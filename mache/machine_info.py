@@ -90,13 +90,15 @@ class MachineInfo:
         """
 
         info = f'Machine: {self.machine}\n' \
-               f'E3SM Supported Machine? {self.e3sm_supported}'
+               f'  E3SM Supported Machine: {self.e3sm_supported}'
 
         if self.e3sm_supported:
             info = f'{info}\n' \
                    f'  Compilers: {", ".join(self.compilers)}\n' \
                    f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
                    f'  OS: {self.os}'
+
+        info = f'{info}\n'
 
         print_unified = (self.e3sm_unified_activation is not None or
                          self.e3sm_unified_base is not None or
@@ -117,6 +119,7 @@ class MachineInfo:
             if self.e3sm_unified_mpi is not None:
                 info = f'{info}\n' \
                        f'  MPI type: {self.e3sm_unified_mpi}'
+            info = f'{info}\n'
 
         print_diags = self.diagnostics_base is not None
         if print_diags:
@@ -126,7 +129,17 @@ class MachineInfo:
             if self.diagnostics_base is not None:
                 info = f'{info}\n' \
                        f'  Base path: {self.diagnostics_base}'
+            info = f'{info}\n'
 
+        info = f'{info}\n' \
+               f'Config options:'
+        for section in self.config.sections():
+            info = f'{info}\n' \
+                   f'  [{section}]'
+            for key, value in self.config.items(section):
+                info = f'{info}\n' \
+                       f'    {key} = {value}'
+            info = f'{info}\n'
         return info
 
     def get_modules_and_mpi_compilers(self, compiler, mpilib):
