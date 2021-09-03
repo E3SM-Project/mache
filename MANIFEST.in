@@ -1,0 +1,2 @@
+include mache/cime_machine_config/*.xml
+include mache/machines/*.cfg
