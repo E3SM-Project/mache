@@ -1,9 +1,9 @@
-import socket
-import warnings
 from lxml import etree
 from importlib.resources import path
 import configparser
 import os
+
+from mache.discover import discover_machine
 
 
 class MachineInfo:
@@ -57,9 +57,11 @@ class MachineInfo:
             The name of an E3SM supported machine.  By default, the machine
             will be inferred from the host name
         """
+        if machine is None:
+            machine = discover_machine()
+            if machine is None:
+                raise ValueError('Unable to discover machine form host name')
         self.machine = machine
-        if self.machine is None:
-            self._discover_machine()
 
         self.config = self._get_config()
 
@@ -252,35 +254,6 @@ class MachineInfo:
                         mpifc = child.text.strip()
 
         return mpicc, mpicxx, mpifc, mod_commands
-
-    def _discover_machine(self):
-        """ Figure out the machine from the host name """
-        if self.machine is not None:
-            return
-        hostname = socket.gethostname()
-        if hostname.startswith('acme1'):
-            machine = 'acme1'
-        elif hostname.startswith('andes'):
-            machine = 'andes'
-        elif hostname.startswith('blueslogin'):
-            machine = 'anvil'
-        elif hostname.startswith('ba-fe'):
-            machine = 'badger'
-        elif hostname.startswith('chrlogin'):
-            machine = 'chrysalis'
-        elif hostname.startswith('compy'):
-            machine = 'compy'
-        elif hostname.startswith('cooley'):
-            machine = 'cooley'
-        elif hostname.startswith('cori'):
-            warnings.warn('defaulting to cori-haswell.  Use -m cori-knl if you'
-                          ' wish to run on KNL.')
-            machine = 'cori-haswell'
-        elif hostname.startswith('gr-fe'):
-            machine = 'grizzly'
-        else:
-            raise ValueError('Unable to discover machine form host name')
-        self.machine = machine
 
     def _get_config(self):
         """ get a parser for config options """
