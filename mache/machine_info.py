@@ -268,6 +268,46 @@ class MachineInfo:
 
         return mpicc, mpicxx, mpifc, mod_commands
 
+    def get_account_defaults(self):
+        """
+        Get default account, partition and quality of service (QOS) for
+        this machine.
+
+        Returns
+        -------
+        account : str
+            The E3SM account on the machine
+
+        partition : str
+            The default partition on the machine, or ``None`` if no partition
+            should be specified
+
+        qos : str
+            The default quality of service on the machine, or ``None`` if no
+            QOS should be specified
+        """
+        config = self.config
+        if config.has_option('parallel', 'account'):
+            account = config.get('parallel', 'account')
+        else:
+            account = None
+
+        if config.has_option('parallel', 'partitions'):
+            partition = config.get('parallel', 'partitions')
+            # take the first entry
+            partition = partition.split(',')[0].strip()
+        else:
+            partition = None
+
+        if config.has_option('parallel', 'qos'):
+            qos = config.get('parallel', 'qos')
+            # take the first entry
+            qos = qos.split(',')[0].strip()
+        else:
+            qos = None
+
+        return account, partition, qos
+
     def _get_config(self):
         """ get a parser for config options """
 
