@@ -1,9 +1,9 @@
-import socket
-import warnings
 from lxml import etree
 from importlib.resources import path
 import configparser
 import os
+
+from mache.discover import discover_machine
 
 
 class MachineInfo:
@@ -57,9 +57,11 @@ class MachineInfo:
             The name of an E3SM supported machine.  By default, the machine
             will be inferred from the host name
         """
+        if machine is None:
+            machine = discover_machine()
+            if machine is None:
+                raise ValueError('Unable to discover machine form host name')
         self.machine = machine
-        if self.machine is None:
-            self._discover_machine()
 
         self.config = self._get_config()
 
@@ -88,13 +90,15 @@ class MachineInfo:
         """
 
         info = f'Machine: {self.machine}\n' \
-               f'E3SM Supported Machine? {self.e3sm_supported}'
+               f'  E3SM Supported Machine: {self.e3sm_supported}'
 
         if self.e3sm_supported:
             info = f'{info}\n' \
                    f'  Compilers: {", ".join(self.compilers)}\n' \
                    f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
                    f'  OS: {self.os}'
+
+        info = f'{info}\n'
 
         print_unified = (self.e3sm_unified_activation is not None or
                          self.e3sm_unified_base is not None or
@@ -115,6 +119,7 @@ class MachineInfo:
             if self.e3sm_unified_mpi is not None:
                 info = f'{info}\n' \
                        f'  MPI type: {self.e3sm_unified_mpi}'
+            info = f'{info}\n'
 
         print_diags = self.diagnostics_base is not None
         if print_diags:
@@ -124,7 +129,17 @@ class MachineInfo:
             if self.diagnostics_base is not None:
                 info = f'{info}\n' \
                        f'  Base path: {self.diagnostics_base}'
+            info = f'{info}\n'
 
+        info = f'{info}\n' \
+               f'Config options:'
+        for section in self.config.sections():
+            info = f'{info}\n' \
+                   f'  [{section}]'
+            for key, value in self.config.items(section):
+                info = f'{info}\n' \
+                       f'    {key} = {value}'
+            info = f'{info}\n'
         return info
 
     def get_modules_and_mpi_compilers(self, compiler, mpilib):
@@ -253,34 +268,45 @@ class MachineInfo:
 
         return mpicc, mpicxx, mpifc, mod_commands
 
-    def _discover_machine(self):
-        """ Figure out the machine from the host name """
-        if self.machine is not None:
-            return
-        hostname = socket.gethostname()
-        if hostname.startswith('acme1'):
-            machine = 'acme1'
-        elif hostname.startswith('andes'):
-            machine = 'andes'
-        elif hostname.startswith('blueslogin'):
-            machine = 'anvil'
-        elif hostname.startswith('ba-fe'):
-            machine = 'badger'
-        elif hostname.startswith('chrlogin'):
-            machine = 'chrysalis'
-        elif hostname.startswith('compy'):
-            machine = 'compy'
-        elif hostname.startswith('cooley'):
-            machine = 'cooley'
-        elif hostname.startswith('cori'):
-            warnings.warn('defaulting to cori-haswell.  Use -m cori-knl if you'
-                          ' wish to run on KNL.')
-            machine = 'cori-haswell'
-        elif hostname.startswith('gr-fe'):
-            machine = 'grizzly'
+    def get_account_defaults(self):
+        """
+        Get default account, partition and quality of service (QOS) for
+        this machine.
+
+        Returns
+        -------
+        account : str
+            The E3SM account on the machine
+
+        partition : str
+            The default partition on the machine, or ``None`` if no partition
+            should be specified
+
+        qos : str
+            The default quality of service on the machine, or ``None`` if no
+            QOS should be specified
+        """
+        config = self.config
+        if config.has_option('parallel', 'account'):
+            account = config.get('parallel', 'account')
         else:
-            raise ValueError('Unable to discover machine form host name')
-        self.machine = machine
+            account = None
+
+        if config.has_option('parallel', 'partitions'):
+            partition = config.get('parallel', 'partitions')
+            # take the first entry
+            partition = partition.split(',')[0].strip()
+        else:
+            partition = None
+
+        if config.has_option('parallel', 'qos'):
+            qos = config.get('parallel', 'qos')
+            # take the first entry
+            qos = qos.split(',')[0].strip()
+        else:
+            qos = None
+
+        return account, partition, qos
 
     def _get_config(self):
         """ get a parser for config options """
@@ -310,11 +336,13 @@ class MachineInfo:
             machines = next(root.iter('config_machines'))
 
             mach = None
+            found = False
             for mach in machines:
                 if mach.tag == 'machine' and mach.attrib['MACH'] == machine:
+                    found = True
                     break
 
-            if mach is None:
+            if not found:
                 # this is not an E3SM supported machine, so we're done
                 self.e3sm_supported = False
                 return
