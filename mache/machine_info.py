@@ -142,7 +142,8 @@ class MachineInfo:
             info = f'{info}\n'
         return info
 
-    def get_modules_and_mpi_compilers(self, compiler, mpilib):
+    def get_modules_and_mpi_compilers(self, compiler, mpilib, debug=False,
+                                      smp_present=False):
         """
         Get the the modules and MPI compiler commands for a given compiler and
         MPI library
@@ -156,6 +157,12 @@ class MachineInfo:
         mpilib : str
             One of the MPI libraries for this machine, , given in the
             ``mpilibs`` attribute
+
+        debug : bool, optional
+            Whether code will be compiled in debug mode
+
+        smp_present : bool, optional
+            Whether code will be compiled with OpenMP threading
 
         Returns
         -------
@@ -171,6 +178,10 @@ class MachineInfo:
         mod_commands : str
             Modules to load to set up the compilers, MPI libraries and other
             dependencies like NetCDF and PNetCDF
+
+        env_vars : dict
+            A dictionary of environment variables that should be set for the
+            given compiler and MPI library
         """
 
         machine = self.machine
@@ -222,6 +233,36 @@ class MachineInfo:
                                     text = f'{text} {command.text}'
                                 mod_commands.append(text)
 
+            env_vars = dict()
+            for vars in mach:
+                if vars.tag != 'environment_variables':
+                    continue
+                if 'compiler' in vars.attrib and \
+                        vars.attrib['compiler'] != compiler:
+                    continue
+                if 'mpilib' in vars.attrib and \
+                        vars.attrib['mpilib'] != mpilib:
+                    continue
+                if 'DEBUG' in vars.attrib:
+                    var_debug = vars.attrib['DEBUG'] == 'TRUE'
+                    if var_debug != debug:
+                        continue
+
+                if 'SMP_PRESENT' in vars.attrib:
+                    var_smp_present = vars.attrib['SMP_PRESENT'] == 'TRUE'
+                    if var_smp_present != smp_present:
+                        continue
+
+                for var in vars:
+                    if var.tag != 'env':
+                        continue
+                    var_name = var.attrib['name']
+                    value = var.text
+                    # go from the XML syntax to bash variable syntax
+                    value = value.replace('$ENV{', '${')
+
+                    env_vars[var_name] = value
+
         with path('mache.cime_machine_config',
                   'config_compilers.xml') as xml_path:
             root = etree.parse(str(xml_path))
@@ -266,7 +307,7 @@ class MachineInfo:
                     elif child.tag == 'MPIFC':
                         mpifc = child.text.strip()
 
-        return mpicc, mpicxx, mpifc, mod_commands
+        return mpicc, mpicxx, mpifc, mod_commands, env_vars
 
     def get_account_defaults(self):
         """
