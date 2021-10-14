@@ -19,15 +19,39 @@ This loads machine info for Anvil and prints it:
 .. code-block:: none
 
     Machine: anvil
-    E3SM Supported Machine? True
+      E3SM Supported Machine: True
       Compilers: intel, gnu
-      MPI libraries: mvapich, impi
+      MPI libraries: impi, openmpi, mvapich
       OS: LINUX
+
     E3SM-Unified:
-      Base path: /lcrc/soft/climate/e3sm-unified
       E3SM-Unified is not currently loaded
+      Base path: /lcrc/soft/climate/e3sm-unified
+
     Diagnostics:
       Base path: /lcrc/group/e3sm/diagnostics
+
+    Config options:
+      [e3sm_unified]
+        group = cels
+        compiler = intel
+        mpi = impi
+        base_path = /lcrc/soft/climate/e3sm-unified
+
+      [diagnostics]
+        base_path = /lcrc/group/e3sm/diagnostics
+
+      [web_portal]
+        base_path = /lcrc/group/e3sm/public_html
+        base_url = https://web.lcrc.anl.gov/public/e3sm/
+
+      [parallel]
+        system = slurm
+        parallel_executable = srun
+        cores_per_node = 36
+        account = condo
+        partitions = acme-small, acme-medium, acme-large
+        qos = regular, acme_high
 
 If you are on the login node of one of the following E3SM supported machines,
 you don't need to provide the machine name.  It will be recognized from the
@@ -93,6 +117,12 @@ e3sm_unified_activation : str
 
 diagnostics_base : str
     The base directory for diagnostics data
+
+web_portal_base : str
+    The base directory for the web portal
+
+web_portal_url : str
+    The base URL for the web portal
 
 License
 -------

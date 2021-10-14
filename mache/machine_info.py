@@ -45,6 +45,12 @@ class MachineInfo:
 
     diagnostics_base : str
         The base directory for diagnostics data
+
+    web_portal_base : str
+        The base directory for the web portal
+
+    web_portal_url : str
+        The base URL for the web portal
     """
 
     def __init__(self, machine=None):
