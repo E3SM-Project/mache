@@ -282,6 +282,10 @@ class MachineInfo:
             The default partition on the machine, or ``None`` if no partition
             should be specified
 
+        configuration : str
+            The default configuration on the machine, or ``None`` if no
+            configuration should be specified
+
         qos : str
             The default quality of service on the machine, or ``None`` if no
             QOS should be specified
@@ -299,6 +303,13 @@ class MachineInfo:
         else:
             partition = None
 
+        if config.has_option('parallel', 'configurations'):
+            configuration = config.get('parallel', 'configurations')
+            # take the first entry
+            configuration = configuration.split(',')[0].strip()
+        else:
+            configuration = None
+
         if config.has_option('parallel', 'qos'):
             qos = config.get('parallel', 'qos')
             # take the first entry
@@ -306,7 +317,7 @@ class MachineInfo:
         else:
             qos = None
 
-        return account, partition, qos
+        return account, partition, configuration, qos
 
     def _get_config(self):
         """ get a parser for config options """
