@@ -2,6 +2,7 @@ from lxml import etree
 from importlib.resources import path
 import configparser
 import os
+import pwd
 
 from mache.discover import discover_machine
 
@@ -51,6 +52,11 @@ class MachineInfo:
 
     web_portal_url : str
         The base URL for the web portal
+
+    username : str
+        The name of the current user, for use in web-portal directories. This
+        value is also added to the ``web_portal`` and ``username`` option of
+        the ``config`` attribute.
     """
 
     def __init__(self, machine=None):
@@ -84,6 +90,12 @@ class MachineInfo:
 
         self.diagnostics_base = None
         self._get_diagnostics_info()
+
+        self.web_portal_base = None
+        self.web_portal_url = None
+
+        self.username = pwd.getpwuid(os.getuid()).pw_name
+        self.config.set('web_portal', 'username', self.username)
 
     def __str__(self):
         """
