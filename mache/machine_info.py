@@ -95,6 +95,8 @@ class MachineInfo:
         self.web_portal_url = None
 
         self.username = pwd.getpwuid(os.getuid()).pw_name
+        if not self.config.has_section('web_portal'):
+            self.config.add_section('web_portal')
         self.config.set('web_portal', 'username', self.username)
 
     def __str__(self):
