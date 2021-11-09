@@ -280,6 +280,10 @@ class MachineInfo:
                     value = var.text
                     # go from the XML syntax to bash variable syntax
                     value = value.replace('$ENV{', '${')
+                    if '$SHELL' in value:
+                        value = value.replace('$SHELL{', '$(')
+                        # replace the last curly bracket with a parenthesis
+                        value = ')'.join(value.rsplit('}', 1))
 
                     env_vars[var_name] = value
 
