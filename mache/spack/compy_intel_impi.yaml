@@ -1,0 +1,102 @@
+spack:
+  specs: 
+  - cmake
+  - intel
+  - intel-mpi
+  - intel-mkl
+  - hdf5+cxx+fortran+hl+mpi+shared
+  - netcdf-c+mpi~parallel-netcdf
+  - netcdf-fortran
+  - parallel-netcdf+cxx+fortran
+{{ specs }}
+  concretization: together
+  packages:
+    all:
+      compiler: [intel@19.0.5]
+      providers:
+        mpi: [intel-mpi@2019.4.243]
+        lapack: [intel-mkl@2019.5.281]
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    diffutils:
+      externals:
+      - spec: diffutils@3.3
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.19.8.1
+        prefix: /usr
+      buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@5.9.20130511
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.16.3
+        prefix: /usr
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.26
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.2
+        prefix: /usr
+      buildable: false
+    zlib:
+      externals:
+      - spec: zlib@1.2.7
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.19.6
+        prefix: /share/apps/cmake/3.19.6
+        modules:
+        - cmake/3.19.6
+      buildable: false
+    intel:
+      externals:
+      - spec: intel@19.0.5
+        prefix: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281
+        modules:
+        - intel/19.0.5
+      buildable: false
+    intel-mpi:
+      externals:
+      - spec: intel-mpi@2019.4.243
+        prefix: /share/apps/intel/2019u4/compilers_and_libraries_2019.4.243
+        modules:
+        - intelmpi/2019u4
+      buildable: false
+    intel-mkl:
+      externals:
+      - spec: intel-mkl@2019.5.281
+        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/mkl
+        modules:
+        - mkl/2019u5
+      buildable: false
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: intel@19.0.5
+      paths:
+        cc: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/icc
+        cxx: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/icpc
+        f77: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/ifort
+        fc: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/ifort
+      flags: {}
+      operating_system: centos7
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
