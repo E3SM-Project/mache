@@ -1,0 +1,137 @@
+spack:
+  specs: 
+  - cmake
+  - gcc
+  - openmpi
+  - intel-mkl
+  - hdf5
+  - netcdf-c
+  - netcdf-fortran
+  - parallel-netcdf
+{{ specs }}
+  concretization: together
+  packages:
+    all:
+      compiler: [gcc@9.2.0]
+      providers:
+        mpi: [openmpi@4.1.1]
+        lapack: [intel-mkl@2020.4.304]
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.8
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/bzip2-1.0.8-n5r3ey3
+      buildable: false
+    curl:
+      externals:
+      - spec:  curl@7.72.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/curl-7.72.0-aklgean
+      buildable: false
+    diffutils:
+      externals:
+      - spec: diffutils@3.7
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/diffutils-3.7-nnauuo4
+      buildable: false
+    libiconv:
+      externals:
+      - spec: libiconv@1.16
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/libiconv-1.16-lnre6zw
+      buildable: false
+    libxml2:
+      externals:
+      - spec: libxml2@2.9.10
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/libxml2-2.9.10-ecwsvih
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.1.1c
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.5
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/xz-5.2.5-2e3gurg
+      buildable: false
+    zlib:
+      externals:
+      - spec: zlib@1.2.11
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/zlib-1.2.11-3tgpz5b
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.19.1
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/cmake-3.19.1-yisciec
+        modules:
+        - cmake/3.19.1-yisciec
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.32.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/perl-5.32.0-bsnc6lt
+        modules:
+          - perl/5.32.0-bsnc6lt
+      buildable: false
+    gcc:
+      externals:
+      - spec: gcc@9.2.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-9.2.0-ugetvbp
+        modules:
+        - gcc/9.2.0-ugetvbp
+      buildable: false
+    openmpi:
+      externals:
+      - spec: openmpi@4.1.1
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/openmpi-4.1.1-73gbwq4
+        modules:
+        - openmpi/4.1.1-73gbwq4
+      buildable: false
+    intel-mkl:
+      externals:
+      - spec: intel-mkl@2020.4.304
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/intel-mkl-2020.4.304-n3b5fye/compilers_and_libraries_2020.4.304
+        modules:
+        - intel-mkl/2020.4.304-n3b5fye
+      buildable: false
+    hdf5:
+      externals:
+      - spec: hdf5@1.8.16+cxx+fortran+hl+mpi
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/hdf5-1.8.16-dqjdy2d
+        modules:
+        - hdf5/1.8.16-dqjdy2d
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.4.1+mpi~parallel-netcdf
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/netcdf-c-4.4.1-y6dun2a
+        modules:
+        - netcdf-c/4.4.1-y6dun2a
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.4.4
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/netcdf-fortran-4.4.4-4lnfxki
+        modules:
+        - netcdf-fortran/4.4.4-4lnfxki
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.11.0+cxx+fortran
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/parallel-netcdf-1.11.0-3x2favk
+        modules:
+        - parallel-netcdf/1.11.0-3x2favk
+      buildable: false
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: gcc@9.2.0
+      paths:
+        cc: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-9.2.0-ugetvbp/bin/gcc
+        cxx: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-9.2.0-ugetvbp/bin/g++
+        f77: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-9.2.0-ugetvbp/bin/gfortran
+        fc: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-9.2.0-ugetvbp/bin/gfortran
+      flags: {}
+      operating_system: centos8
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
