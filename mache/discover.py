@@ -30,8 +30,6 @@ def discover_machine():
         warnings.warn('defaulting to cori-haswell.  Use -m cori-knl if you'
                       ' wish to run on KNL.')
         machine = 'cori-haswell'
-    elif hostname.startswith('gr-fe'):
-        machine = 'grizzly'
     else:
         machine = None
     return machine
