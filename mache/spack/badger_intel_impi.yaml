@@ -1,0 +1,128 @@
+spack:
+  specs: 
+  - cmake
+  - intel
+  - intel-mpi
+  - intel-mkl
+  - hdf5
+  - netcdf-c
+  - netcdf-fortran
+  - parallel-netcdf
+{{ specs }}
+  concretization: together
+  packages:
+    all:
+      compiler: [intel@19.0.4]
+      providers:
+        mpi: [intel-mpi@2019.4.243]
+        lapack: [intel-mkl@2019.0.4]
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.29.0
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.19.8.1
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.0.2k
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.16.3
+        prefix: /usr
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.26
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.2
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.16.2
+        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/cmake/3.16.2
+        modules:
+        - cmake/3.16.2
+      buildable: false
+    intel:
+      externals:
+      - spec: intel@19.0.4
+        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019
+        modules:
+        - intel/19.0.4
+      buildable: false
+    intel-mpi:
+      externals:
+      - spec: intel-mpi@2019.4.243
+        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019.4.243
+        modules:
+        - intel-mpi/2019.4
+      buildable: false
+    intel-mkl:
+      externals:
+      - spec: intel-mkl@2019.0.4
+        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019
+        modules:
+        - mkl/2019.0.4
+      buildable: false
+    hdf5:
+      externals:
+      - spec: hdf5@1.8.16~cxx+fortran+hl~java+mpi+shared
+        prefix: /usr/projects/hpcsoft/toss3/badger/hdf5/1.8.16_intel-19.0.4_intel-mpi-2019.4
+        modules:
+        - hdf5-parallel/1.8.16
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.11.2-cxx+fortran+pic+shared
+        prefix: /usr/projects/hpcsoft/toss3/badger/pnetcdf/1.11.2_intel-19.0.4_intel-mpi-2019.4_hdf5-1.8.16
+        modules:
+        - friendly-testing
+        - pnetcdf/1.11.2
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.7.3+mpi+parallel-netcdf
+        prefix: /usr/projects/hpcsoft/toss3/badger/netcdf/4.7.3_intel-19.0.4_intel-mpi-2019.4_hdf5-1.8.16
+        modules:
+        - friendly-testing
+        - netcdf-h5parallel/4.7.3
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.5.2
+        prefix: /usr/projects/hpcsoft/toss3/badger/netcdf/4.7.3_intel-19.0.4_intel-mpi-2019.4_hdf5-1.8.16
+        modules:
+        - friendly-testing
+        - netcdf-h5parallel/4.7.3
+      buildable: false
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: intel@19.0.4
+      paths:
+        cc: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019/linux/bin/intel64/icc
+        cxx: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019/linux/bin/intel64/icpc
+        f77: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019/linux/bin/intel64/ifort
+        fc: /usr/projects/hpcsoft/toss3/common/x86_64/intel-clusterstudio/2019.4.070/compilers_and_libraries_2019/linux/bin/intel64/ifort
+      flags: {}
+      operating_system: rhel7
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
