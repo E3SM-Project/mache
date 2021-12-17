@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+{{ clone }}
+cd {{ spack_path }}
+source share/spack/setup-env.sh
+spack env remove -y {{ env_name }} && \
+  echo "recreating environment: {{ env_name }}" || \
+  echo "creating new environment: {{ env_name }}"
+spack env create {{ env_name }} {{ yaml_filename }}
+spack env activate {{ env_name }}
+spack install
