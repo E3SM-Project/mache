@@ -2,3 +2,4 @@ include mache/cime_machine_config/*.xml
 include mache/machines/*.cfg
 include mache/spack/*.yaml
 include mache/spack/*.template
+include mache/spack/*.sh
