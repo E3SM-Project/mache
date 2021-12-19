@@ -8,6 +8,33 @@ from mache.machine_info import discover_machine
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None):
+    """
+    Clone the ``spack_for_mache`` branch from
+    `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
+    a spack environment for the given machine, compiler and MPI library.
+
+    Parameters
+    ----------
+    spack_path : str
+        The base path where spack has been (or will be) cloned
+
+    env_name : str
+        The name of the spack environment to be created or recreated
+
+    spack_specs : list of str
+        A list of spack package specs to include in the environment
+
+    compiler : str
+        One of the E3SM supported compilers for the ``machine``
+
+    mpi : str
+        One of the E3SM supported MPI libraries for the given ``compiler`` and
+        ``machine``
+
+    machine : str, optional
+        The name of an E3SM supported machine.  If none is given, the machine
+        will be detected automatically via the host name.
+    """
 
     if machine is None:
         machine = discover_machine()
@@ -47,3 +74,54 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     # clear environment variables and start fresh with those from login
     # so spack doesn't get confused by conda
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+
+
+def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
+    """
+    Build a snippet of a load script for the given spack environment
+
+    Parameters
+    ----------
+    spack_path : str
+        The base path where spack has been (or will be) cloned
+
+    env_name : str
+        The name of the spack environment to be created or recreated
+
+    compiler : str
+        One of the E3SM supported compilers for the ``machine``
+
+    mpi : str
+        One of the E3SM supported MPI libraries for the given ``compiler`` and
+        ``machine``
+
+    machine : str, optional
+        The name of an E3SM supported machine.  If none is given, the machine
+        will be detected automatically via the host name.
+
+    Returns
+    -------
+    load_script : str
+        A snippet of bash shell script that will load the given spack
+        environment and add any additional steps required for using the
+        environment such as setting environment variables or loading modules
+        not handled by the spack environment directly
+    """
+
+    if machine is None:
+        machine = discover_machine()
+        if machine is None:
+            raise ValueError('Unable to discover machine form host name')
+
+    load_script = f'source {spack_path}/share/spack/setup-env.sh\n' \
+                  f'spack env activate {env_name}'
+
+    bash_filename = f'{machine}_{compiler}_{mpi}.sh'
+    try:
+        bask_script = resources.read_text('mache.spack', bash_filename)
+        load_script = f'{load_script}\n{bask_script}'
+    except FileNotFoundError:
+        # there's nothing to add, which is fine
+        pass
+
+    return load_script
