@@ -4,12 +4,13 @@ from jinja2 import Template
 from importlib import resources
 
 from mache.machine_info import discover_machine
+from mache.version import __version__
 
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None):
     """
-    Clone the ``spack_for_mache`` branch from
+    Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
     a spack environment for the given machine, compiler and MPI library.
 
@@ -43,7 +44,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     if not os.path.exists(spack_path):
         # we need to clone the spack repo
-        clone = f'git clone -b spack_for_mache ' \
+        clone = f'git clone -b spack_for_mache_{__version__} ' \
                 f'git@github.com:E3SM-Project/spack.git {spack_path}'
     else:
         clone = ''
