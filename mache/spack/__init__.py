@@ -2,6 +2,7 @@ import os
 import subprocess
 from jinja2 import Template
 from importlib import resources
+import yaml
 
 from mache.machine_info import discover_machine
 from mache.version import __version__
@@ -77,7 +78,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
 
 
-def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
+def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
+                     with_modules=True):
     """
     Build a snippet of a load script for the given spack environment
 
@@ -100,6 +102,9 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
 
+    with_modules : bool, optional
+        Whether to include modules from the spack yaml file in the script
+
     Returns
     -------
     load_script : str
@@ -117,6 +122,14 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
     load_script = f'source {spack_path}/share/spack/setup-env.sh\n' \
                   f'spack env activate {env_name}'
 
+    bash_filename = f'{machine}.sh'
+    try:
+        bask_script = resources.read_text('mache.spack', bash_filename)
+        load_script = f'{load_script}\n{bask_script}'
+    except FileNotFoundError:
+        # there's nothing to add, which is fine
+        pass
+
     bash_filename = f'{machine}_{compiler}_{mpi}.sh'
     try:
         bask_script = resources.read_text('mache.spack', bash_filename)
@@ -124,5 +137,29 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
     except FileNotFoundError:
         # there's nothing to add, which is fine
         pass
+
+    if with_modules:
+        template_filename = f'{machine}_{compiler}_{mpi}.yaml'
+        try:
+            template = Template(
+                resources.read_text('mache.spack', template_filename))
+        except FileNotFoundError:
+            raise ValueError(f'Spack template not available for {compiler} and '
+                             f'{mpi} on {machine}.')
+        yaml_data = yaml.safe_load(template.render(specs=''))
+
+        mods = ['module purge']
+
+        if 'spack' in yaml_data and 'packages' in yaml_data['spack']:
+            package_data = yaml_data['spack']['packages']
+            for package in package_data.values():
+                if 'externals' in package:
+                    for item in package['externals']:
+                        if 'modules' in item:
+                            for mod in item['modules']:
+                                mods.append(f'module load {mod}')
+
+        mods = '\n'.join(mods)
+        load_script = f'{load_script}\n{mods}'
 
     return load_script
