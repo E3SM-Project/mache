@@ -4,12 +4,12 @@ from jinja2 import Template
 from importlib import resources
 import yaml
 
-from mache.machine_info import discover_machine
+from mache.machine_info import discover_machine, MachineInfo
 from mache.version import __version__
 
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
-                   machine=None, with_modules=True):
+                   machine=None):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -36,16 +36,20 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     machine : str, optional
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
-
-    with_modules : bool, optional
-        Whether to load modules from the spack yaml file before creating the
-        spack environment
     """
 
     if machine is None:
         machine = discover_machine()
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
+
+    machine_info = MachineInfo(machine)
+
+    config = machine_info.config
+    section = config['spack']
+
+    with_modules = (section.getboolean('modules_before') or
+                    section.getboolean('modules_after'))
 
     if not os.path.exists(spack_path):
         # we need to clone the spack repo
@@ -90,8 +94,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
 
 
-def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
-                     with_modules=True):
+def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
     """
     Build a snippet of a load script for the given spack environment
 
@@ -131,8 +134,19 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
 
-    if with_modules:
+    machine_info = MachineInfo(machine)
+
+    config = machine_info.config
+    section = config['spack']
+
+    modules_before = section.getboolean('modules_before')
+    modules_after = section.getboolean('modules_after')
+
+    if modules_before or modules_after:
         load_script = 'module purge\n'
+        if modules_before:
+            mods = _get_modules(machine, compiler, mpi)
+            load_script = f'{load_script}\n{mods}\n'
     else:
         load_script = ''
 
@@ -156,7 +170,7 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         # there's nothing to add, which is fine
         pass
 
-    if with_modules:
+    if modules_after:
         mods = _get_modules(machine, compiler, mpi)
         load_script = f'{load_script}\n{mods}'
 
