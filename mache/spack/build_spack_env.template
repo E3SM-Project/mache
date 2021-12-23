@@ -1,5 +1,7 @@
 #!/bin/bash
 
+{{ modules }}
+
 set -e
 
 {{ clone }}

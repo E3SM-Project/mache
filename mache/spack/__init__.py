@@ -9,7 +9,7 @@ from mache.version import __version__
 
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
-                   machine=None):
+                   machine=None, with_modules=True):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -36,6 +36,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     machine : str, optional
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
+
+    with_modules : bool, optional
+        Whether to load modules from the spack yaml file before creating the
+        spack environment
     """
 
     if machine is None:
@@ -67,8 +71,16 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     template = Template(
         resources.read_text('mache.spack', 'build_spack_env.template'))
-    build_file = template.render(clone=clone, spack_path=spack_path,
-                                 env_name=env_name, yaml_filename=yaml_filename)
+    if with_modules:
+        mods = _get_modules(machine, compiler, mpi)
+        mods = f'module purge\n' \
+               f'{mods}'
+    else:
+        mods = ''
+
+    build_file = template.render(modules=mods, clone=clone,
+                                 spack_path=spack_path, env_name=env_name,
+                                 yaml_filename=yaml_filename)
     build_filename = f'build_{env_name}.bash'
     with open(build_filename, 'w') as handle:
         handle.write(build_file)
@@ -119,7 +131,13 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
 
-    load_script = f'source {spack_path}/share/spack/setup-env.sh\n' \
+    if with_modules:
+        load_script = 'module purge\n'
+    else:
+        load_script = ''
+
+    load_script = f'{load_script}' \
+                  f'source {spack_path}/share/spack/setup-env.sh\n' \
                   f'spack env activate {env_name}'
 
     bash_filename = f'{machine}.sh'
@@ -139,27 +157,33 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         pass
 
     if with_modules:
-        template_filename = f'{machine}_{compiler}_{mpi}.yaml'
-        try:
-            template = Template(
-                resources.read_text('mache.spack', template_filename))
-        except FileNotFoundError:
-            raise ValueError(f'Spack template not available for {compiler} and '
-                             f'{mpi} on {machine}.')
-        yaml_data = yaml.safe_load(template.render(specs=''))
-
-        mods = ['module purge']
-
-        if 'spack' in yaml_data and 'packages' in yaml_data['spack']:
-            package_data = yaml_data['spack']['packages']
-            for package in package_data.values():
-                if 'externals' in package:
-                    for item in package['externals']:
-                        if 'modules' in item:
-                            for mod in item['modules']:
-                                mods.append(f'module load {mod}')
-
-        mods = '\n'.join(mods)
+        mods = _get_modules(machine, compiler, mpi)
         load_script = f'{load_script}\n{mods}'
 
     return load_script
+
+
+def _get_modules(machine, compiler, mpi):
+    """ Get a list of modules from a yaml file """
+    template_filename = f'{machine}_{compiler}_{mpi}.yaml'
+    try:
+        template = Template(
+            resources.read_text('mache.spack', template_filename))
+    except FileNotFoundError:
+        raise ValueError(f'Spack template not available for {compiler} and '
+                         f'{mpi} on {machine}.')
+    yaml_data = yaml.safe_load(template.render(specs=''))
+
+    mods = []
+    if 'spack' in yaml_data and 'packages' in yaml_data['spack']:
+        package_data = yaml_data['spack']['packages']
+        for package in package_data.values():
+            if 'externals' in package:
+                for item in package['externals']:
+                    if 'modules' in item:
+                        for mod in item['modules']:
+                            mods.append(f'module load {mod}')
+
+    mods = '\n'.join(mods)
+
+    return mods
