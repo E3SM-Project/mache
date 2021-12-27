@@ -4,10 +4,12 @@ spack:
   - intel
   - intel-mpi
   - intel-mkl
-  - hdf5+cxx+fortran+hl+mpi+shared
-  - netcdf-c+mpi~parallel-netcdf
+{% if e3sm_hdf5_netcdf %}
+  - hdf5
+  - netcdf-c
   - netcdf-fortran
-  - parallel-netcdf+cxx+fortran
+  - parallel-netcdf
+{% endif %}
 {{ specs }}
   concretization: together
   packages:
@@ -84,6 +86,36 @@ spack:
         modules:
         - mkl/2019u5
       buildable: false
+{% if e3sm_hdf5_netcdf %}
+    hdf5:
+      externals:
+      - spec: hdf5~mpi+hl@1.10.5
+        prefix: /share/apps/hdf5/1.10.5/serial
+        modules:
+        - hdf5/1.10.5
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c~mpi~parallel-netcdf@4.6.3
+        prefix: /share/apps/netcdf/4.6.3/intel/19.0.5
+        modules:
+        - netcdf/4.6.3
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.4.5
+        prefix: /share/apps/netcdf/4.6.3/intel/19.0.5
+        modules:
+        - netcdf/4.6.3
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf+cxx+fortran@1.9.0
+        prefix: /share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/
+        modules:
+        - pnetcdf/1.9.0
+      buildable: false
+{% endif %}
   config:
     install_missing_compilers: false
   compilers:
