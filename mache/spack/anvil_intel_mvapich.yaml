@@ -4,10 +4,12 @@ spack:
   - intel
   - mvapich2
   - intel-mkl
+{% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
+{% endif %}
 {{ specs }}
   concretization: together
   packages:
@@ -101,6 +103,7 @@ spack:
         modules:
         - intel-mkl/2020.4.304-voqlapk
       buildable: false
+{% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
@@ -129,6 +132,7 @@ spack:
         modules:
         - parallel-netcdf/1.11.0-kj4jsvt
       buildable: false
+{% endif %}
   config:
     install_missing_compilers: false
   compilers:

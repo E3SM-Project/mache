@@ -4,10 +4,12 @@ spack:
   - intel
   - mpich
   - cray-libsci
+{% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
+{% endif %}
   # libbsd doesn't want to build
   - expat~libbsd
 {{ specs }}
@@ -72,6 +74,7 @@ spack:
         modules:
         - cray-libsci/19.06.1
       buildable: false
+{% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.5+mpi+hl
@@ -100,7 +103,7 @@ spack:
         modules:
         - cray-parallel-netcdf/1.11.1.1
       buildable: false
-
+{% endif %}
   config:
     install_missing_compilers: false
   compilers:

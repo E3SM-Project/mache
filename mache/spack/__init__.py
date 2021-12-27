@@ -9,7 +9,7 @@ from mache.version import __version__
 
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
-                   machine=None):
+                   machine=None, include_e3sm_hdf5_netcdf=False):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -36,6 +36,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     machine : str, optional
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
+
+    include_e3sm_hdf5_netcdf : bool, optional
+        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
+        as used in E3SM
     """
 
     if machine is None:
@@ -68,7 +72,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     except FileNotFoundError:
         raise ValueError(f'Spack template not available for {compiler} and '
                          f'{mpi} on {machine}.')
-    yaml_file = template.render(specs=specs)
+    yaml_file = template.render(specs=specs,
+                                e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
     yaml_filename = os.path.abspath(f'{env_name}.yaml')
     with open(yaml_filename, 'w') as handle:
         handle.write(yaml_file)
@@ -76,7 +81,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     template = Template(
         resources.read_text('mache.spack', 'build_spack_env.template'))
     if with_modules:
-        mods = _get_modules(machine, compiler, mpi)
+        mods = _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf)
         mods = f'module purge\n' \
                f'{mods}'
     else:
@@ -94,7 +99,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
 
 
-def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
+def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
+                     include_e3sm_hdf5_netcdf=False):
     """
     Build a snippet of a load script for the given spack environment
 
@@ -117,8 +123,9 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
 
-    with_modules : bool, optional
-        Whether to include modules from the spack yaml file in the script
+    include_e3sm_hdf5_netcdf : bool, optional
+        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
+        as used in E3SM
 
     Returns
     -------
@@ -145,7 +152,8 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
     if modules_before or modules_after:
         load_script = 'module purge\n'
         if modules_before:
-            mods = _get_modules(machine, compiler, mpi)
+            mods = _get_modules(machine, compiler, mpi,
+                                include_e3sm_hdf5_netcdf)
             load_script = f'{load_script}\n{mods}\n'
     else:
         load_script = ''
@@ -171,13 +179,13 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None):
         pass
 
     if modules_after:
-        mods = _get_modules(machine, compiler, mpi)
+        mods = _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf)
         load_script = f'{load_script}\n{mods}'
 
     return load_script
 
 
-def _get_modules(machine, compiler, mpi):
+def _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf):
     """ Get a list of modules from a yaml file """
     template_filename = f'{machine}_{compiler}_{mpi}.yaml'
     try:
@@ -186,7 +194,8 @@ def _get_modules(machine, compiler, mpi):
     except FileNotFoundError:
         raise ValueError(f'Spack template not available for {compiler} and '
                          f'{mpi} on {machine}.')
-    yaml_data = yaml.safe_load(template.render(specs=''))
+    yaml_data = yaml.safe_load(
+        template.render(specs='', e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf))
 
     mods = []
     if 'spack' in yaml_data and 'packages' in yaml_data['spack']:
