@@ -99,7 +99,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
 
 
-def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
+def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
                      include_e3sm_hdf5_netcdf=False):
     """
     Build a snippet of a load script for the given spack environment
@@ -119,6 +119,9 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         One of the E3SM supported MPI libraries for the given ``compiler`` and
         ``machine``
 
+    shell : {'sh', 'csh'}
+        Which shell the script is for
+
     machine : str, optional
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
@@ -130,7 +133,7 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
     Returns
     -------
     load_script : str
-        A snippet of bash shell script that will load the given spack
+        A snippet of a shell script that will load the given spack
         environment and add any additional steps required for using the
         environment such as setting environment variables or loading modules
         not handled by the spack environment directly
@@ -159,24 +162,21 @@ def get_spack_script(spack_path, env_name, compiler, mpi, machine=None,
         load_script = ''
 
     load_script = f'{load_script}' \
-                  f'source {spack_path}/share/spack/setup-env.sh\n' \
+                  f'source {spack_path}/share/spack/setup-env.{shell}\n' \
                   f'spack env activate {env_name}'
 
-    bash_filename = f'{machine}.sh'
-    try:
-        bask_script = resources.read_text('mache.spack', bash_filename)
-        load_script = f'{load_script}\n{bask_script}'
-    except FileNotFoundError:
-        # there's nothing to add, which is fine
-        pass
-
-    bash_filename = f'{machine}_{compiler}_{mpi}.sh'
-    try:
-        bask_script = resources.read_text('mache.spack', bash_filename)
-        load_script = f'{load_script}\n{bask_script}'
-    except FileNotFoundError:
-        # there's nothing to add, which is fine
-        pass
+    for shell_filename in [f'{machine}.{shell}',
+                           f'{machine}_{compiler}_{mpi}.{shell}']:
+        # load modules, etc. for this machine
+        try:
+            template = Template(
+                resources.read_text('mache.spack', shell_filename))
+        except FileNotFoundError:
+            # there's nothing to add, which is fine
+            continue
+        bash_script = template.render(
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
+        load_script = f'{load_script}\n{bash_script}'
 
     if modules_after:
         mods = _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf)
