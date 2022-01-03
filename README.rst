@@ -73,6 +73,8 @@ host name:
 
 * cori-haswell (but you will get a warning)
 
+* grizzly
+
 If you are on a compute node or want info about a machine you're not currently
 on, give the ``machine`` name in all lowercase.
 
