@@ -1,0 +1,120 @@
+spack:
+  specs:
+  - cmake
+  - intel
+  - mpich
+  - cray-libsci
+{% if e3sm_hdf5_netcdf %}
+  - hdf5
+  - netcdf-c
+  - netcdf-fortran
+  - parallel-netcdf
+{% endif %}
+{{ specs }}
+  concretization: together
+  packages:
+    all:
+      compiler: [intel@19.0.3]
+      providers:
+        mpi: [mpich@7.7.10]
+        lapack: [cray-libsci@19.06.1]
+      target:
+      - mic_knl
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.19.8.1
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.26.1
+        prefix: /usr
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.26
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.3
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.21.3
+        prefix: /usr/common/software/cmake/3.21.3/
+        modules:
+        - cmake/3.21.3
+      buildable: false
+    intel:
+      externals:
+      - spec: intel@19.0.3
+        prefix: /opt/intel/compilers_and_libraries_2019.3.199/
+        modules:
+        - PrgEnv-intel/6.0.5
+        - intel/19.0.3.199
+      buildable: false
+    mpich:
+      externals:
+      - spec: mpich@3.1
+        modules:
+        - cray-mpich/7.7.10
+      buildable: false
+    cray-libsci:
+      externals:
+      - spec: cray-libsci@19.06.1
+        modules:
+        - cray-libsci/19.06.1
+      buildable: false
+{% if e3sm_hdf5_netcdf %}
+    hdf5:
+      externals:
+      - spec: hdf5@1.10.5+mpi+hl
+        prefix: /opt/cray/pe/hdf5-parallel/1.10.5.2/INTEL/19.0
+        modules:
+        - cray-hdf5-parallel/1.10.5.2
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.6.3+mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.6.3.2/INTEL/19.0
+        modules:
+        - cray-netcdf-hdf5parallel/4.6.3.2
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.4.5
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.6.3.2/INTEL/19.0
+        modules:
+        - cray-netcdf-hdf5parallel/4.6.3.2
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.11.1.1+cxx+fortran
+        prefix: /opt/cray/pe/parallel-netcdf/1.11.1.1/INTEL/19.0
+        modules:
+        - cray-parallel-netcdf/1.11.1.1
+      buildable: false
+{% endif %}
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: intel@19.0.3
+      paths:
+        cc: cc
+        cxx: CC
+        f77: ftn
+        fc: ftn
+      flags: {}
+      operating_system: cnl7
+      target: any
+      modules: []
+      environment: {}
+      extra_rpaths: []
