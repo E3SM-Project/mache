@@ -78,16 +78,30 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     with open(yaml_filename, 'w') as handle:
         handle.write(yaml_file)
 
-    template = Template(
-        resources.read_text('mache.spack', 'build_spack_env.template'))
     if with_modules:
         mods = _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf)
-        mods = f'module purge\n' \
-               f'{mods}'
+        modules = f'module purge\n' \
+                  f'{mods}'
     else:
-        mods = ''
+        modules = ''
 
-    build_file = template.render(modules=mods, clone=clone,
+    for shell_filename in [f'{machine}.sh',
+                           f'{machine}_{compiler}_{mpi}.sh']:
+        # load modules, etc. for this machine
+        try:
+            template = Template(
+                resources.read_text('mache.spack', shell_filename))
+        except FileNotFoundError:
+            # there's nothing to add, which is fine
+            continue
+        bash_script = template.render(
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
+
+        modules = f'{modules}\n{bash_script}'
+
+    template = Template(
+        resources.read_text('mache.spack', 'build_spack_env.template'))
+    build_file = template.render(modules=modules, clone=clone,
                                  spack_path=spack_path, env_name=env_name,
                                  yaml_filename=yaml_filename)
     build_filename = f'build_{env_name}.bash'
