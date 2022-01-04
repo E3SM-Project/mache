@@ -14,10 +14,10 @@ spack:
   concretization: together
   packages:
     all:
-      compiler: [intel@19.0.5]
+      compiler: [intel@20.0.0]
       providers:
-        mpi: [intel-mpi@2019.4.243]
-        lapack: [intel-mkl@2019.5.281]
+        mpi: [intel-mpi@2020.0.166]
+        lapack: [intel-mkl@2020.0.166]
     bzip2:
       externals:
       - spec: bzip2@1.0.6
@@ -67,24 +67,24 @@ spack:
       buildable: false
     intel:
       externals:
-      - spec: intel@19.0.5
-        prefix: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281
+      - spec: intel@20.0.0
+        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
         modules:
-        - intel/19.0.5
+        - intel/20.0.0
       buildable: false
     intel-mpi:
       externals:
-      - spec: intel-mpi@2019.4.243
-        prefix: /share/apps/intel/2019u4/compilers_and_libraries_2019.4.243
+      - spec: intel-mpi@2020.0.166
+        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
         modules:
-        - intelmpi/2019u4
+        - intelmpi/2020
       buildable: false
     intel-mkl:
       externals:
-      - spec: intel-mkl@2019.5.281
-        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/mkl
+      - spec: intel-mkl@2020.0.166
+        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
         modules:
-        - mkl/2019u5
+        - mkl/2020
       buildable: false
 {% if e3sm_hdf5_netcdf %}
     hdf5:
@@ -120,12 +120,12 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: intel@19.0.5
+      spec: intel@20.0.0
       paths:
-        cc: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/icc
-        cxx: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/icpc
-        f77: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/ifort
-        fc: /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/bin/intel64/ifort
+        cc: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/icc
+        cxx: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/icpc
+        f77: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/ifort
+        fc: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/ifort
       flags: {}
       operating_system: centos7
       target: x86_64
