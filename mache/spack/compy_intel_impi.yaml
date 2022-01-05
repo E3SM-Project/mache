@@ -18,6 +18,11 @@ spack:
       providers:
         mpi: [intel-mpi@2020.0.166]
         lapack: [intel-mkl@2020.0.166]
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
     bzip2:
       externals:
       - spec: bzip2@1.0.6
@@ -28,9 +33,19 @@ spack:
       - spec: diffutils@3.3
         prefix: /usr
       buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.5.11
+        prefix: /usr
+      buildable: false
     gettext:
       externals:
       - spec: gettext@0.19.8.1
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.16
         prefix: /usr
       buildable: false
     ncurses:
