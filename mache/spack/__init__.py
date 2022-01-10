@@ -55,13 +55,6 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     with_modules = (section.getboolean('modules_before') or
                     section.getboolean('modules_after'))
 
-    if not os.path.exists(spack_path):
-        # we need to clone the spack repo
-        clone = f'git clone -b spack_for_mache_{__version__} ' \
-                f'git@github.com:E3SM-Project/spack.git {spack_path}'
-    else:
-        clone = ''
-
     # add the package specs to the appropriate template
     specs = ''.join([f'  - {spec}\n' for spec in spack_specs])
 
@@ -101,7 +94,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     template = Template(
         resources.read_text('mache.spack', 'build_spack_env.template'))
-    build_file = template.render(modules=modules, clone=clone,
+    build_file = template.render(modules=modules, version=__version__,
                                  spack_path=spack_path, env_name=env_name,
                                  yaml_filename=yaml_filename)
     build_filename = f'build_{env_name}.bash'
