@@ -1,0 +1,21 @@
+#!/bin/bash
+
+{{ modules }}
+
+set -e
+
+if [ -d {{ spack_path }} ]; then
+  cd {{ spack_path }}
+  git fetch origin
+  git reset --hard origin/spack_for_mache_{{ version }}
+else
+  git clone -b spack_for_mache_{{ version }} git@github.com:E3SM-Project/spack.git {{ spack_path }}
+  cd {{ spack_path }}
+fi
+source share/spack/setup-env.sh
+spack env remove -y {{ env_name }} && \
+  echo "recreating environment: {{ env_name }}" || \
+  echo "creating new environment: {{ env_name }}"
+spack env create {{ env_name }} {{ yaml_filename }}
+spack env activate {{ env_name }}
+spack install
