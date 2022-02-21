@@ -23,6 +23,7 @@ requirements:
     - jinja2
     - pyyaml
     - progressbar2
+    - rsync
 
 test:
 
