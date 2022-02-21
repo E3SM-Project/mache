@@ -121,8 +121,7 @@ def main():
     parser.add_argument("-m", "--machine", dest="machine",
                         help="The name of this machine.  If not provided, it "
                              "will be detected automatically")
-    parser.add_argument("-u", "--username", dest="username",
-                        help="The username to use on the other machine, if "
-                             "not from .ssh/config")
+    parser.add_argument("-u", "--username", dest="username", required=True,
+                        help="The username to use on the other machine")
     args = parser.parse_args(sys.argv[3:])
     sync_diags(args.other, args.direction, args.machine, args.username)
