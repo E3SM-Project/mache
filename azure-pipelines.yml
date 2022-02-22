@@ -30,10 +30,14 @@ jobs:
       conda config --add channels conda-forge
       conda config --set channel_priority strict
       conda install --yes python=$PYTHON_VERSION conda conda-build mamba boa
+      # workaround based on recent failures
+      rm /usr/share/miniconda/pkgs/cache/*.json
       mamba update --all --yes
     displayName: Update conda base environment
 
   - bash: |
       eval "$(conda shell.bash hook)"
+      # workaround based on recent failures
+      rm /usr/share/miniconda/pkgs/cache/*.json
       conda mambabuild conda/
     displayName: Build mache metapackage
