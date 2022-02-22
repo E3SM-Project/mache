@@ -20,7 +20,7 @@ def sync_diags(other, direction='to', machine=None, username=None):
         The name of this machine.  If not provided, it will be detected
         automatically
     username : str, optional
-        The username to use on the other machine, if not from ``.ssh/config``
+        The username to use on the other machine
     """
     if direction not in ['to', 'from']:
         raise ValueError('The direction must be one of "to" or "from"')
@@ -45,12 +45,23 @@ def sync_diags(other, direction='to', machine=None, username=None):
     else:
         tunnel = None
 
-    if direction == 'to' and (machine != other or tunnel is None):
-        raise ValueError('You can only use "mache sync diags to ..." to '
-                         'sync diags between directories on an LCRC machine\n'
-                         'or to a machine with a tunnel.  Other machines '
-                         'should only use "mache sync diags from ..." so\n'
-                         'permissions can be updated.')
+    if direction == 'to' and tunnel is None:
+        raise ValueError(
+            'You can only use "mache sync diags to ..." to sync diags to a\n'
+            'machine with a tunnel.  Other machines should only use \n'
+            '"mache sync diags from ..." so permissions can be updated.')
+
+    if machine in lcrc_machines:
+        if machine != other:
+            raise ValueError(f'You should sync {machine} with itself since '
+                             f'files are local')
+    elif username is None:
+        if direction == 'from':
+            raise ValueError('For syncing to work properly, your LCRC '
+                             'username is required.')
+        else:
+            raise ValueError(f'For syncing to work properly, your {other} '
+                             f'username is required.')
 
     if direction == 'from':
         source_config = other_config
@@ -121,7 +132,7 @@ def main():
     parser.add_argument("-m", "--machine", dest="machine",
                         help="The name of this machine.  If not provided, it "
                              "will be detected automatically")
-    parser.add_argument("-u", "--username", dest="username", required=True,
+    parser.add_argument("-u", "--username", dest="username",
                         help="The username to use on the other machine")
     args = parser.parse_args(sys.argv[3:])
     sync_diags(args.other, args.direction, args.machine, args.username)
