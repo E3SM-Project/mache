@@ -170,6 +170,20 @@ not yet generated an SSH key for the destination macine, you will need to run:
 This is the same procedure as for creating an SSH key for GitHub so if you have
 already done that process, you will not need a new SSH key for LCRC.
 
+Setup on Andes
+~~~~~~~~~~~~~~
+Andes at OLCF requires special treatment.  You need to create or edit the
+file ``~/.ssh/config`` with the following:
+
+.. code-block:: none
+
+    Host blues.lcrc.anl.gov
+        User <ac.user>
+        PreferredAuthentications publickey
+        IdentityFile ~/.ssh/id_ed25519
+
+where, again ``<ac.user>`` is your username on LCRC.
+
 Syncing from LCRC
 ~~~~~~~~~~~~~~~~~
 
