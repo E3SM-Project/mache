@@ -99,9 +99,18 @@ def sync_diags(other, direction='to', machine=None, username=None):
     private_args = args + [private_diags, dest_diags]
 
     print(f'running: {" ".join(public_args)}')
-    subprocess.check_call(public_args)
+    try:
+        subprocess.check_call(public_args)
+    except subprocess.CalledProcessError:
+        print('Warning: Some transfer operations failed for public '
+              'diagnostics.')
+    print('')
     print(f'running: {" ".join(private_args)}')
-    subprocess.check_call(private_args)
+    try:
+        subprocess.check_call(private_args)
+    except subprocess.CalledProcessError:
+        print('Warning: Some transfer operations failed for private '
+              'diagnostics.')
 
     if direction == 'from':
         group = machine_config.get('diagnostics', 'group')
