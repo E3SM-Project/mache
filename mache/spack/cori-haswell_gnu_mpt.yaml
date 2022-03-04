@@ -16,10 +16,10 @@ spack:
   concretization: together
   packages:
     all:
-      compiler: [gcc@8.3.0]
+      compiler: [gcc@10.3.0]
       providers:
         mpi: [mpich@7.7.10]
-        lapack: [cray-libsci@19.06.1]
+        lapack: [cray-libsci@20.09.1]
       target:
       - haswell
     bzip2:
@@ -49,18 +49,18 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.14.4
-        prefix: /global/common/sw/cray/cnl7/haswell/cmake/3.14.4/gcc/8.2.0/2hef55n
+      - spec: cmake@3.22.1
+        prefix: /global/common/software/nersc/cori-2022q1/spack/cray-cnl7-haswell/cmake-3.22.1-zdiyyvt
         modules:
-        - cmake/3.14.4
+        - cmake/3.22.1
       buildable: false
     gcc:
       externals:
-      - spec: gcc@8.3.0
-        prefix: /opt/gcc/8.3.0/
+      - spec: gcc@10.3.0
+        prefix: /opt/gcc/10.3.0/
         modules:
-        - PrgEnv-gnu/6.0.5
-        - gcc/8.3.0
+        - PrgEnv-gnu/6.0.10
+        - gcc/10.3.0
       buildable: false
     mpich:
       externals:
@@ -70,9 +70,9 @@ spack:
       buildable: false
     cray-libsci:
       externals:
-      - spec: cray-libsci@19.06.1
+      - spec: cray-libsci@20.09.1
         modules:
-        - cray-libsci/19.06.1
+        - cray-libsci/20.09.1
       buildable: false
 {% if e3sm_hdf5_netcdf %}
     hdf5:
@@ -108,7 +108,7 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: gcc@8.3.0
+      spec: gcc@10.3.0
       paths:
         cc: cc
         cxx: CC

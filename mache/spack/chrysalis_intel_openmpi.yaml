@@ -1,5 +1,5 @@
 spack:
-  specs: 
+  specs:
   - cmake
   - intel
   - openmpi
@@ -16,7 +16,7 @@ spack:
     all:
       compiler: [intel@20.0.4]
       providers:
-        mpi: [openmpi@4.1.1]
+        mpi: [openmpi@4.1.2]
         lapack: [intel-mkl@2020.4.304]
     bzip2:
       externals:
@@ -81,10 +81,10 @@ spack:
       buildable: false
     openmpi:
       externals:
-      - spec: openmpi@4.1.1
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/openmpi-4.1.1-qiqkjbu
+      - spec: openmpi@4.1.2
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/openmpi-4.1.2-k5epdq6
         modules:
-        - openmpi/4.1.1-qiqkjbu
+        - openmpi-4.1.2-k5epdq6
       buildable: false
     intel-mkl:
       externals:
@@ -97,30 +97,30 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.8.16+cxx+fortran+hl+mpi
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/hdf5-1.8.16-35xugty
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/hdf5-1.8.16-kyyksst
         modules:
-        - hdf5/1.8.16-35xugty
+        - hdf5/1.8.16-kyyksst
       buildable: false
     netcdf-c:
       externals:
       - spec: netcdf-c@4.4.1+mpi~parallel-netcdf
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-c-4.4.1-2vngykq
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-c-4.4.1-rrkbpws
         modules:
-        - netcdf-c/4.4.1-2vngykq
+        - netcdf-c/4.4.1-rrkbpws
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.4.4
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-fortran-4.4.4-2kddbib
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-fortran-4.4.4-znpfscr
         modules:
-        - netcdf-fortran/4.4.4-2kddbib
+        - netcdf-fortran/4.4.4-znpfscr
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.11.0+cxx+fortran
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/parallel-netcdf-1.11.0-go65een
+        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/parallel-netcdf-1.11.0-c6fn7rw
         modules:
-        - parallel-netcdf/1.11.0-go65een
+        - parallel-netcdf/1.11.0-c6fn7rw
       buildable: false
 {% endif %}
   config:
