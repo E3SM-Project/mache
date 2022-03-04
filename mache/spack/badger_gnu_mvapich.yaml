@@ -1,5 +1,5 @@
 spack:
-  specs: 
+  specs:
   - cmake
   - gcc
   - mvapich2
@@ -55,10 +55,10 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.16.2
-        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/cmake/3.16.2
+      - spec: cmake@3.19.2
+        prefix: /usr/projects/hpcsoft/toss3/common/x86_64/cmake/3.19.2
         modules:
-        - cmake/3.16.2
+        - cmake/3.19.2
       buildable: false
     gcc:
       externals:
