@@ -181,15 +181,92 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
-        bash_script = template.render(
+        shell_script = template.render(
             e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
-        load_script = f'{load_script}\n{bash_script}'
+        load_script = f'{load_script}\n{shell_script}'
 
     if modules_after:
         mods = _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf)
         load_script = f'{load_script}\n{mods}'
 
     return load_script
+
+
+def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
+                                           include_e3sm_hdf5_netcdf):
+    """
+    Get the non-spack modules, environment variables and compiler names for a
+    given machine, compiler and MPI library.
+
+    Parameters
+    ----------
+    compiler : str
+        One of the E3SM supported compilers for the ``machine``
+
+    mpi : str
+        One of the E3SM supported MPI libraries for the given ``compiler`` and
+        ``machine``
+
+    machine : str, optional
+        The name of an E3SM supported machine.  If none is given, the machine
+        will be detected automatically via the host name.
+
+    shell : {'sh', 'csh'}
+        Which shell the script is for
+
+    include_e3sm_hdf5_netcdf : bool, optional
+        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
+        as used in E3SM
+
+    Returns
+    -------
+    mpicc : str
+        The MPI c compiler for this machine
+
+    mpicxx : str
+        The MPI c++ compiler for this machine
+
+    mpifc : str
+        The MPI Fortran compiler for this machine
+
+    mod_env_commands : str
+        Modules and environment variables needed to set up the compilers, MPI
+        libraries and other dependencies like NetCDF and PNetCDF
+    """
+
+    if machine is None:
+        machine = discover_machine()
+        if machine is None:
+            raise ValueError('Unable to discover machine form host name')
+
+    machine_info = MachineInfo(machine)
+
+    config = machine_info.config
+    section = config['spack']
+
+    with_modules = (section.getboolean('modules_before') or
+                    section.getboolean('modules_after'))
+
+    mod_env_commands = 'module purge\n'
+    if with_modules:
+        mods = _get_modules(machine, compiler, mpi,  include_e3sm_hdf5_netcdf)
+        mod_env_commands = f'{mod_env_commands}\n{mods}\n'
+
+    for shell_filename in [f'{machine}.{shell}',
+                           f'{machine}_{compiler}_{mpi}.{shell}']:
+        try:
+            template = Template(
+                resources.read_text('mache.spack', shell_filename))
+        except FileNotFoundError:
+            # there's nothing to add, which is fine
+            continue
+        shell_script = template.render(
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
+        mod_env_commands = f'{mod_env_commands}\n{shell_script}'
+
+    mpicc, mpicxx, mpifc = _get_mpi_compilers(machine, compiler, mpi)
+
+    return mpicc, mpicxx, mpifc, mod_env_commands
 
 
 def _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf):
@@ -217,3 +294,41 @@ def _get_modules(machine, compiler, mpi, include_e3sm_hdf5_netcdf):
     mods = '\n'.join(mods)
 
     return mods
+
+
+def _get_mpi_compilers(machine, compiler, mpi):
+    """ Get a list of compilers from a yaml file """
+
+    mpi_compilers = {'gnu': {'mpicc': 'mpicc',
+                             'mpicxx': 'mpicxx',
+                             'mpifc': 'mpif90'},
+                     'intel': {'mpicc': 'mpicc',
+                               'mpicxx': 'mpicxx',
+                               'mpifc': 'mpif90'},
+                     'impi': {'mpicc': 'mpiicc',
+                              'mpicxx': 'mpiicpc',
+                              'mpifc': 'mpiifort'},
+                     'cray': {'mpicc': 'cc',
+                              'mpicxx': 'CC',
+                              'mpifc': 'ftn'}}
+
+    cray_machines = ['cori-haswell', 'cori-knl']
+
+    mpi_compiler = None
+    # first, get mpi compilers based on compiler
+    if compiler in mpi_compilers:
+        mpi_compiler = mpi_compilers[compiler]
+
+    # next, get mpi compilers based on mpi (higher priority)
+    if mpi in mpi_compilers:
+        mpi_compiler = mpi_compilers[mpi]
+
+    # finally, get mpi compilers if this is a cray machine (highest priority)
+    if machine in cray_machines:
+        mpi_compiler = mpi_compilers['cray']
+
+    if mpi_compiler is None:
+        raise ValueError(f"Couldn't figure out MPI compilers for {machine} "
+                         f"{compiler} {mpi}")
+
+    return mpi_compiler['mpicc'], mpi_compiler['mpicxx'], mpi_compiler['mpifc']
