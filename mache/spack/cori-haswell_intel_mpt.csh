@@ -30,7 +30,7 @@ module rm craype-mic-knl
 module load craype-haswell
 
 module swap cray-mpich cray-mpich/7.7.10
-module load PrgEnv-intel/6.0.5
+module load PrgEnv-intel/6.0.10
 module rm intel
 module load intel/19.0.3.199
 module swap craype craype/2.6.2
@@ -47,5 +47,5 @@ module load cray-parallel-netcdf/1.11.1.1
 module rm git
 module load git
 module rm cmake
-module load cmake/3.20.2
+module load cmake
 module load perl5-extras
