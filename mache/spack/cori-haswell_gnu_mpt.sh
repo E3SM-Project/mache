@@ -46,8 +46,6 @@ module load cray-netcdf-hdf5parallel/4.6.3.2
 module load cray-hdf5-parallel/1.10.5.2
 module load cray-parallel-netcdf/1.11.1.1
 {% endif %}
-module rm git
-module load git
 module rm cmake
 module load cmake
 module load perl5-extras
