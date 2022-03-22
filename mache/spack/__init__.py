@@ -10,7 +10,7 @@ from mache.version import __version__
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None, include_e3sm_hdf5_netcdf=False,
-                   yaml_template=None):
+                   yaml_template=None, tmpdir=None):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -46,6 +46,9 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
         A jinja template for a yaml file to be used for the environment instead
         of the mache template.  This allows you to use compilers and other
         modules that differ from E3SM.
+
+    tmpdir : str, optional
+        A temporary directory for building spack packages
     """
 
     if machine is None:
@@ -94,6 +97,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     template = Template(
         resources.read_text('mache.spack', 'build_spack_env.template'))
+    if tmpdir is not None:
+        modules = f'{modules}\n' \
+                  f'export TMPDIR={tmpdir}'
+
     build_file = template.render(modules=modules, version=__version__,
                                  spack_path=spack_path, env_name=env_name,
                                  yaml_filename=yaml_filename)
