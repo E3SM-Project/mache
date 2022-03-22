@@ -1,5 +1,5 @@
 spack:
-  specs: 
+  specs:
   - cmake
   - intel
   - openmpi
@@ -102,6 +102,7 @@ spack:
       - spec: intel@20.0.4
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-20.0.4-lednsve
         modules:
+        - gcc/7.4.0
         - intel/20.0.4-lednsve
       buildable: false
     openmpi:
