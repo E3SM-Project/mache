@@ -263,10 +263,13 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
     machine_info = MachineInfo(machine)
 
     config = machine_info.config
-    section = config['spack']
+    if config.has_section('spack'):
+        section = config['spack']
 
-    with_modules = (section.getboolean('modules_before') or
-                    section.getboolean('modules_after'))
+        with_modules = (section.getboolean('modules_before') or
+                        section.getboolean('modules_after'))
+    else:
+        with_modules = False
 
     mod_env_commands = 'module purge\n'
     if with_modules:
