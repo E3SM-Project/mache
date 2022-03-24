@@ -84,7 +84,7 @@ spack:
       - spec: openmpi@4.1.2
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/openmpi-4.1.2-k5epdq6
         modules:
-        - openmpi-4.1.2-k5epdq6
+        - openmpi/4.1.2-k5epdq6
       buildable: false
     intel-mkl:
       externals:
