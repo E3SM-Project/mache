@@ -51,7 +51,7 @@ def sync_diags(other, direction='to', machine=None, username=None):
             'machine with a tunnel.  Other machines should only use \n'
             '"mache sync diags from ..." so permissions can be updated.')
 
-    if machine in lcrc_machines:
+    if machine in lcrc_machines and tunnel is None:
         if machine != other:
             raise ValueError(f'You should sync {machine} with itself since '
                              f'files are local')
@@ -93,7 +93,7 @@ def sync_diags(other, direction='to', machine=None, username=None):
             '--exclude=observations/Atm', '--no-perms', '--omit-dir-times']
 
     if tunnel:
-        args.append(f'--rsync-path="ssh {tunnel} rsync"')
+        args.append(f'--rsync-path=ssh {tunnel} rsync')
 
     public_args = args + [public_diags, dest_diags]
     private_args = args + [private_diags, dest_diags]
