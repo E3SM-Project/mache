@@ -22,12 +22,17 @@ requirements:
     - lxml
     - jinja2
     - pyyaml
+    - progressbar2
+    - rsync
 
 test:
-
+  requires:
+    - pip
   imports:
     - mache
-
+  commands:
+    - mache sync diags --help
+    - pip check
 
 about:
   home: https://github.com/E3SM-Project/mache
