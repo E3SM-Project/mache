@@ -34,7 +34,9 @@ module swap PrgEnv-intel PrgEnv-gnu/6.0.10
 module rm gcc
 module load gcc/10.3.0
 module rm cray-libsci
+{% if e3sm_lapack %}
 module load cray-libsci/20.09.1
+{% endif %}
 module swap craype craype/2.6.2
 module rm pmi
 module load pmi/5.0.14

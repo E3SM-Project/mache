@@ -1,9 +1,11 @@
 spack:
-  specs: 
+  specs:
   - cmake
   - gcc
   - mvapich2
+{% if e3sm_lapack %}
   - intel-mkl
+{% endif %}
 {% if e3sm_hdf5_netcdf %}
   - netcdf-c
   - netcdf-fortran
@@ -16,7 +18,9 @@ spack:
       compiler: [gcc@8.2.0]
       providers:
         mpi: [mvapich2@4.1.1]
+{% if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
+{% endif %}
     bison:
       externals:
       - spec: bison@3.0.4
