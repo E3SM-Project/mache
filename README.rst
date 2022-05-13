@@ -9,12 +9,18 @@ Example usage:
 .. code-block:: python
 
     #!/usr/bin/env python
-    from mache import MachineInfo
+    from mache import MachineInfo, discover_machine
 
-    machinfo = MachineInfo(machine='anvil')
-    print(machinfo)
+    machine_info = MachineInfo()
+    print(machine_info)
+    diags_base = machine_info.config.get('diagnostics', 'base_path')
+    machine = discover_machine()
 
-This loads machine info for Anvil and prints it:
+This loads machine info the current machine, prints it (see below) and
+retrieves a config option specific to that machine.  The ``discover_machine()``
+function can also be used to detect which machine you are on, as shown.
+
+As an example, the result of ``print(machine_info)`` is:
 
 .. code-block:: none
 
@@ -54,8 +60,9 @@ This loads machine info for Anvil and prints it:
         qos = regular, acme_high
 
 If you are on the login node of one of the following E3SM supported machines,
-you don't need to provide the machine name.  It will be recognized from the
-host name:
+you don't need to provide the machine name.  It can be discovered automatically
+when you create a ``MachineInfo()`` object or call ``discover_machine()``.  It
+will be recognized from the host name:
 
 * acme1
 
@@ -71,7 +78,7 @@ host name:
 
 * cooley
 
-* cori-haswell (but you will get a warning)
+* cori-haswell (but you will get a warning that cori-knl is also an option)
 
 * grizzly
 
@@ -123,6 +130,37 @@ web_portal_base : str
 
 web_portal_url : str
     The base URL for the web portal
+
+Installing mache
+----------------
+
+You can install the latest release of ``mache`` from conda-forge:
+
+.. code-block:: bash
+
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda install mache
+
+If you need to install the latest development version, you can run the
+following in the root of the mache branch you are developing:
+
+.. code-block:: bash
+
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda create -y -n mache_dev --file spec-file.txt
+    conda activate mache_dev
+    python -m pip install -e .
+
+To install the development version of ``mache`` in an existing environment, you
+can run:
+
+.. code-block:: bash
+
+    conda install --file spec-file.txt
+    python -m pip install -e .
+
 
 Syncing Diagnostics
 -------------------
