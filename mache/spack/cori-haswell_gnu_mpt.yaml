@@ -3,7 +3,9 @@ spack:
   - cmake
   - gcc
   - mpich
+{% if e3sm_lapack %}
   - cray-libsci
+{% endif %}
 {% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
@@ -19,7 +21,9 @@ spack:
       compiler: [gcc@10.3.0]
       providers:
         mpi: [mpich@7.7.10]
+{% if e3sm_lapack %}
         lapack: [cray-libsci@20.09.1]
+{% endif %}
       target:
       - haswell
     bzip2:

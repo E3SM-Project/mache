@@ -3,7 +3,9 @@ spack:
   - cmake
   - intel
   - intel-mpi
+{% if e3sm_lapack %}
   - intel-mkl
+{% endif %}
 {% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
@@ -17,7 +19,9 @@ spack:
       compiler: [intel@19.0.4]
       providers:
         mpi: [intel-mpi@2019.4.243]
+{% if e3sm_lapack %}
         lapack: [intel-mkl@2019.0.4]
+{% endif %}
     bzip2:
       externals:
       - spec: bzip2@1.0.6
