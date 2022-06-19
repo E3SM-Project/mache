@@ -1,0 +1,153 @@
+spack:
+  specs:
+  - cmake
+  - gcc
+  - openmpi
+{% if e3sm_lapack %}
+  - intel-mkl
+{% endif %}
+{% if e3sm_hdf5_netcdf %}
+  - hdf5
+  - netcdf-c
+  - netcdf-fortran
+  - parallel-netcdf
+{% endif %}
+{{ specs }}
+  concretization: together
+  packages:
+    all:
+      compiler: [gcc@10.2.0]
+      providers:
+        mpi: [openmpi@4.0.1]
+{% if e3sm_lapack %}
+        lapack: [intel-mkl@2020.0.166]
+{% endif %}
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    diffutils:
+      externals:
+      - spec: diffutils@3.3
+        prefix: /usr
+      buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.5.11
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.19.8.1
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.16
+        prefix: /usr
+      buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@5.9.20130511
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.16.3
+        prefix: /usr
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.26
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.2
+        prefix: /usr
+      buildable: false
+    zlib:
+      externals:
+      - spec: zlib@1.2.7
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.19.6
+        prefix: /share/apps/cmake/3.19.6
+        modules:
+        - cmake/3.19.6
+      buildable: false
+    intel:
+      externals:
+      - spec: intel@20.0.0
+        prefix: /share/apps/gcc/10.2.0
+        modules:
+        - gcc/10.2.0
+      buildable: false
+    intel-mpi:
+      externals:
+      - spec: openmpi@4.0.1
+        prefix: /share/apps/openmpi/4.0.1/gcc/10.2.0
+        modules:
+        - intelmpi/2020
+      buildable: false
+    intel-mkl:
+      externals:
+      - spec: intel-mkl@2020.0.166
+        prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
+        modules:
+        - mkl/2020
+      buildable: false
+{% if e3sm_hdf5_netcdf %}
+    hdf5:
+      externals:
+      - spec: hdf5~mpi+hl@1.10.5
+        prefix: /share/apps/hdf5/1.10.5/serial
+        modules:
+        - hdf5/1.10.5
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c~mpi~parallel-netcdf@4.6.3
+        prefix: /share/apps/netcdf/4.6.3/gcc/10.2.0
+        modules:
+        - netcdf/4.6.3
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.4.5
+        prefix: /share/apps/netcdf/4.6.3/gcc/10.2.0
+        modules:
+        - netcdf/4.6.3
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf+cxx+fortran@1.9.0
+        prefix: /share/apps/pnetcdf/1.9.0/gcc/10.2.0/openmpi/4.0.1
+        modules:
+        - pnetcdf/1.9.0
+      buildable: false
+{% endif %}
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: gcc@10.2.0
+      paths:
+        cc: /share/apps/gcc/10.2.0/bin/gcc
+        cxx: /share/apps/gcc/10.2.0/bin/g++
+        f77: /share/apps/gcc/10.2.0/bin/gfortran
+        fc: /share/apps/gcc/10.2.0/bin/gfortran
+      flags: {}
+      operating_system: centos7
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
