@@ -84,19 +84,19 @@ spack:
         modules:
         - cmake/3.19.6
       buildable: false
-    intel:
+    gcc:
       externals:
-      - spec: intel@20.0.0
+      - spec: gcc@10.2.0
         prefix: /share/apps/gcc/10.2.0
         modules:
         - gcc/10.2.0
       buildable: false
-    intel-mpi:
+    openmpi:
       externals:
       - spec: openmpi@4.0.1
         prefix: /share/apps/openmpi/4.0.1/gcc/10.2.0
         modules:
-        - intelmpi/2020
+        - openmpi/4.0.1
       buildable: false
     intel-mkl:
       externals:
