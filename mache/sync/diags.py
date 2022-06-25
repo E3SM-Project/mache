@@ -90,7 +90,7 @@ def sync_diags(other, direction='to', machine=None, username=None):
 
     args = ['rsync', '--verbose', '--recursive', '--times', '--links',
             '--compress', '--progress', '--update',
-            '--exclude=observations/Atm', '--no-perms', '--omit-dir-times']
+            '--no-perms', '--omit-dir-times']
 
     if tunnel:
         args.append(f'--rsync-path=ssh {tunnel} rsync')
