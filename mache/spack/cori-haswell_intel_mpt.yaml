@@ -15,7 +15,8 @@ spack:
   # libbsd doesn't want to build
   - expat~libbsd
 {{ specs }}
-  concretization: together
+  concretizer:
+    unify: true
   packages:
     all:
       compiler: [intel@19.0.3]
