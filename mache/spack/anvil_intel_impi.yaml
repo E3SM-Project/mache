@@ -168,4 +168,5 @@ spack:
       target: x86_64
       modules: []
       environment: {}
-      extra_rpaths: []
+      extra_rpaths:
+      - /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-20.0.4/intel-mpi-2019.9.304-i42whlw/compilers_and_libraries_2020.4.304/linux/mpi/intel64/libfabric/lib/

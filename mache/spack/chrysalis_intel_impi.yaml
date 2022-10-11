@@ -142,4 +142,5 @@ spack:
       target: x86_64
       modules: []
       environment: {}
-      extra_rpaths: []
+      extra_rpaths:
+      - /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/intel-mpi-2019.9.304-tkzvizk/compilers_and_libraries_2020.4.304/linux/mpi/intel64/libfabric/lib/

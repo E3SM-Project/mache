@@ -151,4 +151,5 @@ spack:
       target: x86_64
       modules: []
       environment: {}
-      extra_rpaths: []
+      extra_rpaths:
+      - /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/mpi/intel64/libfabric/lib/
