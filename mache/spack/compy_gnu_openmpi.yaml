@@ -13,7 +13,8 @@ spack:
   - parallel-netcdf
 {% endif %}
 {{ specs }}
-  concretization: together
+  concretizer:
+    unify: true
   packages:
     all:
       compiler: [gcc@10.2.0]
