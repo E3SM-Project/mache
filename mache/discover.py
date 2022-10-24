@@ -1,5 +1,6 @@
 import socket
 import warnings
+import os
 
 
 def discover_machine():
@@ -27,11 +28,20 @@ def discover_machine():
     elif hostname.startswith('cooley'):
         machine = 'cooley'
     elif hostname.startswith('cori'):
-        warnings.warn('defaulting to cori-haswell.  Use -m cori-knl if you'
-                      ' wish to run on KNL.')
+        warnings.warn('defaulting to cori-haswell.  Explicitly specify '
+                      'cori-knl as the machine if you wish to run on KNL.')
         machine = 'cori-haswell'
     elif hostname.startswith('gr-fe'):
         machine = 'grizzly'
     else:
-        machine = None
+        if 'LMOD_SYSTEM_NAME' in os.environ and \
+                os.environ['LMOD_SYSTEM_NAME'] == 'perlmutter':
+            # perlmutter's hostname is too generic to detect, so relying on an
+            # env. variable
+
+            warnings.warn('defaulting to pm-cpu.  Explicitly specify pm-gpu '
+                          'as the machine if you wish to run on GPUs.')
+            machine = 'pm-cpu'
+        else:
+            machine = None
     return machine
