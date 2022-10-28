@@ -72,7 +72,7 @@ class MachineInfo:
         if machine is None:
             machine = discover_machine()
             if machine is None:
-                raise ValueError('Unable to discover machine form host name')
+                raise ValueError('Unable to discover machine from host name')
         self.machine = machine
 
         self.config = self._get_config()
