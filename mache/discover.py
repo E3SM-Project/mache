@@ -13,6 +13,7 @@ def discover_machine():
         The name of the current machine
     """
     hostname = socket.gethostname()
+    machine = None
     if hostname.startswith('acme1'):
         machine = 'acme1'
     elif hostname.startswith('andes'):
@@ -33,15 +34,23 @@ def discover_machine():
         machine = 'cori-haswell'
     elif hostname.startswith('gr-fe'):
         machine = 'grizzly'
-    else:
-        if 'LMOD_SYSTEM_NAME' in os.environ and \
-                os.environ['LMOD_SYSTEM_NAME'] == 'perlmutter':
-            # perlmutter's hostname is too generic to detect, so relying on an
-            # env. variable
+    elif 'NERSC_HOST' in os.environ:
+        hostname = os.environ['NERSC_HOST']
+        if hostname == 'perlmutter':
+            # perlmutter's hostname is too generic to detect, so relying on
+            # $NERSC_HOST
 
-            warnings.warn('defaulting to pm-cpu.  Explicitly specify pm-gpu '
-                          'as the machine if you wish to run on GPUs.')
+            warnings.warn('defaulting to pm-cpu.  Explicitly specify '
+                          'pm-gpu as the machine if you wish to run on '
+                          'GPUs.')
             machine = 'pm-cpu'
-        else:
-            machine = None
+        elif hostname == 'unknown':
+            raise ValueError(
+                'You appear to have $NERSC_HOST=unknown.  This typically '
+                'indicates that you \n'
+                'have an outdated .bash_profile.ext or similar.  Please '
+                'either delete or \n'
+                'edit that file so it no longer defines $NERSC_HOST, log out, '
+                'log back in, \n'
+                'and try again.')
     return machine
