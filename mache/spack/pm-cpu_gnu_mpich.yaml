@@ -77,7 +77,15 @@ spack:
       - spec: mpich@8.1.15
         prefix: /opt/cray/pe/mpich/8.1.15/ofi/gnu/9.1
         modules:
+        - libfabric/1.15.0.0
         - cray-mpich/8.1.15
+      buildable: false
+    libfabric:
+      externals:
+      - spec: libfabric@1.15.0.0
+        prefix: /opt/cray/libfabric/1.15.0.0
+        modules:
+        - libfabric/1.15.0.0
       buildable: false
 {% if e3sm_lapack %}
     cray-libsci:
@@ -133,5 +141,3 @@ spack:
       target: x86_64
       modules: []
       environment: {}
-      extra_rpaths:
-      - /opt/cray/libfabric/1.15.0.0/lib64

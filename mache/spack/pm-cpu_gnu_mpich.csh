@@ -15,6 +15,7 @@ module load cray-libsci
 {% endif %}
 module load craype
 module rm cray-mpich
+moudle load libfabric/1.15.0.0
 module load cray-mpich/8.1.15
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel
