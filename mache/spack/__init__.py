@@ -277,11 +277,14 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
     machine_info = MachineInfo(machine)
 
     config = machine_info.config
+    cray_compilers = False
     if config.has_section('spack'):
         section = config['spack']
 
         with_modules = (section.getboolean('modules_before') or
                         section.getboolean('modules_after'))
+        if config.has_option('spack', 'cray_compilers'):
+            cray_compilers = section.getboolean('cray_compilers')
     else:
         with_modules = False
 
@@ -307,7 +310,8 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
             e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
         mod_env_commands = f'{mod_env_commands}\n{shell_script}'
 
-    mpicc, mpicxx, mpifc = _get_mpi_compilers(machine, compiler, mpi)
+    mpicc, mpicxx, mpifc = _get_mpi_compilers(machine, compiler, mpi,
+                                              cray_compilers)
 
     return mpicc, mpicxx, mpifc, mod_env_commands
 
@@ -351,7 +355,7 @@ def _get_modules(yaml_string):
     return mods
 
 
-def _get_mpi_compilers(machine, compiler, mpi):
+def _get_mpi_compilers(machine, compiler, mpi, cray_compilers):
     """ Get a list of compilers from a yaml file """
 
     mpi_compilers = {'gnu': {'mpicc': 'mpicc',
@@ -367,8 +371,6 @@ def _get_mpi_compilers(machine, compiler, mpi):
                               'mpicxx': 'CC',
                               'mpifc': 'ftn'}}
 
-    cray_machines = ['cori-haswell', 'cori-knl']
-
     mpi_compiler = None
     # first, get mpi compilers based on compiler
     if compiler in mpi_compilers:
@@ -379,7 +381,7 @@ def _get_mpi_compilers(machine, compiler, mpi):
         mpi_compiler = mpi_compilers[mpi]
 
     # finally, get mpi compilers if this is a cray machine (highest priority)
-    if machine in cray_machines:
+    if cray_compilers:
         mpi_compiler = mpi_compilers['cray']
 
     if mpi_compiler is None:
