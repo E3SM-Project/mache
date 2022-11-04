@@ -6,7 +6,8 @@ from mache.machine_info import MachineInfo
 from mache.permissions import update_permissions
 
 
-def sync_diags(other, direction='to', machine=None, username=None):
+def sync_diags(other, direction='to', machine=None, username=None,
+               config_filename=None):
     """
     Synchronize diagnostics files between supported machines
 
@@ -21,6 +22,8 @@ def sync_diags(other, direction='to', machine=None, username=None):
         automatically
     username : str, optional
         The username to use on the other machine
+    config_filename : str, optional
+        A config file to override default config options for the machine
     """
     if direction not in ['to', 'from']:
         raise ValueError('The direction must be one of "to" or "from"')
@@ -36,6 +39,8 @@ def sync_diags(other, direction='to', machine=None, username=None):
         raise ValueError(f'You can only sync diagnostics from an LCRC '
                          f'machine: {", ".join(lcrc_machines)}')
     machine_config = machine_info.config
+    if config_filename is not None:
+        machine_config.read(config_filename)
     other_info = MachineInfo(machine=other)
     other_config = other_info.config
 
@@ -143,5 +148,9 @@ def main():
                              "will be detected automatically")
     parser.add_argument("-u", "--username", dest="username",
                         help="The username to use on the other machine")
+    parser.add_argument("-f", "--config_file", dest="config_file",
+                        help="A config file to override default config "
+                             "options for the machine")
     args = parser.parse_args(sys.argv[3:])
-    sync_diags(args.other, args.direction, args.machine, args.username)
+    sync_diags(args.other, args.direction, args.machine, args.username,
+               args.config_file)
