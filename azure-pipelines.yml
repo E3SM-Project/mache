@@ -17,8 +17,8 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      python3.9:
-        python.version: '3.9'
+      python3.10:
+        python.version: '3.10'
 
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
