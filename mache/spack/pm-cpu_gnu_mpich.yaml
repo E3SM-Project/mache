@@ -19,7 +19,7 @@ spack:
     all:
       compiler: [gcc@11.2.0]
       providers:
-        mpi: [mpich@8.1.15]
+        mpi: [mpich@8.1.17]
 {% if e3sm_lapack %}
         lapack: [cray-libsci@2019.0.4]
 {% endif %}
@@ -74,11 +74,11 @@ spack:
       buildable: false
     mpich:
       externals:
-      - spec: mpich@8.1.15
-        prefix: /opt/cray/pe/mpich/8.1.15/ofi/gnu/9.1
+      - spec: mpich@8.1.17
+        prefix: /opt/cray/pe/mpich/8.1.17/ofi/gnu/9.1
         modules:
         - libfabric/1.15.0.0
-        - cray-mpich/8.1.15
+        - cray-mpich/8.1.17
       buildable: false
     libfabric:
       externals:
@@ -99,31 +99,31 @@ spack:
 {% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
-      - spec: hdf5@1.12.1.1~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.1.1/GNU/9.1
+      - spec: hdf5@1.12.1.5~cxx+fortran+hl~java+mpi+shared
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.1.5/GNU/9.1
         modules:
-        - cray-hdf5-parallel/1.12.1.1
+        - cray-hdf5-parallel/1.12.1.5
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.12.2+cxx+fortran+pic+shared
+      - spec: parallel-netcdf@1.12.2.5+cxx+fortran+pic+shared
         prefix: /opt/cray/pe/parallel-netcdf/1.12.2.1/GNU/9.1/
         modules:
-        - cray-parallel-netcdf/1.12.2.1
+        - cray-parallel-netcdf/1.12.2.5
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.8.1.1+mpi+parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.8.1.1/GNU/9.1
+      - spec: netcdf-c@4.8.1.5+mpi+parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.8.1.5/GNU/9.1
         modules:
-        - cray-netcdf-hdf5parallel/4.8.1.1
+        - cray-netcdf-hdf5parallel/4.8.1.5
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.5.3
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.8.1.1/GNU/9.1
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.8.1.5/GNU/9.1
         modules:
-        - cray-netcdf-hdf5parallel/4.8.1.1
+        - cray-netcdf-hdf5parallel/4.8.1.5
       buildable: false
 {% endif %}
   config:
