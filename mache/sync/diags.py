@@ -93,6 +93,11 @@ def sync_diags(other, direction='to', machine=None, username=None,
     else:
         dest_diags = f'{prefix}{dest_diags}'
 
+    if not public_diags.endswith('/'):
+        public_diags = f'{public_diags}/'
+    if not private_diags.endswith('/'):
+        private_diags = f'{private_diags}/'
+
     args = ['rsync', '--verbose', '--recursive', '--times', '--links',
             '--compress', '--progress', '--update',
             '--no-perms', '--omit-dir-times']
