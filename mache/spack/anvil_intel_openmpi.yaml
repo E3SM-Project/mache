@@ -105,7 +105,6 @@ spack:
     intel:
       externals:
       - spec: intel@20.0.4
-        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-20.0.4-lednsve
         modules:
         - gcc/7.4.0
         - intel/20.0.4-lednsve
@@ -113,14 +112,12 @@ spack:
     openmpi:
       externals:
       - spec: openmpi@4.1.1
-        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-20.0.4/openmpi-4.1.1-v3b3npd
         modules:
         - openmpi/4.1.1-v3b3npd
       buildable: false
     intel-mkl:
       externals:
       - spec: intel-mkl@2020.4.304
-        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-20.0.4/intel-mkl-2020.4.304-voqlapk
         modules:
         - intel-mkl/2020.4.304-voqlapk
       buildable: false
@@ -167,6 +164,8 @@ spack:
       flags: {}
       operating_system: centos7
       target: x86_64
-      modules: []
+      modules:
+      - gcc/7.4.0
+      - intel/20.0.4-lednsve
       environment: {}
       extra_rpaths: []
