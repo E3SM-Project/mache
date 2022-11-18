@@ -32,8 +32,6 @@ def discover_machine():
         warnings.warn('defaulting to cori-haswell.  Explicitly specify '
                       'cori-knl as the machine if you wish to run on KNL.')
         machine = 'cori-haswell'
-    elif hostname.startswith('gr-fe'):
-        machine = 'grizzly'
     elif 'NERSC_HOST' in os.environ:
         hostname = os.environ['NERSC_HOST']
         if hostname == 'perlmutter':
