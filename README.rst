@@ -80,7 +80,7 @@ will be recognized from the host name:
 
 * cori-haswell (but you will get a warning that cori-knl is also an option)
 
-* grizzly
+* pm-cpu
 
 If you are on a compute node or want info about a machine you're not currently
 on, give the ``machine`` name in all lowercase.
@@ -190,8 +190,8 @@ with a shared diagnostics directory on each supported machine.
 Whenever possible, we log on to the E3SM machine and download the data from
 LCRC because this allows the synchronization tool to also update permissions
 once the data has been synchronized.  This is the approach for all machines
-except for Los Alamos National Laboratory's Badger and Grizzly machines, which
-are behind a firewall taht prevents this approach.
+except for Los Alamos National Laboratory's Badger, which is behind a firewall
+that prevents this approach.
 
 One-time Setup
 ~~~~~~~~~~~~~~
@@ -199,7 +199,7 @@ One-time Setup
 To synchronize data from LCRC to other machines, you must first provide your
 SSH keys by going to the `Argonne Accounts <https://accounts.cels.anl.gov/>`_
 page, logging in, and adding the public ssh key for each machine.  If you have
-not yet generated an SSH key for the destination macine, you will need to run:
+not yet generated an SSH key for the destination machine, you will need to run:
 
 .. code-block:: bash
 
