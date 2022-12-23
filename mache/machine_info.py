@@ -59,7 +59,7 @@ class MachineInfo:
         the ``config`` attribute.
     """
 
-    def __init__(self, machine=None):
+    def __init__(self, machine=None, quiet=False):
         """
         Create an object with information about the E3SM supported machine
 
@@ -68,9 +68,13 @@ class MachineInfo:
         machine : str, optional
             The name of an E3SM supported machine.  By default, the machine
             will be inferred from the host name
+
+        quiet : bool, optional
+            Whether to print warnings if the machine name is ambiguous
+
         """
         if machine is None:
-            machine = discover_machine()
+            machine = discover_machine(quiet=quiet)
             if machine is None:
                 raise ValueError('Unable to discover machine from host name')
         self.machine = machine

@@ -3,9 +3,14 @@ import warnings
 import os
 
 
-def discover_machine():
+def discover_machine(quiet=False):
     """
     Figure out the machine from the host name
+
+    Parameters
+    ----------
+    quiet : bool, optional
+        Whether to print warnings if the machine name is ambiguous
 
     Returns
     -------
@@ -29,18 +34,19 @@ def discover_machine():
     elif hostname.startswith('cooley'):
         machine = 'cooley'
     elif hostname.startswith('cori'):
-        warnings.warn('defaulting to cori-haswell.  Explicitly specify '
-                      'cori-knl as the machine if you wish to run on KNL.')
+        if not quiet:
+            warnings.warn('defaulting to cori-haswell.  Explicitly specify '
+                          'cori-knl as the machine if you wish to run on KNL.')
         machine = 'cori-haswell'
     elif 'NERSC_HOST' in os.environ:
         hostname = os.environ['NERSC_HOST']
         if hostname == 'perlmutter':
             # perlmutter's hostname is too generic to detect, so relying on
             # $NERSC_HOST
-
-            warnings.warn('defaulting to pm-cpu.  Explicitly specify '
-                          'pm-gpu as the machine if you wish to run on '
-                          'GPUs.')
+            if not quiet:
+                warnings.warn('defaulting to pm-cpu.  Explicitly specify '
+                              'pm-gpu as the machine if you wish to run on '
+                              'GPUs.')
             machine = 'pm-cpu'
         elif hostname == 'unknown':
             raise ValueError(
@@ -51,4 +57,15 @@ def discover_machine():
                 'edit that file so it no longer defines $NERSC_HOST, log out, '
                 'log back in, \n'
                 'and try again.')
+
+    # As a last resort (e.g. on a compute node), try getting the machine from
+    # a file created on install
+    if machine is None and 'CONDA_PREFIX' in os.environ:
+        prefix = os.environ['CONDA_PREFIX']
+        machine_filename = os.path.join(
+            prefix, 'share', 'mache', 'machine.txt')
+        if os.path.exists(machine_filename):
+            with open(machine_filename) as fp:
+                machine = fp.read().replace('\n', '').strip()
+
     return machine
