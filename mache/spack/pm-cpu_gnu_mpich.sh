@@ -15,15 +15,15 @@ module load cray-libsci
 {% endif %}
 module load craype
 module rm cray-mpich
-module load libfabric/1.15.0.0
-module load cray-mpich/8.1.17
+module load libfabric/1.15.2.0
+module load cray-mpich/8.1.22
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel
 module rm cray-netcdf-hdf5parallel
 module rm cray-parallel-netcdf
-module load cray-hdf5-parallel/1.12.1.5
-module load cray-netcdf-hdf5parallel/4.8.1.5
-module load cray-parallel-netcdf/1.12.2.5
+module load cray-hdf5-parallel/1.12.2.1
+module load cray-netcdf-hdf5parallel/4.9.0.1
+module load cray-parallel-netcdf/1.12.3.1
 {% endif %}
 module load cmake/3.22.0
 
