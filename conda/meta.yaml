@@ -1,5 +1,5 @@
 {% set name = "mache" %}
-{% set version = "1.10.0rc1" %}
+{% set version = "1.10.0rc2" %}
 
 package:
   name: {{ name|lower }}
