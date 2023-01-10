@@ -1,5 +1,9 @@
 from lxml import etree
-from importlib.resources import path
+try:
+    from importlib import resources as importlib_resources
+except ImportError:
+    # python<=3.8
+    import importlib_resources
 import configparser
 import os
 import pwd
@@ -225,12 +229,14 @@ class MachineInfo:
 
         machine = self.machine
         try:
-            with path('mache.machines', f'{machine}.cfg') as cfg_path:
-                config.read(cfg_path)
+            cfg_path = \
+                importlib_resources.files('mache.machines') / f'{machine}.cfg'
+            config.read(cfg_path)
         except FileNotFoundError:
             # this isn't a known machine so use the default
-            with path('mache.machines', 'default.cfg') as cfg_path:
-                config.read(cfg_path)
+            cfg_path = \
+                importlib_resources.files('mache.machines') / 'default.cfg'
+            config.read(cfg_path)
 
         return config
 
@@ -238,48 +244,49 @@ class MachineInfo:
         """ Parse the compilers and mpi modules from XML config files """
         machine = self.machine
 
-        with path('mache.cime_machine_config',
-                  'config_machines.xml') as xml_path:
-            root = etree.parse(str(xml_path))
+        xml_path = (importlib_resources.files('mache.cime_machine_config') /
+                    'config_machines.xml')
 
-            machines = next(root.iter('config_machines'))
+        root = etree.parse(str(xml_path))
 
-            mach = None
-            found = False
-            for mach in machines:
-                if mach.tag == 'machine' and mach.attrib['MACH'] == machine:
-                    found = True
-                    break
+        machines = next(root.iter('config_machines'))
 
-            if not found:
-                # this is not an E3SM supported machine, so we're done
-                self.e3sm_supported = False
-                return
+        mach = None
+        found = False
+        for mach in machines:
+            if mach.tag == 'machine' and mach.attrib['MACH'] == machine:
+                found = True
+                break
 
-            self.e3sm_supported = True
-            compilers = None
-            for child in mach:
-                if child.tag == 'COMPILERS':
-                    compilers = child.text.split(',')
-                    break
+        if not found:
+            # this is not an E3SM supported machine, so we're done
+            self.e3sm_supported = False
+            return
 
-            self.compilers = compilers
+        self.e3sm_supported = True
+        compilers = None
+        for child in mach:
+            if child.tag == 'COMPILERS':
+                compilers = child.text.split(',')
+                break
 
-            mpilibs = None
-            for child in mach:
-                if child.tag == 'MPILIBS':
-                    mpilibs = child.text.split(',')
-                    break
+        self.compilers = compilers
 
-            self.mpilibs = mpilibs
+        mpilibs = None
+        for child in mach:
+            if child.tag == 'MPILIBS':
+                mpilibs = child.text.split(',')
+                break
 
-            machine_os = None
-            for child in mach:
-                if child.tag == 'OS':
-                    machine_os = child.text
-                    break
+        self.mpilibs = mpilibs
 
-            self.os = machine_os
+        machine_os = None
+        for child in mach:
+            if child.tag == 'OS':
+                machine_os = child.text
+                break
+
+        self.os = machine_os
 
     def _detect_e3sm_unified(self):
         """ Read E3SM-Unified base path and detect whether it is running """

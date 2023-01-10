@@ -1,7 +1,11 @@
 import os
 import subprocess
 from jinja2 import Template
-from importlib import resources
+try:
+    from importlib import resources as importlib_resources
+except ImportError:
+    # python<=3.8
+    import importlib_resources
 import yaml
 
 from mache.machine_info import discover_machine, MachineInfo
@@ -88,9 +92,11 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     for shell_filename in [f'{machine}.sh',
                            f'{machine}_{compiler}_{mpi}.sh']:
         # load modules, etc. for this machine
+        path = \
+            importlib_resources.files('mache.spack') / shell_filename
         try:
-            template = Template(
-                resources.read_text('mache.spack', shell_filename))
+            with open(path) as fp:
+                template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
@@ -100,8 +106,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
         modules = f'{modules}\n{bash_script}'
 
-    template = Template(
-        resources.read_text('mache.spack', 'build_spack_env.template'))
+    path = \
+        importlib_resources.files('mache.spack') / 'build_spack_env.template'
+    with open(path) as fp:
+        template = Template(fp.read())
     if tmpdir is not None:
         modules = f'{modules}\n' \
                   f'export TMPDIR={tmpdir}'
@@ -199,9 +207,11 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
     for shell_filename in [f'{machine}.{shell}',
                            f'{machine}_{compiler}_{mpi}.{shell}']:
         # load modules, etc. for this machine
+        path = \
+            importlib_resources.files('mache.spack') / shell_filename
         try:
-            template = Template(
-                resources.read_text('mache.spack', shell_filename))
+            with open(path) as fp:
+                template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
@@ -299,9 +309,11 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
 
     for shell_filename in [f'{machine}.{shell}',
                            f'{machine}_{compiler}_{mpi}.{shell}']:
+        path = \
+            importlib_resources.files('mache.spack') / shell_filename
         try:
-            template = Template(
-                resources.read_text('mache.spack', shell_filename))
+            with open(path) as fp:
+                template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
@@ -321,9 +333,11 @@ def _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
     """ Get the data from the jinja-templated yaml file based on settings """
     if yaml_template is None:
         template_filename = f'{machine}_{compiler}_{mpi}.yaml'
+        path = \
+            importlib_resources.files('mache.spack') / template_filename
         try:
-            template = Template(
-                resources.read_text('mache.spack', template_filename))
+            with open(path) as fp:
+                template = Template(fp.read())
         except FileNotFoundError:
             raise ValueError(f'Spack template not available for {compiler} '
                              f'and {mpi} on {machine}.')

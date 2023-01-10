@@ -18,8 +18,9 @@ requirements:
     - pip
   run:
     - python >=3.8
-    - lxml
+    - importlib_resources
     - jinja2
+    - lxml
     - pyyaml
     - progressbar2
     - rsync
