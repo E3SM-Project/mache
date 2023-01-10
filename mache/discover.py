@@ -27,6 +27,11 @@ def discover_machine(quiet=False):
         machine = 'anvil'
     elif hostname.startswith('ba-fe'):
         machine = 'badger'
+    elif hostname.startswith('ch-fe'):
+        if not quiet:
+            warnings.warn('defaulting to chicoma-cpu.  Use -m chicoma-gpu if '
+                          'you wish to run on GPUs.')
+        machine = 'chicoma-cpu'
     elif hostname.startswith('chrlogin'):
         machine = 'chrysalis'
     elif hostname.startswith('compy'):
