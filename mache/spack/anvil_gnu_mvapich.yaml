@@ -7,6 +7,7 @@ spack:
   - intel-mkl
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
+  - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
@@ -123,6 +124,13 @@ spack:
         - intel-mkl/2020.4.304-d6zw4xa
       buildable: false
 {% if e3sm_hdf5_netcdf %}
+    hdf5:
+      externals:
+      - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
+        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-8.2.0/hdf5-1.10.7-wburbwj
+        modules:
+        - hdf5/1.10.7-wburbwj
+      buildable: false
     netcdf-c:
       externals:
       - spec: netcdf-c@4.4.1+mpi~parallel-netcdf
