@@ -15,7 +15,7 @@ from mache.version import __version__
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None, include_e3sm_lapack=False,
                    include_e3sm_hdf5_netcdf=False, yaml_template=None,
-                   tmpdir=None):
+                   tmpdir=None, spack_mirror=None):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -57,6 +57,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     tmpdir : str, optional
         A temporary directory for building spack packages
+
+    spack_mirror : str, optional
+        The absolute path to a local spack mirror (e.g. for files a given
+        machine isn't allowed to download)
     """
 
     if machine is None:
@@ -114,9 +118,14 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
         modules = f'{modules}\n' \
                   f'export TMPDIR={tmpdir}'
 
-    build_file = template.render(modules=modules, version=__version__,
-                                 spack_path=spack_path, env_name=env_name,
-                                 yaml_filename=yaml_filename)
+    template_args = dict(modules=modules, version=__version__,
+                         spack_path=spack_path, env_name=env_name,
+                         yaml_filename=yaml_filename)
+
+    if spack_mirror is not None:
+        template_args['spack_mirror'] = spack_mirror
+
+    build_file = template.render(**template_args)
     build_filename = f'build_{env_name}.bash'
     with open(build_filename, 'w') as handle:
         handle.write(build_file)
