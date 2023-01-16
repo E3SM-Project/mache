@@ -13,6 +13,12 @@ else
   cd {{ spack_path }}
 fi
 source share/spack/setup-env.sh
+
+{% if spack_mirror is defined %}
+    spack mirror remove spack_mirror >& /dev/null || true
+    spack mirror add spack_mirror file://{{ spack_mirror }}
+{% endif %}
+
 spack env remove -y {{ env_name }} && \
   echo "recreating environment: {{ env_name }}" || \
   echo "creating new environment: {{ env_name }}"
