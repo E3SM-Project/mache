@@ -19,7 +19,7 @@ source share/spack/setup-env.sh
     spack mirror add spack_mirror file://{{ spack_mirror }}
 {% endif %}
 
-spack env remove -y {{ env_name }} && \
+spack env remove -y {{ env_name }} >& /dev/null && \
   echo "recreating environment: {{ env_name }}" || \
   echo "creating new environment: {{ env_name }}"
 spack env create {{ env_name }} {{ yaml_filename }}
