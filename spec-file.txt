@@ -5,3 +5,11 @@ lxml
 pyyaml
 progressbar2
 rsync
+
+# Linting and testing
+pip
+pytest
+isort
+flake8
+mypy
+pre-commit
