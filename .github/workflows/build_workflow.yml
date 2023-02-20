@@ -36,11 +36,19 @@ jobs:
           python-version: "3.10"
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        id: file_changes
+        uses: trilom/file-changes-action@v1.2.3
+        with:
+          output: ' '
+
+      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         # Run all pre-commit hooks on all the files.
         # Getting only staged files can be tricky in case a new PR is opened
         # since the action is run on a branch in detached head state
         name: Install and Run Pre-commit
         uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files}}
 
   build:
     name: test mache - python ${{ matrix.python-version }}
@@ -93,7 +101,7 @@ jobs:
         run: |
           mamba create -n mache_dev --file spec-file.txt \
               python=${{ matrix.python-version }}
-          mamba activate mache_dev
+          conda activate mache_dev
           python -m pip install -e .
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
@@ -102,6 +110,7 @@ jobs:
            CHECK_IMAGES: False
         run: |
           set -e
+          conda activate mache_dev
           pip check
           mache sync diags --help
           python conda/run_test.py
