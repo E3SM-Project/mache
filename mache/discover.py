@@ -34,6 +34,8 @@ def discover_machine(quiet=False):
         machine = 'chicoma-cpu'
     elif hostname.startswith('chrlogin'):
         machine = 'chrysalis'
+    elif hostname.startswith('chr-'):
+        machine = 'chrysalis'
     elif hostname.startswith('compy'):
         machine = 'compy'
     elif hostname.startswith('cooley'):
