@@ -25,8 +25,6 @@ def discover_machine(quiet=False):
         machine = 'andes'
     elif hostname.startswith('blueslogin'):
         machine = 'anvil'
-    elif hostname.startswith('ba-fe'):
-        machine = 'badger'
     elif hostname.startswith('ch-fe'):
         if not quiet:
             warnings.warn('defaulting to chicoma-cpu.  Use -m chicoma-gpu if '
@@ -39,9 +37,6 @@ def discover_machine(quiet=False):
     elif hostname.startswith('cooley'):
         machine = 'cooley'
     elif hostname.startswith('cori'):
-        if not quiet:
-            warnings.warn('defaulting to cori-haswell.  Explicitly specify '
-                          'cori-knl as the machine if you wish to run on KNL.')
         machine = 'cori-haswell'
     elif 'NERSC_HOST' in os.environ:
         hostname = os.environ['NERSC_HOST']
