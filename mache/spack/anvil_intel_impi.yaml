@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - intel
   - intel-mpi
 {% if e3sm_lapack %}

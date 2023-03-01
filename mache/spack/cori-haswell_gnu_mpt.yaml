@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - mpich
 {% if e3sm_lapack %}

@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - mvapich2
 {% if e3sm_lapack %}

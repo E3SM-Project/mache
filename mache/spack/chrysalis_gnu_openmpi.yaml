@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - openmpi
 {% if e3sm_lapack %}
