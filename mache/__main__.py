@@ -1,5 +1,5 @@
-import sys
 import argparse
+import sys
 
 import mache.version
 from mache import sync

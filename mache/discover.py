@@ -1,6 +1,6 @@
+import os
 import socket
 import warnings
-import os
 
 
 def discover_machine(quiet=False):
