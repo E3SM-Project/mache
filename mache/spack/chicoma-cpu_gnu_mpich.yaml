@@ -63,13 +63,6 @@ spack:
       - spec: xz@5.2.3
         prefix: /usr
       buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.20.3
-        prefix: /usr/projects/hpcsoft/cos2/common/x86_64/cmake/3.20.3
-        modules:
-        - cmake/3.20.3
-      buildable: false
     python:
       externals:
       - spec: python@3.9.7

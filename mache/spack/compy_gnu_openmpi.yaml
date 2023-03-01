@@ -78,13 +78,6 @@ spack:
       - spec: zlib@1.2.7
         prefix: /usr
       buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.19.6
-        prefix: /share/apps/cmake/3.19.6
-        modules:
-        - cmake/3.19.6
-      buildable: false
     gcc:
       externals:
       - spec: gcc@10.2.0
