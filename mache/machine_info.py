@@ -1,12 +1,17 @@
-from lxml import etree
-try:
-    from importlib import resources as importlib_resources
-except ImportError:
-    # python<=3.8
-    import importlib_resources
 import configparser
 import os
 import pwd
+import sys
+from typing import TYPE_CHECKING
+
+from lxml import etree
+
+if TYPE_CHECKING or sys.version_info > (3, 8, 0):
+    from importlib import resources as importlib_resources
+else:
+    # python <= 3.8
+    import importlib_resources
+
 
 from mache.discover import discover_machine
 
@@ -120,7 +125,8 @@ class MachineInfo:
         info = f'Machine: {self.machine}\n' \
                f'  E3SM Supported Machine: {self.e3sm_supported}'
 
-        if self.e3sm_supported:
+        if self.e3sm_supported and self.compilers is not None and \
+                self.mpilibs is not None and self.os is not None:
             info = f'{info}\n' \
                    f'  Compilers: {", ".join(self.compilers)}\n' \
                    f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
@@ -231,12 +237,12 @@ class MachineInfo:
         try:
             cfg_path = \
                 importlib_resources.files('mache.machines') / f'{machine}.cfg'
-            config.read(cfg_path)
+            config.read(str(cfg_path))
         except FileNotFoundError:
             # this isn't a known machine so use the default
             cfg_path = \
                 importlib_resources.files('mache.machines') / 'default.cfg'
-            config.read(cfg_path)
+            config.read(str(cfg_path))
 
         return config
 
