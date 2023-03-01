@@ -1,10 +1,11 @@
+import grp
 import os
 import stat
-import grp
+
 import progressbar
 
 
-def update_permissions(base_paths, group, show_progress=True,
+def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
                        group_writable=False, other_readable=True):
     """
     Update the group that a directory belongs to along with the "group" and

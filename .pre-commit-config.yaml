@@ -33,4 +33,4 @@ repos:
       - id: mypy
         args: ["--config=setup.cfg", "--show-error-codes"]
         verbose: true
-        additional_dependencies: ['types-requests']
+        additional_dependencies: ['types-requests', 'types-PyYAML']
