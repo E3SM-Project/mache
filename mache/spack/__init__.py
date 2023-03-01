@@ -1,14 +1,19 @@
 import os
 import subprocess
+import sys
+from typing import TYPE_CHECKING
+
 from jinja2 import Template
-try:
+
+if TYPE_CHECKING or sys.version_info > (3, 8, 0):
     from importlib import resources as importlib_resources
-except ImportError:
-    # python<=3.8
+else:
+    # python <= 3.8
     import importlib_resources
+
 import yaml
 
-from mache.machine_info import discover_machine, MachineInfo
+from mache.machine_info import MachineInfo, discover_machine
 from mache.version import __version__
 
 
@@ -99,7 +104,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
         path = \
             importlib_resources.files('mache.spack') / shell_filename
         try:
-            with open(path) as fp:
+            with open(str(path)) as fp:
                 template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
@@ -112,7 +117,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     path = \
         importlib_resources.files('mache.spack') / 'build_spack_env.template'
-    with open(path) as fp:
+    with open(str(path)) as fp:
         template = Template(fp.read())
     if tmpdir is not None:
         modules = f'{modules}\n' \
@@ -219,7 +224,7 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
         path = \
             importlib_resources.files('mache.spack') / shell_filename
         try:
-            with open(path) as fp:
+            with open(str(path)) as fp:
                 template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
@@ -321,7 +326,7 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
         path = \
             importlib_resources.files('mache.spack') / shell_filename
         try:
-            with open(path) as fp:
+            with open(str(path)) as fp:
                 template = Template(fp.read())
         except FileNotFoundError:
             # there's nothing to add, which is fine
@@ -345,7 +350,7 @@ def _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
         path = \
             importlib_resources.files('mache.spack') / template_filename
         try:
-            with open(path) as fp:
+            with open(str(path)) as fp:
                 template = Template(fp.read())
         except FileNotFoundError:
             raise ValueError(f'Spack template not available for {compiler} '
@@ -373,9 +378,9 @@ def _get_modules(yaml_string):
                         for mod in item['modules']:
                             mods.append(f'module load {mod}')
 
-    mods = '\n'.join(mods)
+    mods_str = '\n'.join(mods)
 
-    return mods
+    return mods_str
 
 
 def _get_mpi_compilers(machine, compiler, mpi, cray_compilers):

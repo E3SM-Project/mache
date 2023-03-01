@@ -1,7 +1,8 @@
-import sys
 import argparse
+import sys
 
 from mache.sync import diags
+
 
 def main():
     """
