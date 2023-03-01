@@ -1,13 +1,13 @@
-import sys
 import argparse
 import subprocess
+import sys
 
 from mache.machine_info import MachineInfo
 from mache.permissions import update_permissions
 
 
-def sync_diags(other, direction='to', machine=None, username=None,
-               config_filename=None):
+def sync_diags(other, direction='to', machine=None,  # noqa: C901
+               username=None, config_filename=None):
     """
     Synchronize diagnostics files between supported machines
 
