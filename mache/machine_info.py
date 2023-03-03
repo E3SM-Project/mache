@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from lxml import etree
 
-if TYPE_CHECKING or sys.version_info > (3, 8, 0):
+if TYPE_CHECKING or sys.version_info >= (3, 9, 0):
     from importlib import resources as importlib_resources
 else:
     # python <= 3.8
