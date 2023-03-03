@@ -70,8 +70,6 @@ will be recognized from the host name:
 
 * anvil
 
-* badger
-
 * chrysalis
 
 * compy
@@ -253,10 +251,10 @@ first log on to an LCRC machine, then run:
 
 .. code-block:: bash
 
-    mache sync diags to badger -u <username>
+    mache sync diags to chicoma-cpu -u <username>
 
-where ``<username>`` is your account name on the non-LCRC machine (``badger``
-in this example).
+where ``<username>`` is your account name on the non-LCRC machine
+(``chicoma-cpu`` in this example).
 
 License
 -------

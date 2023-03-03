@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - mpich
 {% if e3sm_lapack %}
@@ -62,13 +61,6 @@ spack:
       externals:
       - spec: xz@5.2.3
         prefix: /usr
-      buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.22.0
-        prefix: /global/common/software/nersc/pm-2021q4/sw/cmake-3.22.0
-        modules:
-        - cmake/3.22.0
       buildable: false
     gcc:
       externals:

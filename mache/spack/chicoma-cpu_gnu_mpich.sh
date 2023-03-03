@@ -30,7 +30,6 @@ module load cray-hdf5-parallel/1.12.2.1
 module load cray-netcdf-hdf5parallel/4.9.0.1
 module load cray-parallel-netcdf/1.12.3.1
 {% endif %}
-module load cmake/3.20.3
 
 export NETCDF_C_PATH=$(dirname $(dirname $(which nc-config)))
 export NETCDF_FORTRAN_PATH=$(dirname $(dirname $(which nf-config)))

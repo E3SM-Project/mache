@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - openmpi
 {% if e3sm_lapack %}
@@ -62,13 +61,6 @@ spack:
       externals:
       - spec: zlib@1.2.11
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/zlib-1.2.11-3tgpz5b
-      buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.19.1
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/cmake-3.19.1-yisciec
-        modules:
-        - cmake/3.19.1-yisciec
       buildable: false
     perl:
       externals:

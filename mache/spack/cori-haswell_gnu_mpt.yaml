@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - mpich
 {% if e3sm_lapack %}
@@ -51,13 +50,6 @@ spack:
       externals:
       - spec: xz@5.2.3
         prefix: /usr
-      buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.22.1
-        prefix: /global/common/software/nersc/cori-2022q1/spack/cray-cnl7-haswell/cmake-3.22.1-zdiyyvt
-        modules:
-        - cmake/3.22.1
       buildable: false
     gcc:
       externals:

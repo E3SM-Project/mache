@@ -1,4 +1,4 @@
-exclude: "docs|.git|conda/meta.yaml"
+exclude: "docs|.git"
 default_stages: [commit]
 fail_fast: true
 
@@ -8,7 +8,6 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: check-yaml
 
   # Can run individually with `pre-commit run isort --all-files`
   - repo: https://github.com/PyCQA/isort

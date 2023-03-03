@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - gcc
   - openmpi
 {% if e3sm_lapack %}
@@ -77,13 +76,6 @@ spack:
       externals:
       - spec: zlib@1.2.7
         prefix: /usr
-      buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.19.6
-        prefix: /share/apps/cmake/3.19.6
-        modules:
-        - cmake/3.19.6
       buildable: false
     gcc:
       externals:

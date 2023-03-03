@@ -1,6 +1,5 @@
 spack:
   specs:
-  - cmake
   - intel
   - intel-mpi
 {% if e3sm_lapack %}
@@ -87,13 +86,6 @@ spack:
       externals:
       - spec: zlib@1.2.11
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/zlib-1.2.11-dudhhig
-      buildable: false
-    cmake:
-      externals:
-      - spec: cmake@3.20.3
-        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/cmake-3.20.3-vedypwm
-        modules:
-        - cmake/3.20.3-vedypwm
       buildable: false
     perl:
       externals:
