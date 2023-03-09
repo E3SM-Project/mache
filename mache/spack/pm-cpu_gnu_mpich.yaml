@@ -95,10 +95,10 @@ spack:
 {% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@21.08.1.2
-        prefix: /opt/cray/pe/libsci/21.08.1.2/GNU/9.1/x86_64
+      - spec: cray-libsci@23.02.1.1
+        prefix: /opt/cray/pe/libsci/23.02.1.1/GNU/9.1/x86_64
         modules:
-        - mkl/2019.0.4
+        - cray-libsci/23.02.1.1
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
