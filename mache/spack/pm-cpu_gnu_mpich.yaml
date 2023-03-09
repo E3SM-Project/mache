@@ -42,6 +42,11 @@ spack:
       - spec: libxml2@2.9.7
         prefix: /usr
       buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@6.1.20180317
+        prefix: /usr
+      buildable: false
     openssl:
       externals:
       - spec: openssl@1.1.1d
