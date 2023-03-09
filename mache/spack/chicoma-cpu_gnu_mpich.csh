@@ -42,3 +42,5 @@ setenv PERL5LIB /usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-
 setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
 setenv FI_CXI_RX_MATCH_MODE software
 setenv MPICH_COLL_SYNC MPI_Bcast
+
+setenv LD_LIBRARY_PATH $CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH

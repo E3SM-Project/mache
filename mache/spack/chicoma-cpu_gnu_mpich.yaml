@@ -20,7 +20,7 @@ spack:
       providers:
         mpi: [mpich@8.1.21]
 {% if e3sm_lapack %}
-        lapack: [cray-libsci@2019.0.4]
+        lapack: [cray-libsci@22.11.1.2]
 {% endif %}
     bzip2:
       externals:
@@ -97,10 +97,10 @@ spack:
 {% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@21.08.1.2
-        prefix: /opt/cray/pe/libsci/21.08.1.2/GNU/9.1/x86_64
+      - spec: cray-libsci@22.11.1.2
+        prefix: /opt/cray/pe/libsci/22.11.1.2/GNU/9.1/x86_64
         modules:
-        - mkl/2019.0.4
+        - cray-libsci/22.11.1.2
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
