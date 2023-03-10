@@ -146,4 +146,4 @@ spack:
       - libfabric/1.15.2.0
       environment:
         prepend_path:
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.18__gd0f7936.shasta/lib64/pkgconfig/"
+          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.30__gd0f7936.shasta/lib64/pkgconfig"
