@@ -42,6 +42,11 @@ spack:
       - spec: libxml2@2.9.7
         prefix: /usr
       buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@6.1.20180317
+        prefix: /usr
+      buildable: false
     openssl:
       externals:
       - spec: openssl@1.1.1d
@@ -90,10 +95,10 @@ spack:
 {% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@21.08.1.2
-        prefix: /opt/cray/pe/libsci/21.08.1.2/GNU/9.1/x86_64
+      - spec: cray-libsci@23.02.1.1
+        prefix: /opt/cray/pe/libsci/23.02.1.1/GNU/9.1/x86_64
         modules:
-        - mkl/2019.0.4
+        - cray-libsci/23.02.1.1
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
@@ -141,4 +146,4 @@ spack:
       - libfabric/1.15.2.0
       environment:
         prepend_path:
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.18__gd0f7936.shasta/lib64/pkgconfig/"
+          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.30__gd0f7936.shasta/lib64/pkgconfig"

@@ -21,6 +21,7 @@ module load craype-accel-host
 module load cray-libsci
 {% endif %}
 module load craype
+module load libfabric/1.15.0.0
 module load cray-mpich/8.1.21
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel
@@ -31,9 +32,6 @@ module load cray-netcdf-hdf5parallel/4.9.0.1
 module load cray-parallel-netcdf/1.12.3.1
 {% endif %}
 
-export NETCDF_C_PATH=$(dirname $(dirname $(which nc-config)))
-export NETCDF_FORTRAN_PATH=$(dirname $(dirname $(which nf-config)))
-export PNETCDF_PATH=$(dirname $(dirname $(which pnetcdf_version)))
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
 export OMP_STACKSIZE=128M
@@ -41,3 +39,8 @@ export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export HDF5_USE_FILE_LOCKING=FALSE
 export PERL5LIB=/usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
+export PNETCDF_HINTS="romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
+export FI_CXI_RX_MATCH_MODE=software
+export MPICH_COLL_SYNC=MPI_Bcast
+
+export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
