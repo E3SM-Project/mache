@@ -18,7 +18,7 @@ from mache.version import __version__
 
 
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
-                   machine=None, include_e3sm_lapack=False,
+                   machine=None, config_file=None, include_e3sm_lapack=False,
                    include_e3sm_hdf5_netcdf=False, yaml_template=None,
                    tmpdir=None, spack_mirror=None):
     """
@@ -48,6 +48,9 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
 
+    config_file : str, optional
+        The name of a config file to load config options from.
+
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
@@ -76,6 +79,9 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     machine_info = MachineInfo(machine)
 
     config = machine_info.config
+    if config_file is not None:
+        config.read(config_file)
+
     section = config['spack']
 
     with_modules = (section.getboolean('modules_before') or
@@ -141,8 +147,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
 
 def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
-                     include_e3sm_lapack=False, include_e3sm_hdf5_netcdf=False,
-                     yaml_template=None):
+                     config_file=None, include_e3sm_lapack=False,
+                     include_e3sm_hdf5_netcdf=False, yaml_template=None):
     """
     Build a snippet of a load script for the given spack environment
 
@@ -167,6 +173,9 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
     machine : str, optional
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
+
+    config_file : str, optional
+        The name of a config file to load config options from.
 
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
@@ -197,6 +206,9 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
     machine_info = MachineInfo(machine)
 
     config = machine_info.config
+    if config_file is not None:
+        config.read(config_file)
+
     section = config['spack']
 
     modules_before = section.getboolean('modules_before')
