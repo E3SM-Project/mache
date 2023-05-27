@@ -15,12 +15,9 @@ module rm perftools-base &> /dev/null
 module rm perftools &> /dev/null
 module rm darshan &> /dev/null
 
-module load PrgEnv-gnu/8.3.3
-module load gcc/11.2.0
+module load PrgEnv-intel/8.3.3
+module load intel/2023.0.0
 module load craype-accel-host
-{% if e3sm_lapack %}
-module load cray-libsci/23.02.1.1
-{% endif %}
 module load craype/2.7.19
 module rm cray-mpich &> /dev/null
 module load libfabric/1.15.2.0
@@ -35,15 +32,15 @@ module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
-export NETCDF_C_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
-export NETCDF_FORTRAN_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
-export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
+setenv NETCDF_C_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
+setenv NETCDF_FORTRAN_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
+setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
-export MPICH_ENV_DISPLAY=1
-export MPICH_VERSION_DISPLAY=1
-export OMP_STACKSIZE=128M
-export OMP_PROC_BIND=spread
-export OMP_PLACES=threads
-export HDF5_USE_FILE_LOCKING=FALSE
-export PERL5LIB=/global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
-export FI_CXI_RX_MATCH_MODE=software
+setenv MPICH_ENV_DISPLAY 1
+setenv MPICH_VERSION_DISPLAY 1
+setenv OMP_STACKSIZE 128M
+setenv OMP_PROC_BIND spread
+setenv OMP_PLACES threads
+setenv HDF5_USE_FILE_LOCKING FALSE
+setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
+setenv FI_CXI_RX_MATCH_MODE software

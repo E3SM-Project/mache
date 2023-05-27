@@ -15,12 +15,9 @@ module rm perftools-base &> /dev/null
 module rm perftools &> /dev/null
 module rm darshan &> /dev/null
 
-module load PrgEnv-gnu/8.3.3
-module load gcc/11.2.0
+module load PrgEnv-intel/8.3.3
+module load intel/2023.0.0
 module load craype-accel-host
-{% if e3sm_lapack %}
-module load cray-libsci/23.02.1.1
-{% endif %}
 module load craype/2.7.19
 module rm cray-mpich &> /dev/null
 module load libfabric/1.15.2.0
