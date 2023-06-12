@@ -16,7 +16,7 @@ module rm perftools &> /dev/null
 module rm darshan &> /dev/null
 
 module load PrgEnv-intel/8.3.3
-module load intel/2023.0.0
+module load intel/2023.1.0
 module load craype-accel-host
 module load craype/2.7.19
 module rm cray-mpich &> /dev/null
