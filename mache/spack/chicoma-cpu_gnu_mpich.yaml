@@ -37,9 +37,19 @@ spack:
       - spec: gettext@0.19.8.1
         prefix: /usr
       buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr
+      buildable: false
     libxml2:
       externals:
       - spec: libxml2@2.9.7
+        prefix: /usr
+      buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@6.1
         prefix: /usr
       buildable: false
     openssl:
