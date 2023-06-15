@@ -32,6 +32,11 @@ spack:
       - spec: curl@7.60.0
         prefix: /usr
       buildable: false
+    diffutils:
+      externals:
+      - spec: diffutils@3.6
+        prefix: /usr
+      buildable: false
     gettext:
       externals:
       - spec: gettext@0.19.8.1
