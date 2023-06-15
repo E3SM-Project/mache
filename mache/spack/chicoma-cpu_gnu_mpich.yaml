@@ -42,6 +42,11 @@ spack:
       - spec: gmake@4.2.1
         prefix: /usr
       buildable: false
+    libiconv:
+      externals:
+      - spec: libiconv@2.31
+        prefix: /usr
+      buildable: false
     libxml2:
       externals:
       - spec: libxml2@2.9.7
