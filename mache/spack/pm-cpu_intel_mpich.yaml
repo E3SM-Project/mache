@@ -51,6 +51,13 @@ spack:
       - spec: perl@5.26.1
         prefix: /usr
       buildable: false
+    python:
+      externals:
+      - spec: python@3.9.7
+        prefix: /global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11
+        modules:
+        - python/3.9-anaconda-2021.11
+      buildable: false
     tar:
       externals:
       - spec: tar@1.34
