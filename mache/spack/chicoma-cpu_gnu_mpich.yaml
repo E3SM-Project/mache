@@ -138,7 +138,7 @@ spack:
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.0.1+mpi+parallel-netcdf
+      - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
     netcdf-fortran:
