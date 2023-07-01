@@ -1,7 +1,7 @@
 spack:
   specs:
   - gcc
-  - mpich
+  - cray-mpich
 {% if e3sm_lapack %}
   - cray-libsci
 {% endif %}
@@ -18,7 +18,7 @@ spack:
     all:
       compiler: [gcc@11.2.0]
       providers:
-        mpi: [mpich@8.1.24]
+        mpi: [cray-mpich@8.1.24]
 {% if e3sm_lapack %}
         lapack: [cray-libsci@23.02.1.1]
 {% endif %}
@@ -84,9 +84,9 @@ spack:
         - craype/2.7.19
         - libfabric/1.15.2.0
       buildable: false
-    mpich:
+    cray-mpich:
       externals:
-      - spec: mpich@8.1.24
+      - spec: cray-mpich@8.1.24
         prefix: /opt/cray/pe/mpich/8.1.24/ofi/gnu/9.1
         modules:
         - libfabric/1.15.2.0
