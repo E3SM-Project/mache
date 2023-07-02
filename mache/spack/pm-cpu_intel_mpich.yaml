@@ -10,7 +10,7 @@ spack:
 {% endif %}
 {{ specs }}
   concretizer:
-    unify: true
+    unify: when_possible
   packages:
     all:
       compiler: [intel@2023.1.0]
@@ -98,8 +98,8 @@ spack:
       externals:
       - spec: hdf5@1.12.2.3~cxx+fortran+hl~java+mpi+shared
         prefix: /opt/cray/pe/hdf5-parallel/1.12.2.3/intel/19.0
-        modules:
-        - cray-hdf5-parallel/1.12.2.3
+      - spec: hdf5@1.12.2.3~cxx+fortran+hl~java~mpi+shared
+        prefix: /opt/cray/pe/hdf5/1.12.2.3/intel/19.0
       buildable: false
     parallel-netcdf:
       externals:
@@ -110,11 +110,15 @@ spack:
       externals:
       - spec: netcdf-c@4.9.0.3+mpi~parallel-netcdf
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/intel/19.0
+      - spec: netcdf-c@4.9.0.3~mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf/4.9.0.3/intel/19.0
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.5.3
+      - spec: netcdf-fortran@4.5.3 ^netcdf-c+mpi
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/intel/19.0
+      - spec: netcdf-fortran@4.5.3 ^netcdf-c~mpi
+        prefix: /opt/cray/pe/netcdf/4.9.0.3/intel/19.0
       buildable: false
 {% endif %}
   config:
