@@ -38,9 +38,11 @@ setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
 setenv MPICH_ENV_DISPLAY 1
 setenv MPICH_VERSION_DISPLAY 1
-setenv OMP_STACKSIZE 128M
-setenv OMP_PROC_BIND spread
-setenv OMP_PLACES threads
+## purposefully omitting OMP variables that cause trouble in ESMF
+# setenv OMP_STACKSIZE 128M
+# setenv OMP_PROC_BIND spread
+# setenv OMP_PLACES threads
 setenv HDF5_USE_FILE_LOCKING FALSE
-setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
+## Not needed
+# setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
 setenv FI_CXI_RX_MATCH_MODE software
