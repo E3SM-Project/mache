@@ -3,3 +3,4 @@ include mache/machines/*.cfg
 include mache/spack/*.yaml
 include mache/spack/*.template
 include mache/spack/*.sh
+include mache/spack/*.csh
