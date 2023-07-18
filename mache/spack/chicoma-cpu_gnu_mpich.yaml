@@ -1,7 +1,7 @@
 spack:
   specs:
   - gcc
-  - mpich
+  - cray-mpich
 {% if e3sm_lapack %}
   - cray-libsci
 {% endif %}
@@ -18,7 +18,7 @@ spack:
     all:
       compiler: [gcc@12.1.0]
       providers:
-        mpi: [mpich@8.1.21]
+        mpi: [cray-mpich@8.1.21]
 {% if e3sm_lapack %}
         lapack: [cray-libsci@22.11.1.2]
 {% endif %}
@@ -99,9 +99,9 @@ spack:
         - craype
         - libfabric/1.15.0.0
       buildable: false
-    mpich:
+    cray-mpich:
       externals:
-      - spec: mpich@8.1.21
+      - spec: cray-mpich@8.1.21
         prefix: /opt/cray/pe/mpich/8.1.21/ofi/gnu/9.1
         modules:
         - libfabric/1.15.0.0
@@ -138,7 +138,7 @@ spack:
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.0.1+mpi+parallel-netcdf
+      - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
     netcdf-fortran:

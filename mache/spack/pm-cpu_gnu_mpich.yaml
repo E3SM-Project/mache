@@ -1,7 +1,7 @@
 spack:
   specs:
   - gcc
-  - mpich
+  - cray-mpich
 {% if e3sm_lapack %}
   - cray-libsci
 {% endif %}
@@ -13,12 +13,12 @@ spack:
 {% endif %}
 {{ specs }}
   concretizer:
-    unify: true
+    unify: when_possible
   packages:
     all:
       compiler: [gcc@11.2.0]
       providers:
-        mpi: [mpich@8.1.24]
+        mpi: [cray-mpich@8.1.24]
 {% if e3sm_lapack %}
         lapack: [cray-libsci@23.02.1.1]
 {% endif %}
@@ -84,9 +84,9 @@ spack:
         - craype/2.7.19
         - libfabric/1.15.2.0
       buildable: false
-    mpich:
+    cray-mpich:
       externals:
-      - spec: mpich@8.1.24
+      - spec: cray-mpich@8.1.24
         prefix: /opt/cray/pe/mpich/8.1.24/ofi/gnu/9.1
         modules:
         - libfabric/1.15.2.0
@@ -113,8 +113,8 @@ spack:
       externals:
       - spec: hdf5@1.12.2.3~cxx+fortran+hl~java+mpi+shared
         prefix: /opt/cray/pe/hdf5-parallel/1.12.2.3/GNU/9.1
-        modules:
-        - cray-hdf5-parallel/1.12.2.3
+      - spec: hdf5@1.12.2.3~cxx+fortran+hl~java~mpi+shared
+        prefix: /opt/cray/pe/hdf5/1.12.2.3/GNU/9.1
       buildable: false
     parallel-netcdf:
       externals:
@@ -123,13 +123,17 @@ spack:
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.0.3+mpi+parallel-netcdf
+      - spec: netcdf-c@4.9.0.3+mpi~parallel-netcdf
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/GNU/9.1
+      - spec: netcdf-c@4.9.0.3~mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf/4.9.0.3/GNU/9.1
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.5.3
+      - spec: netcdf-fortran@4.5.3 ^netcdf-c+mpi
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/GNU/9.1
+      - spec: netcdf-fortran@4.5.3 ^netcdf-c~mpi
+        prefix: /opt/cray/pe/netcdf/4.9.0.3/GNU/9.1
       buildable: false
 {% endif %}
   config:
