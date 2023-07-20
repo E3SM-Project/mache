@@ -25,3 +25,4 @@ spack env remove -y {{ env_name }} >& /dev/null && \
 spack env create {{ env_name }} {{ yaml_filename }}
 spack env activate {{ env_name }}
 spack install
+{{ custom_spack }}

@@ -21,7 +21,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None, config_file=None, include_e3sm_lapack=False,
                    include_e3sm_hdf5_netcdf=False,
                    include_system_hdf5_netcdf=False,
-                   yaml_template=None, tmpdir=None, spack_mirror=None):
+                   yaml_template=None, tmpdir=None, spack_mirror=None,
+                   custom_spack=''):
     """
     Clone the ``spack_for_mache_{{version}}`` branch from
     `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
@@ -74,6 +75,10 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     spack_mirror : str, optional
         The absolute path to a local spack mirror (e.g. for files a given
         machine isn't allowed to download)
+
+    custom_spack : str, optional
+        Spack commands to run at the end of the script after the environment
+        has been installed.
     """
 
     if machine is None:
@@ -139,7 +144,8 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     template_args = dict(modules=modules, version=__version__,
                          spack_path=spack_path, env_name=env_name,
-                         yaml_filename=yaml_filename)
+                         yaml_filename=yaml_filename,
+                         custom_spack=custom_spack)
 
     if spack_mirror is not None:
         template_args['spack_mirror'] = spack_mirror
