@@ -113,8 +113,6 @@ spack:
       externals:
       - spec: netcdf-fortran@4.5.3 ^netcdf-c+mpi
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/intel/19.0
-      - spec: netcdf-fortran@4.5.3 ^netcdf-c~mpi
-        prefix: /opt/cray/pe/netcdf/4.9.0.3/intel/19.0
       buildable: false
 {% endif %}
 {% if system_hdf5_netcdf %}
