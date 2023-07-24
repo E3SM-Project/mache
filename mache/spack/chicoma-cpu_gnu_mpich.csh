@@ -34,9 +34,10 @@ module load cray-parallel-netcdf/1.12.3.1
 
 setenv MPICH_ENV_DISPLAY 1
 setenv MPICH_VERSION_DISPLAY 1
-setenv OMP_STACKSIZE 128M
-setenv OMP_PROC_BIND spread
-setenv OMP_PLACES threads
+## purposefully omitting OMP variables that cause trouble in ESMF
+# setenv OMP_STACKSIZE 128M
+# setenv OMP_PROC_BIND spread
+# setenv OMP_PLACES threads
 setenv HDF5_USE_FILE_LOCKING FALSE
 setenv PERL5LIB /usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
 setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
