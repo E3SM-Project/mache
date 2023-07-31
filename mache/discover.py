@@ -38,6 +38,12 @@ def discover_machine(quiet=False):
         machine = 'cooley'
     elif hostname.startswith('cori'):
         machine = 'cori-haswell'
+    elif 'LMOD_SYSTEM_NAME' in os.environ:
+        hostname = os.environ['LMOD_SYSTEM_NAME']
+        if hostname == 'frontier':
+            # frontier's hostname is too generic to detect, so relying on
+            # LMOD_SYSTEM_NAME
+            machine = 'frontier'
     elif 'NERSC_HOST' in os.environ:
         hostname = os.environ['NERSC_HOST']
         if hostname == 'perlmutter':
