@@ -1,6 +1,5 @@
 import os
 import socket
-import warnings
 
 
 def discover_machine(quiet=False):
@@ -19,40 +18,33 @@ def discover_machine(quiet=False):
     """
     hostname = socket.gethostname()
     machine = None
-    if hostname.startswith('acme1'):
-        machine = 'acme1'
-    elif hostname.startswith('andes'):
-        machine = 'andes'
-    elif hostname.startswith('blueslogin'):
-        machine = 'anvil'
-    elif hostname.startswith('ch-fe'):
-        if not quiet:
-            warnings.warn('defaulting to chicoma-cpu.  Use -m chicoma-gpu if '
-                          'you wish to run on GPUs.')
-        machine = 'chicoma-cpu'
-    elif hostname.startswith('chrlogin'):
-        machine = 'chrysalis'
-    elif hostname.startswith('compy'):
-        machine = 'compy'
-    elif hostname.startswith('cooley'):
-        machine = 'cooley'
-    elif hostname.startswith('cori'):
-        machine = 'cori-haswell'
-    elif 'LMOD_SYSTEM_NAME' in os.environ:
+    machines_by_hostname = {
+        'acme1': 'acme1',
+        'andes': 'andes',
+        'blueslogin': 'anvil',
+        'ch-fe': 'chicoma-cpu',
+        'chrlogin': 'chrysalis',
+        'compy': 'compy',
+        'cooley': 'cooley'
+    }
+    found = False
+    for host, mach in machines_by_hostname.items():
+        if hostname.startswith(host):
+            machine = mach
+            found = True
+            break
+    if not found and 'LMOD_SYSTEM_NAME' in os.environ:
         hostname = os.environ['LMOD_SYSTEM_NAME']
         if hostname == 'frontier':
             # frontier's hostname is too generic to detect, so relying on
             # LMOD_SYSTEM_NAME
             machine = 'frontier'
-    elif 'NERSC_HOST' in os.environ:
+            found = True
+    if not found and 'NERSC_HOST' in os.environ:
         hostname = os.environ['NERSC_HOST']
         if hostname == 'perlmutter':
             # perlmutter's hostname is too generic to detect, so relying on
             # $NERSC_HOST
-            if not quiet:
-                warnings.warn('defaulting to pm-cpu.  Explicitly specify '
-                              'pm-gpu as the machine if you wish to run on '
-                              'GPUs.')
             machine = 'pm-cpu'
         elif hostname == 'unknown':
             raise ValueError(
