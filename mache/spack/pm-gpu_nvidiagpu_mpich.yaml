@@ -162,6 +162,7 @@ spack:
       - nvidia/22.7
       - cudatoolkit/11.7
       - craype-accel-nvidia80
+      - gcc-mixed/11.2.0
       - craype-x86-milan
       - libfabric
       environment:
