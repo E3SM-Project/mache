@@ -27,6 +27,11 @@ spack:
       - spec: bzip2@1.0.8
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/bzip2-1.0.8-6n3r43w
       buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.24.2
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-11.3.0/cmake-3.24.2-whgdv7y
+      buildable: false
     curl:
       externals:
       - spec: curl@7.72.0
