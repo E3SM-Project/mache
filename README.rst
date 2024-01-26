@@ -70,13 +70,15 @@ will be recognized from the host name:
 
 * anvil
 
+* chicoma-cpu
+
 * chrysalis
 
 * compy
 
 * cooley
 
-* cori-haswell (but you will get a warning that cori-knl is also an option)
+* frontier
 
 * pm-cpu
 
