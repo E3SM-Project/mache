@@ -32,6 +32,11 @@ spack:
       - spec: bzip2@1.0.6
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/bzip2-1.0.6-mbwr6sk
       buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.26.3
+        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-11.3.0/cmake-3.26.3-nszudya
+      buildable: false
     curl:
       externals:
       - spec: curl@7.72.0
