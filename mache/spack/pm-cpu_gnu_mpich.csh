@@ -21,10 +21,10 @@ module load craype-accel-host
 {% if e3sm_lapack %}
 module load cray-libsci/23.02.1.1
 {% endif %}
-module load craype/2.7.19
+module load craype/2.7.20
 module rm cray-mpich &> /dev/null
 module load libfabric/1.15.2.0
-module load cray-mpich/8.1.24
+module load cray-mpich/8.1.25
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel &> /dev/null
 module rm cray-netcdf-hdf5parallel &> /dev/null

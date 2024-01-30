@@ -15,12 +15,19 @@ module rm perftools-base &> /dev/null
 module rm perftools &> /dev/null
 module rm darshan &> /dev/null
 
-module load PrgEnv-intel/8.3.3
-module load intel/2023.1.0
-module load craype-accel-host
+module load PrgEnv-nvidia
+module load nvidia/22.7
+module load craype-x86-milan
+module load libfabric/1.15.2.0
+module load cudatoolkit/11.7
+module load craype-accel-nvidia80
+module load gcc-mixed/11.2.0
 module load craype/2.7.20
 module rm cray-mpich &> /dev/null
 module load cray-mpich/8.1.25
+{% if e3sm_lapack %}
+module load cray-libsci/23.02.1.1
+{% endif %}
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel &> /dev/null
 module rm cray-netcdf-hdf5parallel &> /dev/null
@@ -31,22 +38,17 @@ module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
-export NETCDF_C_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
-export NETCDF_FORTRAN_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
-export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
+setenv NETCDF_C_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
+setenv NETCDF_FORTRAN_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
+setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
-export MPICH_ENV_DISPLAY=1
-export MPICH_VERSION_DISPLAY=1
+setenv MPICH_ENV_DISPLAY 1
+setenv MPICH_VERSION_DISPLAY 1
 ## purposefully omitting OMP variables that cause trouble in ESMF
-# export OMP_STACKSIZE=128M
-# export OMP_PROC_BIND=spread
-# export OMP_PLACES=threads
-export HDF5_USE_FILE_LOCKING=FALSE
+# setenv OMP_STACKSIZE 128M
+# setenv OMP_PROC_BIND spread
+# setenv OMP_PLACES threads
+setenv HDF5_USE_FILE_LOCKING FALSE
 ## Not needed
-# export PERL5LIB=/global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
-export FI_CXI_RX_MATCH_MODE=software
-
-if [ -z "${NERSC_HOST:-}" ]; then
-  # happens when building spack environment
-  export NERSC_HOST="perlmutter"
-fi
+# setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
+setenv MPICH_GPU_SUPPORT_ENABLED 1

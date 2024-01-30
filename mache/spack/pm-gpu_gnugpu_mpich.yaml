@@ -18,7 +18,7 @@ spack:
     all:
       compiler: [gcc@11.2.0]
       providers:
-        mpi: [cray-mpich@8.1.25]
+        mpi: [cray-mpich@8.1.24]
 {% if e3sm_lapack %}
         lapack: [cray-libsci@23.02.1.1]
 {% endif %}
@@ -105,8 +105,9 @@ spack:
         modules:
         - PrgEnv-gnu/8.3.3
         - gcc/11.2.0
-        - craype-accel-host
-        - craype/2.7.20
+        - cudatoolkit/11.7
+        - craype-accel-nvidia80
+        - craype/2.7.19
         - libfabric/1.15.2.0
       buildable: false
     cray-mpich:
@@ -167,11 +168,12 @@ spack:
         fc: ftn
       flags: {}
       operating_system: sles15
-      target: x86_64
+      target: any
       modules:
       - PrgEnv-gnu/8.3.3
       - gcc/11.2.0
-      - craype-accel-host
+      - cudatoolkit/11.7
+      - craype-accel-nvidia80
       - craype/2.7.20
       - libfabric/1.15.2.0
       environment:
