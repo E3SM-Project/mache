@@ -1,0 +1,180 @@
+spack:
+  specs:
+  - gcc
+  - cray-mpich
+{% if e3sm_lapack %}
+  - cray-libsci
+{% endif %}
+{% if e3sm_hdf5_netcdf %}
+  - hdf5
+  - netcdf-c
+  - netcdf-fortran
+  - parallel-netcdf
+{% endif %}
+{{ specs }}
+  concretizer:
+    unify: when_possible
+  packages:
+    all:
+      compiler: [gcc@11.2.0]
+      providers:
+        mpi: [cray-mpich@8.1.23]
+{% if e3sm_lapack %}
+        lapack: [cray-libsci@22.12.1.1]
+{% endif %}
+    autoconf:
+      externals:
+      - spec: autoconf@2.69
+        prefix: /usr
+      buildable: false
+    automake:
+      externals:
+      - spec: automake@1.15.1
+        prefix: /usr
+      buildable: false
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.8
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.23.2
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/cmake-3.23.2-4r4mpiba7cwdw2hlakh5i7tchi64s3qd
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.79.1
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.20.2
+        prefix: /usr
+      buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.3
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/gmake-4.3-32qt54ujpdxcat7ceg4vcjlmf2ze25j5
+      buildable: false
+    libxml2:
+      externals:
+      - spec: libxml2@2.9.14
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.18
+        prefix: /usr
+      buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@6.1
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.1.1l
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.26.1
+        prefix: /usr
+      buildable: false
+    python:
+      externals:
+      - spec: python@3.9.13
+        prefix: /opt/cray/pe/python/3.9.13.1
+        modules:
+        - cray-python/3.9.13.1
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.34
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.3
+        prefix: /usr
+      buildable: false
+    gcc:
+      externals:
+      - spec: gcc@11.2.0
+        modules:
+        - PrgEnv-gnu/8.3.3
+        - gcc/11.2.0
+        - craype/2.7.19
+        - libfabric/1.15.2.0
+      buildable: false
+    cray-mpich:
+      externals:
+      - spec: cray-mpich@8.1.23
+        prefix: /opt/cray/pe/mpich/8.1.23/ofi/gnu/9.1
+        modules:
+        - libfabric/1.15.2.0
+        - cray-mpich/8.1.23
+      buildable: false
+    libfabric:
+      externals:
+      - spec: libfabric@1.15.2.0
+        prefix: /opt/cray/libfabric/1.15.2.0
+        modules:
+        - libfabric/1.15.2.0
+      buildable: false
+{% if e3sm_lapack %}
+    cray-libsci:
+      externals:
+      - spec: cray-libsci@22.12.1.1
+        prefix: /opt/cray/pe/libsci/22.12.1.1/GNU/9.1/x86_64
+        modules:
+        - cray-libsci/22.12.1.1
+      buildable: false
+{% endif %}
+{% if e3sm_hdf5_netcdf or system_hdf5_netcdf %}
+    hdf5:
+      externals:
+      - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.1/GNU/9.1
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.12.3.1+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.1/GNU/9.1/
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.5.3
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
+      buildable: false
+{% endif %}
+
+  config:
+    install_missing_compilers: false
+  compilers:
+  - compiler:
+      spec: gcc@11.2.0
+      paths:
+        cc: cc
+        cxx: CC
+        f77: ftn
+        fc: ftn
+      flags: {}
+      operating_system: sles15
+      target: x86_64
+      modules:
+      - PrgEnv-gnu/8.3.3
+      - gcc/11.2.0
+      - craype/2.7.19
+      - libfabric/1.15.2.0
+      - craype-accel-amd-gfx90a
+      - rocm/5.4.0
+      environment:
+        prepend_path:
+          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.22__gd067c3f.shasta/lib64/pkgconfig"
