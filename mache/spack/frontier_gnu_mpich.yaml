@@ -107,7 +107,7 @@ spack:
         - cray-libsci/22.12.1.1
       buildable: false
 {% endif %}
-{% if e3sm_hdf5_netcdf %}
+{% if e3sm_hdf5_netcdf or system_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
@@ -125,38 +125,8 @@ spack:
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.5.3 ^netcdf-c+mpi
+      - spec: netcdf-fortran@4.5.3
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
-      - spec: netcdf-fortran@4.5.3 ^netcdf-c~mpi
-        prefix: /opt/cray/pe/netcdf/4.9.0.1/GNU/9.1
-      buildable: false
-{% endif %}
-{% if system_hdf5_netcdf %}
-    hdf5:
-      externals:
-      - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.1/GNU/9.1
-      - spec: hdf5@1.12.2.1~cxx+fortran+hl~java~mpi+shared
-        prefix: /opt/cray/pe/hdf5/1.12.2.1/GNU/9.1
-      buildable: false
-    parallel-netcdf:
-      externals:
-      - spec: parallel-netcdf@1.12.3.1+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.1/GNU/9.1/
-      buildable: false
-    netcdf-c:
-      externals:
-      - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
-      - spec: netcdf-c@4.9.0.1~mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf/4.9.0.1/GNU/9.1
-      buildable: false
-    netcdf-fortran:
-      externals:
-      - spec: netcdf-fortran@4.5.3 ^netcdf-c+mpi
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
-      - spec: netcdf-fortran@4.5.3 ^netcdf-c~mpi
-        prefix: /opt/cray/pe/netcdf/4.9.0.1/GNU/9.1
       buildable: false
 {% endif %}
   config:
