@@ -19,6 +19,7 @@ module load PrgEnv-intel/8.3.3
 module load intel/2023.1.0
 module load craype-accel-host
 module load craype/2.7.20
+module load libfabric/1.15.2.0
 module rm cray-mpich &> /dev/null
 module load cray-mpich/8.1.25
 {% if e3sm_hdf5_netcdf %}

@@ -101,6 +101,7 @@ spack:
         - intel/2023.1.0
         - craype-accel-host
         - craype/2.7.20
+        - libfabric/1.15.2.0
       buildable: false
     cray-mpich:
       externals:
@@ -108,6 +109,7 @@ spack:
         prefix: /opt/cray/pe/mpich/8.1.25/ofi/intel/19.0
         modules:
         - cray-mpich/8.1.25
+        - libfabric/1.15.2.0
       buildable: false
     libfabric:
       externals:
@@ -156,6 +158,7 @@ spack:
       - intel/2023.1.0
       - craype-accel-host
       - craype/2.7.20
+      - libfabric/1.15.2.0
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
