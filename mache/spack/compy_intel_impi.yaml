@@ -32,6 +32,11 @@ spack:
       - spec: bzip2@1.0.6
         prefix: /usr
       buildable: false
+    curl:
+      externals:
+      - spec: curl@7.29.0
+        prefix: /usr
+      buildable: false
     diffutils:
       externals:
       - spec: diffutils@3.3
@@ -47,6 +52,11 @@ spack:
       - spec: gettext@0.19.8.1
         prefix: /usr
       buildable: false
+    gmake:
+      externals:
+      - spec: gmake@3.82
+        prefix: /usr
+      buildable: false
     m4:
       externals:
       - spec: m4@1.4.16
@@ -55,6 +65,11 @@ spack:
     ncurses:
       externals:
       - spec: ncurses@5.9.20130511
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.0.2k
         prefix: /usr
       buildable: false
     perl:
