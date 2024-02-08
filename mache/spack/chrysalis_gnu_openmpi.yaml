@@ -42,6 +42,11 @@ spack:
       - spec: diffutils@3.7
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.2.0/diffutils-3.7-nnauuo4
       buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.6.0
+        prefix: /usr
+      buildable: false
     gmake:
       externals:
       - spec: gmake@4.2.1
