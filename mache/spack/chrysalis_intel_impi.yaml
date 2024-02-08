@@ -42,6 +42,11 @@ spack:
       - spec: diffutils@3.7
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/diffutils-3.7-bml5fc4
       buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr
+      buildable: false
     libiconv:
       externals:
       - spec: libiconv@1.16
