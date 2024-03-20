@@ -22,10 +22,25 @@ spack:
 {% if e3sm_lapack %}
         lapack: [cray-libsci@23.02.1.1]
 {% endif %}
+    autoconf:
+      externals:
+      - spec: autoconf@2.69
+        prefix: /usr
+      buildable: false
+    automake:
+      externals:
+      - spec: automake@1.15.1
+        prefix: /usr
+      buildable: false
     bzip2:
       externals:
       - spec: bzip2@1.0.8
         prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.23.2
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/cmake-3.23.2-4r4mpiba7cwdw2hlakh5i7tchi64s3qd
       buildable: false
     curl:
       externals:
@@ -37,9 +52,19 @@ spack:
       - spec: gettext@0.20.2
         prefix: /usr
       buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.3
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/gmake-4.3-32qt54ujpdxcat7ceg4vcjlmf2ze25j5
+      buildable: false
     libxml2:
       externals:
       - spec: libxml2@2.9.14
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.18
         prefix: /usr
       buildable: false
     ncurses:
