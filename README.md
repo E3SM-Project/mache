@@ -88,7 +88,7 @@ The attributes currently available are:
 &nbsp;&nbsp;&nbsp;&nbsp;Config options for this machine
 
 ***e3sm_supported : bool*** \
-&nbsp;&nbsp;&nbsp;&nbsp;Whether this machine supports running E3SM itself, and therefore has a 
+&nbsp;&nbsp;&nbsp;&nbsp;Whether this machine supports running E3SM itself, and therefore has a
     list of compilers, MPI libraries, and the modules needed to load them
 
 ***compilers : list*** \
@@ -164,14 +164,14 @@ E3SM maintains a set of public diagnostics data (those that we have
 permission to share with any users of our software) on LCRC machines
 (Anvil and Chrysalis) in the directory:
 
-``` 
+```
 /lcrc/group/e3sm/public_html/diagnostics/
 ```
 
 A set of private diagnostics data (which we do not have permission to
 share outside the E3SM project) are stored at:
 
-``` 
+```
 /lcrc/group/e3sm/diagnostics_private/
 ```
 
@@ -205,7 +205,7 @@ LCRC.
 Andes at OLCF requires special treatment. You need to create or edit the
 file `~/.ssh/config` with the following:
 
-``` 
+```
 Host blues.lcrc.anl.gov
     User <ac.user>
     PreferredAuthentications publickey
@@ -257,4 +257,3 @@ SPDX-License-Identifier: (BSD-3-Clause)
 See [LICENSE](./LICENSE) for details
 
 Unlimited Open Source - BSD 3-clause Distribution `LLNL-CODE-819717`
-
