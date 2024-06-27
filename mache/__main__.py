@@ -23,7 +23,7 @@ The available mache commands are:
     parser.add_argument('command', help='command to run')
     parser.add_argument('-v', '--version',
                         action='version',
-                        version='mache {}'.format(mache.version.__version__),
+                        version=f'mache {mache.version.__version__}',
                         help="Show version number and exit")
     if len(sys.argv) == 1:
         parser.print_help()
@@ -34,7 +34,7 @@ The available mache commands are:
     commands = {'sync': sync.main}
 
     if args.command not in commands:
-        print('Unrecognized command {}'.format(args.command))
+        print(f'Unrecognized command {args.command}')
         parser.print_help()
         exit(1)
 

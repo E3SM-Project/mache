@@ -29,7 +29,7 @@ def main():
     commands = {'diags': diags.main}
 
     if args.command not in commands:
-        print('Unrecognized command {}'.format(args.command))
+        print(f'Unrecognized command {args.command}')
         parser.print_help()
         exit(1)
 
