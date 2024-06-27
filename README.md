@@ -121,6 +121,10 @@ The attributes currently available are:
 ***web_portal_url : str*** \
 &nbsp;&nbsp;&nbsp;&nbsp;The base URL for the web portal
 
+***username : str*** \
+&nbsp;&nbsp;&nbsp;&nbsp;The name of the current user, for use in web-portal directories. This
+    value is also added to the `web_portal` and `username` option of the `config` attribute.
+
 ## Installing mache
 
 You can install the latest release of `mache` from conda-forge:
