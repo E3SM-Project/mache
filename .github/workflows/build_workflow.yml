@@ -11,7 +11,7 @@ on:
 
 env:
   CANCEL_OTHERS: true
-  PATHS_IGNORE: '["**/README.rst", "**/docs/**"]'
+  PATHS_IGNORE: '["**/README.md", "**/docs/**"]'
 
 jobs:
   pre-commit-hooks:
@@ -87,10 +87,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: "mache_ci"
-          miniforge-variant: Mambaforge
           miniforge-version: latest
-          use-mamba: true
-          mamba-version: "*"
           channels: conda-forge,defaults
           channel-priority: strict
           auto-update-conda: true
@@ -99,7 +96,7 @@ jobs:
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Install mache
         run: |
-          mamba create -n mache_dev --file spec-file.txt \
+          conda create -n mache_dev --file spec-file.txt \
               python=${{ matrix.python-version }}
           conda activate mache_dev
           python -m pip install -e .
