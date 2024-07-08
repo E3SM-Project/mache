@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.permissions</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href="../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Mache
+          </a>
+              <div class="version">
+                1.23.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.permissions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.permissions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">grp</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+
+<span class="kn">import</span> <span class="nn">progressbar</span>
+
+
+<div class="viewcode-block" id="update_permissions"><a class="viewcode-back" href="../../developers_guide/generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions">[docs]</a><span class="k">def</span> <span class="nf">update_permissions</span><span class="p">(</span><span class="n">base_paths</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: C901</span>
+                       <span class="n">group_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">other_readable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update the group that a directory belongs to along with the &quot;group&quot; and</span>
+<span class="sd">    &quot;other&quot; permissions for the directory</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    base_paths : str or list</span>
+<span class="sd">        The base path(s) to recursively update permissions on</span>
+
+<span class="sd">    group : str</span>
+<span class="sd">        The name of the group the contents of ``base_paths`` should belong to</span>
+
+<span class="sd">    show_progress : bool, optional</span>
+<span class="sd">        Whether to show a progress bar</span>
+
+<span class="sd">    group_writable : bool, optional</span>
+<span class="sd">        Whether to allow group write permissions</span>
+
+<span class="sd">    other_readable : bool, optional</span>
+<span class="sd">        Whether to allow world read (and, where appropriate, execute)</span>
+<span class="sd">        permissions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_paths</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">directories</span> <span class="o">=</span> <span class="p">[</span><span class="n">base_paths</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">directories</span> <span class="o">=</span> <span class="n">base_paths</span>
+
+    <span class="n">new_uid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span>
+    <span class="n">new_gid</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
+
+    <span class="n">read_write_perm</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span>
+    <span class="n">exec_perm</span> <span class="o">=</span> <span class="p">(</span><span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXUSR</span> <span class="o">|</span>
+                 <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">group_writable</span><span class="p">:</span>
+        <span class="n">read_write_perm</span> <span class="o">=</span> <span class="n">read_write_perm</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWGRP</span>
+        <span class="n">exec_perm</span> <span class="o">=</span> <span class="n">exec_perm</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWGRP</span>
+    <span class="k">if</span> <span class="n">other_readable</span><span class="p">:</span>
+        <span class="n">read_write_perm</span> <span class="o">=</span> <span class="n">read_write_perm</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span>
+        <span class="n">exec_perm</span> <span class="o">=</span> <span class="n">exec_perm</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXOTH</span>
+
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXU</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXG</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXO</span>
+
+    <span class="c1"># first the base directories that don&#39;t seem to be included in</span>
+    <span class="c1"># os.walk()</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">directories</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dir_stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">perm</span> <span class="o">=</span> <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="n">mask</span>
+
+        <span class="k">if</span> <span class="n">perm</span> <span class="o">==</span> <span class="n">exec_perm</span> <span class="ow">and</span> <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_uid</span> <span class="o">==</span> <span class="n">new_uid</span> <span class="ow">and</span> \
+                <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_gid</span> <span class="o">==</span> <span class="n">new_gid</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">new_uid</span><span class="p">,</span> <span class="n">new_gid</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">exec_perm</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+    <span class="n">files_and_dirs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">directories</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+            <span class="n">files_and_dirs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+            <span class="n">files_and_dirs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_progress</span><span class="p">:</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">[</span><span class="n">progressbar</span><span class="o">.</span><span class="n">Percentage</span><span class="p">(),</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">progressbar</span><span class="o">.</span><span class="n">Bar</span><span class="p">(),</span>
+                   <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">progressbar</span><span class="o">.</span><span class="n">ETA</span><span class="p">()]</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">progressbar</span><span class="o">.</span><span class="n">ProgressBar</span><span class="p">(</span><span class="n">widgets</span><span class="o">=</span><span class="n">widgets</span><span class="p">,</span>
+                                      <span class="n">maxval</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">files_and_dirs</span><span class="p">),</span>
+                                      <span class="n">maxerror</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">progress</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">directories</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                <span class="n">progress</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">show_progress</span><span class="p">:</span>
+                    <span class="n">bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">progress</span><span class="p">)</span>
+
+                <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dir_stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">perm</span> <span class="o">=</span> <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="n">mask</span>
+
+                <span class="k">if</span> <span class="n">perm</span> <span class="o">==</span> <span class="n">exec_perm</span> <span class="ow">and</span> <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_uid</span> <span class="o">==</span> <span class="n">new_uid</span> <span class="ow">and</span> \
+                        <span class="n">dir_stat</span><span class="o">.</span><span class="n">st_gid</span> <span class="o">==</span> <span class="n">new_gid</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">new_uid</span><span class="p">,</span> <span class="n">new_gid</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">exec_perm</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+            <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">progress</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">progress</span><span class="p">)</span>
+                <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">file_stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">perm</span> <span class="o">=</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="n">mask</span>
+
+                <span class="k">if</span> <span class="n">perm</span> <span class="o">&amp;</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXUSR</span><span class="p">:</span>
+                    <span class="c1"># executable, so make sure others can execute it</span>
+                    <span class="n">new_perm</span> <span class="o">=</span> <span class="n">exec_perm</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_perm</span> <span class="o">=</span> <span class="n">read_write_perm</span>
+
+                <span class="k">if</span> <span class="n">perm</span> <span class="o">==</span> <span class="n">new_perm</span> <span class="ow">and</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_uid</span> <span class="o">==</span> <span class="n">new_uid</span> <span class="ow">and</span> \
+                        <span class="n">file_stat</span><span class="o">.</span><span class="n">st_gid</span> <span class="o">==</span> <span class="n">new_gid</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">new_uid</span><span class="p">,</span> <span class="n">new_gid</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">new_perm</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+    <span class="k">if</span> <span class="n">show_progress</span><span class="p">:</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: main
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="permissions.html">main</a></dd>
+    </dl>
+  </div>
+</div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
