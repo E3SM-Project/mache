@@ -111,3 +111,13 @@ jobs:
           pip check
           mache sync diags --help
           python conda/run_test.py
+
+      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        name: Build Sphinx Docs
+        run: |
+          conda activate mache_dev
+          # sphinx-multiversion expects at least a "main" branch
+          git branch main || echo "branch main already exists."
+          cd docs
+          sphinx-multiversion . _build/html
+
