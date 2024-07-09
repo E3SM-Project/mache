@@ -9,6 +9,8 @@ module rm PrgEnv-aocc &> /dev/null
 module rm intel &> /dev/null
 module rm intel-oneapi &> /dev/null
 module rm cudatoolkit &> /dev/null
+module rm climate-utils &> /dev/null
+module rm matlab &> /dev/null
 module rm craype-accel-nvidia80 &> /dev/null
 module rm craype-accel-host &> /dev/null
 module rm perftools-base &> /dev/null
