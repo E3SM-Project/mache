@@ -44,6 +44,7 @@ export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
+export MPICH_MPIIO_DVS_MAXNODES=1
 ## purposefully omitting OMP variables that cause trouble in ESMF
 # export OMP_STACKSIZE=128M
 # export OMP_PROC_BIND=spread

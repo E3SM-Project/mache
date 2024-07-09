@@ -40,6 +40,7 @@ setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
 setenv MPICH_ENV_DISPLAY 1
 setenv MPICH_VERSION_DISPLAY 1
+setenv MPICH_MPIIO_DVS_MAXNODES 1
 ## purposefully omitting OMP variables that cause trouble in ESMF
 # setenv OMP_STACKSIZE 128M
 # setenv OMP_PROC_BIND spread
