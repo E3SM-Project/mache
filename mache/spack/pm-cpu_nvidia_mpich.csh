@@ -38,6 +38,7 @@ module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
+setenv NETCDF_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv NETCDF_C_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv NETCDF_FORTRAN_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
@@ -53,3 +54,6 @@ setenv HDF5_USE_FILE_LOCKING FALSE
 ## Not needed
 # setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
 setenv MPICH_GPU_SUPPORT_ENABLED 1
+setenv MPICH_COLL_SYNC MPI_Bcast
+setenv GATOR_INITIAL_MB 4000MB
+setenv BLA_VENDOR NVHPC

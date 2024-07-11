@@ -38,6 +38,7 @@ module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
+export NETCDF_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_C_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_FORTRAN_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
@@ -58,3 +59,7 @@ if [ -z "${NERSC_HOST:-}" ]; then
   # happens when building spack environment
   export NERSC_HOST="perlmutter"
 fi
+export MPICH_GPU_SUPPORT_ENABLED=1
+export MPICH_COLL_SYNC=MPI_Bcast
+export GATOR_INITIAL_MB=4000MB
+export BLA_VENDOR=NVHPC
