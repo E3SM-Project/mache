@@ -6,6 +6,8 @@ module rm PrgEnv-intel &> /dev/null
 module rm PrgEnv-nvidia &> /dev/null
 module rm PrgEnv-cray &> /dev/null
 module rm PrgEnv-aocc &> /dev/null
+module rm climate-utils &> /dev/null
+module rm matlab &> /dev/null
 module rm intel &> /dev/null
 module rm intel-oneapi &> /dev/null
 module rm cudatoolkit &> /dev/null
@@ -37,11 +39,13 @@ module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
+export NETCDF_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_C_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_FORTRAN_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
 {% endif %}
 export MPICH_ENV_DISPLAY=1
+export MPICH_MPIIO_DVS_MAXNODES=1
 export MPICH_VERSION_DISPLAY=1
 ## purposefully omitting OMP variables that cause trouble in ESMF
 # export OMP_STACKSIZE=128M
