@@ -16,6 +16,8 @@ requirements:
   host:
     - python >=3.8
     - pip
+    - setuptools >=60
+    - setuptools-scm >=8.0
   run:
     - python >=3.8
     - importlib_resources

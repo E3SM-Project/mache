@@ -6,6 +6,10 @@ pyyaml
 progressbar2
 rsync
 
+# Building
+setuptools >=60
+setuptools-scm >=8.0
+
 # Linting and testing
 pip
 pytest
