@@ -1,0 +1,87 @@
+[project]
+name = "mache"
+dynamic = ["version"]
+authors = [
+    { name="Xylar Asay-Davis", email="xylar@lanl.gov" },
+    { name="Althea Denlinger", email="althea@lanl.gov" }
+]
+description = "A package for providing configuration data related to E3SM supported machines."
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    # these are only for searching/browsing projects on PyPI
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "importlib_resources",
+    "jinja2",
+    "lxml",
+    "pyyaml",
+    "progressbar2",
+]
+
+[project.optional-dependencies]
+docs = [
+    # building documentation
+    "sphinx",
+    "sphinx_rtd_theme",
+    "myst-parser",
+    "sphinx-multiversion",
+    "rst-to-myst",
+]
+
+dev = [
+    # linting and testing
+    "pip",
+    "pytest",
+    "isort",
+    "flake8",
+    "mypy",
+    "pre-commit",
+]
+
+[tool.isort]
+multi_line_output = "3"
+include_trailing_comma = true
+force_grid_wrap = "0"
+use_parentheses = true
+line_length = "79"
+skip = "e3sm_diags/e3sm_diags_driver.py"
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
+[build-system]
+requires = [
+    "setuptools>=60",
+    "setuptools-scm>=8.0",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+exclude = ["docs*", "conda*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "mache.version.__version__" }
+
+# evolution of options.entry-points
+[project.scripts]
+mache = "mache.__main__:main"
+
+[project.urls]
+Documentation = "https://docs.e3sm.org/mache"
+"Bug Tracker" = "https://github.com/E3SM-Project/mache/issues"
