@@ -66,10 +66,7 @@ warn_redundant_casts = true
 warn_unused_configs = true
 
 [build-system]
-requires = [
-    "setuptools>=60",
-    "setuptools-scm>=8.0",
-]
+requires = ["setuptools>=60"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
