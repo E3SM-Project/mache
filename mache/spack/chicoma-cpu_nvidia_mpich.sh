@@ -14,7 +14,7 @@ module rm PrgEnv-aocc
 module rm craype-accel-nvidia80
 module rm craype-accel-host
 
-module load PrgEnv-nvidia
+module load PrgEnv-nvidia/8.4.0
 module load nvidia/22.7
 module load craype-x86-milan
 module load libfabric/1.15.2.0
@@ -22,7 +22,7 @@ module load craype-accel-host
 module load craype
 module load cray-mpich/8.1.26
 {% if e3sm_lapack %}
-module load cray-libsci/23.02.1.1
+module load cray-libsci/23.05.1.4
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel

@@ -107,7 +107,7 @@ spack:
     cray-libsci:
       externals:
       - spec: cray-libsci@23.05.1.4
-        prefix: /opt/cray/pe/libsci/23.02.1.1/NVIDIA/20.7/x86_64
+        prefix: /opt/cray/pe/libsci/23.05.1.4/NVIDIA/20.7/x86_64
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf or system_hdf5_netcdf %}
@@ -148,7 +148,7 @@ spack:
       operating_system: sles15
       target: any
       modules:
-      - PrgEnv-nvidia
+      - PrgEnv-nvidia/8.4.0
       - nvidia/22.7
       - craype-x86-milan
       - craype-accel-host
