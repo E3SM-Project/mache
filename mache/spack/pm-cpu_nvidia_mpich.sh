@@ -59,7 +59,6 @@ if [ -z "${NERSC_HOST:-}" ]; then
   # happens when building spack environment
   export NERSC_HOST="perlmutter"
 fi
-export MPICH_GPU_SUPPORT_ENABLED=1
 export MPICH_COLL_SYNC=MPI_Bcast
 export GATOR_INITIAL_MB=4000MB
 export BLA_VENDOR=NVHPC
