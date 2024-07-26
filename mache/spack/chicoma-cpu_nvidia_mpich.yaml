@@ -91,7 +91,7 @@ spack:
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.26
-        prefix: /opt/cray/pe/mpich/8.1.25/ofi/nvidia/20.7
+        prefix: /opt/cray/pe/mpich/8.1.26/ofi/nvidia/20.7
         modules:
         - libfabric/1.15.2.0
         - cray-mpich/8.1.26

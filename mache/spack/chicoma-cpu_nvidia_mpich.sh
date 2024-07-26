@@ -43,7 +43,6 @@ export HDF5_USE_FILE_LOCKING=FALSE
 export PERL5LIB=/usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
 export PNETCDF_HINTS="romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
 export MPICH_COLL_SYNC=MPI_Bcast
-export MPICH_GPU_SUPPORT_ENABLED=1
 
 export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 export BLA_VENDOR=NVHPC

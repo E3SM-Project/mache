@@ -43,7 +43,6 @@ setenv HDF5_USE_FILE_LOCKING FALSE
 setenv PERL5LIB /usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
 setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
 setenv MPICH_COLL_SYNC MPI_Bcast
-setenv MPICH_GPU_SUPPORT_ENABLED 1
 
 setenv LD_LIBRARY_PATH $CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 setenv BLA_VENDOR NVHPC
