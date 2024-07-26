@@ -26,6 +26,11 @@ spack:
       - spec: bzip2@1.0.6
         prefix: /usr
       buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.25.1
+        prefix: /usr/projects/hpcsoft/cos2/common/x86_64/cmake/3.25.1
+      buildable: false
     curl:
       externals:
       - spec: curl@7.60.0
