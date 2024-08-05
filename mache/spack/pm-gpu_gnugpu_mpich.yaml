@@ -110,6 +110,18 @@ spack:
         - craype/2.7.19
         - libfabric/1.15.2.0
       buildable: false
+    cuda:
+      externals:
+      - spec: cuda@11.7
+        prefix: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7
+        modules:
+        - PrgEnv-gnu/8.3.3
+        - gcc/11.2.0
+        - cudatoolkit/11.7
+        - craype-accel-nvidia80
+        - craype/2.7.19
+        - libfabric/1.15.2.0
+      buildable: false
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.25
