@@ -98,6 +98,19 @@ spack:
       - spec: xz@5.2.3
         prefix: /usr
       buildable: false
+    cuda:
+      externals:
+      - spec: cuda@11.7
+        prefix: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7
+        modules:
+        - PrgEnv-nvidia
+        - nvidia/22.7
+        - cudatoolkit/11.7
+        - craype-accel-nvidia80
+        - gcc-mixed/11.2.0
+        - craype-x86-milan
+        - libfabric
+      buildable: false
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.25
