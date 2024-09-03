@@ -14,11 +14,11 @@ build:
 
 requirements:
   host:
-    - python >=3.8
+    - python >=3.9
     - pip
     - setuptools >=60
   run:
-    - python >=3.8
+    - python >=3.9
     - importlib_resources
     - jinja2
     - lxml

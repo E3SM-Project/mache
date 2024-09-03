@@ -1,17 +1,11 @@
 import os
 import subprocess
 import sys
+from importlib import resources as importlib_resources
 from typing import TYPE_CHECKING
 
-from jinja2 import Template
-
-if TYPE_CHECKING or sys.version_info >= (3, 9, 0):
-    from importlib import resources as importlib_resources
-else:
-    # python <= 3.8
-    import importlib_resources
-
 import yaml
+from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
 from mache.version import __version__
@@ -98,7 +92,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                     section.getboolean('modules_after'))
 
     # add the package specs to the appropriate template
-    specs = ''.join([f'  - {spec}\n' for spec in spack_specs])
+    specs = ''.join([f'  - {spec}\n' for spec in spack_specs])  # noqa: E221
 
     yaml_data = _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
                                include_e3sm_hdf5_netcdf,
@@ -111,8 +105,9 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 
     if with_modules:
         mods = _get_modules(yaml_data)
-        modules = f'module purge\n' \
-                  f'{mods}'
+        modules = \
+            f'module purge\n' \
+            f'{mods}'
     else:
         modules = ''
 
@@ -139,8 +134,9 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     with open(str(path)) as fp:
         template = Template(fp.read())
     if tmpdir is not None:
-        modules = f'{modules}\n' \
-                  f'export TMPDIR={tmpdir}'
+        modules = \
+            f'{modules}\n' \
+            f'export TMPDIR={tmpdir}'
 
     template_args = dict(modules=modules, version=__version__,
                          spack_path=spack_path, env_name=env_name,
@@ -245,9 +241,10 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
     else:
         load_script = ''
 
-    load_script = f'{load_script}' \
-                  f'source {spack_path}/share/spack/setup-env.{shell}\n' \
-                  f'spack env activate {env_name}'
+    load_script = \
+        f'{load_script}' \
+        f'source {spack_path}/share/spack/setup-env.{shell}\n' \
+        f'spack env activate {env_name}'
 
     for shell_filename in [f'{machine}.{shell}',
                            f'{machine}_{compiler}_{mpi}.{shell}']:

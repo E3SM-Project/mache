@@ -1,17 +1,9 @@
 import configparser
 import os
 import pwd
-import sys
-from typing import TYPE_CHECKING
+from importlib import resources as importlib_resources
 
 from lxml import etree
-
-if TYPE_CHECKING or sys.version_info >= (3, 9, 0):
-    from importlib import resources as importlib_resources
-else:
-    # python <= 3.8
-    import importlib_resources
-
 
 from mache.discover import discover_machine
 
@@ -122,15 +114,17 @@ class MachineInfo:
             The contents as a string for printing to the terminal
         """
 
-        info = f'Machine: {self.machine}\n' \
-               f'  E3SM Supported Machine: {self.e3sm_supported}'
+        info = \
+            f'Machine: {self.machine}\n' \
+            f'  E3SM Supported Machine: {self.e3sm_supported}'
 
         if self.e3sm_supported and self.compilers is not None and \
                 self.mpilibs is not None and self.os is not None:
-            info = f'{info}\n' \
-                   f'  Compilers: {", ".join(self.compilers)}\n' \
-                   f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
-                   f'  OS: {self.os}'
+            info = \
+                f'{info}\n' \
+                f'  Compilers: {", ".join(self.compilers)}\n' \
+                f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
+                f'  OS: {self.os}'
 
         info = f'{info}\n'
 
@@ -138,41 +132,51 @@ class MachineInfo:
                          self.e3sm_unified_base is not None or
                          self.e3sm_unified_mpi is not None)
         if print_unified:
-            info = f'{info}\n' \
-                   f'E3SM-Unified:'
+            info = \
+                f'{info}\n' \
+                f'E3SM-Unified: '
 
             if self.e3sm_unified_activation is None:
-                info = f'{info}\n' \
-                       f'  E3SM-Unified is not currently loaded'
+                info = \
+                    f'{info}\n' \
+                    f'  E3SM-Unified is not currently loaded'
             else:
-                info = f'{info}\n' \
-                       f'  Activation: {self.e3sm_unified_activation}'
+                info = \
+                    f'{info}\n' \
+                    f'  Activation: {self.e3sm_unified_activation}'
             if self.e3sm_unified_base is not None:
-                info = f'{info}\n' \
-                       f'  Base path: {self.e3sm_unified_base}'
+                info = \
+                    f'{info}\n' \
+                    f'  Base path: {self.e3sm_unified_base}'
             if self.e3sm_unified_mpi is not None:
-                info = f'{info}\n' \
-                       f'  MPI type: {self.e3sm_unified_mpi}'
+                info = \
+                    f'{info}\n' \
+                    f'  MPI type: {self.e3sm_unified_mpi}'
             info = f'{info}\n'
 
         print_diags = self.diagnostics_base is not None
         if print_diags:
-            info = f'{info}\n' \
-                   f'Diagnostics:'
+            info = \
+                f'{info}\n' \
+                f'Diagnostics: '
 
             if self.diagnostics_base is not None:
-                info = f'{info}\n' \
-                       f'  Base path: {self.diagnostics_base}'
+                info = \
+                    f'{info}\n' \
+                    f'  Base path: {self.diagnostics_base}'
             info = f'{info}\n'
 
-        info = f'{info}\n' \
-               f'Config options:'
+        info = \
+            f'{info}\n' \
+            f'Config options: '
         for section in self.config.sections():
-            info = f'{info}\n' \
-                   f'  [{section}]'
+            info = \
+                f'{info}\n' \
+                f'  [{section}]'
             for key, value in self.config.items(section):
-                info = f'{info}\n' \
-                       f'    {key} = {value}'
+                info = \
+                    f'{info}\n' \
+                    f'    {key} = {value}'
             info = f'{info}\n'
         return info
 
