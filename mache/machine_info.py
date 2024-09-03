@@ -1,16 +1,9 @@
 import configparser
 import os
 import pwd
-import sys
-from typing import TYPE_CHECKING
+from importlib import resources as importlib_resources
 
 from lxml import etree
-
-if TYPE_CHECKING or sys.version_info >= (3, 9, 0):
-    from importlib import resources as importlib_resources
-else:
-    # python <= 3.8
-    import importlib_resources
 
 from mache.discover import discover_machine
 

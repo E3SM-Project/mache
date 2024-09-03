@@ -1,17 +1,11 @@
 import os
 import subprocess
 import sys
+from importlib import resources as importlib_resources
 from typing import TYPE_CHECKING
 
-from jinja2 import Template
-
-if TYPE_CHECKING or sys.version_info >= (3, 9, 0):
-    from importlib import resources as importlib_resources
-else:
-    # python <= 3.8
-    import importlib_resources
-
 import yaml
+from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
 from mache.version import __version__

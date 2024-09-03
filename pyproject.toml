@@ -8,10 +8,9 @@ authors = [
 description = "A package for providing configuration data related to E3SM supported machines."
 license = {file = "LICENSE"}
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     # these are only for searching/browsing projects on PyPI
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
