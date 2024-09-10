@@ -92,6 +92,11 @@ spack:
       - spec: zlib@1.2.7
         prefix: /usr
       buildable: false
+    python:
+      externals:
+      - spec: python@3.12.3
+        prefix: /share/apps/python/miniconda2024May29
+      buildable: false
     intel:
       externals:
       - spec: intel@20.0.0
