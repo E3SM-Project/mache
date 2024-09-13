@@ -1,6 +1,6 @@
 module reset >& /dev/null
 module switch PrgEnv-cray PrgEnv-gnu/8.3.3 >& /dev/null
-module switch gcc gcc/11.2.0 >& /dev/null
+module switch gcc gcc/12.2.0 >& /dev/null
 
 {% if e3sm_lapack %}
 module load cray-libsci/22.12.1.1
