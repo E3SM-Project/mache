@@ -6,10 +6,12 @@ module rm PrgEnv-intel &> /dev/null
 module rm PrgEnv-nvidia &> /dev/null
 module rm PrgEnv-cray &> /dev/null
 module rm PrgEnv-aocc &> /dev/null
+module rm gcc-native &> /dev/null
 module rm intel &> /dev/null
 module rm intel-oneapi &> /dev/null
 module rm cudatoolkit &> /dev/null
 module rm climate-utils &> /dev/null
+module rm cray-libsci &> /dev/null
 module rm matlab &> /dev/null
 module rm craype-accel-nvidia80 &> /dev/null
 module rm craype-accel-host &> /dev/null
