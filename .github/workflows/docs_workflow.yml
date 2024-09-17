@@ -48,7 +48,7 @@ jobs:
           conda create -n mache_dev --file spec-file.txt \
             python=${{ matrix.python-version }}
           conda activate mache_dev
-          python -m pip install -e .
+          python -m pip install -vv --no-deps --no-build-isolation -e .
 
       - name: Build Sphinx Docs
         run: |
