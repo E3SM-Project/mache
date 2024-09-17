@@ -23,7 +23,7 @@ conda config --add channels conda-forge
 conda config --set channel_priority strict
 conda create -y -n mache_dev --file spec-file.txt
 conda activate mache_dev
-python -m pip install -e .
+python -m pip install --no-deps --no-build-isolation -e .
 ```
 
 To install the development version of `mache` in an existing
@@ -31,7 +31,7 @@ environment, you can run:
 
 ```bash
 conda install --file spec-file.txt
-python -m pip install -e .
+python -m pip install --no-deps --no-build-isolation -e .
 ```
 
 (dev-code-styling)=
