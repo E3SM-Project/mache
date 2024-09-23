@@ -99,7 +99,7 @@ jobs:
           conda create -n mache_dev --file spec-file.txt \
               python=${{ matrix.python-version }}
           conda activate mache_dev
-          python -m pip install -e .
+          python -m pip install --no-deps --no-build-isolation -vv -e .
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Run Tests

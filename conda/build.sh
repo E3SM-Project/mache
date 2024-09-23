@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-$PYTHON -m pip install -vv --no-deps .
+$PYTHON -m pip install -vv --no-deps --no-build-isolation .
 
 mkdir -p "$PREFIX"/bin
 POST_LINK="$PREFIX"/bin/.mache-post-link.sh
