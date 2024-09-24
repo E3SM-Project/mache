@@ -54,16 +54,12 @@ jobs:
         run: |
           set -e
           conda activate mache_dev
-          pip check
-          mache sync diags --help
           cd docs
           sphinx-multiversion . _build/html
       - name: Copy Docs and Commit
         run: |
           set -e
           conda activate mache_dev
-          pip check
-          mache sync diags --help
           cd docs
           # gh-pages branch must already exist
           git clone https://github.com/E3SM-Project/mache.git --branch gh-pages --single-branch gh-pages

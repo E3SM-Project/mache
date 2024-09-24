@@ -27,13 +27,17 @@ requirements:
     - rsync
 
 test:
+  source_files:
+    - tests
   requires:
     - pip
+    - pytest
   imports:
     - mache
   commands:
     - mache sync diags --help
     - pip check
+    - pytest tests
 
 about:
   home: https://github.com/E3SM-Project/mache

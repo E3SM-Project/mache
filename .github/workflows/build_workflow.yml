@@ -110,7 +110,7 @@ jobs:
           conda activate mache_dev
           pip check
           mache sync diags --help
-          python conda/run_test.py
+          pytest tests
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Build Sphinx Docs
