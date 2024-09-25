@@ -16,7 +16,7 @@ spack:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@11.2.0]
+      compiler: [gcc@12.2.0]
       providers:
         mpi: [cray-mpich@8.1.25]
 {% if e3sm_lapack %}
@@ -101,10 +101,10 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@11.2.0
+      - spec: gcc@12.2.0
         modules:
-        - PrgEnv-gnu/8.3.3
-        - gcc/11.2.0
+        - PrgEnv-gnu/8.5.0
+        - gcc/12.2.0
         - craype-accel-host
         - craype/2.7.20
         - libfabric/1.15.2.0
@@ -159,7 +159,7 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: gcc@11.2.0
+      spec: gcc@12.2.0
       paths:
         cc: cc
         cxx: CC
@@ -169,8 +169,8 @@ spack:
       operating_system: sles15
       target: x86_64
       modules:
-      - PrgEnv-gnu/8.3.3
-      - gcc/11.2.0
+      - PrgEnv-gnu/8.5.0
+      - gcc/12.2.0
       - craype-accel-host
       - craype/2.7.20
       - libfabric/1.15.2.0

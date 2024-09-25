@@ -6,10 +6,12 @@ module rm PrgEnv-intel &> /dev/null
 module rm PrgEnv-nvidia &> /dev/null
 module rm PrgEnv-cray &> /dev/null
 module rm PrgEnv-aocc &> /dev/null
+module rm gcc-native &> /dev/null
 module rm intel &> /dev/null
 module rm intel-oneapi &> /dev/null
 module rm cudatoolkit &> /dev/null
 module rm climate-utils &> /dev/null
+module rm cray-libsci &> /dev/null
 module rm matlab &> /dev/null
 module rm craype-accel-nvidia80 &> /dev/null
 module rm craype-accel-host &> /dev/null
@@ -17,8 +19,8 @@ module rm perftools-base &> /dev/null
 module rm perftools &> /dev/null
 module rm darshan &> /dev/null
 
-module load PrgEnv-gnu/8.3.3
-module load gcc/11.2.0
+module load PrgEnv-gnu/8.5.0
+module load gcc/12.2.0
 module load craype-accel-host
 {% if e3sm_lapack %}
 module load cray-libsci/23.02.1.1

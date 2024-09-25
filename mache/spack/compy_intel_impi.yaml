@@ -130,21 +130,21 @@ spack:
     netcdf-c:
       externals:
       - spec: netcdf-c~mpi~parallel-netcdf@4.6.3
-        prefix: /share/apps/netcdf/4.6.3/intel/19.0.5
+        prefix: /share/apps/netcdf/4.6.3/intel/20.0.0
         modules:
         - netcdf/4.6.3
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.4.5
-        prefix: /share/apps/netcdf/4.6.3/intel/19.0.5
+        prefix: /share/apps/netcdf/4.6.3/intel/20.0.0
         modules:
         - netcdf/4.6.3
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf+cxx+fortran@1.9.0
-        prefix: /share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/
+        prefix: /share/apps/pnetcdf/1.9.0/intel/20.0.0/intelmpi/2020/
         modules:
         - pnetcdf/1.9.0
       buildable: false
