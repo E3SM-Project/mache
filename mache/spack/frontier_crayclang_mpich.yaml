@@ -122,7 +122,7 @@ spack:
         - cray-libsci/22.12.1.1
       buildable: false
 {% endif %}
-{% if e3sm_hdf5_netcdf or system_hdf5_netcdf %}
+{% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
