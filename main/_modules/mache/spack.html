@@ -96,7 +96,6 @@
 <div class="viewcode-block" id="make_spack_env"><a class="viewcode-back" href="../../developers_guide/generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env">[docs]</a><span class="k">def</span> <span class="nf">make_spack_env</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">spack_specs</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span>
                    <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                    <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                   <span class="n">include_system_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                    <span class="n">yaml_template</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmpdir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spack_mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                    <span class="n">custom_spack</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -136,10 +135,6 @@
 <span class="sd">        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf</span>
 <span class="sd">        as used in E3SM</span>
 
-<span class="sd">    include_system_hdf5_netcdf : bool, optional</span>
-<span class="sd">        Whether to include the system hdf5, netcdf-c, netcdf-fortran and</span>
-<span class="sd">        pnetcdf (not necessarily the same as E3SM)</span>
-
 <span class="sd">    yaml_template : str, optional</span>
 <span class="sd">        A jinja template for a yaml file to be used for the environment instead</span>
 <span class="sd">        of the mache template.  This allows you to use compilers and other</span>
@@ -177,8 +172,7 @@
     <span class="n">specs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;  - </span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">spack_specs</span><span class="p">])</span>  <span class="c1"># noqa: E221</span>
 
     <span class="n">yaml_data</span> <span class="o">=</span> <span class="n">_get_yaml_data</span><span class="p">(</span><span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="p">,</span>
-                               <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-                               <span class="n">include_system_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span>
+                               <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span>
                                <span class="n">yaml_template</span><span class="p">)</span>
 
     <span class="n">yaml_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.yaml&#39;</span><span class="p">)</span>
@@ -206,8 +200,7 @@
             <span class="k">continue</span>
         <span class="n">bash_script</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
             <span class="n">e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-            <span class="n">system_hdf5_netcdf</span><span class="o">=</span><span class="n">include_system_hdf5_netcdf</span><span class="p">)</span>
+            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">)</span>
 
         <span class="n">modules</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">modules</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">bash_script</span><span class="si">}</span><span class="s1">&#39;</span>
 
@@ -241,7 +234,7 @@
 <div class="viewcode-block" id="get_spack_script"><a class="viewcode-back" href="../../developers_guide/generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script">[docs]</a><span class="k">def</span> <span class="nf">get_spack_script</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">config_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">include_system_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">yaml_template</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                     <span class="n">yaml_template</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build a snippet of a load script for the given spack environment</span>
 
@@ -277,10 +270,6 @@
 <span class="sd">        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf</span>
 <span class="sd">        as used in E3SM</span>
 
-<span class="sd">    include_system_hdf5_netcdf : bool, optional</span>
-<span class="sd">        Whether to include the system hdf5, netcdf-c, netcdf-fortran and</span>
-<span class="sd">        pnetcdf (not necessarily the same as E3SM)</span>
-
 <span class="sd">    yaml_template : str, optional</span>
 <span class="sd">        A jinja template for a yaml file to be used for the environment instead</span>
 <span class="sd">        of the mache template.  This allows you to use compilers and other</span>
@@ -313,7 +302,7 @@
 
     <span class="n">yaml_data</span> <span class="o">=</span> <span class="n">_get_yaml_data</span><span class="p">(</span>
         <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="p">,</span> <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-        <span class="n">include_system_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">)</span>
+        <span class="n">specs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">modules_before</span> <span class="ow">or</span> <span class="n">modules_after</span><span class="p">:</span>
         <span class="n">load_script</span> <span class="o">=</span> <span class="s1">&#39;module purge</span><span class="se">\n</span><span class="s1">&#39;</span>
@@ -341,8 +330,7 @@
             <span class="k">continue</span>
         <span class="n">shell_script</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
             <span class="n">e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-            <span class="n">system_hdf5_netcdf</span><span class="o">=</span><span class="n">include_system_hdf5_netcdf</span><span class="p">)</span>
+            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">)</span>
         <span class="n">load_script</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">load_script</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">shell_script</span><span class="si">}</span><span class="s1">&#39;</span>
 
     <span class="k">if</span> <span class="n">modules_after</span><span class="p">:</span>
@@ -355,7 +343,6 @@
 <div class="viewcode-block" id="get_modules_env_vars_and_mpi_compilers"><a class="viewcode-back" href="../../developers_guide/generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers">[docs]</a><span class="k">def</span> <span class="nf">get_modules_env_vars_and_mpi_compilers</span><span class="p">(</span><span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span>
                                            <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                            <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                           <span class="n">include_system_hdf5_netcdf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                            <span class="n">yaml_template</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the non-spack modules, environment variables and compiler names for a</span>
@@ -383,10 +370,6 @@
 <span class="sd">    include_e3sm_hdf5_netcdf : bool, optional</span>
 <span class="sd">        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf</span>
 <span class="sd">        as used in E3SM</span>
-
-<span class="sd">    include_system_hdf5_netcdf : bool, optional</span>
-<span class="sd">        Whether to include the system hdf5, netcdf-c, netcdf-fortran and</span>
-<span class="sd">        pnetcdf (not necessarily the same as E3SM)</span>
 
 <span class="sd">    yaml_template : str, optional</span>
 <span class="sd">        A jinja template for a yaml file to be used for the environment instead</span>
@@ -432,7 +415,7 @@
     <span class="k">if</span> <span class="n">with_modules</span><span class="p">:</span>
         <span class="n">yaml_data</span> <span class="o">=</span> <span class="n">_get_yaml_data</span><span class="p">(</span>
             <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="p">,</span>
-            <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span> <span class="n">include_system_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
             <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">)</span>
         <span class="n">mods</span> <span class="o">=</span> <span class="n">_get_modules</span><span class="p">(</span><span class="n">yaml_data</span><span class="p">)</span>
         <span class="n">mod_env_commands</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mod_env_commands</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">mods</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
@@ -449,8 +432,7 @@
             <span class="k">continue</span>
         <span class="n">shell_script</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
             <span class="n">e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-            <span class="n">system_hdf5_netcdf</span><span class="o">=</span><span class="n">include_system_hdf5_netcdf</span><span class="p">)</span>
+            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">)</span>
         <span class="n">mod_env_commands</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mod_env_commands</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">shell_script</span><span class="si">}</span><span class="s1">&#39;</span>
 
     <span class="n">mpicc</span><span class="p">,</span> <span class="n">mpicxx</span><span class="p">,</span> <span class="n">mpifc</span> <span class="o">=</span> <span class="n">_get_mpi_compilers</span><span class="p">(</span><span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span>
@@ -460,7 +442,7 @@
 
 
 <span class="k">def</span> <span class="nf">_get_yaml_data</span><span class="p">(</span><span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">include_e3sm_lapack</span><span class="p">,</span>
-                   <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span> <span class="n">include_system_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span>
+                   <span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span>
                    <span class="n">yaml_template</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Get the data from the jinja-templated yaml file based on settings &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">yaml_template</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -479,8 +461,7 @@
 
     <span class="n">yaml_data</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">,</span>
                                 <span class="n">e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-                                <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">,</span>
-                                <span class="n">system_hdf5_netcdf</span><span class="o">=</span><span class="n">include_system_hdf5_netcdf</span><span class="p">)</span>
+                                <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">include_e3sm_hdf5_netcdf</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">yaml_data</span>
 
 
