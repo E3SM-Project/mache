@@ -14,7 +14,6 @@ from mache.version import __version__
 def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
                    machine=None, config_file=None, include_e3sm_lapack=False,
                    include_e3sm_hdf5_netcdf=False,
-                   include_system_hdf5_netcdf=False,
                    yaml_template=None, tmpdir=None, spack_mirror=None,
                    custom_spack=''):
     """
@@ -54,10 +53,6 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
 
-    include_system_hdf5_netcdf : bool, optional
-        Whether to include the system hdf5, netcdf-c, netcdf-fortran and
-        pnetcdf (not necessarily the same as E3SM)
-
     yaml_template : str, optional
         A jinja template for a yaml file to be used for the environment instead
         of the mache template.  This allows you to use compilers and other
@@ -95,8 +90,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
     specs = ''.join([f'  - {spec}\n' for spec in spack_specs])  # noqa: E221
 
     yaml_data = _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
-                               include_e3sm_hdf5_netcdf,
-                               include_system_hdf5_netcdf, specs,
+                               include_e3sm_hdf5_netcdf, specs,
                                yaml_template)
 
     yaml_filename = os.path.abspath(f'{env_name}.yaml')
@@ -124,8 +118,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
             continue
         bash_script = template.render(
             e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-            system_hdf5_netcdf=include_system_hdf5_netcdf)
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
 
         modules = f'{modules}\n{bash_script}'
 
@@ -159,7 +152,7 @@ def make_spack_env(spack_path, env_name, spack_specs, compiler, mpi,
 def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
                      config_file=None, include_e3sm_lapack=False,
                      include_e3sm_hdf5_netcdf=False,
-                     include_system_hdf5_netcdf=False, yaml_template=None):
+                     yaml_template=None):
     """
     Build a snippet of a load script for the given spack environment
 
@@ -195,10 +188,6 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
 
-    include_system_hdf5_netcdf : bool, optional
-        Whether to include the system hdf5, netcdf-c, netcdf-fortran and
-        pnetcdf (not necessarily the same as E3SM)
-
     yaml_template : str, optional
         A jinja template for a yaml file to be used for the environment instead
         of the mache template.  This allows you to use compilers and other
@@ -231,7 +220,7 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
 
     yaml_data = _get_yaml_data(
         machine, compiler, mpi, include_e3sm_lapack, include_e3sm_hdf5_netcdf,
-        include_system_hdf5_netcdf, specs='', yaml_template=yaml_template)
+        specs='', yaml_template=yaml_template)
 
     if modules_before or modules_after:
         load_script = 'module purge\n'
@@ -259,8 +248,7 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
             continue
         shell_script = template.render(
             e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-            system_hdf5_netcdf=include_system_hdf5_netcdf)
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
         load_script = f'{load_script}\n{shell_script}'
 
     if modules_after:
@@ -273,7 +261,6 @@ def get_spack_script(spack_path, env_name, compiler, mpi, shell, machine=None,
 def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
                                            include_e3sm_lapack=False,
                                            include_e3sm_hdf5_netcdf=False,
-                                           include_system_hdf5_netcdf=False,
                                            yaml_template=None):
     """
     Get the non-spack modules, environment variables and compiler names for a
@@ -301,10 +288,6 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
     include_e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
-
-    include_system_hdf5_netcdf : bool, optional
-        Whether to include the system hdf5, netcdf-c, netcdf-fortran and
-        pnetcdf (not necessarily the same as E3SM)
 
     yaml_template : str, optional
         A jinja template for a yaml file to be used for the environment instead
@@ -350,7 +333,7 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
     if with_modules:
         yaml_data = _get_yaml_data(
             machine, compiler, mpi, include_e3sm_lapack,
-            include_e3sm_hdf5_netcdf, include_system_hdf5_netcdf, specs='',
+            include_e3sm_hdf5_netcdf, specs='',
             yaml_template=yaml_template)
         mods = _get_modules(yaml_data)
         mod_env_commands = f'{mod_env_commands}\n{mods}\n'
@@ -367,8 +350,7 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
             continue
         shell_script = template.render(
             e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-            system_hdf5_netcdf=include_system_hdf5_netcdf)
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
         mod_env_commands = f'{mod_env_commands}\n{shell_script}'
 
     mpicc, mpicxx, mpifc = _get_mpi_compilers(machine, compiler, mpi,
@@ -378,7 +360,7 @@ def get_modules_env_vars_and_mpi_compilers(machine, compiler, mpi, shell,
 
 
 def _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
-                   include_e3sm_hdf5_netcdf, include_system_hdf5_netcdf, specs,
+                   include_e3sm_hdf5_netcdf, specs,
                    yaml_template):
     """ Get the data from the jinja-templated yaml file based on settings """
     if yaml_template is None:
@@ -397,8 +379,7 @@ def _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
 
     yaml_data = template.render(specs=specs,
                                 e3sm_lapack=include_e3sm_lapack,
-                                e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-                                system_hdf5_netcdf=include_system_hdf5_netcdf)
+                                e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf)
     return yaml_data
 
 
