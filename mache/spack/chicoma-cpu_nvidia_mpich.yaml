@@ -28,8 +28,8 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.25.1
-        prefix: /usr/projects/hpcsoft/cos2/common/x86_64/cmake/3.25.1
+      - spec: cmake@3.27.7
+        prefix: /usr/projects/hpcsoft/tce/23-05/cos2-x86_64-cc80/packages/cmake/cmake-3.27.7/
       buildable: false
     curl:
       externals:
@@ -98,15 +98,7 @@ spack:
       - spec: cray-mpich@8.1.26
         prefix: /opt/cray/pe/mpich/8.1.26/ofi/nvidia/20.7
         modules:
-        - libfabric/1.15.2.0
         - cray-mpich/8.1.26
-      buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
       buildable: false
 {% if e3sm_lapack %}
     cray-libsci:
@@ -157,7 +149,6 @@ spack:
       - nvidia/22.7
       - craype-x86-milan
       - craype-accel-host
-      - libfabric/1.15.2.0
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.45__gd0f7936.shasta/lib64/pkgconfig"
