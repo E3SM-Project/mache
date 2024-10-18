@@ -27,6 +27,11 @@ spack:
       - spec: bzip2@1.0.6
         prefix: /usr
       buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.27.7
+        prefix: /usr/projects/hpcsoft/tce/23-05/cos2-x86_64-cc80/packages/cmake/cmake-3.27.7/
+      buildable: false
     curl:
       externals:
       - spec: curl@7.60.0
@@ -93,26 +98,17 @@ spack:
       externals:
       - spec: gcc@12.2.0
         modules:
-        - PrgEnv-gnu/8.4.0
+        - PrgEnv-gnu/8.5.0
         - gcc/12.2.0
         - craype-accel-host
         - craype
-        - libfabric/1.15.2.0
       buildable: false
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.26
         prefix: /opt/cray/pe/mpich/8.1.26/ofi/gnu/9.1
         modules:
-        - libfabric/1.15.2.0
         - cray-mpich/8.1.26
-      buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
       buildable: false
 {% if e3sm_lapack %}
     cray-libsci:
@@ -161,7 +157,7 @@ spack:
       operating_system: sles15
       target: x86_64
       modules:
-      - PrgEnv-gnu/8.4.0
+      - PrgEnv-gnu/8.5.0
       - gcc/12.2.0
       - craype-accel-host
       - craype
