@@ -5,19 +5,19 @@ export HTTP_PROXY=http://proxyout.lanl.gov:8080
 export HTTPS_PROXY=http://proxyout.lanl.gov:8080
 export FTP_PROXY=http://proxyout.lanl.gov:8080
 
-source /usr/share/lmod/8.3.1/init/sh
+source /usr/share/lmod/lmod/init/sh
 
+module rm craype-accel-nvidia80
+module rm craype-accel-host
+module rm cray-libsci
 module rm PrgEnv-gnu
 module rm PrgEnv-nvidia
 module rm PrgEnv-cray
 module rm PrgEnv-aocc
-module rm craype-accel-nvidia80
-module rm craype-accel-host
 
 module load PrgEnv-nvidia/8.4.0
 module load nvidia/22.7
 module load craype-x86-milan
-module load libfabric/1.15.2.0
 module load craype-accel-host
 module load craype
 module load cray-mpich/8.1.26
@@ -32,6 +32,7 @@ module load cray-hdf5-parallel/1.12.2.3
 module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
 {% endif %}
+module load cmake/3.27.7
 
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
