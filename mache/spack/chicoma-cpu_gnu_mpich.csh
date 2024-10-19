@@ -7,10 +7,25 @@ setenv FTP_PROXY http://proxyout.lanl.gov:8080
 
 source /usr/share/lmod/lmod/init/csh
 
+module rm cray-hdf5-parallel
+module rm cray-netcdf-hdf5parallel
+module rm cray-parallel-netcdf
+module rm cray-netcdf
+module rm cray-hdf5
+module rm intel
+module rm intel-oneapi
+module rm nvidia
+module rm aocc
+module rm cudatoolkit
+module rm climate-utils
+module rm cray-libsci
 module rm craype-accel-nvidia80
 module rm craype-accel-host
-module rm cray-libsci
+module rm perftools-base
+module rm perftools
+module rm darshan
 module rm PrgEnv-gnu
+module rm PrgEnv-intel
 module rm PrgEnv-nvidia
 module rm PrgEnv-cray
 module rm PrgEnv-aocc
@@ -24,9 +39,6 @@ module load cray-libsci
 module load craype
 module load cray-mpich/8.1.26
 {% if e3sm_hdf5_netcdf %}
-module rm cray-hdf5-parallel
-module rm cray-netcdf-hdf5parallel
-module rm cray-parallel-netcdf
 module load cray-hdf5-parallel/1.12.2.3
 module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
