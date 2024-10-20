@@ -6,10 +6,6 @@
 
 import os
 from datetime import date
-import sphinx_rtd_theme
-
-from sphinx.application import Sphinx
-from sphinx.transforms.post_transforms import SphinxPostTransform
 
 from mache.version import __version__
 
@@ -95,7 +91,6 @@ myst_enable_checkboxes = True
 # -- HTML output -------------------------------------------------
 
 html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_title = ""
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -112,4 +107,3 @@ html_sidebars = {
 smv_tag_whitelist = r"^\d+\.\d+.\d+$"  # Include tags like "tags/2.5.0"
 smv_branch_whitelist = "main"
 smv_remote_whitelist = r"^(origin|upstream)$"  # Use branches from origin
-
