@@ -96,9 +96,11 @@ spack:
         modules:
         - PrgEnv-gnu/8.5.0
         - gcc/12.2.0
+        - libfabric/1.15.2.0
         - cray-libsci/23.05.1.4
-        - craype-accel-host
         - craype
+        - craype-accel-host
+        - craype-x86-rome
       buildable: false
     cray-mpich:
       externals:
@@ -151,9 +153,11 @@ spack:
       modules:
       - PrgEnv-gnu/8.5.0
       - gcc/12.2.0
+      - libfabric/1.15.2.0
       - cray-libsci/23.05.1.4
-      - craype-accel-host
       - craype
+      - craype-accel-host
+      - craype-x86-rome
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.45__gd0f7936.shasta/lib64/pkgconfig"
