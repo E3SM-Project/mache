@@ -31,15 +31,14 @@ module rm cray-hdf5-parallel \
           PrgEnv-cray \
           PrgEnv-aocc
 
+# we must load cray-libsci for gcc to work
 module load PrgEnv-gnu/8.5.0 \
             gcc/12.2.0 \
+            cray-libsci/23.05.1.4 \
             craype-accel-host \
             cray-mpich/8.1.26 \
             craype \
             cmake/3.27.7
-{% if e3sm_lapack %}
-module load cray-libsci/23.05.1.4
-{% endif %}
 {% if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.3 \
             cray-netcdf-hdf5parallel/4.9.0.3 \
