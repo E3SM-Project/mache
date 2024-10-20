@@ -31,11 +31,10 @@ dependencies = [
 [project.optional-dependencies]
 docs = [
     # building documentation
-    "sphinx",
+    "sphinx >=8.0.0",
     "sphinx_rtd_theme",
     "myst-parser",
     "sphinx-multiversion",
-    "rst-to-myst",
 ]
 
 dev = [
