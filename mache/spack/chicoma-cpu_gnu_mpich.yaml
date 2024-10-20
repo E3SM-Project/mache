@@ -106,7 +106,6 @@ spack:
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.26
-        prefix: /opt/cray/pe/mpich/8.1.26/ofi/gnu/9.1
         modules:
         - cray-mpich/8.1.26
       buildable: false
@@ -114,7 +113,6 @@ spack:
     cray-libsci:
       externals:
       - spec: cray-libsci@23.05.1.4
-        prefix: /opt/cray/pe/libsci/23.05.1.4/GNU/9.1/x86_64
         modules:
         - cray-libsci/23.05.1.4
       buildable: false
@@ -123,7 +121,6 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.12.2.3~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.3/GNU/9.1
         modules:
         - cray-hdf5-parallel/1.12.2.3
       buildable: false
