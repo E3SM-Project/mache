@@ -161,7 +161,6 @@ spack:
       - gcc/12.2.0
       - craype-accel-host
       - craype
-      - libfabric/1.15.2.0
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.45__gd0f7936.shasta/lib64/pkgconfig"
