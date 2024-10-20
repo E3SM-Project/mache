@@ -7,44 +7,43 @@ setenv FTP_PROXY http://proxyout.lanl.gov:8080
 
 source /usr/share/lmod/lmod/init/csh
 
-module rm cray-hdf5-parallel
-module rm cray-netcdf-hdf5parallel
-module rm cray-parallel-netcdf
-module rm cray-netcdf
-module rm cray-hdf5
-module rm intel
-module rm intel-oneapi
-module rm nvidia
-module rm aocc
-module rm cudatoolkit
-module rm climate-utils
-module rm cray-libsci
-module rm craype-accel-nvidia80
-module rm craype-accel-host
-module rm perftools-base
-module rm perftools
-module rm darshan
-module rm PrgEnv-gnu
-module rm PrgEnv-intel
-module rm PrgEnv-nvidia
-module rm PrgEnv-cray
-module rm PrgEnv-aocc
 
-module load PrgEnv-nvidia/8.4.0
-module load nvidia/22.7
-module load craype-x86-milan
-module load craype-accel-host
-module load craype
-module load cray-mpich/8.1.26
-{% if e3sm_lapack %}
-module load cray-libsci/23.05.1.4
-{% endif %}
+module rm cray-hdf5-parallel \
+          cray-netcdf-hdf5parallel \
+          cray-parallel-netcdf \
+          cray-netcdf \
+          cray-hdf5 \
+          intel \
+          intel-oneapi \
+          nvidia \
+          aocc \
+          cudatoolkit \
+          climate-utils \
+          cray-libsci \
+          craype \
+          craype-accel-nvidia80 \
+          craype-accel-host \
+          perftools-base \
+          perftools \
+          darshan \
+          PrgEnv-gnu \
+          PrgEnv-intel \
+          PrgEnv-nvidia \
+          PrgEnv-cray \
+          PrgEnv-aocc
+
+module load PrgEnv-nvidia/8.5.0 \
+            nvidia/24.7 \
+            cray-libsci/23.05.1.4 \
+            craype-accel-host \
+            cray-mpich/8.1.26 \
+            craype \
+            cmake/3.27.7
 {% if e3sm_hdf5_netcdf %}
-module load cray-hdf5-parallel/1.12.2.3
-module load cray-netcdf-hdf5parallel/4.9.0.3
-module load cray-parallel-netcdf/1.12.3.3
+module load cray-hdf5-parallel/1.12.2.3 \
+            cray-netcdf-hdf5parallel/4.9.0.3 \
+            cray-parallel-netcdf/1.12.3.3
 {% endif %}
-module load cmake/3.27.7
 
 setenv MPICH_ENV_DISPLAY 1
 setenv MPICH_VERSION_DISPLAY 1
