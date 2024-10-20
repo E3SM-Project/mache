@@ -1,24 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adding a New Machine to Mache</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=7ab3649f" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d5e04e60"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -39,9 +36,6 @@
           <a href="../index.html" class="icon icon-home">
             Mache
           </a>
-              <div class="version">
-                1.25.0
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -87,7 +81,7 @@
            <div itemprop="articleBody">
              
   <section class="tex2jax_ignore mathjax_ignore" id="adding-a-new-machine-to-mache">
-<span id="dev-adding-new-machine"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#adding-a-new-machine-to-mache" title="Permalink to this heading"></a></h1>
+<span id="dev-adding-new-machine"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#adding-a-new-machine-to-mache" title="Link to this heading"></a></h1>
 <p>Adding an E3SM-known machine to mache requires adding a new config file, as
 well as updating the list of machines in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code>.</p>
 <div class="admonition note">
@@ -101,12 +95,12 @@ included in this list, you must contact the E3SM-Project developers to add your
 machine.</p>
 </div>
 <section id="adding-a-new-config-file">
-<span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Permalink to this heading"></a></h2>
+<span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Link to this heading"></a></h2>
 <p>Adding a new config file is usually straightforward if you follow the format of
 an existing config file.</p>
 </section>
 <section id="adding-the-new-machine-to-discover-py">
-<span id="dev-discover-new-machine"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#adding-the-new-machine-to-discover-py" title="Permalink to this heading"></a></h2>
+<span id="dev-discover-new-machine"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#adding-the-new-machine-to-discover-py" title="Link to this heading"></a></h2>
 <p>You will need to amend the list of machine names in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code> so that mache
 can identify the new machine via its hostname. This process is typically done
 using a regular expression, which is often possible whenever the machine’s

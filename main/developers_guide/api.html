@@ -1,24 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API reference</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=7ab3649f" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d5e04e60"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -39,9 +36,6 @@
           <a href="../index.html" class="icon icon-home">
             Mache
           </a>
-              <div class="version">
-                1.25.0
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -108,17 +102,13 @@
            <div itemprop="articleBody">
              
   <section class="tex2jax_ignore mathjax_ignore" id="api-reference">
-<span id="dev-api"></span><h1>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h1>
+<span id="dev-api"></span><h1>API reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
 <p>This page provides an auto-generated summary of the mache API. For more
 details and examples, refer to the relevant sections in the main part of the
 documentation.</p>
 <section id="discover">
-<h2>discover<a class="headerlink" href="#discover" title="Permalink to this heading"></a></h2>
+<h2>discover<a class="headerlink" href="#discover" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.discover.discover_machine.html#mache.discover.discover_machine" title="mache.discover.discover_machine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_machine</span></code></a>([quiet])</p></td>
 <td><p>Figure out the machine from the host name</p></td>
@@ -127,12 +117,8 @@ documentation.</p>
 </table>
 </section>
 <section id="permissions">
-<h2>permissions<a class="headerlink" href="#permissions" title="Permalink to this heading"></a></h2>
+<h2>permissions<a class="headerlink" href="#permissions" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions" title="mache.permissions.update_permissions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_permissions</span></code></a>(base_paths, group[, ...])</p></td>
 <td><p>Update the group that a directory belongs to along with the &quot;group&quot; and &quot;other&quot; permissions for the directory</p></td>
@@ -141,12 +127,8 @@ documentation.</p>
 </table>
 </section>
 <section id="spack">
-<h2>spack<a class="headerlink" href="#spack" title="Permalink to this heading"></a></h2>
+<h2>spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
 <td><p>Clone the <code class="docutils literal notranslate"><span class="pre">spack_for_mache_{{version}}</span></code> branch from <a class="reference external" href="https://github.com/E3SM-Project/spack">E3SM's spack clone</a> and build a spack environment for the given machine, compiler and MPI library.</p></td>
@@ -161,12 +143,8 @@ documentation.</p>
 </table>
 </section>
 <section id="sync">
-<h2>sync<a class="headerlink" href="#sync" title="Permalink to this heading"></a></h2>
+<h2>sync<a class="headerlink" href="#sync" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html#mache.sync.diags.sync_diags" title="mache.sync.diags.sync_diags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync_diags</span></code></a>(other[, direction, machine, ...])</p></td>
 <td><p>Synchronize diagnostics files between supported machines</p></td>
@@ -175,12 +153,8 @@ documentation.</p>
 </table>
 </section>
 <section id="machineinfo">
-<h2>MachineInfo<a class="headerlink" href="#machineinfo" title="Permalink to this heading"></a></h2>
+<h2>MachineInfo<a class="headerlink" href="#machineinfo" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.html#mache.MachineInfo" title="mache.MachineInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo</span></code></a>([machine, quiet])</p></td>
 <td><p>An object containing information about an E3SM supported machine</p></td>
