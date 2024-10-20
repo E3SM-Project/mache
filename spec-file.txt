@@ -19,7 +19,7 @@ mypy
 pre-commit
 
 # Documentation
-sphinx >=8.0.0
+sphinx >=7.0.0
 sphinx_rtd_theme
 myst-parser
 sphinx-multiversion
