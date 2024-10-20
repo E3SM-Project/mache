@@ -118,8 +118,7 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.12.2.3~cxx+fortran+hl~java+mpi+shared
-        modules:
-        - cray-hdf5-parallel/1.12.2.3
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.3/gnu/9.1
       buildable: false
     parallel-netcdf:
       externals:
