@@ -12,6 +12,8 @@ module rm cray-hdf5-parallel \
           cray-parallel-netcdf \
           cray-netcdf \
           cray-hdf5 \
+          gcc \
+          gcc-native \
           intel \
           intel-oneapi \
           nvidia \
@@ -33,16 +35,16 @@ module rm cray-hdf5-parallel \
 
 # we must load cray-libsci for gcc to work
 module load PrgEnv-gnu/8.5.0 \
-            gcc/12.2.0 \
-            cray-libsci/23.05.1.4 \
+            gcc-native/12.3 \
+            cray-libsci/23.12.5 \
             craype-accel-host \
-            cray-mpich/8.1.26 \
-            craype \
+            craype/2.7.30 \
+            cray-mpich/8.1.28 \
             cmake/3.27.7
 {% if e3sm_hdf5_netcdf %}
-module load cray-hdf5-parallel/1.12.2.3 \
-            cray-netcdf-hdf5parallel/4.9.0.3 \
-            cray-parallel-netcdf/1.12.3.3
+module load cray-hdf5-parallel/1.12.2.9 \
+            cray-netcdf-hdf5parallel/4.9.0.9 \
+            cray-parallel-netcdf/1.12.3.9
 {% endif %}
 
 setenv MPICH_ENV_DISPLAY 1
@@ -60,4 +62,4 @@ setenv MPICH_COLL_SYNC MPI_Bcast
 # for standalone MPAS builds
 setenv GNU_CRAY_LDFLAGS "-Wl,--enable-new-dtags"
 
-setenv LD_LIBRARY_PATH="/opt/cray/pe/gcc/12.2.0/snos/lib64:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+setenv LD_LIBRARY_PATH="/usr/lib64/gcc/x86_64-suse-linux/12:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
