@@ -13,6 +13,8 @@ module rm cray-hdf5-parallel \
           cray-parallel-netcdf \
           cray-netcdf \
           cray-hdf5 \
+          gcc \
+          gcc-native \
           intel \
           intel-oneapi \
           nvidia \
@@ -34,15 +36,15 @@ module rm cray-hdf5-parallel \
 
 module load PrgEnv-nvidia/8.5.0 \
             nvidia/24.7 \
-            cray-libsci/23.05.1.4 \
+            cray-libsci/23.12.5 \
             craype-accel-host \
-            cray-mpich/8.1.26 \
-            craype \
+            craype/2.7.30 \
+            cray-mpich/8.1.28 \
             cmake/3.27.7
 {% if e3sm_hdf5_netcdf %}
-module load cray-hdf5-parallel/1.12.2.3 \
-            cray-netcdf-hdf5parallel/4.9.0.3 \
-            cray-parallel-netcdf/1.12.3.3
+module load cray-hdf5-parallel/1.12.2.9 \
+            cray-netcdf-hdf5parallel/4.9.0.9 \
+            cray-parallel-netcdf/1.12.3.9
 {% endif %}
 
 setenv MPICH_ENV_DISPLAY 1
