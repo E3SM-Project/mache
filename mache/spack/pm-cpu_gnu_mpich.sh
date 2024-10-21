@@ -27,7 +27,7 @@ module load cray-libsci/23.02.1.1
 {% endif %}
 module load craype/2.7.20
 module rm cray-mpich &> /dev/null
-module load libfabric/1.15.2.0
+module load libfabric/1.20.1
 module load cray-mpich/8.1.25
 {% if e3sm_hdf5_netcdf %}
 module rm cray-hdf5-parallel &> /dev/null
