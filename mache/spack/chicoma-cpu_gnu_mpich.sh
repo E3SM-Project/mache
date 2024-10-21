@@ -58,3 +58,6 @@ export FI_CXI_RX_MATCH_MODE=software
 export MPICH_COLL_SYNC=MPI_Bcast
 
 export LD_LIBRARY_PATH="/opt/cray/pe/gcc/12.2.0/snos/lib64:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+
+# for standalone MPAS builds
+export GNU_CRAY_LDFLAGS="-Wl,--enable-new-dtags"
