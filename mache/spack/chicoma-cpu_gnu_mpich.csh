@@ -57,4 +57,7 @@ setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_writ
 setenv FI_CXI_RX_MATCH_MODE software
 setenv MPICH_COLL_SYNC MPI_Bcast
 
+# for standalone MPAS builds
+setenv GNU_CRAY_LDFLAGS "-Wl,--enable-new-dtags"
+
 setenv LD_LIBRARY_PATH="/opt/cray/pe/gcc/12.2.0/snos/lib64:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
