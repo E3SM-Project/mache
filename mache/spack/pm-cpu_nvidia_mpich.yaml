@@ -99,15 +99,8 @@ spack:
       - spec: cray-mpich@8.1.25
         prefix: /opt/cray/pe/mpich/8.1.25/ofi/nvidia/20.7
         modules:
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
         - cray-mpich/8.1.25
-      buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
       buildable: false
     cray-libsci:
       externals:

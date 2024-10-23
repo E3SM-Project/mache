@@ -23,7 +23,7 @@ module rm cray-hdf5-parallel \
 module load PrgEnv-nvidia \
             nvidia/22.7 \
             craype-x86-milan \
-            libfabric/1.15.2.0 \
+            libfabric/1.20.1 \
             craype-accel-host \
             craype/2.7.20 \
             cray-mpich/8.1.25 \
