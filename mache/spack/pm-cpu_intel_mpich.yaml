@@ -106,7 +106,6 @@ spack:
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.28
-        prefix: /opt/cray/pe/mpich/8.1.28/ofi/intel/19.0
         modules:
         - cray-mpich/8.1.28
         - libfabric/1.20.1
@@ -120,7 +119,7 @@ spack:
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/19.0/
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/19.0
       buildable: false
     netcdf-c:
       externals:

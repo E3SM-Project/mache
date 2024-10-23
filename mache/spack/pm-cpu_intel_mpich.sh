@@ -1,4 +1,5 @@
-module rm cray-hdf5-parallel \
+module rm cpe \
+          cray-hdf5-parallel \
           cray-netcdf-hdf5parallel \
           cray-parallel-netcdf \
           PrgEnv-gnu \

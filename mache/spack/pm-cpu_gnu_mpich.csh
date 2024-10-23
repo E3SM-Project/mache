@@ -1,4 +1,5 @@
-module rm cray-hdf5-parallel \
+module rm cpe \
+          cray-hdf5-parallel \
           cray-netcdf-hdf5parallel \
           cray-parallel-netcdf \
           PrgEnv-gnu \
@@ -21,16 +22,16 @@ module rm cray-hdf5-parallel \
           cray-mpich &> /dev/null
 
 module load PrgEnv-gnu/8.5.0 \
-            gcc/12.2.0 \
-            craype-accel-host \
+            gcc-native/12.3 \
             cray-libsci/23.12.5 \
-            craype/2.7.20 \
+            craype-accel-host \
+            craype/2.7.30 \
             libfabric/1.20.1 \
-            cray-mpich/8.1.25
+            cray-mpich/8.1.28
 {% if e3sm_hdf5_netcdf %}
-module load cray-hdf5-parallel/1.12.2.3 \
-            cray-netcdf-hdf5parallel/4.9.0.3 \
-            cray-parallel-netcdf/1.12.3.3
+module load cray-hdf5-parallel/1.12.2.9 \
+            cray-netcdf-hdf5parallel/4.9.0.9 \
+            cray-parallel-netcdf/1.12.3.9
 {% endif %}
 
 {% if e3sm_hdf5_netcdf %}
