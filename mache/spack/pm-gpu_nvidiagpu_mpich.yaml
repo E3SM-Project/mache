@@ -120,7 +120,7 @@ spack:
       - spec: cray-libsci@23.12.5
         prefix: /opt/cray/pe/libsci/23.02.1.1/NVIDIA/20.7/x86_64
         modules:
-        - cray-libsci/23.02.1.1
+        - cray-libsci/23.12.5
       buildable: false
 {% if e3sm_hdf5_netcdf %}
     hdf5:
