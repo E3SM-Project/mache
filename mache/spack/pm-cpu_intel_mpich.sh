@@ -50,12 +50,12 @@ export HDF5_USE_FILE_LOCKING=FALSE
 ## Not needed
 # export PERL5LIB=/global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
 export FI_CXI_RX_MATCH_MODE=software
+export FI_MR_CACHE_MONITOR=kdreg2
 
 if [ -z "${NERSC_HOST:-}" ]; then
   # happens when building spack environment
   export NERSC_HOST="perlmutter"
 fi
-export FI_CXI_RX_MATCH_MODE=software
 export MPICH_COLL_SYNC=MPI_Bcast
 export GATOR_INITIAL_MB=4000MB
 export BLA_VENDOR=Intel10_64_dyn

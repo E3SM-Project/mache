@@ -50,6 +50,8 @@ setenv MPICH_MPIIO_DVS_MAXNODES 1
 # setenv OMP_PROC_BIND spread
 # setenv OMP_PLACES threads
 setenv HDF5_USE_FILE_LOCKING FALSE
+setenv MPICH_COLL_SYNC MPI_Bcast
+setenv FI_MR_CACHE_MONITOR kdreg2
 ## Not needed
 # setenv PERL5LIB /global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
 setenv MPICH_GPU_SUPPORT_ENABLED 1

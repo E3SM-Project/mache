@@ -51,6 +51,8 @@ export MPICH_VERSION_DISPLAY=1
 export HDF5_USE_FILE_LOCKING=FALSE
 ## Not needed
 # export PERL5LIB=/global/cfs/cdirs/e3sm/perl/lib/perl5-only-switch
+export MPICH_COLL_SYNC=MPI_Bcast
+export FI_MR_CACHE_MONITOR=kdreg2
 export MPICH_GPU_SUPPORT_ENABLED=1
 
 if [ -z "${NERSC_HOST:-}" ]; then
