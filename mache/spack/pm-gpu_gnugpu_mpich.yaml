@@ -122,9 +122,7 @@ spack:
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.28
-        modules:
-        - libfabric/1.20.1
-        - cray-mpich/8.1.28
+        prefix: /opt/cray/pe/mpich/8.1.28/ofi/gnu/12.3
       buildable: false
     cray-libsci:
       externals:
