@@ -5,31 +5,46 @@ setenv HTTP_PROXY http://proxyout.lanl.gov:8080
 setenv HTTPS_PROXY http://proxyout.lanl.gov:8080
 setenv FTP_PROXY http://proxyout.lanl.gov:8080
 
-source /usr/share/lmod/8.3.1/init/csh
+source /usr/share/lmod/lmod/init/csh
 
-module rm PrgEnv-gnu
-module rm PrgEnv-nvidia
-module rm PrgEnv-cray
-module rm PrgEnv-aocc
-module rm craype-accel-nvidia80
-module rm craype-accel-host
+module rm cray-hdf5-parallel \
+          cray-netcdf-hdf5parallel \
+          cray-parallel-netcdf \
+          cray-netcdf \
+          cray-hdf5 \
+          gcc \
+          gcc-native \
+          intel \
+          intel-oneapi \
+          nvidia \
+          aocc \
+          cudatoolkit \
+          climate-utils \
+          cray-libsci \
+          craype \
+          craype-accel-nvidia80 \
+          craype-accel-host \
+          perftools-base \
+          perftools \
+          darshan \
+          PrgEnv-gnu \
+          PrgEnv-intel \
+          PrgEnv-nvidia \
+          PrgEnv-cray \
+          PrgEnv-aocc
 
-module load PrgEnv-gnu/8.4.0
-module load gcc/12.2.0
-module load craype-accel-host
-{% if e3sm_lapack %}
-module load cray-libsci
-{% endif %}
-module load craype
-module load libfabric/1.15.2.0
-module load cray-mpich/8.1.26
+# we must load cray-libsci for gcc to work
+module load PrgEnv-gnu/8.5.0 \
+            gcc-native/12.3 \
+            cray-libsci/23.12.5 \
+            craype-accel-host \
+            craype/2.7.30 \
+            cray-mpich/8.1.28 \
+            cmake/3.27.7
 {% if e3sm_hdf5_netcdf %}
-module rm cray-hdf5-parallel
-module rm cray-netcdf-hdf5parallel
-module rm cray-parallel-netcdf
-module load cray-hdf5-parallel/1.12.2.3
-module load cray-netcdf-hdf5parallel/4.9.0.3
-module load cray-parallel-netcdf/1.12.3.3
+module load cray-hdf5-parallel/1.12.2.9 \
+            cray-netcdf-hdf5parallel/4.9.0.9 \
+            cray-parallel-netcdf/1.12.3.9
 {% endif %}
 
 setenv MPICH_ENV_DISPLAY 1
@@ -44,4 +59,7 @@ setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_writ
 setenv FI_CXI_RX_MATCH_MODE software
 setenv MPICH_COLL_SYNC MPI_Bcast
 
-setenv LD_LIBRARY_PATH $CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+# for standalone MPAS builds
+setenv GNU_CRAY_LDFLAGS "-Wl,--enable-new-dtags"
+
+setenv LD_LIBRARY_PATH="/usr/lib64/gcc/x86_64-suse-linux/12:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
