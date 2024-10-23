@@ -83,10 +83,9 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.9.13
-        prefix: /opt/cray/pe/python/3.9.13.1
+      - spec: python@3.11.5
         modules:
-        - cray-python/3.9.13.1
+        - cray-python/3.11.5
       buildable: false
     tar:
       externals:
@@ -158,6 +157,7 @@ spack:
       operating_system: sles15
       target: any
       modules:
+      - Core/24.07
       - PrgEnv-cray/8.3.3
       - cce/15.0.1
       - craype/2.7.20
