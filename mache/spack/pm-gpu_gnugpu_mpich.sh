@@ -21,7 +21,7 @@ module rm cray-hdf5-parallel \
 module load PrgEnv-gnu/8.3.3 \
             gcc/11.2.0 \
             craype-x86-milan \
-            libfabric/1.15.2.0 \
+            libfabric/1.20.1 \
             cudatoolkit/11.7 \
             craype-accel-nvidia80 \
             craype/2.7.20 \

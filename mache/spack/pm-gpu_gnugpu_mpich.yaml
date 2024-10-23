@@ -104,7 +104,7 @@ spack:
         - cudatoolkit/11.7
         - craype-accel-nvidia80
         - craype/2.7.19
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
       buildable: false
     cuda:
       externals:
@@ -116,22 +116,15 @@ spack:
         - cudatoolkit/11.7
         - craype-accel-nvidia80
         - craype/2.7.19
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
       buildable: false
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.25
         prefix: /opt/cray/pe/mpich/8.1.25/ofi/gnu/9.1
         modules:
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
         - cray-mpich/8.1.25
-      buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
       buildable: false
     cray-libsci:
       externals:
@@ -181,7 +174,7 @@ spack:
       - cudatoolkit/11.7
       - craype-accel-nvidia80
       - craype/2.7.20
-      - libfabric/1.15.2.0
+      - libfabric/1.20.1
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
