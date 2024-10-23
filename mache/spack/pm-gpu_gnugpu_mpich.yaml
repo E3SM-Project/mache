@@ -101,11 +101,11 @@ spack:
         modules:
         - PrgEnv-gnu/8.5.0
         - gcc-native/12.3
-        - cudatoolkit/12.2
         - craype-accel-nvidia80
         - cray-libsci/23.12.5
         - libfabric/1.20.1
         - craype/2.7.30
+        - cudatoolkit/12.2
       buildable: false
     cuda:
       externals:
@@ -113,11 +113,11 @@ spack:
         modules:
         - PrgEnv-gnu/8.5.0
         - gcc-native/12.3
-        - cudatoolkit/12.2
         - craype-accel-nvidia80
         - cray-libsci/23.12.5
         - libfabric/1.20.1
         - craype/2.7.30
+        - cudatoolkit/12.2
       buildable: false
     cray-mpich:
       externals:
@@ -166,12 +166,13 @@ spack:
       operating_system: sles15
       target: any
       modules:
-      - PrgEnv-gnu/8.3.3
-      - gcc/12.3
-      - cudatoolkit/11.7
+      - PrgEnv-gnu/8.5.0
+      - gcc-native/12.3
       - craype-accel-nvidia80
-      - craype/2.7.20
+      - cray-libsci/23.12.5
       - libfabric/1.20.1
+      - craype/2.7.30
+      - cudatoolkit/12.2
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
