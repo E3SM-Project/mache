@@ -24,7 +24,7 @@ module load PrgEnv-intel/8.5.0 \
             intel/2023.2.0 \
             craype-accel-host \
             craype/2.7.30 \
-            libfabric/1.15.2.0 \
+            libfabric/1.20.1 \
             cray-mpich/8.1.28
 {% if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
