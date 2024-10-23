@@ -109,28 +109,24 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/hdf5-1.10.7-4cghwvq
         modules:
         - hdf5/1.10.7-4cghwvq
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.4.1+mpi~parallel-netcdf
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-c-4.4.1-a4hji6e
+      - spec: netcdf-c@4.7.4+mpi~parallel-netcdf
         modules:
-        - netcdf-c/4.4.1-a4hji6e
+        - netcdf-c/4.7.4-4qjdadt
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.4.4
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/netcdf-fortran-4.4.4-husened
+      - spec: netcdf-fortran@4.5.3
         modules:
-        - netcdf-fortran/4.4.4-husened
+        - netcdf-fortran/4.5.3-qozrykr
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.11.0+cxx+fortran
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/parallel-netcdf-1.11.0-icrpxty
         modules:
         - parallel-netcdf/1.11.0-icrpxty
       buildable: false
