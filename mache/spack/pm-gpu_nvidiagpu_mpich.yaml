@@ -96,7 +96,7 @@ spack:
       buildable: false
     cuda:
       externals:
-      - spec: cuda@12.2
+      - spec: cuda@12.4
         modules:
         - PrgEnv-nvidia
         - nvidia/24.5
@@ -104,7 +104,7 @@ spack:
         - cray-libsci/23.12.5
         - libfabric/1.20.1
         - craype/2.7.30
-        - cudatoolkit/12.2
+        - cudatoolkit/12.4
       buildable: false
     cray-mpich:
       externals:
@@ -161,7 +161,7 @@ spack:
       - cray-libsci/23.12.5
       - libfabric/1.20.1
       - craype/2.7.30
-      - cudatoolkit/12.2
+      - cudatoolkit/12.4
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"

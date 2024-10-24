@@ -23,7 +23,7 @@ module rm cpe \
 
 module load PrgEnv-nvidia \
             nvidia/24.5 \
-            cudatoolkit/12.2 \
+            cudatoolkit/12.4 \
             craype-accel-nvidia80 \
             gcc-native-mixed/12.3 \
             cray-libsci/23.12.5 \

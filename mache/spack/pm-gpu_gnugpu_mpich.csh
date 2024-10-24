@@ -23,7 +23,7 @@ module rm cpe \
 
 module load PrgEnv-gnu/8.5.0 \
             gcc-native/12.3 \
-            cudatoolkit/12.2 \
+            cudatoolkit/12.4 \
             craype-accel-nvidia80 \
             cray-libsci/23.12.5 \
             libfabric/1.20.1 \
