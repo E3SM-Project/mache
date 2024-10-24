@@ -28,7 +28,8 @@ module load PrgEnv-gnu/8.5.0 \
             cray-libsci/23.12.5 \
             libfabric/1.20.1 \
             craype/2.7.30 \
-            cray-mpich/8.1.28
+            cray-mpich/8.1.28 \
+            cmake/3.24.3
 {% if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
             cray-netcdf-hdf5parallel/4.9.0.9 \
