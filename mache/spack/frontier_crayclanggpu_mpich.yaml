@@ -38,8 +38,9 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.23.2
-        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/cmake-3.23.2-4r4mpiba7cwdw2hlakh5i7tchi64s3qd
+      - spec: cmake@3.27.9
+        modules:
+        - cmake/3.27.9
       buildable: false
     curl:
       externals:
