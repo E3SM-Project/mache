@@ -1,4 +1,5 @@
 module reset >& /dev/null
+module switch Core/24.07 >& /dev/null
 module switch PrgEnv-cray PrgEnv-gnu/8.3.3 >& /dev/null
 module switch gcc gcc/11.2.0 >& /dev/null
 module load craype-accel-amd-gfx90a

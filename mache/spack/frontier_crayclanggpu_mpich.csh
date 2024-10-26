@@ -1,4 +1,5 @@
 module reset >& /dev/null
+module switch Core/24.07 >& /dev/null
 module switch PrgEnv-cray PrgEnv-cray/8.3.3 >& /dev/null
 module switch cce cce/15.0.1 >& /dev/null
 module switch craype craype/2.7.20 >& /dev/null

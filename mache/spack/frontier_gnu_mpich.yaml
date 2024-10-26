@@ -39,8 +39,9 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.23.2
-        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/cmake-3.23.2-4r4mpiba7cwdw2hlakh5i7tchi64s3qd
+      - spec: cmake@3.27.9
+        modules:
+        - cmake/3.27.9
       buildable: false
     curl:
       externals:
@@ -84,10 +85,9 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.9.13
-        prefix: /opt/cray/pe/python/3.9.13.1
+      - spec: python@3.11.5
         modules:
-        - cray-python/3.9.13.1
+        - cray-python/3.11.5
       buildable: false
     tar:
       externals:
@@ -168,6 +168,7 @@ spack:
       operating_system: sles15
       target: x86_64
       modules:
+      - Core/24.07
       - PrgEnv-gnu/8.3.3
       - gcc/12.2.0
       - craype/2.7.19

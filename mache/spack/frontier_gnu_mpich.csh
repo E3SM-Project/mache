@@ -1,4 +1,5 @@
 module reset >& /dev/null
+module switch Core/24.07 >& /dev/null
 module switch PrgEnv-cray PrgEnv-gnu/8.3.3 >& /dev/null
 module switch gcc gcc/12.2.0 >& /dev/null
 
