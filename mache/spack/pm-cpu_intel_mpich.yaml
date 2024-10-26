@@ -101,22 +101,14 @@ spack:
         - intel/2023.2.0
         - craype-accel-host
         - craype/2.7.30
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
       buildable: false
     cray-mpich:
       externals:
       - spec: cray-mpich@8.1.28
-        prefix: /opt/cray/pe/mpich/8.1.28/ofi/intel/19.0
         modules:
         - cray-mpich/8.1.28
-        - libfabric/1.15.2.0
-      buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
       buildable: false
 {% if e3sm_hdf5_netcdf %}
     hdf5:
@@ -127,7 +119,7 @@ spack:
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/19.0/
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/19.0
       buildable: false
     netcdf-c:
       externals:
@@ -158,7 +150,7 @@ spack:
       - intel/2023.2.0
       - craype-accel-host
       - craype/2.7.30
-      - libfabric/1.15.2.0
+      - libfabric/1.20.1
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"

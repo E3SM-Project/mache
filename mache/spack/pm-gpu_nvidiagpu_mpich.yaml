@@ -1,9 +1,7 @@
 spack:
   specs:
   - cray-mpich
-{% if e3sm_lapack %}
   - cray-libsci
-{% endif %}
 {% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
@@ -15,12 +13,10 @@ spack:
     unify: when_possible
   packages:
     all:
-      compiler: [nvhpc@22.7]
+      compiler: [nvhpc@24.5]
       providers:
-        mpi: [cray-mpich@8.1.25]
-{% if e3sm_lapack %}
-        lapack: [cray-libsci@23.02.1.1]
-{% endif %}
+        mpi: [cray-mpich@8.1.28]
+        lapack: [cray-libsci@23.12.5]
     bzip2:
       externals:
       - spec: bzip2@1.0.6
@@ -100,84 +96,72 @@ spack:
       buildable: false
     cuda:
       externals:
-      - spec: cuda@11.7
-        prefix: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7
+      - spec: cuda@12.4
         modules:
         - PrgEnv-nvidia
-        - nvidia/22.7
-        - cudatoolkit/11.7
+        - nvidia/24.5
         - craype-accel-nvidia80
-        - gcc-mixed/11.2.0
-        - craype-x86-milan
-        - libfabric
+        - cray-libsci/23.12.5
+        - libfabric/1.20.1
+        - craype/2.7.30
+        - cudatoolkit/12.4
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.25
-        prefix: /opt/cray/pe/mpich/8.1.25/ofi/nvidia/20.7
+      - spec: cray-mpich@8.1.28
         modules:
-        - libfabric/1.15.2.0
-        - cray-mpich/8.1.25
+        - libfabric/1.20.1
+        - cray-mpich/8.1.28
       buildable: false
-    libfabric:
-      externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
-        modules:
-        - libfabric/1.15.2.0
-      buildable: false
-{% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@23.02.1.1
-        prefix: /opt/cray/pe/libsci/23.02.1.1/NVIDIA/20.7/x86_64
+      - spec: cray-libsci@23.12.5
         modules:
-        - cray-libsci/23.02.1.1
+        - cray-libsci/23.12.5
       buildable: false
-{% endif %}
 {% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
-      - spec: hdf5@1.12.2.3~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.3/nvidia/20.7
+      - spec: hdf5@1.12.2.9~cxx+fortran+hl~java+mpi+shared
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.9/nvidia/23.3
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.12.3.3+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.3/nvidia/20.7
+      - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/nvidia/23.3
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.0.3+mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/nvidia/20.7
+      - spec: netcdf-c@4.9.0.9+mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/nvidia/23.3
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.5.3
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.3/nvidia/20.7
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/nvidia/23.3
       buildable: false
 {% endif %}
   config:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: nvhpc@22.7
+      spec: nvhpc@24.5
       paths:
-        cc: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvc
-        cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvc++
-        f77: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvfortran
-        fc: /opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvfortran
+        cc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc
+        cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc++
+        f77: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvfortran
+        fc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvfortran
       flags: {}
       operating_system: sles15
       target: any
       modules:
       - PrgEnv-nvidia
-      - nvidia/22.7
-      - cudatoolkit/11.7
+      - nvidia/24.5
       - craype-accel-nvidia80
-      - gcc-mixed/11.2.0
-      - craype-x86-milan
-      - libfabric
+      - cray-libsci/23.12.5
+      - libfabric/1.20.1
+      - craype/2.7.30
+      - cudatoolkit/12.4
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
