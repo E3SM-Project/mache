@@ -32,6 +32,7 @@ def discover_machine(quiet=False):
         r'^cooley': 'cooley',
         r'^polaris': 'polaris',
         r'^dane\d{4}': 'dane',
+        r'^ruby\d{4}': 'ruby',
     }
     for host_re, mach in machines_by_host_re.items():
         p = re.compile(host_re)
