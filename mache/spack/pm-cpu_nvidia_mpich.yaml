@@ -104,7 +104,7 @@ spack:
     cray-libsci:
       externals:
       - spec: cray-libsci@23.12.5
-        module:
+        modules:
         - cray-libsci/23.12.5
       buildable: false
 {% if e3sm_hdf5_netcdf %}
