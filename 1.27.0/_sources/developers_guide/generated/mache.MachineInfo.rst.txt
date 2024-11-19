@@ -1,0 +1,23 @@
+﻿mache.MachineInfo
+=================
+
+.. currentmodule:: mache
+
+.. autoclass:: MachineInfo
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MachineInfo.__init__
+      ~MachineInfo.get_account_defaults
+   
+   
+
+   
+   
+   
