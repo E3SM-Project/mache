@@ -135,9 +135,9 @@ spack:
     intel-mkl:
       externals:
       - spec: intel-mkl@2022.1.0
-        prefix: /usr/tce/packages/mkl-interfaces/mkl-interfaces-2022.1.0-intel-2021.6.0
+        prefix: /usr/tce/packages/mkl/mkl-2022.1.0
         modules:
-        - mkl-interfaces/2022.1.0
+        - mkl/2022.1.0
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
