@@ -1,6 +1,6 @@
 spack:
   specs:
-  - intel
+  - intel-oneapi-compilers-classic
   - mvapich2
 {% if e3sm_lapack %}
   - intel-oneapi-mkl
@@ -16,7 +16,7 @@ spack:
     unify: true
   packages:
     all:
-      compiler: [intel@2021.6.0]
+      compiler: [intel-oneapi-compilers-classic@2021.6.0]
       providers:
         mpi: [mvapich2@2.3.7]
 {% if e3sm_lapack %}
@@ -133,9 +133,9 @@ spack:
       - spec: python@3.9.12+bz2+crypt+ctypes+dbm+lzma+nis+pyexpat~pythoncmd+readline+sqlite3+ssl+tix+tkinter+uuid+zlib
         prefix: /usr/tce
       buildable: false
-    intel:
+    intel-oneapi-compilers-classic:
       externals:
-      - spec: intel@2021.6.0
+      - spec: intel-oneapi-compilers-classic@2021.6.0
         prefix: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic
         modules:
         - intel-classic/2021.6.0-magic
@@ -153,7 +153,7 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: intel@=2021.6.0
+      spec: intel-oneapi-compilers-classic@=2021.6.0
       paths:
         cc: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icc
         cxx: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icpc
