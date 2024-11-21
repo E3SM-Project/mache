@@ -11,6 +11,7 @@ spack:
   - netcdf-fortran
   - parallel-netcdf
 {% endif %}
+{{ specs }}
   concretizer:
     unify: true
   compilers:
