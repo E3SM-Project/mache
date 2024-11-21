@@ -111,7 +111,7 @@ spack:
       buildable: false
     intel-oneapi-compilers:
       externals:
-      - spec: intel-oneapi-compilers@2021.6.0
+      - spec: intel-oneapi-compilers@2021.6.0 %gcc
         prefix: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic
         extra_attributes:
           compilers:
@@ -122,6 +122,15 @@ spack:
         - StdEnv
         - intel-classic/2021.6.0-magic
       buildable: false
+    gcc:
+      externals:
+      - spec: gcc@10.3.1 languages='c,c++,fortran'
+        prefix: /usr/tce
+        extra_attributes:
+          compilers:
+            c: /usr/tce/bin/gcc
+            cxx: /usr/tce/bin/g++
+            fortran: /usr/tce/bin/gfortran
     mvapich2:
       externals:
       - spec: mvapich2@2.3.7~cuda~debug+regcache+wrapperrpath ch3_rank_bits=32 file_systems=lustre,nfs,ufs
@@ -174,7 +183,7 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: intel-oneapi-compilers@=2021.6.0
+      spec: intel-oneapi-compilers@=2021.6.0 %gcc
       paths:
         cc: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icc
         cxx: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icpc
@@ -186,5 +195,18 @@ spack:
       modules:
       - StdEnv
       - intel-classic/2021.6.0-magic
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@=10.3.1
+      paths:
+        cc: /usr/tce/bin/gcc
+        cxx: /usr/tce/bin/g++
+        f77: /usr/tce/bin/gfortran
+        fc: /usr/tce/bin/gfortran
+      flags: {}
+      operating_system: rhel8
+      target: x86_64
+      modules: []
       environment: {}
       extra_rpaths: []
