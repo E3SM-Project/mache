@@ -111,7 +111,7 @@ spack:
       buildable: false
     intel-oneapi-compilers:
       externals:
-      - spec: intel-oneapi-compilers@2021.6.0 %gcc
+      - spec: intel-oneapi-compilers@2021.6.0
         prefix: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic
         extra_attributes:
           compilers:
@@ -183,7 +183,7 @@ spack:
     install_missing_compilers: false
   compilers:
   - compiler:
-      spec: intel-oneapi-compilers@=2021.6.0 %gcc
+      spec: intel-oneapi-compilers@=2021.6.0
       paths:
         cc: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icc
         cxx: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icpc
