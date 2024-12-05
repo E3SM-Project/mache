@@ -10,6 +10,9 @@ on:
     # 5. Entry: Weekday when the process will be started [0-6] [0 is Sunday]
     - cron: '0 8 * * 3'
 
+env:
+  UP_TO_DATE: false
+
 jobs:
   auto-update:
     runs-on: ubuntu-latest
@@ -35,9 +38,10 @@ jobs:
           pre-commit autoupdate
           git add .
           # The second command will fail if no changes were present, so we ignore it
-          git commit -m "Update pre-commit dependencies" || true
+          git commit -m "Update pre-commit dependencies" || ( echo "UP_TO_DATE=true" >> "$GITHUB_ENV")
 
       - name: Push Changes
+        if: ${{ env.UP_TO_DATE == 'false' }}
         uses: ad-m/github-push-action@master
         with:
           branch: update-pre-commit-deps
@@ -47,12 +51,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Make PR
+      - name: Make PR and add reviewers and labels
+        if: ${{ env.UP_TO_DATE == 'false' }}
         run: |
           cd update-pre-commit-deps
-          gh pr create --title "Update pre-commit and its dependencies" \
+          gh pr create \
+          --title "Update pre-commit and its dependencies" \
           --body "This PR was auto-generated to update pre-commit and its dependencies." \
-          --head update-pre-commit-deps
+          --head update-pre-commit-deps \
+          --reviewer altheaden,xylar \
+          --label ci
         env:
           GH_TOKEN: ${{ github.token }}
 
