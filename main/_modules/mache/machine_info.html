@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mache.machine_info</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
@@ -74,19 +74,19 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.machine_info</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">configparser</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pwd</span>
-<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pwd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
 
-<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
 
-<span class="kn">from</span> <span class="nn">mache.discover</span> <span class="kn">import</span> <span class="n">discover_machine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_machine</span>
 
 
 <div class="viewcode-block" id="MachineInfo">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo">[docs]</a>
-<span class="k">class</span> <span class="nc">MachineInfo</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MachineInfo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An object containing information about an E3SM supported machine</span>
 
@@ -140,7 +140,7 @@
 
 <div class="viewcode-block" id="MachineInfo.__init__">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create an object with information about the E3SM supported machine</span>
 
@@ -185,7 +185,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;web_portal&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert the info to a format that is good for printing</span>
 
@@ -263,7 +263,7 @@
 
 <div class="viewcode-block" id="MachineInfo.get_account_defaults">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_account_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_account_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get default account, partition and quality of service (QOS) for</span>
 <span class="sd">        this machine.</span>
@@ -315,7 +315,7 @@
         <span class="k">return</span> <span class="n">account</span><span class="p">,</span> <span class="n">partition</span><span class="p">,</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">qos</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; get a parser for config options &quot;&quot;&quot;</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span>
@@ -334,7 +334,7 @@
 
         <span class="k">return</span> <span class="n">config</span>
 
-    <span class="k">def</span> <span class="nf">_parse_compilers_and_mpi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_compilers_and_mpi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Parse the compilers and mpi modules from XML config files &quot;&quot;&quot;</span>
         <span class="n">machine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">machine</span>
 
@@ -382,7 +382,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">machine_os</span>
 
-    <span class="k">def</span> <span class="nf">_detect_e3sm_unified</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect_e3sm_unified</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Read E3SM-Unified base path and detect whether it is running &quot;&quot;&quot;</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
 
@@ -396,7 +396,7 @@
         <span class="k">if</span> <span class="s1">&#39;E3SMU_MPI&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;E3SMU_MPI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_get_diagnostics_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_diagnostics_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Get config options related to diagnostics data &quot;&quot;&quot;</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mache.permissions</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
@@ -74,16 +74,16 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.permissions</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">grp</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">stat</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">grp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">stat</span>
 
-<span class="kn">import</span> <span class="nn">progressbar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">progressbar</span>
 
 
 <div class="viewcode-block" id="update_permissions">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions">[docs]</a>
-<span class="k">def</span> <span class="nf">update_permissions</span><span class="p">(</span><span class="n">base_paths</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: C901</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_permissions</span><span class="p">(</span><span class="n">base_paths</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: C901</span>
                        <span class="n">group_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">other_readable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Update the group that a directory belongs to along with the &quot;group&quot; and</span>
