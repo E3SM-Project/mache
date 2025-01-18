@@ -1,6 +1,6 @@
 # Quick Start
 
-`mache` (Machines for E3SM) is a package for providing configuration data 
+`mache` (Machines for E3SM) is a package for providing configuration data
 related to E3SM supported machines.
 
 (dev-installing-mache)=
@@ -38,33 +38,33 @@ python -m pip install --no-deps --no-build-isolation -e .
 
 ## Code styling and linting
 
-`mache` uses `pre-commit` to lint incoming code when you make a commit (as 
+`mache` uses `pre-commit` to lint incoming code when you make a commit (as
 long as you have your environment set up correctly), and on GitHub whenever you
-make a pull request to the `mache` repository. Linting makes sure your code 
+make a pull request to the `mache` repository. Linting makes sure your code
 follows the formatting guidelines of PEP8, and cleans up additional things like
 whitespace at the end of files.
 
-The first time you set up the `mache_dev` environment, you will need to set up 
+The first time you set up the `mache_dev` environment, you will need to set up
 `pre-commit`. This is done by running:
 
 ```bash
 pre-commit install
 ```
 
-You only need to do this once when you create the `mache_dev` environment. If 
+You only need to do this once when you create the `mache_dev` environment. If
 you create a new version of `mache_dev`, then you will need to run it again.
 
 When you run `git commit <filename>`, `pre-commit` will automatically lint your
-code before committing. Some formatting will be updated by `pre-commit` 
+code before committing. Some formatting will be updated by `pre-commit`
 automatically, in which case it will terminate the commit and inform you of the
 change. Then you can run `git commit <filename>` again to continue the linting
 process until your commit is successful. Some changes need to be made manually,
-such as inconsistent variable types. When this happens, you must update the 
+such as inconsistent variable types. When this happens, you must update the
 file to `pre-commit`'s standards, and then attempt to re-commit the file.
 
 Internally, `pre-commit`  uses [flake8](https://flake8.pycqa.org/en/latest/) to
-check PEP8 compliance, [isort](https://pycqa.github.io/isort/) to sort, check 
-and format imports, [flynt](https://github.com/ikamensh/flynt) to change any 
+check PEP8 compliance, [isort](https://pycqa.github.io/isort/) to sort, check
+and format imports, [flynt](https://github.com/ikamensh/flynt) to change any
 format strings to f-strings, and [mypy](https://mypy-lang.org/) to check for
 consistent variable types. An example error might be:
 
@@ -172,7 +172,7 @@ config : configparser.ConfigParser
 
 e3sm_supported : bool
 
-: Whether this machine supports running E3SM itself, and therefore has a list 
+: Whether this machine supports running E3SM itself, and therefore has a list
 of compilers, MPI libraries, and the modules needed to load them
 
 compilers : list
@@ -193,12 +193,12 @@ e3sm_unified_mpi : {'nompi', 'system', None}
 
 e3sm_unified_base : str
 
-: The base path where E3SM-Unified and its activation scripts are installed if 
+: The base path where E3SM-Unified and its activation scripts are installed if
 `e3sm_unified` is not `None`
 
 e3sm_unified_activation : str
 
-: The activation script used to activate E3SM-Unified if `e3sm_unified` is not 
+: The activation script used to activate E3SM-Unified if `e3sm_unified` is not
 `None`
 
 diagnostics_base : str
@@ -215,8 +215,8 @@ web_portal_url : str
 
 username : str
 
-: The name of the current user, for use in web-portal directories. This value 
-is also added to the `web_portal` and `username` option of the `config` 
+: The name of the current user, for use in web-portal directories. This value
+is also added to the `web_portal` and `username` option of the `config`
 attribute.
 
 ## Syncing diagnostics
@@ -246,7 +246,8 @@ data with a shared diagnostics directory on each supported machine.
 Whenever possible, we log on to the E3SM machine and download the data
 from LCRC because this allows the synchronization tool to also update
 permissions once the data has been synchronized. This is the approach
-for all machines except for Los Alamos National Laboratory's Badger,
+for all machines except for Frontier and Andes, which doesn't allow connections
+to LCRC because of Duo Mobile, and Los Alamos National Laboratory's Chicoma,
 which is behind a firewall that prevents this approach.
 
 ### One-time setup
@@ -264,20 +265,6 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 This is the same procedure as for creating an SSH key for GitHub so if
 you have already done that process, you will not need a new SSH key for
 LCRC.
-
-### Setup on Andes
-
-Andes at OLCF requires special treatment. You need to create or edit the
-file `~/.ssh/config` with the following:
-
-```
-Host blues.lcrc.anl.gov
-    User <ac.user>
-    PreferredAuthentications publickey
-    IdentityFile ~/.ssh/id_ed25519
-```
-
-where, again `<ac.user>` is your username on LCRC.
 
 ### Syncing from LCRC
 
