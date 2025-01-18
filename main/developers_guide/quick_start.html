@@ -53,7 +53,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#syncing-diagnostics">Syncing diagnostics</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#one-time-setup">One-time setup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#setup-on-andes">Setup on Andes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#syncing-from-lcrc">Syncing from LCRC</a></li>
 </ul>
 </li>
@@ -284,7 +283,8 @@ data with a shared diagnostics directory on each supported machine.</p>
 <p>Whenever possible, we log on to the E3SM machine and download the data
 from LCRC because this allows the synchronization tool to also update
 permissions once the data has been synchronized. This is the approach
-for all machines except for Los Alamos National Laboratory’s Badger,
+for all machines except for Frontier and Andes, which doesn’t allow connections
+to LCRC because of Duo Mobile, and Los Alamos National Laboratory’s Chicoma,
 which is behind a firewall that prevents this approach.</p>
 <section id="one-time-setup">
 <h3>One-time setup<a class="headerlink" href="#one-time-setup" title="Link to this heading"></a></h3>
@@ -299,18 +299,6 @@ SSH key for the destination machine, you will need to run:</p>
 <p>This is the same procedure as for creating an SSH key for GitHub so if
 you have already done that process, you will not need a new SSH key for
 LCRC.</p>
-</section>
-<section id="setup-on-andes">
-<h3>Setup on Andes<a class="headerlink" href="#setup-on-andes" title="Link to this heading"></a></h3>
-<p>Andes at OLCF requires special treatment. You need to create or edit the
-file <code class="docutils literal notranslate"><span class="pre">~/.ssh/config</span></code> with the following:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Host</span> <span class="n">blues</span><span class="o">.</span><span class="n">lcrc</span><span class="o">.</span><span class="n">anl</span><span class="o">.</span><span class="n">gov</span>
-    <span class="n">User</span> <span class="o">&lt;</span><span class="n">ac</span><span class="o">.</span><span class="n">user</span><span class="o">&gt;</span>
-    <span class="n">PreferredAuthentications</span> <span class="n">publickey</span>
-    <span class="n">IdentityFile</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_ed25519</span>
-</pre></div>
-</div>
-<p>where, again <code class="docutils literal notranslate"><span class="pre">&lt;ac.user&gt;</span></code> is your username on LCRC.</p>
 </section>
 <section id="syncing-from-lcrc">
 <h3>Syncing from LCRC<a class="headerlink" href="#syncing-from-lcrc" title="Link to this heading"></a></h3>
