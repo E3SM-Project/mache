@@ -50,16 +50,10 @@ def sync_diags(other, direction='to', machine=None,  # noqa: C901
     else:
         tunnel = None
 
-    if direction == 'to' and tunnel is None:
-        raise ValueError(
-            'You can only use "mache sync diags to ..." to sync diags to a\n'
-            'machine with a tunnel.  Other machines should only use \n'
-            '"mache sync diags from ..." so permissions can be updated.')
-
-    if machine in lcrc_machines and tunnel is None:
-        if machine != other:
-            raise ValueError(f'You should sync {machine} with itself since '
-                             f'files are local')
+    if machine in lcrc_machines and other in lcrc_machines and \
+            machine != other:
+        raise ValueError(f'You should sync {machine} with itself since '
+                         f'files are local')
     elif username is None:
         if direction == 'from':
             raise ValueError('For syncing to work properly, your LCRC '
