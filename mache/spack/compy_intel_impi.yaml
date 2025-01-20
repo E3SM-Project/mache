@@ -149,8 +149,6 @@ spack:
         - pnetcdf/1.9.0
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: intel@20.0.0

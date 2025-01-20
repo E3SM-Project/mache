@@ -152,8 +152,6 @@ spack:
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/gnu/12.3
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: gcc@12.3

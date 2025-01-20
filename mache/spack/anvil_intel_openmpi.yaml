@@ -148,8 +148,6 @@ spack:
         - parallel-netcdf/1.11.0-x4n5s7k
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: intel@20.0.4

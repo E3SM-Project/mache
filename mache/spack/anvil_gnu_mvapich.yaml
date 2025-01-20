@@ -150,8 +150,6 @@ spack:
         - parallel-netcdf/1.11.0-c22b2bn
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: gcc@8.2.0

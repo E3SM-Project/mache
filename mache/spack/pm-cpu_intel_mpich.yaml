@@ -132,8 +132,6 @@ spack:
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/intel/2023.2
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: intel@2023.2.0
