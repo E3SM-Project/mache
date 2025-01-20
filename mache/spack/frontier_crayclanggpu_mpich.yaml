@@ -144,8 +144,6 @@ spack:
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/crayclang/14.0
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: cce@15.0.1

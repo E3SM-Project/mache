@@ -131,8 +131,6 @@ spack:
         - parallel-netcdf/1.11.0-d7h4ysd
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: gcc@11.2.0

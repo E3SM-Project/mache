@@ -151,8 +151,6 @@ spack:
         - parallel-netcdf/1.11.0-kj4jsvt
       buildable: false
 {% endif %}
-  config:
-    install_missing_compilers: false
   compilers:
   - compiler:
       spec: intel@20.0.4
