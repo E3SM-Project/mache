@@ -1,5 +1,7 @@
 # mache: Machines for E3SM
 
+<img src="docs/_static/mache-logo.png" width="500" height="500">
+
 A package for providing configuration data relate to E3SM supported
 machines.
 

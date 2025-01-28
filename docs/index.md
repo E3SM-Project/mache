@@ -1,6 +1,10 @@
 (mache)=
 
 # Mache
+```{image} _static/mache-logo.png
+:align: center
+:width: 384 px
+```
 
 A package for providing configuration data relate to E3SM supported machines.
 
