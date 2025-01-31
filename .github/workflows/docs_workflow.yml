@@ -23,16 +23,6 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Cache Conda
-        uses: actions/cache@v4
-        env:
-          # Increase this value to reset cache if deploy/conda-dev-spec.template has not changed in the workflow
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('spec-file.txt') }}
-
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Set up Conda Environment
         uses: conda-incubator/setup-miniconda@v3
