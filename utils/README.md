@@ -14,3 +14,10 @@ A developer can then copy `new_config_machines.xml` into
 `mache/cime_machine_config/config_machines.xml` as part of a PR that makes
 relevant updates. They should also make the changes associated with the
 differences that this utility displays in the appropriate `mache/spack/templates` files.
+
+## extract spack shell scripts from CIME machine config
+
+The `extract_all_spack_from_config_machines.py` produces shell scripts for
+each machine, compiler and MPI library supported for spack builds from `mache`.
+The scripts are places in `new_spack` and can be moved or copied to
+`mache/spack` (after vetting!).
