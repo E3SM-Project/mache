@@ -101,6 +101,11 @@ spack:
         - craype/2.7.30
         - craype-accel-host
         - craype-x86-rome
+        extra_attributes:
+          compilers:
+            c: cc
+            cxx: CC
+            fortran: ftn
       buildable: false
     cray-mpich:
       externals:
