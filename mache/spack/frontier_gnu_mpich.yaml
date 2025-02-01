@@ -107,6 +107,11 @@ spack:
         - gcc/12.2.0
         - craype/2.7.19
         - libfabric/1.15.2.0
+        extra_attributes:
+          compilers:
+            c: cc
+            cxx: CC
+            fortran: ftn
       buildable: false
     cray-mpich:
       externals:
