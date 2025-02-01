@@ -103,6 +103,11 @@ spack:
         prefix: /share/apps/gcc/10.2.0
         modules:
         - gcc/10.2.0
+        extra_attributes:
+          compilers:
+            c: /share/apps/gcc/10.2.0/bin/gcc
+            cxx: /share/apps/gcc/10.2.0/bin/g++
+            fortran: /share/apps/gcc/10.2.0/bin/gfortran
       buildable: false
     openmpi:
       externals:

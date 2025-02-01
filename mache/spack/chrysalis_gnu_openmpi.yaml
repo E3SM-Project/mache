@@ -90,6 +90,11 @@ spack:
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-11.2.0-bgddrif
         modules:
         - gcc/11.2.0-bgddrif
+        extra_attributes:
+          compilers:
+            c: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-11.2.0-bgddrif/bin/gcc
+            cxx: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-11.2.0-bgddrif/bin/g++
+            fortran: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/gcc-11.2.0-bgddrif/bin/gfortran
       buildable: false
     openmpi:
       externals:

@@ -90,7 +90,7 @@ spack:
     zlib:
       externals:
       - spec: zlib@1.2.11
-        prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/zlib-1.2.11-dudhhig
+        prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/zlib-1.2.11-m3ugpb3
       buildable: false
     perl:
       externals:
@@ -105,6 +105,11 @@ spack:
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33
         modules:
         - gcc/8.2.0-xhxgy33
+        extra_attributes:
+          compilers:
+            c: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33/bin/gcc
+            cxx: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33/bin/g++
+            fortran: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33/bin/gfortran
       buildable: false
     openmpi:
       externals:
