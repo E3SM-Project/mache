@@ -9,6 +9,10 @@ rsync
 # Building
 setuptools >=60
 
+# Utilities
+requests
+termcolor
+
 # Linting and testing
 pip
 pytest
