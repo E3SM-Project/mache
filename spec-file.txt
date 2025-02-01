@@ -4,14 +4,12 @@ jinja2
 lxml
 pyyaml
 progressbar2
+requests
 rsync
+termcolor
 
 # Building
 setuptools >=60
-
-# Utilities
-requests
-termcolor
 
 # Linting and testing
 pip
