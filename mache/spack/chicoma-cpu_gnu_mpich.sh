@@ -56,7 +56,6 @@ export MPICH_VERSION_DISPLAY=1
 export HDF5_USE_FILE_LOCKING=FALSE
 export PERL5LIB=/usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
 export PNETCDF_HINTS="romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
-export FI_CXI_RX_MATCH_MODE=software
 export MPICH_COLL_SYNC=MPI_Bcast
 
 export LD_LIBRARY_PATH="/usr/lib64/gcc/x86_64-suse-linux/12:${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"

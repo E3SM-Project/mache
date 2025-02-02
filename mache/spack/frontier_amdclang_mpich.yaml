@@ -156,7 +156,7 @@ spack:
       operating_system: sles15
       target: any
       modules:
-      - Core/24.07
+      - Core/24.00
       - PrgEnv-amd/8.3.3
       - amd/5.4.0
       - libfabric/1.15.2.0

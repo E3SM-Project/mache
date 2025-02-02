@@ -1,8 +1,9 @@
 module reset >& /dev/null
-module switch Core/24.07 >& /dev/null
+module switch Core Core/24.00 >& /dev/null
 module switch PrgEnv-cray PrgEnv-amd/8.3.3 >& /dev/null
 module switch amd amd/5.4.0 >& /dev/null
-module load craype-accel-amd-gfx90a >& /dev/null
+# see https://github.com/E3SM-Project/E3SM/issues/6755
+# module load craype-accel-amd-gfx90a >& /dev/null
 
 {% if e3sm_lapack %}
 module load cray-libsci/22.12.1.1
