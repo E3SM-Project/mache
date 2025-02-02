@@ -56,7 +56,6 @@ setenv MPICH_VERSION_DISPLAY 1
 setenv HDF5_USE_FILE_LOCKING FALSE
 setenv PERL5LIB /usr/projects/climate/SHARED_CLIMATE/software/chicoma-cpu/perl5-only-switch/lib/perl5
 setenv PNETCDF_HINTS "romio_ds_write=disable;romio_ds_read=disable;romio_cb_write=enable;romio_cb_read=enable"
-setenv FI_CXI_RX_MATCH_MODE software
 setenv MPICH_COLL_SYNC MPI_Bcast
 
 # for standalone MPAS builds
