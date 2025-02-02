@@ -156,7 +156,7 @@ spack:
       operating_system: sles15
       target: any
       modules:
-      - Core/24.07
+      - Core/24.00
       - PrgEnv-cray/8.3.3
       - cce/15.0.1
       - craype/2.7.20

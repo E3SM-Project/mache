@@ -1,5 +1,5 @@
 module reset >& /dev/null
-module switch Core/24.07 >& /dev/null
+module switch Core Core/24.00 >& /dev/null
 module switch PrgEnv-cray PrgEnv-amd/8.3.3 >& /dev/null
 module switch amd amd/5.4.0 >& /dev/null
 
