@@ -108,15 +108,6 @@ spack:
       - spec: findutils@4.6.0
         prefix: /usr
       buildable: false
-    python:
-      externals:
-      - spec: python@2.7.18+bz2+crypt+ctypes+dbm~lzma+nis+pyexpat~pythoncmd+readline+sqlite3+ssl+tix+tkinter+uuid+zlib
-        modules:
-        - python/2.7.18
-      - spec: python@3.9.12+bz2+crypt+ctypes+dbm+lzma+nis+pyexpat~pythoncmd+readline+sqlite3+ssl+tix+tkinter+uuid+zlib
-        modules:
-        - python/3.9.12
-      buildable: false
     m4:
       externals:
       - spec: m4@1.4.18

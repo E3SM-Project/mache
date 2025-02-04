@@ -126,13 +126,6 @@ spack:
         - mvapich2/2.3.7
         - mvapich2-tce/2.3.7
       buildable: false
-    python:
-      externals:
-      - spec: python@2.7.18+bz2+crypt+ctypes+dbm~lzma+nis+pyexpat~pythoncmd+readline+sqlite3+ssl+tix+tkinter+uuid+zlib
-        prefix: /usr/tce
-      - spec: python@3.9.12+bz2+crypt+ctypes+dbm+lzma+nis+pyexpat~pythoncmd+readline+sqlite3+ssl+tix+tkinter+uuid+zlib
-        prefix: /usr/tce
-      buildable: false
     intel-oneapi-compilers:
       externals:
       - spec: intel-oneapi-compilers@2021.6.0
