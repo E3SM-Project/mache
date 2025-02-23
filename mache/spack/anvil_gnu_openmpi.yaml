@@ -167,5 +167,7 @@ spack:
       operating_system: centos7
       target: x86_64
       modules: []
-      environment: {}
+      environment:
+        prepend_path:
+          MODULEPATH: /lcrc/group/e3sm/soft/modulefiles/anvil
       extra_rpaths: []
