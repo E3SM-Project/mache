@@ -20,7 +20,6 @@ def discover_machine(quiet=False):
     hostname = socket.gethostname()
     machine = None
     machines_by_host_re = {
-        r'^acme1': 'acme1',
         r'^andes': 'andes',
         r'^blueslogin': 'anvil',
         r'^b\d{3}': 'anvil',
