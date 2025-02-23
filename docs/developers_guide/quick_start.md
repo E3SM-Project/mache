@@ -141,15 +141,20 @@ Config options:
 If you are on the login node of one of the following E3SM supported
 machines, you don't need to provide the machine name. It can be
 discovered automatically when you create a `MachineInfo()` object or
-call `discover_machine()`. It will be recognized from the host name:
+call `discover_machine()`. It will be recognized from the host name or the
+local environment:
 
--   andes
--   anvil
--   chicoma-cpu
--   chrysalis
--   compy
--   frontier
--   pm-cpu
+- andes
+- anvil
+- chicoma-cpu
+- chrysalis
+- compy
+- dane
+- frontier
+- pm-cpu
+- polaris
+- ruby
+
 
 If you are on a compute node or want info about a machine you're not
 currently on, give the `machine` name in all lowercase.
