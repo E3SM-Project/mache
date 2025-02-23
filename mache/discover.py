@@ -29,7 +29,6 @@ def discover_machine(quiet=False):
         r'^chr-\d{4}': 'chrysalis',
         r'^compy': 'compy',
         r'^n\d{4}': 'anvil',
-        r'^cooley': 'cooley',
         r'^polaris': 'polaris',
         r'^dane\d{1,4}': 'dane',
         r'^ruby\d{1,4}': 'ruby',
