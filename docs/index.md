@@ -3,7 +3,7 @@
 # Mache
 ```{image} _static/mache-logo.png
 :align: center
-:width: 384 px
+:width: 200 px
 ```
 
 A package for providing configuration data relate to E3SM supported machines.
