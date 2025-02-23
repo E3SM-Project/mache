@@ -143,13 +143,11 @@ machines, you don't need to provide the machine name. It can be
 discovered automatically when you create a `MachineInfo()` object or
 call `discover_machine()`. It will be recognized from the host name:
 
--   acme1
 -   andes
 -   anvil
 -   chicoma-cpu
 -   chrysalis
 -   compy
--   cooley
 -   frontier
 -   pm-cpu
 
