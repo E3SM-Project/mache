@@ -16,11 +16,11 @@ spack:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@12.2.0]
+      compiler: [gcc@11.2.0]
       providers:
         mpi: [cray-mpich@8.1.23]
 {% if e3sm_lapack %}
-        lapack: [cray-libsci@23.02.1.1]
+        lapack: [cray-libsci@24.11.0]
 {% endif %}
     autoconf:
       externals:
@@ -40,6 +40,8 @@ spack:
     cmake:
       externals:
       - spec: cmake@3.27.9
+        # prefix is needed -- module does not seem to be sufficient
+        prefix: /sw/frontier/spack-envs/core-24.07/opt/gcc-7.5.0/cmake-3.27.9-pyxnvhiskwepbw5itqyipzyhhfw3yitk
         modules:
         - cmake/3.27.9
       buildable: false
@@ -48,9 +50,14 @@ spack:
       - spec: curl@7.79.1
         prefix: /usr
       buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.8.0
+        prefix: /usr
+      buildable: false
     gettext:
       externals:
-      - spec: gettext@0.20.2
+      - spec: gettext@0.21.1
         prefix: /usr
       buildable: false
     gmake:
@@ -101,10 +108,10 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@12.2.0
+      - spec: gcc@11.2.0
         modules:
         - PrgEnv-gnu/8.3.3
-        - gcc/12.2.0
+        - gcc/11.2.0
         - craype/2.7.19
         - libfabric/1.15.2.0
         extra_attributes:
@@ -131,10 +138,9 @@ spack:
 {% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@22.12.1.1
-        prefix: /opt/cray/pe/libsci/22.12.1.1/GNU/9.1/x86_64
+      - spec: cray-libsci@24.11.0
         modules:
-        - cray-libsci/22.12.1.1
+        - cray-libsci/24.11.0
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
@@ -159,9 +165,10 @@ spack:
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
 {% endif %}
+
   compilers:
   - compiler:
-      spec: gcc@12.2.0
+      spec: gcc@11.2.0
       paths:
         cc: cc
         cxx: CC
@@ -173,9 +180,8 @@ spack:
       modules:
       - Core/24.00
       - PrgEnv-gnu/8.3.3
-      - gcc/12.2.0
+      - gcc/11.2.0
       - craype/2.7.19
       - libfabric/1.15.2.0
-      environment:
-        prepend_path:
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.5.2-2.4_3.45__gd0f7936.shasta/lib64/pkgconfig"
+      - craype-accel-amd-gfx90a
+      - rocm/5.4.0
