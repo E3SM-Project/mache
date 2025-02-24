@@ -139,3 +139,6 @@ cython_debug/
 
 # pycharm
 .idea/
+
+# xml files in the root directory
+/*.xml
