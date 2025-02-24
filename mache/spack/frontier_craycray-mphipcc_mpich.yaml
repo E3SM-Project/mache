@@ -49,9 +49,14 @@ spack:
       - spec: curl@7.79.1
         prefix: /usr
       buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.8.0
+        prefix: /usr
+      buildable: false
     gettext:
       externals:
-      - spec: gettext@0.20.2
+      - spec: gettext@0.21.1
         prefix: /usr
       buildable: false
     gmake:
