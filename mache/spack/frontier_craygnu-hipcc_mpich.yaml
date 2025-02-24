@@ -1,5 +1,6 @@
 spack:
   specs:
+  - gcc
   - cray-mpich
 {% if e3sm_lapack %}
   - cray-libsci
@@ -15,11 +16,11 @@ spack:
     unify: when_possible
   packages:
     all:
-      compiler: [rocmcc@5.4.0]
+      compiler: [gcc@13.2]
       providers:
-        mpi: [cray-mpich@8.1.23]
+        mpi: [cray-mpich@8.1.31]
 {% if e3sm_lapack %}
-        lapack: [cray-libsci@22.12.1.1]
+        lapack: [cray-libsci@24.11.0]
 {% endif %}
     autoconf:
       externals:
@@ -39,6 +40,8 @@ spack:
     cmake:
       externals:
       - spec: cmake@3.27.9
+        # prefix is needed -- module does not seem to be sufficient
+        prefix: /sw/frontier/spack-envs/core-24.07/opt/gcc-7.5.0/cmake-3.27.9-pyxnvhiskwepbw5itqyipzyhhfw3yitk
         modules:
         - cmake/3.27.9
       buildable: false
@@ -98,55 +101,77 @@ spack:
       - spec: xz@5.2.3
         prefix: /usr
       buildable: false
+    gcc:
+      # despite complaints about redundancy, this needs to be here to prevent
+      # spack from trying to build gcc
+      externals:
+      - spec: gcc@13.2
+        modules:
+        - Core/24.07
+        - PrgEnv-gnu/8.6.0
+        - cpe/24.11
+        - gcc-native/13.2
+        - craype/2.7.19
+        - libfabric/1.22.0
+        - libunwind/1.8.1
+        - craype-accel-amd-gfx90a
+        - rocm/6.2.4
+        extra_attributes:
+          # this needs to be here for gcc because the gcc pacakge looks here
+          # rather than below in the compilers section
+          compilers:
+            c: cc
+            cxx: CC
+            fortran: ftn
+      buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.23
-        prefix: /opt/cray/pe/mpich/8.1.23/ofi/amd/5.0
+      - spec: cray-mpich@8.1.31
         modules:
-        - libfabric/1.15.2.0
-        - cray-mpich/8.1.23
+        - libfabric/1.22.0
+        - libunwind/1.8.1
+        - cray-mpich/8.1.31
       buildable: false
     libfabric:
       externals:
-      - spec: libfabric@1.15.2.0
-        prefix: /opt/cray/libfabric/1.15.2.0
+      - spec: libfabric@1.22.0
         modules:
-        - libfabric/1.15.2.0
+        - libfabric/1.22.0
       buildable: false
 {% if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@22.12.1.1
-        prefix: /opt/cray/pe/libsci/22.12.1.1/amd/4.0/x86_64
+      - spec: cray-libsci@24.11.0
         modules:
-        - cray-libsci/22.12.1.1
+        - cray-libsci/24.11.0
       buildable: false
 {% endif %}
 {% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.1/amd/4.3
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.1/GNU/9.1
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.12.3.1+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.1/amd/4.3
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.1/GNU/9.1/
       buildable: false
     netcdf-c:
       externals:
       - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/amd/4.3
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.5.3
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/amd/4.3
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
 {% endif %}
+
   compilers:
   - compiler:
-      spec: rocmcc@5.4.0
+      spec: gcc@13.2
       paths:
         cc: cc
         cxx: CC
@@ -154,22 +179,14 @@ spack:
         fc: ftn
       flags: {}
       operating_system: sles15
-      target: any
+      target: x86_64
       modules:
-      - Core/24.00
-      - PrgEnv-amd/8.3.3
-      - amd/5.4.0
-      # see https://github.com/E3SM-Project/E3SM/issues/6755
-      # - craype-accel-amd-gfx90a
-      - libfabric/1.15.2.0
-      environment:
-        set:
-          RFE_811452_DISABLE: '1'
-        append_path:
-          LD_LIBRARY_PATH: /opt/cray/pe/gcc-libs:/opt/cray/libfabric/1.15.2.0/lib64
-        prepend_path:
-          LD_LIBRARY_PATH: /opt/cray/pe/pmi/6.1.8/lib
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.22__gd067c3f.shasta/lib64/pkgconfig"
-      extra_rpaths:
-      - /opt/cray/pe/gcc-libs
-      - /opt/cray/gcc-libs
+      - Core/24.07
+      - PrgEnv-gnu/8.6.0
+      - cpe/24.11
+      - gcc-native/13.2
+      - craype/2.7.19
+      - libfabric/1.22.0
+      - libunwind/1.8.1
+      - craype-accel-amd-gfx90a
+      - rocm/6.2.4
