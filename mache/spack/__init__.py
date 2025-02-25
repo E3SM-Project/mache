@@ -1,8 +1,6 @@
 import os
 import subprocess
-import sys
 from importlib import resources as importlib_resources
-from typing import TYPE_CHECKING
 
 import yaml
 from jinja2 import Template
@@ -370,9 +368,9 @@ def _get_yaml_data(machine, compiler, mpi, include_e3sm_lapack,
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise ValueError(f'Spack template not available for {compiler} '
-                             f'and {mpi} on {machine}.')
+                             f'and {mpi} on {machine}.') from err
     else:
         with open(yaml_template) as f:
             template = Template(f.read())

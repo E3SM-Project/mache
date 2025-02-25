@@ -5,8 +5,13 @@ import stat
 import progressbar
 
 
-def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
-                       group_writable=False, other_readable=True):
+def update_permissions(  # noqa: C901
+    base_paths,
+    group,
+    show_progress=True,
+    group_writable=False,
+    other_readable=True,
+):
     """
     Update the group that a directory belongs to along with the "group" and
     "other" permissions for the directory
@@ -73,7 +78,7 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
 
     files_and_dirs = []
     for base in directories:
-        for root, dirs, files in os.walk(base):
+        for _, dirs, files in os.walk(base):
             files_and_dirs.extend(dirs)
             files_and_dirs.extend(files)
 
