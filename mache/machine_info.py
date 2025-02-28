@@ -114,69 +114,57 @@ class MachineInfo:
             The contents as a string for printing to the terminal
         """
 
-        info = \
-            f'Machine: {self.machine}\n' \
+        info = (
+            f'Machine: {self.machine}\n'
             f'  E3SM Supported Machine: {self.e3sm_supported}'
+        )
 
-        if self.e3sm_supported and self.compilers is not None and \
-                self.mpilibs is not None and self.os is not None:
-            info = \
-                f'{info}\n' \
-                f'  Compilers: {", ".join(self.compilers)}\n' \
-                f'  MPI libraries: {", ".join(self.mpilibs)}\n' \
+        if (
+            self.e3sm_supported
+            and self.compilers is not None
+            and self.mpilibs is not None
+            and self.os is not None
+        ):
+            info = (
+                f'{info}\n'
+                f'  Compilers: {", ".join(self.compilers)}\n'
+                f'  MPI libraries: {", ".join(self.mpilibs)}\n'
                 f'  OS: {self.os}'
+            )
 
         info = f'{info}\n'
 
-        print_unified = (self.e3sm_unified_activation is not None or
-                         self.e3sm_unified_base is not None or
-                         self.e3sm_unified_mpi is not None)
+        print_unified = (
+            self.e3sm_unified_activation is not None
+            or self.e3sm_unified_base is not None
+            or self.e3sm_unified_mpi is not None
+        )
         if print_unified:
-            info = \
-                f'{info}\n' \
-                f'E3SM-Unified: '
+            info = f'{info}\nE3SM-Unified: '
 
             if self.e3sm_unified_activation is None:
-                info = \
-                    f'{info}\n' \
-                    f'  E3SM-Unified is not currently loaded'
+                info = f'{info}\n  E3SM-Unified is not currently loaded'
             else:
-                info = \
-                    f'{info}\n' \
-                    f'  Activation: {self.e3sm_unified_activation}'
+                info = f'{info}\n  Activation: {self.e3sm_unified_activation}'
             if self.e3sm_unified_base is not None:
-                info = \
-                    f'{info}\n' \
-                    f'  Base path: {self.e3sm_unified_base}'
+                info = f'{info}\n  Base path: {self.e3sm_unified_base}'
             if self.e3sm_unified_mpi is not None:
-                info = \
-                    f'{info}\n' \
-                    f'  MPI type: {self.e3sm_unified_mpi}'
+                info = f'{info}\n  MPI type: {self.e3sm_unified_mpi}'
             info = f'{info}\n'
 
         print_diags = self.diagnostics_base is not None
         if print_diags:
-            info = \
-                f'{info}\n' \
-                f'Diagnostics: '
+            info = f'{info}\nDiagnostics: '
 
             if self.diagnostics_base is not None:
-                info = \
-                    f'{info}\n' \
-                    f'  Base path: {self.diagnostics_base}'
+                info = f'{info}\n  Base path: {self.diagnostics_base}'
             info = f'{info}\n'
 
-        info = \
-            f'{info}\n' \
-            f'Config options: '
+        info = f'{info}\nConfig options: '
         for section in self.config.sections():
-            info = \
-                f'{info}\n' \
-                f'  [{section}]'
+            info = f'{info}\n  [{section}]'
             for key, value in self.config.items(section):
-                info = \
-                    f'{info}\n' \
-                    f'    {key} = {value}'
+                info = f'{info}\n    {key} = {value}'
             info = f'{info}\n'
         return info
 
@@ -232,30 +220,35 @@ class MachineInfo:
         return account, partition, constraint, qos
 
     def _get_config(self):
-        """ get a parser for config options """
+        """get a parser for config options"""
 
         config = configparser.ConfigParser(
-            interpolation=configparser.ExtendedInterpolation())
+            interpolation=configparser.ExtendedInterpolation()
+        )
 
         machine = self.machine
         try:
-            cfg_path = \
+            cfg_path = (
                 importlib_resources.files('mache.machines') / f'{machine}.cfg'
+            )
             config.read(str(cfg_path))
         except FileNotFoundError:
             # this isn't a known machine so use the default
-            cfg_path = \
+            cfg_path = (
                 importlib_resources.files('mache.machines') / 'default.cfg'
+            )
             config.read(str(cfg_path))
 
         return config
 
     def _parse_compilers_and_mpi(self):
-        """ Parse the compilers and mpi modules from XML config files """
+        """Parse the compilers and mpi modules from XML config files"""
         machine = self.machine
 
-        xml_path = (importlib_resources.files('mache.cime_machine_config') /
-                    'config_machines.xml')
+        xml_path = (
+            importlib_resources.files('mache.cime_machine_config')
+            / 'config_machines.xml'
+        )
 
         root = etree.parse(str(xml_path))
 
@@ -299,11 +292,12 @@ class MachineInfo:
         self.os = machine_os
 
     def _detect_e3sm_unified(self):
-        """ Read E3SM-Unified base path and detect whether it is running """
+        """Read E3SM-Unified base path and detect whether it is running"""
         config = self.config
 
-        if config is not None and \
-                config.has_option('e3sm_unified', 'base_path'):
+        if config is not None and config.has_option(
+            'e3sm_unified', 'base_path'
+        ):
             self.e3sm_unified_base = config.get('e3sm_unified', 'base_path')
 
         if 'E3SMU_SCRIPT' in os.environ:
@@ -313,10 +307,11 @@ class MachineInfo:
             self.e3sm_unified_mpi = os.environ['E3SMU_MPI'].lower()
 
     def _get_diagnostics_info(self):
-        """ Get config options related to diagnostics data """
+        """Get config options related to diagnostics data"""
 
         config = self.config
 
-        if config is not None and \
-                config.has_option('diagnostics', 'base_path'):
+        if config is not None and config.has_option(
+            'diagnostics', 'base_path'
+        ):
             self.diagnostics_base = config.get('diagnostics', 'base_path')

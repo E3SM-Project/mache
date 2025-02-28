@@ -7,12 +7,8 @@ from mache.permissions import update_permissions
 
 
 def sync_diags(  # noqa: C901
-        other,
-        direction='to',
-        machine=None,
-        username=None,
-        config_filename=None
-    ):
+    other, direction='to', machine=None, username=None, config_filename=None
+):
     """
     Synchronize diagnostics files between supported machines
 
@@ -38,11 +34,15 @@ def sync_diags(  # noqa: C901
 
     lcrc_machines = ['anvil', 'chrysalis']
     if direction == 'to' and machine not in lcrc_machines:
-        raise ValueError(f'You can only sync diagnostics to another machine '
-                         f'from an LCRC machine: {", ".join(lcrc_machines)}')
+        raise ValueError(
+            f'You can only sync diagnostics to another machine '
+            f'from an LCRC machine: {", ".join(lcrc_machines)}'
+        )
     if direction == 'from' and other not in lcrc_machines:
-        raise ValueError(f'You can only sync diagnostics from an LCRC '
-                         f'machine: {", ".join(lcrc_machines)}')
+        raise ValueError(
+            f'You can only sync diagnostics from an LCRC '
+            f'machine: {", ".join(lcrc_machines)}'
+        )
     machine_config = machine_info.config
     if config_filename is not None:
         machine_config.read(config_filename)
@@ -55,17 +55,24 @@ def sync_diags(  # noqa: C901
     else:
         tunnel = None
 
-    if machine in lcrc_machines and other in lcrc_machines and \
-            machine != other:
-        raise ValueError(f'You should sync {machine} with itself since '
-                         f'files are local')
+    if (
+        machine in lcrc_machines
+        and other in lcrc_machines
+        and machine != other
+    ):
+        raise ValueError(
+            f'You should sync {machine} with itself since files are local'
+        )
     elif username is None:
         if direction == 'from':
-            raise ValueError('For syncing to work properly, your LCRC '
-                             'username is required.')
+            raise ValueError(
+                'For syncing to work properly, your LCRC username is required.'
+            )
         else:
-            raise ValueError(f'For syncing to work properly, your {other} '
-                             f'username is required.')
+            raise ValueError(
+                f'For syncing to work properly, your {other} '
+                f'username is required.'
+            )
 
     if direction == 'from':
         source_config = other_config
@@ -97,9 +104,18 @@ def sync_diags(  # noqa: C901
     if not private_diags.endswith('/'):
         private_diags = f'{private_diags}/'
 
-    args = ['rsync', '--verbose', '--recursive', '--times', '--links',
-            '--compress', '--progress', '--update',
-            '--no-perms', '--omit-dir-times']
+    args = [
+        'rsync',
+        '--verbose',
+        '--recursive',
+        '--times',
+        '--links',
+        '--compress',
+        '--progress',
+        '--update',
+        '--no-perms',
+        '--omit-dir-times',
+    ]
 
     if tunnel:
         args.append(f'--rsync-path=ssh {tunnel} rsync')
@@ -111,22 +127,28 @@ def sync_diags(  # noqa: C901
     try:
         subprocess.check_call(public_args)
     except subprocess.CalledProcessError:
-        print('Warning: Some transfer operations failed for public '
-              'diagnostics.')
+        print(
+            'Warning: Some transfer operations failed for public diagnostics.'
+        )
     print('')
     print(f'running: {" ".join(private_args)}')
     try:
         subprocess.check_call(private_args)
     except subprocess.CalledProcessError:
-        print('Warning: Some transfer operations failed for private '
-              'diagnostics.')
+        print(
+            'Warning: Some transfer operations failed for private diagnostics.'
+        )
 
     if direction == 'from':
         group = machine_config.get('diagnostics', 'group')
         print(f'Updating permissions on {dest_diags}:')
-        update_permissions(base_paths=dest_diags, group=group,
-                           show_progress=True, group_writable=True,
-                           other_readable=True)
+        update_permissions(
+            base_paths=dest_diags,
+            group=group,
+            show_progress=True,
+            group_writable=True,
+            other_readable=True,
+        )
         print('Done.')
 
 
@@ -135,26 +157,45 @@ def main():
     Defines the ``mache sync diags`` command
     """
     parser = argparse.ArgumentParser(
-        description="Synchronize diagnostics files between supported machines",
-        usage='''
+        description='Synchronize diagnostics files between supported machines',
+        usage="""
     mache sync diags to <other> [<args>]
         or
     mache sync diags from <other> [<args>]
 
     To get help on an individual command, run:
         mache sync <command> --help
-        ''')
-    parser.add_argument('direction', help='whether to sync "to" or "from" the '
-                                          'other machine')
-    parser.add_argument("other", help="The other machine to sync to or from")
-    parser.add_argument("-m", "--machine", dest="machine",
-                        help="The name of this machine.  If not provided, it "
-                             "will be detected automatically")
-    parser.add_argument("-u", "--username", dest="username",
-                        help="The username to use on the other machine")
-    parser.add_argument("-f", "--config_file", dest="config_file",
-                        help="A config file to override default config "
-                             "options for the machine")
+        """,
+    )
+    parser.add_argument(
+        'direction', help='whether to sync "to" or "from" the other machine'
+    )
+    parser.add_argument('other', help='The other machine to sync to or from')
+    parser.add_argument(
+        '-m',
+        '--machine',
+        dest='machine',
+        help='The name of this machine.  If not provided, it '
+        'will be detected automatically',
+    )
+    parser.add_argument(
+        '-u',
+        '--username',
+        dest='username',
+        help='The username to use on the other machine',
+    )
+    parser.add_argument(
+        '-f',
+        '--config_file',
+        dest='config_file',
+        help='A config file to override default config '
+        'options for the machine',
+    )
     args = parser.parse_args(sys.argv[3:])
-    sync_diags(args.other, args.direction, args.machine, args.username,
-               args.config_file)
+    sync_diags(
+        args.other,
+        args.direction,
+        args.machine,
+        args.username,
+        args.config_file,
+    )

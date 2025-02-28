@@ -11,20 +11,24 @@ def main():
     """
 
     parser = argparse.ArgumentParser(
-        description="Perform mache commands",
-        usage='''
+        description='Perform mache commands',
+        usage="""
 mache <command> [<args>]
 The available mache commands are:
     sync    Sync files between supported machines
  To get help on an individual command, run:
     mache <command> --help
-    ''')
+    """,
+    )
 
     parser.add_argument('command', help='command to run')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=f'mache {mache.version.__version__}',
-                        help="Show version number and exit")
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version=f'mache {mache.version.__version__}',
+        help='Show version number and exit',
+    )
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
