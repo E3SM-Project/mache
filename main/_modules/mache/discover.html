@@ -137,14 +137,16 @@
                 <span class="s1">&#39;either delete or </span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="s1">&#39;edit that file so it no longer defines $NERSC_HOST, log out, &#39;</span>
                 <span class="s1">&#39;log back in, </span><span class="se">\n</span><span class="s1">&#39;</span>
-                <span class="s1">&#39;and try again.&#39;</span><span class="p">)</span>
+                <span class="s1">&#39;and try again.&#39;</span>
+            <span class="p">)</span>
 
     <span class="c1"># As a last resort (e.g. on a compute node), try getting the machine from</span>
     <span class="c1"># a file created on install</span>
     <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;CONDA_PREFIX&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CONDA_PREFIX&#39;</span><span class="p">]</span>
         <span class="n">machine_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;share&#39;</span><span class="p">,</span> <span class="s1">&#39;mache&#39;</span><span class="p">,</span> <span class="s1">&#39;machine.txt&#39;</span><span class="p">)</span>
+            <span class="n">prefix</span><span class="p">,</span> <span class="s1">&#39;share&#39;</span><span class="p">,</span> <span class="s1">&#39;mache&#39;</span><span class="p">,</span> <span class="s1">&#39;machine.txt&#39;</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">machine_filename</span><span class="p">):</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">machine_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                 <span class="n">machine</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>

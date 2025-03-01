@@ -140,11 +140,11 @@ change. Then you can run <code class="docutils literal notranslate"><span class=
 process until your commit is successful. Some changes need to be made manually,
 such as inconsistent variable types. When this happens, you must update the
 file to <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>’s standards, and then attempt to re-commit the file.</p>
-<p>Internally, <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>  uses <a class="reference external" href="https://flake8.pycqa.org/en/latest/">flake8</a> to
-check PEP8 compliance, <a class="reference external" href="https://pycqa.github.io/isort/">isort</a> to sort, check
-and format imports, <a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> to change any
-format strings to f-strings, and <a class="reference external" href="https://mypy-lang.org/">mypy</a> to check for
-consistent variable types. An example error might be:</p>
+<p>Internally, <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>  uses <a class="reference external" href="https://docs.astral.sh/ruff/">ruff</a> to check
+PEP8 compliance, as well as sort, check and format imports,
+<a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> to change any format strings to
+f-strings, and <a class="reference external" href="https://mypy-lang.org/">mypy</a> to check for consistent variable
+types. An example error might be:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>example.py:77:1:<span class="w"> </span>E302<span class="w"> </span>expected<span class="w"> </span><span class="m">2</span><span class="w"> </span>blank<span class="w"> </span>lines,<span class="w"> </span>found<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
