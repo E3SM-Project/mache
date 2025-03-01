@@ -10,14 +10,15 @@ def main():
     """
 
     parser = argparse.ArgumentParser(
-        description="Perform synchronization between supported machines",
-        usage='''
+        description='Perform synchronization between supported machines',
+        usage="""
     mache sync <command> [<args>]
     The available mache commands are:
         diags    Synchronize diagnostics files between supported machines
      To get help on an individual command, run:
         mache sync <command> --help
-        ''')
+        """,
+    )
 
     parser.add_argument('command', help='command to run')
     if len(sys.argv) == 2:

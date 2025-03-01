@@ -5,8 +5,13 @@ import stat
 import progressbar
 
 
-def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
-                       group_writable=False, other_readable=True):
+def update_permissions(  # noqa: C901
+    base_paths,
+    group,
+    show_progress=True,
+    group_writable=False,
+    other_readable=True,
+):
     """
     Update the group that a directory belongs to along with the "group" and
     "other" permissions for the directory
@@ -39,8 +44,13 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
     new_gid = grp.getgrnam(group).gr_gid
 
     read_write_perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP
-    exec_perm = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
-                 stat.S_IRGRP | stat.S_IXGRP)
+    exec_perm = (
+        stat.S_IRUSR
+        | stat.S_IWUSR
+        | stat.S_IXUSR
+        | stat.S_IRGRP
+        | stat.S_IXGRP
+    )
 
     if group_writable:
         read_write_perm = read_write_perm | stat.S_IWGRP
@@ -61,8 +71,11 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
 
         perm = dir_stat.st_mode & mask
 
-        if perm == exec_perm and dir_stat.st_uid == new_uid and \
-                dir_stat.st_gid == new_gid:
+        if (
+            perm == exec_perm
+            and dir_stat.st_uid == new_uid
+            and dir_stat.st_gid == new_gid
+        ):
             continue
 
         try:
@@ -73,16 +86,21 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
 
     files_and_dirs = []
     for base in directories:
-        for root, dirs, files in os.walk(base):
+        for _, dirs, files in os.walk(base):
             files_and_dirs.extend(dirs)
             files_and_dirs.extend(files)
 
     if show_progress:
-        widgets = [progressbar.Percentage(), ' ', progressbar.Bar(),
-                   ' ', progressbar.ETA()]
-        bar = progressbar.ProgressBar(widgets=widgets,
-                                      maxval=len(files_and_dirs),
-                                      maxerror=False).start()
+        widgets = [
+            progressbar.Percentage(),
+            ' ',
+            progressbar.Bar(),
+            ' ',
+            progressbar.ETA(),
+        ]
+        bar = progressbar.ProgressBar(
+            widgets=widgets, maxval=len(files_and_dirs), maxerror=False
+        ).start()
     else:
         bar = None
     progress = 0
@@ -102,8 +120,11 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
 
                 perm = dir_stat.st_mode & mask
 
-                if perm == exec_perm and dir_stat.st_uid == new_uid and \
-                        dir_stat.st_gid == new_gid:
+                if (
+                    perm == exec_perm
+                    and dir_stat.st_uid == new_uid
+                    and dir_stat.st_gid == new_gid
+                ):
                     continue
 
                 try:
@@ -129,8 +150,11 @@ def update_permissions(base_paths, group, show_progress=True,  # noqa: C901
                 else:
                     new_perm = read_write_perm
 
-                if perm == new_perm and file_stat.st_uid == new_uid and \
-                        file_stat.st_gid == new_gid:
+                if (
+                    perm == new_perm
+                    and file_stat.st_uid == new_uid
+                    and file_stat.st_gid == new_gid
+                ):
                     continue
 
                 try:

@@ -59,14 +59,16 @@ def discover_machine(quiet=False):
                 'either delete or \n'
                 'edit that file so it no longer defines $NERSC_HOST, log out, '
                 'log back in, \n'
-                'and try again.')
+                'and try again.'
+            )
 
     # As a last resort (e.g. on a compute node), try getting the machine from
     # a file created on install
     if machine is None and 'CONDA_PREFIX' in os.environ:
         prefix = os.environ['CONDA_PREFIX']
         machine_filename = os.path.join(
-            prefix, 'share', 'mache', 'machine.txt')
+            prefix, 'share', 'mache', 'machine.txt'
+        )
         if os.path.exists(machine_filename):
             with open(machine_filename) as fp:
                 machine = fp.read().replace('\n', '').strip()

@@ -12,11 +12,10 @@ setuptools >=60
 # Linting and testing
 pip
 pytest
-isort
 flynt
-flake8
 mypy
 pre-commit
+ruff
 
 # Documentation
 sphinx >=7.0.0
