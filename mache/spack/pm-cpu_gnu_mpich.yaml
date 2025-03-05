@@ -31,7 +31,7 @@ spack:
     cmake:
       externals:
       - spec: cmake@3.24.3
-        prefix: /global/common/software/nersc/pm-2022q4/spack/linux-sles15-zen/cmake-3.24.3-k5msymx/
+        prefix: /global/common/software/nersc9/cmake/3.24.3
       buildable: false
     findutils:
       externals:
