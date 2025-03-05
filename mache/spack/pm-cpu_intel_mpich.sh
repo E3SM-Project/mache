@@ -23,6 +23,7 @@ module rm cpe \
 
 module load PrgEnv-intel/8.5.0 \
             intel/2023.2.0 \
+            cray-libsci/23.12.5 \
             craype-accel-host \
             craype/2.7.30 \
             libfabric/1.20.1 \
