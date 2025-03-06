@@ -6,6 +6,12 @@ import yaml
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
+from mache.spack.config_machines import (  # noqa: F401
+    config_to_shell_script,
+    extract_machine_config,
+    extract_spack_from_config_machines,
+)
+from mache.spack.list import list_machine_compiler_mpilib  # noqa: F401
 from mache.version import __version__
 
 
