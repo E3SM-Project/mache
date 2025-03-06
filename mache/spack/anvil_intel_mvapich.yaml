@@ -104,7 +104,7 @@ spack:
       - spec: intel@20.0.4
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-20.0.4-lednsve
         modules:
-        - gcc/7.4.0
+        - gcc/8.2.0
         - intel/20.0.4-lednsve
       buildable: false
     mvapich2:
@@ -163,5 +163,7 @@ spack:
       operating_system: centos7
       target: x86_64
       modules: []
-      environment: {}
+      environment:
+        prepend_path:
+          MODULEPATH: /lcrc/group/e3sm/soft/modulefiles/anvil
       extra_rpaths: []

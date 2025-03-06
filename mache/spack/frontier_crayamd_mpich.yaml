@@ -1,7 +1,9 @@
 spack:
   specs:
-  - intel
   - cray-mpich
+{% if e3sm_lapack %}
+  - cray-libsci
+{% endif %}
 {% if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
@@ -13,25 +15,37 @@ spack:
     unify: when_possible
   packages:
     all:
-      compiler: [intel@2023.2.0]
+      compiler: [rocmcc@5.4.0]
       providers:
-        mpi: [cray-mpich@8.1.28]
-        lapack: [cray-libsci@23.12.5]
-        blas: [cray-libsci@23.12.5]
-    bzip2:
+        mpi: [cray-mpich@8.1.26]
+        lapack: [cray-libsci@22.12.1.1]
+    autoconf:
       externals:
-      - spec: bzip2@1.0.6
+      - spec: autoconf@2.69
         prefix: /usr
       buildable: false
-    curl:
+    automake:
       externals:
-      - spec: curl@7.66.0
+      - spec: automake@1.15.1
+        prefix: /usr
+      buildable: false
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.8
         prefix: /usr
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.24.3
-        prefix: /global/common/software/nersc9/cmake/3.24.3
+      - spec: cmake@3.23.2
+        # prefix is needed -- module does not seem to be sufficient
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/cmake-3.23.2-4r4mpiba7cwdw2hlakh5i7tchi64s3qd
+        modules:
+        - cmake/3.23.2
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.79.1
+        prefix: /usr
       buildable: false
     findutils:
       externals:
@@ -40,22 +54,22 @@ spack:
       buildable: false
     gettext:
       externals:
-      - spec: gettext@0.20.2
+      - spec: gettext@0.21.1
         prefix: /usr
       buildable: false
     gmake:
       externals:
-      - spec: gmake@4.2.1
-        prefix: /usr
+      - spec: gmake@4.3
+        prefix: /sw/frontier/spack-envs/base/opt/linux-sles15-x86_64/gcc-7.5.0/gmake-4.3-32qt54ujpdxcat7ceg4vcjlmf2ze25j5
       buildable: false
-    libuv:
+    libtool:
       externals:
-      - spec: libuv@1.44.2
+      - spec: libtool@2.4.6
         prefix: /usr
       buildable: false
     libxml2:
       externals:
-      - spec: libxml2@2.9.7
+      - spec: libxml2@2.9.14
         prefix: /usr
       buildable: false
     m4:
@@ -65,17 +79,12 @@ spack:
       buildable: false
     ncurses:
       externals:
-      - spec: ncurses@6.1.20180317
-        prefix: /usr
-      buildable: false
-    ninja:
-      externals:
-      - spec: ninja@1.10.0
+      - spec: ncurses@6.1
         prefix: /usr
       buildable: false
     openssl:
       externals:
-      - spec: openssl@1.1.1d
+      - spec: openssl@1.1.1l
         prefix: /usr
       buildable: false
     perl:
@@ -85,10 +94,9 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.9.7
-        prefix: /global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11
+      - spec: python@3.11.5
         modules:
-        - python/3.9-anaconda-2021.11
+        - cray-python/3.11.5
       buildable: false
     tar:
       externals:
@@ -100,55 +108,51 @@ spack:
       - spec: xz@5.2.3
         prefix: /usr
       buildable: false
-    intel:
-      externals:
-      - spec: intel@2023.2.0
-        modules:
-        - PrgEnv-intel/8.5.0
-        - intel/2023.2.0
-        - cray-libsci/23.12.5
-        - craype-accel-host
-        - craype/2.7.30
-        - libfabric/1.20.1
-      buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.28
+      - spec: cray-mpich@8.1.26
         modules:
-        - cray-mpich/8.1.28
+        - libunwind/1.5.0
+        - libfabric/1.20.1
+        - cray-mpich/8.1.26
+      buildable: false
+    libfabric:
+      externals:
+      - spec: libfabric@1.20.1
+        modules:
         - libfabric/1.20.1
       buildable: false
     cray-libsci:
       externals:
-      - spec: cray-libsci@23.12.5
+      - spec: cray-libsci@22.12.1.1
         modules:
-        - cray-libsci/23.12.5
+        - cray-libsci/22.12.1.1
       buildable: false
 {% if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
-      - spec: hdf5@1.12.2.9~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.9/intel/2023.2
+      - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
+        prefix: /opt/cray/pe/hdf5-parallel/1.12.2.1/amd/4.3
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/2023.2
+      - spec: parallel-netcdf@1.12.3.1+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.1/amd/4.3
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.0.9+mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/intel/2023.2
+      - spec: netcdf-c@4.9.0.1+mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/amd/4.3
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.5.3
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/intel/2023.2
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/amd/4.3
       buildable: false
 {% endif %}
   compilers:
   - compiler:
-      spec: intel@2023.2.0
+      spec: rocmcc@5.4.0
       paths:
         cc: cc
         cxx: CC
@@ -156,14 +160,12 @@ spack:
         fc: ftn
       flags: {}
       operating_system: sles15
-      target: x86_64
+      target: any
       modules:
-      - PrgEnv-intel/8.5.0
-      - intel/2023.2.0
-      - cray-libsci/23.12.5
-      - craype-accel-host
-      - craype/2.7.30
+      - Core/24.00
+      - PrgEnv-amd/8.3.3
+      - amd/5.4.0
       - libfabric/1.20.1
-      environment:
-        prepend_path:
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
+      - libunwind/1.5.0
+      # needed to prevent incompatible default version
+      - cray-libsci/22.12.1.1

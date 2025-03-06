@@ -103,7 +103,7 @@ spack:
       externals:
       - spec: intel@20.0.4
         modules:
-        - gcc/7.4.0
+        - gcc/8.2.0
         - intel/20.0.4-lednsve
       buildable: false
     openmpi:
@@ -160,7 +160,9 @@ spack:
       operating_system: centos7
       target: x86_64
       modules:
-      - gcc/7.4.0
+      - gcc/8.2.0
       - intel/20.0.4-lednsve
-      environment: {}
+      environment:
+        prepend_path:
+          MODULEPATH: /lcrc/group/e3sm/soft/modulefiles/anvil
       extra_rpaths: []

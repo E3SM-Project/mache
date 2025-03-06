@@ -20,7 +20,6 @@ def discover_machine(quiet=False):
     hostname = socket.gethostname()
     machine = None
     machines_by_host_re = {
-        r'^acme1': 'acme1',
         r'^andes': 'andes',
         r'^blueslogin': 'anvil',
         r'^b\d{3}': 'anvil',
@@ -29,7 +28,6 @@ def discover_machine(quiet=False):
         r'^chr-\d{4}': 'chrysalis',
         r'^compy': 'compy',
         r'^n\d{4}': 'anvil',
-        r'^cooley': 'cooley',
         r'^polaris': 'polaris',
         r'^dane\d{1,4}': 'dane',
         r'^ruby\d{1,4}': 'ruby',
