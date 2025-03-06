@@ -1,0 +1,332 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.sync.diags</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=a4350439"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.sync.diags</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.sync.diags</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.machine_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.permissions</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_permissions</span>
+
+
+<div class="viewcode-block" id="sync_diags">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.sync.diags.sync_diags.html#mache.sync.diags.sync_diags">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sync_diags</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="n">other</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;to&#39;</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_filename</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Synchronize diagnostics files between supported machines</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    other : str</span>
+<span class="sd">        The other machine to sync to or from</span>
+<span class="sd">    direction : {&#39;to&#39;, &#39;from&#39;}, optional</span>
+<span class="sd">        The direction to sync (to or from the other machine).</span>
+<span class="sd">    machine : str, optional</span>
+<span class="sd">        The name of this machine.  If not provided, it will be detected</span>
+<span class="sd">        automatically</span>
+<span class="sd">    username : str, optional</span>
+<span class="sd">        The username to use on the other machine</span>
+<span class="sd">    config_filename : str, optional</span>
+<span class="sd">        A config file to override default config options for the machine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;to&#39;</span><span class="p">,</span> <span class="s1">&#39;from&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The direction must be one of &quot;to&quot; or &quot;from&quot;&#39;</span><span class="p">)</span>
+
+    <span class="n">machine_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">)</span>
+    <span class="n">machine</span> <span class="o">=</span> <span class="n">machine_info</span><span class="o">.</span><span class="n">machine</span>
+
+    <span class="n">lcrc_machines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;anvil&#39;</span><span class="p">,</span> <span class="s1">&#39;chrysalis&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;to&#39;</span> <span class="ow">and</span> <span class="n">machine</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lcrc_machines</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;You can only sync diagnostics to another machine &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;from an LCRC machine: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lcrc_machines</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;from&#39;</span> <span class="ow">and</span> <span class="n">other</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lcrc_machines</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;You can only sync diagnostics from an LCRC &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;machine: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lcrc_machines</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="n">machine_config</span> <span class="o">=</span> <span class="n">machine_info</span><span class="o">.</span><span class="n">config</span>
+    <span class="k">if</span> <span class="n">config_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">machine_config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">config_filename</span><span class="p">)</span>
+    <span class="n">other_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+    <span class="n">other_config</span> <span class="o">=</span> <span class="n">other_info</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">other_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;hostname&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">other_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;tunnel_hostname&#39;</span><span class="p">):</span>
+        <span class="n">tunnel</span> <span class="o">=</span> <span class="n">other_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;tunnel_hostname&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tunnel</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">machine</span> <span class="ow">in</span> <span class="n">lcrc_machines</span>
+        <span class="ow">and</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">lcrc_machines</span>
+        <span class="ow">and</span> <span class="n">machine</span> <span class="o">!=</span> <span class="n">other</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;You should sync </span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1"> with itself since files are local&#39;</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">username</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;For syncing to work properly, your LCRC username is required.&#39;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;For syncing to work properly, your </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;username is required.&#39;</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span>
+        <span class="n">source_config</span> <span class="o">=</span> <span class="n">other_config</span>
+        <span class="n">dest_config</span> <span class="o">=</span> <span class="n">machine_config</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">source_config</span> <span class="o">=</span> <span class="n">machine_config</span>
+        <span class="n">dest_config</span> <span class="o">=</span> <span class="n">other_config</span>
+
+    <span class="n">public_diags</span> <span class="o">=</span> <span class="n">source_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;public_diags&#39;</span><span class="p">)</span>
+    <span class="n">private_diags</span> <span class="o">=</span> <span class="n">source_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;private_diags&#39;</span><span class="p">)</span>
+    <span class="n">dest_diags</span> <span class="o">=</span> <span class="n">dest_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">machine</span> <span class="o">==</span> <span class="n">other</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">username</span><span class="si">}</span><span class="s1">@</span><span class="si">{</span><span class="n">hostname</span><span class="si">}</span><span class="s1">:&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">hostname</span><span class="si">}</span><span class="s1">:&#39;</span>
+
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span>
+        <span class="n">public_diags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">public_diags</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">private_diags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">private_diags</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dest_diags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">dest_diags</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">public_diags</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">public_diags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">public_diags</span><span class="si">}</span><span class="s1">/&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">private_diags</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">private_diags</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">private_diags</span><span class="si">}</span><span class="s1">/&#39;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;rsync&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--verbose&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--recursive&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--times&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--links&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--compress&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--progress&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--update&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--no-perms&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--omit-dir-times&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">tunnel</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;--rsync-path=ssh </span><span class="si">{</span><span class="n">tunnel</span><span class="si">}</span><span class="s1"> rsync&#39;</span><span class="p">)</span>
+
+    <span class="n">public_args</span> <span class="o">=</span> <span class="n">args</span> <span class="o">+</span> <span class="p">[</span><span class="n">public_diags</span><span class="p">,</span> <span class="n">dest_diags</span><span class="p">]</span>
+    <span class="n">private_args</span> <span class="o">=</span> <span class="n">args</span> <span class="o">+</span> <span class="p">[</span><span class="n">private_diags</span><span class="p">,</span> <span class="n">dest_diags</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;running: </span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">public_args</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">public_args</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;Warning: Some transfer operations failed for public diagnostics.&#39;</span>
+        <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;running: </span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">private_args</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">private_args</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;Warning: Some transfer operations failed for private diagnostics.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating permissions on </span><span class="si">{</span><span class="n">dest_diags</span><span class="si">}</span><span class="s1">:&#39;</span><span class="p">)</span>
+        <span class="n">update_permissions</span><span class="p">(</span>
+            <span class="n">base_paths</span><span class="o">=</span><span class="n">dest_diags</span><span class="p">,</span>
+            <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">group_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">other_readable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Done.&#39;</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines the ``mache sync diags`` command</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Synchronize diagnostics files between supported machines&#39;</span><span class="p">,</span>
+        <span class="n">usage</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    mache sync diags to &lt;other&gt; [&lt;args&gt;]</span>
+<span class="s2">        or</span>
+<span class="s2">    mache sync diags from &lt;other&gt; [&lt;args&gt;]</span>
+
+<span class="s2">    To get help on an individual command, run:</span>
+<span class="s2">        mache sync &lt;command&gt; --help</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;direction&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;whether to sync &quot;to&quot; or &quot;from&quot; the other machine&#39;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;other&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The other machine to sync to or from&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-m&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--machine&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;machine&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The name of this machine.  If not provided, it &#39;</span>
+        <span class="s1">&#39;will be detected automatically&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-u&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--username&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The username to use on the other machine&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-f&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--config_file&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;config_file&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;A config file to override default config &#39;</span>
+        <span class="s1">&#39;options for the machine&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">:])</span>
+    <span class="n">sync_diags</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: 1.28.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../1.24.0/index.html">1.24.0</a></dd>
+      <dd><a href="../../../../1.25.0/index.html">1.25.0</a></dd>
+      <dd><a href="../../../../1.26.0/index.html">1.26.0</a></dd>
+      <dd><a href="../../../../1.27.0/index.html">1.27.0</a></dd>
+      <dd><a href="diags.html">1.28.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
