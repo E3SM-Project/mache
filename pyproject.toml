@@ -58,7 +58,7 @@ warn_unused_configs = true
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
-exclude = ["docs*", "conda*"]
+exclude = ["docs", "conda"]
 line-length = 79
 
 [tool.ruff.lint]
@@ -88,7 +88,7 @@ requires = ["setuptools>=60"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-exclude = ["docs*", "conda*"]
+exclude = ["docs", "conda", "tests"]
 
 [tool.setuptools.dynamic]
 version = { attr = "mache.version.__version__" }
