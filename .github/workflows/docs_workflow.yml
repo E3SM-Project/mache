@@ -25,34 +25,33 @@ jobs:
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Set up Conda Environment
-        uses: conda-incubator/setup-miniconda@v3
+        uses: mamba-org/setup-micromamba@v2
         with:
-          activate-environment: "mache_ci"
-          miniforge-version: latest
-          channels: conda-forge
-          channel-priority: strict
-          auto-update-conda: true
-          python-version: ${{ env.PYTHON_VERSION }}
+          environment-name: mache_dev
+          init-shell: bash
+          condarc: |
+            channel_priority: strict
+            channels:
+                - conda-forge
+          create-args: >-
+            python=${{ env.PYTHON_VERSION }}
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Install mache
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
-          conda create -n mache_dev --file spec-file.txt \
+          conda install -y --file spec-file.txt \
             python=${{ env.PYTHON_VERSION }}
-          conda activate mache_dev
           python -m pip install -vv --no-deps --no-build-isolation -e .
 
       - name: Build Sphinx Docs
         run: |
           set -e
-          conda activate mache_dev
           cd docs
           sphinx-multiversion . _build/html
       - name: Copy Docs and Commit
         run: |
           set -e
-          conda activate mache_dev
           cd docs
           # gh-pages branch must already exist
           git clone https://github.com/E3SM-Project/mache.git --branch gh-pages --single-branch gh-pages
