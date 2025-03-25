@@ -49,11 +49,11 @@ def compare_machine_configs(old_xml, new_xml, machine_name):
     new_machine = new_tree.find(f".//machine[@MACH='{machine_name}']")
 
     if old_machine is None:
-        print(f"Machine {machine_name} not found in {old_xml}.")
+        print(f'Machine {machine_name} not found in {old_xml}.')
         return
 
     if new_machine is None:
-        print(f"Machine {machine_name} not found in {new_xml}.")
+        print(f'Machine {machine_name} not found in {new_xml}.')
         return
 
     old_machine_str = etree.tostring(old_machine, pretty_print=True).decode()
@@ -64,11 +64,11 @@ def compare_machine_configs(old_xml, new_xml, machine_name):
         new_machine_str.splitlines(),
         fromfile='old',
         tofile='new',
-        lineterm=''
+        lineterm='',
     )
 
     print()
-    print(colored(f"Comparing machine: {machine_name}", 'blue'))
+    print(colored(f'Comparing machine: {machine_name}', 'blue'))
     for line in diff:
         if line.startswith('-'):
             print(colored(line, 'red'))
