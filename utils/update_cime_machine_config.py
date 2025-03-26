@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import argparse
+
 from mache.cime_machine_config import (
     compare_machine_configs,
     extract_supported_machines,
@@ -13,6 +15,21 @@ def main():
     Main function to download the XML file, get supported machines, and extract
     them, then compare the machine configurations between the old and new XML.
     """
+    parser = argparse.ArgumentParser(
+        description='Get and display the updates made to '
+        'config_supported_machines.xml',
+    )
+
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version='',
+        help='Show version number and exit',
+    )
+
+    parser.parse_args()
+
     url = (
         'https://raw.githubusercontent.com/E3SM-Project/E3SM/refs/heads/'
         'master/cime_config/machines/config_machines.xml'
