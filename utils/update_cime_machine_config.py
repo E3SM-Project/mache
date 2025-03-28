@@ -24,7 +24,7 @@ def main():
         '-v',
         '--version',
         action='version',
-        version='',
+        version=mache.version.__version__,
         help='Show version number and exit',
     )
 
