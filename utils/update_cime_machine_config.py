@@ -2,6 +2,7 @@
 
 import argparse
 
+import mache.version
 from mache.cime_machine_config import (
     compare_machine_configs,
     extract_supported_machines,
