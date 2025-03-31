@@ -4,7 +4,9 @@ jinja2
 lxml
 pyyaml
 progressbar2
+requests
 rsync
+termcolor
 
 # Building
 setuptools >=60
