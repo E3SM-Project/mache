@@ -31,14 +31,18 @@ def extract_machine_config(xml_file, machine, compiler, mpilib):
         if mach.get('MACH') == machine:
             for mod_sys in mach.findall('module_system'):
                 for mod in mod_sys.findall('modules'):
-                    if not (re.match(mod.get('compiler', '.*'), compiler) and
-                            re.match(mod.get('mpilib', '.*'), mpilib) and
-                            re.match(mod.get('DEBUG', '.*'), 'FALSE')):
+                    if not (
+                        re.match(mod.get('compiler', '.*'), compiler)
+                        and re.match(mod.get('mpilib', '.*'), mpilib)
+                        and re.match(mod.get('DEBUG', '.*'), 'FALSE')
+                    ):
                         mod_sys.remove(mod)
             for env_vars in mach.findall('environment_variables'):
-                if not (re.match(env_vars.get('compiler', '.*'), compiler) and
-                        re.match(env_vars.get('mpilib', '.*'), mpilib) and
-                        re.match(env_vars.get('DEBUG', '.*'), 'FALSE')):
+                if not (
+                    re.match(env_vars.get('compiler', '.*'), compiler)
+                    and re.match(env_vars.get('mpilib', '.*'), mpilib)
+                    and re.match(env_vars.get('DEBUG', '.*'), 'FALSE')
+                ):
                     mach.remove(env_vars)
             return mach
     return None
@@ -99,27 +103,30 @@ def config_to_shell_script(config, shell_type):
                 module_commands[name] = []
 
     script_lines.extend(
-        _convert_module_commands_to_script_lines(module_commands, shell_type))
+        _convert_module_commands_to_script_lines(module_commands, shell_type)
+    )
     script_lines.append('')
 
     if e3sm_hdf5_netcdf_modules:
         script_lines.append('{% if e3sm_hdf5_netcdf %}')
         script_lines.extend(
-            _convert_module_commands_to_script_lines(e3sm_hdf5_netcdf_modules,
-                                                     shell_type))
+            _convert_module_commands_to_script_lines(
+                e3sm_hdf5_netcdf_modules, shell_type
+            )
+        )
         script_lines.append('{% endif %}')
         script_lines.append('')
 
-    script_lines.extend(
-        _convert_env_vars_to_script_lines(config, shell_type))
+    script_lines.extend(_convert_env_vars_to_script_lines(config, shell_type))
 
     script_lines.append('')
 
     return '\n'.join(script_lines)
 
 
-def extract_spack_from_config_machines(machine, compiler, mpilib, shell,
-                                       output):
+def extract_spack_from_config_machines(
+    machine, compiler, mpilib, shell, output
+):
     """
     Extract machine configuration from XML and write it to a shell script.
 
@@ -140,8 +147,10 @@ def extract_spack_from_config_machines(machine, compiler, mpilib, shell,
 
     config = extract_machine_config(config_filename, machine, compiler, mpilib)
     if config is None:
-        raise ValueError(f'No configuration found for machine={machine}, '
-                         f'compiler={compiler}, mpilib={mpilib}')
+        raise ValueError(
+            f'No configuration found for machine={machine}, '
+            f'compiler={compiler}, mpilib={mpilib}'
+        )
 
     script = config_to_shell_script(config, shell)
     with open(output, 'w') as f:
@@ -233,7 +242,8 @@ def _convert_env_vars_to_script_lines(config, shell_type):
                 # by MPAS standalone components
                 e3sm_hdf5_netcdf_env_vars.append(('NETCDF_C_PATH', value))
                 e3sm_hdf5_netcdf_env_vars.append(
-                    ('NETCDF_FORTRAN_PATH', value))
+                    ('NETCDF_FORTRAN_PATH', value)
+                )
         else:
             if shell_type == 'sh':
                 script_lines.append(f'export {name}="{value}"')
