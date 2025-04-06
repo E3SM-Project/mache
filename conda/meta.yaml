@@ -25,6 +25,7 @@ requirements:
     - pyyaml
     - progressbar2
     - rsync
+    - termcolor
 
 test:
   source_files:

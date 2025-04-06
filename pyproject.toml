@@ -27,6 +27,7 @@ dependencies = [
     "lxml",
     "pyyaml",
     "progressbar2",
+    "termcolor",
 ]
 
 [project.optional-dependencies]
