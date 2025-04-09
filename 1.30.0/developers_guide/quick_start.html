@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=38a8c9ed"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding a New Machine to Mache" href="adding_new_machine.html" />
+    <link rel="prev" title="Mache" href="../index.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-mache">Installing mache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-styling-and-linting">Code styling and linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-usage">Example usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#syncing-diagnostics">Syncing diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#one-time-setup">One-time setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#syncing-from-lcrc">Syncing from LCRC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#syncing-on-lcrc">Syncing on LCRC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#syncing-to-machines-with-firewalls">Syncing to machines with firewalls</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick Start</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/quick_start.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> (Machines for E3SM) is a package for providing configuration data
+related to E3SM supported machines.</p>
+<section id="installing-mache">
+<span id="dev-installing-mache"></span><h2>Installing mache<a class="headerlink" href="#installing-mache" title="Link to this heading"></a></h2>
+<p>You can install the latest release of <code class="docutils literal notranslate"><span class="pre">mache</span></code> from conda-forge:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_priority<span class="w"> </span>strict
+conda<span class="w"> </span>install<span class="w"> </span>mache
+</pre></div>
+</div>
+<p>If you need to install the latest development version, you can run the
+following in the root of the <code class="docutils literal notranslate"><span class="pre">mache</span></code> branch you are developing:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_priority<span class="w"> </span>strict
+conda<span class="w"> </span>create<span class="w"> </span>-y<span class="w"> </span>-n<span class="w"> </span>mache_dev<span class="w"> </span>--file<span class="w"> </span>spec-file.txt
+conda<span class="w"> </span>activate<span class="w"> </span>mache_dev
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>To install the development version of <code class="docutils literal notranslate"><span class="pre">mache</span></code> in an existing
+environment, you can run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>--file<span class="w"> </span>spec-file.txt
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="code-styling-and-linting">
+<span id="dev-code-styling"></span><h2>Code styling and linting<a class="headerlink" href="#code-styling-and-linting" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> uses <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code> to lint incoming code when you make a commit (as
+long as you have your environment set up correctly), and on GitHub whenever you
+make a pull request to the <code class="docutils literal notranslate"><span class="pre">mache</span></code> repository. Linting makes sure your code
+follows the formatting guidelines of PEP8, and cleans up additional things like
+whitespace at the end of files.</p>
+<p>The first time you set up the <code class="docutils literal notranslate"><span class="pre">mache_dev</span></code> environment, you will need to set up
+<code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>. This is done by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>You only need to do this once when you create the <code class="docutils literal notranslate"><span class="pre">mache_dev</span></code> environment. If
+you create a new version of <code class="docutils literal notranslate"><span class="pre">mache_dev</span></code>, then you will need to run it again.</p>
+<p>When you run <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">&lt;filename&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code> will automatically lint your
+code before committing. Some formatting will be updated by <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>
+automatically, in which case it will terminate the commit and inform you of the
+change. Then you can run <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">&lt;filename&gt;</span></code> again to continue the linting
+process until your commit is successful. Some changes need to be made manually,
+such as inconsistent variable types. When this happens, you must update the
+file to <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>’s standards, and then attempt to re-commit the file.</p>
+<p>Internally, <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>  uses <a class="reference external" href="https://docs.astral.sh/ruff/">ruff</a> to check
+PEP8 compliance, as well as sort, check and format imports,
+<a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> to change any format strings to
+f-strings, and <a class="reference external" href="https://mypy-lang.org/">mypy</a> to check for consistent variable
+types. An example error might be:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>example.py:77:1:<span class="w"> </span>E302<span class="w"> </span>expected<span class="w"> </span><span class="m">2</span><span class="w"> </span>blank<span class="w"> </span>lines,<span class="w"> </span>found<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>For this example, we would just add an additional blank line after line 77 and
+try the commit again to make sure we’ve resolved the issue.</p>
+<p>You may also find it useful to use an IDE with a PEP8 style checker built in,
+such as <a class="reference external" href="https://www.jetbrains.com/pycharm/">PyCharm</a>. See
+<a class="reference external" href="https://www.jetbrains.com/help/pycharm/tutorial-code-quality-assistance-tips-and-tricks.html">this tutorial</a>
+for some tips on checking code style in PyCharm.</p>
+</section>
+<section id="example-usage">
+<span id="dev-example-usage"></span><h2>Example usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span><span class="p">,</span> <span class="n">discover_machine</span>
+
+<span class="n">machine_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">machine_info</span><span class="p">)</span>
+<span class="n">diags_base</span> <span class="o">=</span> <span class="n">machine_info</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+<span class="n">machine</span> <span class="o">=</span> <span class="n">discover_machine</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This loads machine info the current machine, prints it (see below) and
+retrieves a config option specific to that machine. The
+<code class="docutils literal notranslate"><span class="pre">discover_machine()</span></code> function can also be used to detect which machine
+you are on, as shown.</p>
+<p>As an example, the result of <code class="docutils literal notranslate"><span class="pre">print(machine_info)</span></code> is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Machine</span><span class="p">:</span> <span class="n">anvil</span>
+  <span class="n">E3SM</span> <span class="n">Supported</span> <span class="n">Machine</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">Compilers</span><span class="p">:</span> <span class="n">intel</span><span class="p">,</span> <span class="n">gnu</span>
+  <span class="n">MPI</span> <span class="n">libraries</span><span class="p">:</span> <span class="n">impi</span><span class="p">,</span> <span class="n">openmpi</span><span class="p">,</span> <span class="n">mvapich</span>
+  <span class="n">OS</span><span class="p">:</span> <span class="n">LINUX</span>
+
+<span class="n">E3SM</span><span class="o">-</span><span class="n">Unified</span><span class="p">:</span>
+  <span class="n">E3SM</span><span class="o">-</span><span class="n">Unified</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">currently</span> <span class="n">loaded</span>
+  <span class="n">Base</span> <span class="n">path</span><span class="p">:</span> <span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">soft</span><span class="o">/</span><span class="n">climate</span><span class="o">/</span><span class="n">e3sm</span><span class="o">-</span><span class="n">unified</span>
+
+<span class="n">Diagnostics</span><span class="p">:</span>
+  <span class="n">Base</span> <span class="n">path</span><span class="p">:</span> <span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">diagnostics</span>
+
+<span class="n">Config</span> <span class="n">options</span><span class="p">:</span>
+  <span class="p">[</span><span class="n">e3sm_unified</span><span class="p">]</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">cels</span>
+    <span class="n">compiler</span> <span class="o">=</span> <span class="n">intel</span>
+    <span class="n">mpi</span> <span class="o">=</span> <span class="n">impi</span>
+    <span class="n">base_path</span> <span class="o">=</span> <span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">soft</span><span class="o">/</span><span class="n">climate</span><span class="o">/</span><span class="n">e3sm</span><span class="o">-</span><span class="n">unified</span>
+
+  <span class="p">[</span><span class="n">diagnostics</span><span class="p">]</span>
+    <span class="n">base_path</span> <span class="o">=</span> <span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">diagnostics</span>
+
+  <span class="p">[</span><span class="n">web_portal</span><span class="p">]</span>
+    <span class="n">base_path</span> <span class="o">=</span> <span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">public_html</span>
+    <span class="n">base_url</span> <span class="o">=</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">web</span><span class="o">.</span><span class="n">lcrc</span><span class="o">.</span><span class="n">anl</span><span class="o">.</span><span class="n">gov</span><span class="o">/</span><span class="n">public</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span>
+
+  <span class="p">[</span><span class="n">parallel</span><span class="p">]</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">slurm</span>
+    <span class="n">parallel_executable</span> <span class="o">=</span> <span class="n">srun</span>
+    <span class="n">cores_per_node</span> <span class="o">=</span> <span class="mi">36</span>
+    <span class="n">account</span> <span class="o">=</span> <span class="n">condo</span>
+    <span class="n">partitions</span> <span class="o">=</span> <span class="n">acme</span><span class="o">-</span><span class="n">small</span><span class="p">,</span> <span class="n">acme</span><span class="o">-</span><span class="n">medium</span><span class="p">,</span> <span class="n">acme</span><span class="o">-</span><span class="n">large</span>
+    <span class="n">qos</span> <span class="o">=</span> <span class="n">regular</span><span class="p">,</span> <span class="n">acme_high</span>
+</pre></div>
+</div>
+<p>If you are on the login node of one of the following E3SM supported
+machines, you don’t need to provide the machine name. It can be
+discovered automatically when you create a <code class="docutils literal notranslate"><span class="pre">MachineInfo()</span></code> object or
+call <code class="docutils literal notranslate"><span class="pre">discover_machine()</span></code>. It will be recognized from the host name or the
+local environment:</p>
+<ul class="simple">
+<li><p>andes</p></li>
+<li><p>anvil</p></li>
+<li><p>chicoma-cpu</p></li>
+<li><p>chrysalis</p></li>
+<li><p>compy</p></li>
+<li><p>dane</p></li>
+<li><p>frontier</p></li>
+<li><p>pm-cpu</p></li>
+<li><p>polaris</p></li>
+<li><p>ruby</p></li>
+</ul>
+<p>If you are on a compute node or want info about a machine you’re not
+currently on, give the <code class="docutils literal notranslate"><span class="pre">machine</span></code> name in all lowercase.</p>
+</section>
+<section id="attributes">
+<span id="dev-attributes"></span><h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<p>The attributes currently available are:</p>
+<dl class="simple myst">
+<dt>machine : str</dt><dd><p>The name of an E3SM supported machine</p>
+</dd>
+<dt>config : configparser.ConfigParser</dt><dd><p>Config options for this machine</p>
+</dd>
+<dt>e3sm_supported : bool</dt><dd><p>Whether this machine supports running E3SM itself, and therefore has a list
+of compilers, MPI libraries, and the modules needed to load them</p>
+</dd>
+<dt>compilers : list</dt><dd><p>A list of compilers for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p>
+</dd>
+<dt>mpilibs : list</dt><dd><p>A list of MPI libraries for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p>
+</dd>
+<dt>os : str</dt><dd><p>The machine’s operating system if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p>
+</dd>
+<dt>e3sm_unified_mpi : {‘nompi’, ‘system’, None}</dt><dd><p>Which MPI type is included in the E3SM-Unified environment (if one is loaded)</p>
+</dd>
+<dt>e3sm_unified_base : str</dt><dd><p>The base path where E3SM-Unified and its activation scripts are installed if
+<code class="docutils literal notranslate"><span class="pre">e3sm_unified</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt>e3sm_unified_activation : str</dt><dd><p>The activation script used to activate E3SM-Unified if <code class="docutils literal notranslate"><span class="pre">e3sm_unified</span></code> is not
+<code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt>diagnostics_base : str</dt><dd><p>The base directory for diagnostics data</p>
+</dd>
+<dt>web_portal_base : str</dt><dd><p>The base directory for the web portal</p>
+</dd>
+<dt>web_portal_url : str</dt><dd><p>The base URL for the web portal</p>
+</dd>
+<dt>username : str</dt><dd><p>The name of the current user, for use in web-portal directories. This value
+is also added to the <code class="docutils literal notranslate"><span class="pre">web_portal</span></code> and <code class="docutils literal notranslate"><span class="pre">username</span></code> option of the <code class="docutils literal notranslate"><span class="pre">config</span></code>
+attribute.</p>
+</dd>
+</dl>
+</section>
+<section id="syncing-diagnostics">
+<h2>Syncing diagnostics<a class="headerlink" href="#syncing-diagnostics" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> can be used to synchronize diagnostics data (observational data
+sets, testing data, mapping files, region masks, etc.) either directly
+on LCRC or from LCRC to other supported machines.</p>
+<p>E3SM maintains a set of public diagnostics data (those that we have
+permission to share with any users of our software) on LCRC machines
+(Anvil and Chrysalis) in the directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">public_html</span><span class="o">/</span><span class="n">diagnostics</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>A set of private diagnostics data (which we do not have permission to
+share outside the E3SM project) are stored at:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">diagnostics_private</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code> command can be used to synchronize both sets of
+data with a shared diagnostics directory on each supported machine.</p>
+<p>Whenever possible, we log on to the E3SM machine and download the data
+from LCRC because this allows the synchronization tool to also update
+permissions once the data has been synchronized. This is the approach
+for all machines except for Frontier and Andes, which doesn’t allow connections
+to LCRC because of Duo Mobile, and Los Alamos National Laboratory’s Chicoma,
+which is behind a firewall that prevents this approach.</p>
+<section id="one-time-setup">
+<h3>One-time setup<a class="headerlink" href="#one-time-setup" title="Link to this heading"></a></h3>
+<p>To synchronize data from LCRC to other machines, you must first provide
+your SSH keys by going to the <a class="reference external" href="https://accounts.cels.anl.gov/">Argonne
+Accounts</a> page, logging in, and adding
+the public ssh key for each machine. If you have not yet generated an
+SSH key for the destination machine, you will need to run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;your_email@example.com&quot;</span>
+</pre></div>
+</div>
+<p>This is the same procedure as for creating an SSH key for GitHub so if
+you have already done that process, you will not need a new SSH key for
+LCRC.</p>
+</section>
+<section id="syncing-from-lcrc">
+<h3>Syncing from LCRC<a class="headerlink" href="#syncing-from-lcrc" title="Link to this heading"></a></h3>
+<p>To synchronize diagnostics data from LCRC, simply run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>sync<span class="w"> </span>diags<span class="w"> </span>from<span class="w"> </span>anvil<span class="w"> </span>-u<span class="w"> </span>&lt;ac.user&gt;
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;ac.user&gt;</span></code> is your account name on LCRC.</p>
+</section>
+</section>
+<section id="syncing-on-lcrc">
+<h2>Syncing on LCRC<a class="headerlink" href="#syncing-on-lcrc" title="Link to this heading"></a></h2>
+<p>To synchronize diagnostics on an LCRC machine, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>sync<span class="w"> </span>diags<span class="w"> </span>from<span class="w"> </span>anvil
+</pre></div>
+</div>
+<p>Make sure the machine after <code class="docutils literal notranslate"><span class="pre">from</span></code> is the same as the machine you are
+on, <code class="docutils literal notranslate"><span class="pre">anvil</span></code> in this example.</p>
+<section id="syncing-to-machines-with-firewalls">
+<h3>Syncing to machines with firewalls<a class="headerlink" href="#syncing-to-machines-with-firewalls" title="Link to this heading"></a></h3>
+<p>To synchronize diagnostics data to a machine with a firewall by using a
+tunnel, first log on to an LCRC machine, then run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>sync<span class="w"> </span>diags<span class="w"> </span>to<span class="w"> </span>chicoma-cpu<span class="w"> </span>-u<span class="w"> </span>&lt;username&gt;
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;username&gt;</span></code> is your account name on the non-LCRC machine
+(<code class="docutils literal notranslate"><span class="pre">chicoma-cpu</span></code> in this example).</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Mache" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="adding_new_machine.html" class="btn btn-neutral float-right" title="Adding a New Machine to Mache" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: 1.30.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../1.24.0/index.html">1.24.0</a></dd>
+      <dd><a href="../../1.25.0/index.html">1.25.0</a></dd>
+      <dd><a href="../../1.26.0/index.html">1.26.0</a></dd>
+      <dd><a href="../../1.27.0/index.html">1.27.0</a></dd>
+      <dd><a href="../../1.28.0/index.html">1.28.0</a></dd>
+      <dd><a href="../../1.29.0/index.html">1.29.0</a></dd>
+      <dd><a href="quick_start.html">1.30.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
