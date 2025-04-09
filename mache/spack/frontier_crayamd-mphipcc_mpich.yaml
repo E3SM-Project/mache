@@ -165,12 +165,11 @@ spack:
       - Core/24.00
       - PrgEnv-amd/8.3.3
       - amd/5.4.0
+      - cray-libsci/22.12.1.1
       - craype-accel-amd-gfx90a
       - rocm/5.4.0
       - libunwind/1.5.0
       - libfabric/1.20.1
-      # needed to prevent incompatible default version
-      - cray-libsci/22.12.1.1
       # we need to include mpich because an incompatible version of
       # libmpi_gtl_hsa.so.0 is loaded otherwise and we need to use the mpich
       # verison (see below)

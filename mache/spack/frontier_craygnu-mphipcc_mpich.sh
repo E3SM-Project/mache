@@ -3,12 +3,13 @@ source /opt/cray/pe/lmod/lmod/init/sh
 module reset
 
 module load \
+    Core/25.03 \
     PrgEnv-gnu \
     cpe/24.11 \
     libunwind/1.8.1 \
-    subversion/1.14.2 \
-    git/2.45.1 \
-    cmake/3.27.9 \
+    subversion \
+    git \
+    cmake \
     craype-accel-amd-gfx90a \
     rocm/6.2.4
 

@@ -5,6 +5,7 @@ module reset
 module switch Core Core/24.00
 module switch PrgEnv-cray PrgEnv-amd/8.3.3
 module switch amd amd/5.4.0
+module load cray-libsci/22.12.1.1
 
 module load \
     craype-accel-amd-gfx90a \
@@ -25,9 +26,6 @@ module load \
     cray-netcdf-hdf5parallel/4.9.0.1 \
     cray-parallel-netcdf/1.12.3.1
 {% endif %}
-
-# needed to prevent incompatible default version
-module load cray-libsci/22.12.1.1
 
 export HDF5_ROOT=""
 export MPICH_GPU_SUPPORT_ENABLED="0"

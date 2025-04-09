@@ -165,7 +165,6 @@ spack:
       - Core/24.00
       - PrgEnv-amd/8.3.3
       - amd/5.4.0
+      - cray-libsci/22.12.1.1
       - libfabric/1.20.1
       - libunwind/1.5.0
-      # needed to prevent incompatible default version
-      - cray-libsci/22.12.1.1
