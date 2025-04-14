@@ -13,4 +13,4 @@ to supported machines.
 A developer can then copy `new_config_machines.xml` into
 `mache/cime_machine_config/config_machines.xml` as part of a PR that makes
 relevant updates. They should also make the changes associated with the
-differences that this utility displays in the appropriate `mache/spack` files.
+differences that this utility displays in the appropriate `mache/spack/templates` files.
