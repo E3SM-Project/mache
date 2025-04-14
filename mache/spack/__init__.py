@@ -120,7 +120,9 @@ def make_spack_env(
 
     for shell_filename in [f'{machine}.sh', f'{machine}_{compiler}_{mpi}.sh']:
         # load modules, etc. for this machine
-        path = importlib_resources.files('mache.spack') / shell_filename
+        path = (
+            importlib_resources.files('mache.spack.templates') / shell_filename
+        )
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
@@ -135,7 +137,8 @@ def make_spack_env(
         modules = f'{modules}\n{bash_script}'
 
     path = (
-        importlib_resources.files('mache.spack') / 'build_spack_env.template'
+        importlib_resources.files('mache.spack.templates')
+        / 'build_spack_env.template'
     )
     with open(str(path)) as fp:
         template = Template(fp.read())
@@ -270,7 +273,9 @@ def get_spack_script(
         f'{machine}_{compiler}_{mpi}.{shell}',
     ]:
         # load modules, etc. for this machine
-        path = importlib_resources.files('mache.spack') / shell_filename
+        path = (
+            importlib_resources.files('mache.spack.templates') / shell_filename
+        )
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
@@ -385,7 +390,9 @@ def get_modules_env_vars_and_mpi_compilers(
         f'{machine}.{shell}',
         f'{machine}_{compiler}_{mpi}.{shell}',
     ]:
-        path = importlib_resources.files('mache.spack') / shell_filename
+        path = (
+            importlib_resources.files('mache.spack.templates') / shell_filename
+        )
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
@@ -417,7 +424,10 @@ def _get_yaml_data(
     """Get the data from the jinja-templated yaml file based on settings"""
     if yaml_template is None:
         template_filename = f'{machine}_{compiler}_{mpi}.yaml'
-        path = importlib_resources.files('mache.spack') / template_filename
+        path = (
+            importlib_resources.files('mache.spack.templates')
+            / template_filename
+        )
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
