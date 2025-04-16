@@ -1,6 +1,6 @@
 ```{image} _static/mache-logo.png
 :align: center
-:width: 200 px
+:width: 400 px
 ```
 
 (mache)=
