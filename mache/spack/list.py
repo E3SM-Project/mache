@@ -6,7 +6,7 @@ from pathlib import Path
 def list_machine_compiler_mpilib():
     """
     List tuples of machine, compiler, and MPI library parsed from the name of
-    YAML files in the `mache.spack` directory.
+    YAML files in the `mache.spack.templates` directory.
 
     Returns
     -------
@@ -16,7 +16,9 @@ def list_machine_compiler_mpilib():
     machine_compiler_mpi_list = []
     pattern = re.compile(r'([\w-]+)_([\w-]+)_([\w-]+)')
 
-    files = sorted(importlib.resources.files('mache.spack').iterdir(), key=str)
+    files = sorted(
+        importlib.resources.files('mache.spack.templates').iterdir(), key=str
+    )
     for file in files:
         file_path = Path(str(file))
         if file_path.suffix == '.yaml':
