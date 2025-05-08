@@ -39,6 +39,10 @@ documentation.
     make_spack_env
     get_spack_script
     get_modules_env_vars_and_mpi_compilers
+    extract_machine_config
+    config_to_shell_script
+    extract_spack_from_config_machines
+    list_machine_compiler_mpilib
 ```
 
 ## sync
