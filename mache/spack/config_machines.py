@@ -66,15 +66,7 @@ def config_to_shell_script(config, shell_type):
     """
     script_lines = []
 
-    if shell_type == 'sh':
-        script_lines.append('#!/bin/bash')
-    elif shell_type == 'csh':
-        script_lines.append('#!/bin/csh')
-    else:
-        raise ValueError('Unsupported shell type. Use "sh" or "csh".')
-
-    script_lines.append('')
-
+    # TODO: possibly replace \: with :
     init_path = None
     for init in config.findall('.//module_system/init_path'):
         if init.get('lang') == shell_type:
