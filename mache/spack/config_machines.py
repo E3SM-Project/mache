@@ -74,6 +74,7 @@ def config_to_shell_script(config, shell_type):
             break
 
     if init_path is not None:
+        init_path = init_path.replace(';', '\n')
         script_lines.append(f'source {init_path}')
         script_lines.append('')
 
