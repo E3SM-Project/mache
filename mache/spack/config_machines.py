@@ -88,7 +88,10 @@ def config_to_shell_script(config, shell_type):
                 if 'command' != 'unload' and 'python' in value:
                     # we don't want to load E3SM's python module
                     continue
-                elif re.search(r'hdf5|netcdf', value, re.IGNORECASE):
+                elif 'command' != 'unload' and re.search(
+                    r'hdf5|netcdf', value, re.IGNORECASE
+                ):
+                    # we want to remove hdf5 and netcdf in all cases
                     e3sm_hdf5_netcdf_modules[name].append(value)
                 else:
                     module_commands[name].append(value)
