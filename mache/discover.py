@@ -21,6 +21,8 @@ def discover_machine(quiet=False):
     machine = None
     machines_by_host_re = {
         r'^andes': 'andes',
+        r'^aurora': 'aurora',
+        r'^x\d{4}c\d{1}s\d{1}b0n0': 'aurora',
         r'^blueslogin': 'anvil',
         r'^b\d{3}': 'anvil',
         r'^ch-fe': 'chicoma-cpu',
