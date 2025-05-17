@@ -62,10 +62,10 @@ process until your commit is successful. Some changes need to be made manually,
 such as inconsistent variable types. When this happens, you must update the
 file to `pre-commit`'s standards, and then attempt to re-commit the file.
 
-Internally, `pre-commit`  uses [ruff](https://docs.astral.sh/ruff/) to check 
-PEP8 compliance, as well as sort, check and format imports, 
-[flynt](https://github.com/ikamensh/flynt) to change any format strings to 
-f-strings, and [mypy](https://mypy-lang.org/) to check for consistent variable 
+Internally, `pre-commit`  uses [ruff](https://docs.astral.sh/ruff/) to check
+PEP8 compliance, as well as sort, check and format imports,
+[flynt](https://github.com/ikamensh/flynt) to change any format strings to
+f-strings, and [mypy](https://mypy-lang.org/) to check for consistent variable
 types. An example error might be:
 
 ```bash
@@ -145,6 +145,7 @@ call `discover_machine()`. It will be recognized from the host name or the
 local environment:
 
 - andes
+- aurora
 - anvil
 - chicoma-cpu
 - chrysalis
