@@ -26,6 +26,11 @@ spack:
 {%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
 {%- endif %}
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
     bzip2:
       externals:
       - spec: bzip2@1.0.8
