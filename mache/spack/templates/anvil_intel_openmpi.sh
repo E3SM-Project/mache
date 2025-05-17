@@ -13,13 +13,13 @@ module load \
     intel-mkl/2020.4.304-voqlapk \
     openmpi/4.1.1-v3b3npd
 
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 module load \
     netcdf-c/4.4.1-smyuxme \
     netcdf-cxx/4.2-kfb2aag \
     netcdf-fortran/4.4.4-mablvyc \
     parallel-netcdf/1.11.0-x4n5s7k
-{% endif %}
+{%- endif %}
 
 export UCX_TLS="self,sm,ud"
 export UCX_UD_MLX5_RX_QUEUE_LEN="16384"
