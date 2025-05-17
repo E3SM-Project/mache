@@ -1,24 +1,28 @@
+{%- set compiler = "intel@20.0.0" %}
+{%- set mpi = "intel-mpi@2020.0.166" %}
 spack:
   specs:
-  - intel
-  - intel-mpi
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - intel-mkl
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [intel@20.0.0]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [intel-mpi@2020.0.166]
+        mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.0.166]
 {%- endif %}
@@ -99,7 +103,7 @@ spack:
       buildable: false
     intel:
       externals:
-      - spec: intel@20.0.0
+      - spec: {{ compiler }}
         prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
         modules:
         - gcc/8.1.0
@@ -107,7 +111,7 @@ spack:
       buildable: false
     intel-mpi:
       externals:
-      - spec: intel-mpi@2020.0.166
+      - spec: {{ mpi }}%{{ compiler }}
         prefix: /share/apps/intel/2020/compilers_and_libraries_2020.0.166
         modules:
         - intelmpi/2020
@@ -151,7 +155,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: intel@20.0.0
+      spec: {{ compiler }}
       paths:
         cc: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/icc
         cxx: /share/apps/intel/2020/compilers_and_libraries_2020.0.166/linux/bin/intel64/icpc

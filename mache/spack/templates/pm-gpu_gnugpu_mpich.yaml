@@ -1,22 +1,26 @@
+{%- set compiler = "gcc@12.3" %}
+{%- set mpi = "cray-mpich@8.1.28" %}
 spack:
   specs:
-  - gcc
-  - cray-mpich
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
   - cray-libsci
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@12.3]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.28]
+        mpi: [{{ mpi }}%{{ compiler }}]
         lapack: [cray-libsci@23.12.5]
     bzip2:
       externals:
@@ -102,7 +106,7 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@12.3
+      - spec: {{ compiler }}
         modules:
         - PrgEnv-gnu/8.5.0
         - gcc-native/12.3
@@ -131,7 +135,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.28
+      - spec: {{ mpi }}%{{ compiler }}
         prefix: /opt/cray/pe/mpich/8.1.28/ofi/gnu/12.3
       buildable: false
     cray-libsci:
@@ -164,7 +168,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: gcc@12.3
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC

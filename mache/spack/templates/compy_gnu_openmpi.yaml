@@ -1,24 +1,28 @@
+{%- set compiler = "gcc@10.2.0" %}
+{%- set mpi = "openmpi@4.0.1" %}
 spack:
   specs:
-  - gcc
-  - openmpi
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - intel-mkl
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [gcc@10.2.0]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [openmpi@4.0.1]
+        mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.0.166]
 {%- endif %}
@@ -99,7 +103,7 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@10.2.0
+      - spec: {{ compiler }}
         prefix: /share/apps/gcc/10.2.0
         modules:
         - gcc/10.2.0
@@ -111,7 +115,7 @@ spack:
       buildable: false
     openmpi:
       externals:
-      - spec: openmpi@4.0.1
+      - spec: {{ mpi }}%{{ compiler }}
         prefix: /share/apps/openmpi/4.0.1/gcc/10.2.0
         modules:
         - openmpi/4.0.1
@@ -155,7 +159,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: gcc@10.2.0
+      spec: {{ compiler }}
       paths:
         cc: /share/apps/gcc/10.2.0/bin/gcc
         cxx: /share/apps/gcc/10.2.0/bin/g++

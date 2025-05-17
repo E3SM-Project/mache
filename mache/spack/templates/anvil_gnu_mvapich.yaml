@@ -1,24 +1,29 @@
+{%- set compiler = "gcc@8.2.0" %}
+{%- set mpi = "mvapich2@2.2" %}
+
 spack:
   specs:
-  - gcc
-  - mvapich2
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - intel-mkl
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [gcc@8.2.0]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [mvapich2@4.1.1]
+        mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
 {%- endif %}
@@ -101,7 +106,7 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@8.2.0
+      - spec: {{ compiler }}
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33
         modules:
         - gcc/8.2.0-xhxgy33
@@ -113,7 +118,7 @@ spack:
       buildable: false
     mvapich2:
       externals:
-      - spec: mvapich2@2.2
+      - spec: m{{ mpi }}%{{ compiler }}
         prefix: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-8.2.0/mvapich2-2.2-ppznoge
         modules:
         - mvapich2/2.2-verbs-ppznoge
@@ -157,7 +162,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: gcc@8.2.0
+      spec: {{ compiler }}
       paths:
         cc: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33/bin/gcc
         cxx: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/gcc-8.2.0-xhxgy33/bin/g++

@@ -1,23 +1,27 @@
+{%- set compiler = "rocmcc@5.4.0" %}
+{%- set mpi = "cray-mpich@8.1.26" %}
 spack:
   specs:
-  - cray-mpich
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - cray-libsci
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [rocmcc@5.4.0]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.23]
+        mpi: [{{ mpi }}%{{ compiler }}]
         lapack: [cray-libsci@22.12.1.1]
     autoconf:
       externals:
@@ -110,7 +114,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.26
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libunwind/1.5.0
         - libfabric/1.20.1
@@ -152,7 +156,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: rocmcc@5.4.0
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC
