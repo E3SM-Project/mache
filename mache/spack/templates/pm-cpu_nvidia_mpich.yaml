@@ -1,21 +1,25 @@
+{%- set compiler = "nvhpc@24.5" %}
+{%- set mpi = "cray-mpich@8.1.28" %}
 spack:
   specs:
-  - cray-mpich
+  - {{ mpi }}%{{ compiler }}
   - cray-libsci
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [nvhpc@24.5]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.28]
+        mpi: [{{ mpi }}%{{ compiler }}]
         lapack: [cray-libsci@23.12.5]
         blas: [cray-libsci@23.12.5]
     bzip2:
@@ -102,7 +106,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.28
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.20.1
         - cray-mpich/8.1.28
@@ -137,7 +141,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: nvhpc@24.5
+      spec: {{ compiler }}
       paths:
         cc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc
         cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc++

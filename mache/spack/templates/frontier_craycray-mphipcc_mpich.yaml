@@ -1,23 +1,27 @@
+{%- set compiler = "cce@15.0.1" %}
+{%- set mpi = "cray-mpich@8.1.26" %}
 spack:
   specs:
-  - cray-mpich
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - cray-libsci
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [cce@15.0.1]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.26]
+        mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
         lapack: [cray-libsci@22.12.1.1]
 {%- endif %}
@@ -112,7 +116,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.26
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.20.1
         - libunwind/1.5.0
@@ -157,7 +161,7 @@ spack:
 
   compilers:
   - compiler:
-      spec: cce@15.0.1
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC

@@ -1,24 +1,28 @@
+{%- set compiler = "gcc@13.2" %}
+{%- set mpi = "cray-mpich@8.1.31" %}
 spack:
   specs:
-  - gcc
-  - cray-mpich
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - cray-libsci
 {%- endif %}
 {%- if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
 {%- endif %}
-{{ specs }}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@13.2]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.31]
+        mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
         lapack: [cray-libsci@23.02.1.1]
 {%- endif %}
@@ -115,7 +119,7 @@ spack:
       # despite complaints about redundancy, this needs to be here to prevent
       # spack from trying to build gcc
       externals:
-      - spec: gcc@13.2
+      - spec: {{ compiler }}
         modules:
         - Core/25.03
         - PrgEnv-gnu
@@ -134,7 +138,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.31
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.22.0
         - libunwind/1.8.1
@@ -178,7 +182,7 @@ spack:
 {%- endif %}
   compilers:
   - compiler:
-      spec: gcc@13.2
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC
