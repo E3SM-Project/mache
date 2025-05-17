@@ -1,27 +1,31 @@
+{%- set compiler = "intel@20.0.4" %}
+{%- set mpi = "intel-mpi@2019.9.304" %}
 spack:
   specs:
-  - intel
-  - intel-mpi
-{% if e3sm_lapack %}
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+{%- if e3sm_lapack %}
   - intel-mkl
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [intel@20.0.4]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [intel-mpi@2019.9.304]
-{% if e3sm_lapack %}
+        mpi: [{{ mpi }}%{{ compiler }}]
+{%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
-{% endif %}
+{%- endif %}
     bison:
       externals:
       - spec: bison@3.0.4
@@ -101,14 +105,14 @@ spack:
       buildable: false
     intel:
       externals:
-      - spec: intel@20.0.4
+      - spec: {{ compiler }}
         modules:
         - gcc/8.2.0
         - intel/20.0.4-lednsve
       buildable: false
     intel-mpi:
       externals:
-      - spec: intel-mpi@2019.9.304
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - intel-mpi/2019.9.304-i42whlw
       buildable: false
@@ -118,7 +122,7 @@ spack:
         modules:
         - intel-mkl/2020.4.304-voqlapk
       buildable: false
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
@@ -147,10 +151,10 @@ spack:
         modules:
         - parallel-netcdf/1.11.0-y3nmmej
       buildable: false
-{% endif %}
+{%- endif %}
   compilers:
   - compiler:
-      spec: intel@20.0.4
+      spec: {{ compiler }}
       paths:
         cc: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-20.0.4-lednsve/compilers_and_libraries_2020.4.304/linux/bin/intel64/icc
         cxx: /gpfs/fs1/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-20.0.4-lednsve/compilers_and_libraries_2020.4.304/linux/bin/intel64/icpc

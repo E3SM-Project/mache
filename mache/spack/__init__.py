@@ -95,16 +95,13 @@ def make_spack_env(
         'modules_after'
     )
 
-    # add the package specs to the appropriate template
-    specs = ''.join([f'  - {spec}\n' for spec in spack_specs])  # noqa: E221
-
     yaml_data = _get_yaml_data(
         machine,
         compiler,
         mpi,
         include_e3sm_lapack,
         include_e3sm_hdf5_netcdf,
-        specs,
+        spack_specs,
         yaml_template,
     )
 
@@ -250,7 +247,7 @@ def get_spack_script(
         mpi,
         include_e3sm_lapack,
         include_e3sm_hdf5_netcdf,
-        specs='',
+        specs=[],
         yaml_template=yaml_template,
     )
 
@@ -380,7 +377,7 @@ def get_modules_env_vars_and_mpi_compilers(
             mpi,
             include_e3sm_lapack,
             include_e3sm_hdf5_netcdf,
-            specs='',
+            specs=[],
             yaml_template=yaml_template,
         )
         mods = _get_modules(yaml_data)

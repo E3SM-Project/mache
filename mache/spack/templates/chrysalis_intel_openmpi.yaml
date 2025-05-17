@@ -1,27 +1,36 @@
+{%- set compiler = "intel@20.0.4" %}
+{%- set mpi = "openmpi@4.1.6" %}
 spack:
   specs:
-  - intel
-  - openmpi
-{% if e3sm_lapack %}
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+{%- if e3sm_lapack %}
   - intel-mkl
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [intel@20.0.4]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [openmpi@4.1.6]
-{% if e3sm_lapack %}
+        mpi: [{{ mpi }}%{{ compiler }}]
+{%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
-{% endif %}
+{%- endif %}
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
     bzip2:
       externals:
       - spec: bzip2@1.0.8
@@ -86,14 +95,14 @@ spack:
       buildable: false
     intel:
       externals:
-      - spec: intel@20.0.4
+      - spec: {{ compiler }}
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g
         modules:
         - intel/20.0.4-kodw73g
       buildable: false
     openmpi:
       externals:
-      - spec: openmpi@4.1.6
+      - spec: {{ mpi }}%{{ compiler }}
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/intel-20.0.4/openmpi-4.1.6-2mm63n2
         modules:
         - openmpi/4.1.6-2mm63n2
@@ -105,7 +114,7 @@ spack:
         modules:
         - intel-mkl/2020.4.304-g2qaxzf
       buildable: false
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
@@ -130,10 +139,10 @@ spack:
         modules:
         - parallel-netcdf/1.11.0-icrpxty
       buildable: false
-{% endif %}
+{%- endif %}
   compilers:
   - compiler:
-      spec: intel@20.0.4
+      spec: {{ compiler }}
       paths:
         cc: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/icc
         cxx: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/icpc

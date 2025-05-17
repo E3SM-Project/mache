@@ -28,18 +28,18 @@ module load PrgEnv-intel/8.5.0 \
             craype/2.7.30 \
             libfabric/1.20.1 \
             cray-mpich/8.1.28
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
             cray-netcdf-hdf5parallel/4.9.0.9 \
             cray-parallel-netcdf/1.12.3.9
-{% endif %}
+{%- endif %}
 
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 setenv NETCDF_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv NETCDF_C_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv NETCDF_FORTRAN_PATH $CRAY_NETCDF_HDF5PARALLEL_PREFIX
 setenv PNETCDF_PATH $CRAY_PARALLEL_NETCDF_PREFIX
-{% endif %}
+{%- endif %}
 setenv MPICH_ENV_DISPLAY 1
 setenv MPICH_VERSION_DISPLAY 1
 setenv MPICH_MPIIO_DVS_MAXNODES 1

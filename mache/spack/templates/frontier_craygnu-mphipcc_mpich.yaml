@@ -1,27 +1,31 @@
+{%- set compiler = "gcc@13.2" %}
+{%- set mpi = "cray-mpich@8.1.31" %}
 spack:
   specs:
-  - gcc
-  - cray-mpich
-{% if e3sm_lapack %}
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+{%- if e3sm_lapack %}
   - cray-libsci
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@13.2]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.31]
-{% if e3sm_lapack %}
+        mpi: [{{ mpi }}%{{ compiler }}]
+{%- if e3sm_lapack %}
         lapack: [cray-libsci@24.11.0]
-{% endif %}
+{%- endif %}
     autoconf:
       externals:
       - spec: autoconf@2.69
@@ -115,7 +119,7 @@ spack:
       # despite complaints about redundancy, this needs to be here to prevent
       # spack from trying to build gcc
       externals:
-      - spec: gcc@13.2
+      - spec: {{ compiler }}
         modules:
         - Core/25.03
         - PrgEnv-gnu
@@ -136,7 +140,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.31
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.22.0
         - libunwind/1.8.1
@@ -148,15 +152,15 @@ spack:
         modules:
         - libfabric/1.22.0
       buildable: false
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
     cray-libsci:
       externals:
       - spec: cray-libsci@24.11.0
         modules:
         - cray-libsci/24.11.0
       buildable: false
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
@@ -177,11 +181,11 @@ spack:
       - spec: netcdf-fortran@4.5.3
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/GNU/9.1
       buildable: false
-{% endif %}
+{%- endif %}
 
   compilers:
   - compiler:
-      spec: gcc@13.2
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC
