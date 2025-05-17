@@ -1,15 +1,15 @@
 spack:
   specs:
   - cray-mpich
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
   - cray-libsci
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
-{% endif %}
+{%- endif %}
 {{ specs }}
   concretizer:
     unify: when_possible
@@ -18,9 +18,9 @@ spack:
       compiler: [cce@15.0.1]
       providers:
         mpi: [cray-mpich@8.1.26]
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
         lapack: [cray-libsci@22.12.1.1]
-{% endif %}
+{%- endif %}
     autoconf:
       externals:
       - spec: autoconf@2.69
@@ -124,15 +124,15 @@ spack:
         modules:
         - libfabric/1.20.1
       buildable: false
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
     cray-libsci:
       externals:
       - spec: cray-libsci@22.12.1.1
         modules:
         - cray-libsci/22.12.1.1
       buildable: false
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.1~cxx+fortran+hl~java+mpi+shared
@@ -153,7 +153,7 @@ spack:
       - spec: netcdf-fortran@4.5.3
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.1/crayclang/14.0
       buildable: false
-{% endif %}
+{%- endif %}
 
   compilers:
   - compiler:

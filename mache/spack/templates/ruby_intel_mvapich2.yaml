@@ -2,15 +2,15 @@ spack:
   specs:
   - intel
   - mvapich2
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
   - intel-oneapi-mkl
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
-{% endif %}
+{%- endif %}
 {{ specs }}
   concretizer:
     unify: true
@@ -48,9 +48,9 @@ spack:
       compiler: [intel@2021.6.0]
       providers:
         mpi: [mvapich2@2.3.7]
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
         lapack: [intel-oneapi-mkl@2022.1.0]
-{% endif %}
+{%- endif %}
     intel:
       externals:
       - spec: intel@2021.6.0
@@ -277,15 +277,15 @@ spack:
       - spec: tar@1.30
         prefix: /usr
       buildable: false
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
     intel-oneapi-mkl:
       externals:
       - spec: intel-oneapi-mkl@2022.1.0
         modules:
         - mkl-interfaces/2022.1.0
       buildable: false
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.14.0+cxx+fortran+hl~java+mpi~szip+threadsafe+tools api=v18
@@ -310,6 +310,6 @@ spack:
         modules:
         - parallel-netcdf/1.12.3
       buildable: false
-{% endif %}
+{%- endif %}
   config:
     install_missing_compilers: false

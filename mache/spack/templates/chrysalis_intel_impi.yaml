@@ -2,15 +2,15 @@ spack:
   specs:
   - intel
   - intel-mpi
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
   - intel-mkl
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
   - hdf5
   - netcdf-c
   - netcdf-fortran
   - parallel-netcdf
-{% endif %}
+{%- endif %}
 {{ specs }}
   concretizer:
     unify: true
@@ -19,9 +19,9 @@ spack:
       compiler: [intel@20.0.4]
       providers:
         mpi: [intel-mpi@2019.9.304]
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
         lapack: [intel-mkl@2020.4.304]
-{% endif %}
+{%- endif %}
     bzip2:
       externals:
       - spec: bzip2@1.0.8
@@ -105,7 +105,7 @@ spack:
         modules:
         - intel-mkl/2020.4.304-g2qaxzf
       buildable: false
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi~shared
@@ -130,7 +130,7 @@ spack:
         modules:
         - parallel-netcdf/1.11.0-b74wv4m
       buildable: false
-{% endif %}
+{%- endif %}
   compilers:
   - compiler:
       spec: intel@20.0.4

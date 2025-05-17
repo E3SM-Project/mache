@@ -31,18 +31,18 @@ module load PrgEnv-nvidia \
             craype/2.7.30 \
             cray-mpich/8.1.28 \
             cmake/3.24.3
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
             cray-netcdf-hdf5parallel/4.9.0.9 \
             cray-parallel-netcdf/1.12.3.9
-{% endif %}
+{%- endif %}
 
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 export NETCDF_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_C_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export NETCDF_FORTRAN_PATH=$CRAY_NETCDF_HDF5PARALLEL_PREFIX
 export PNETCDF_PATH=$CRAY_PARALLEL_NETCDF_PREFIX
-{% endif %}
+{%- endif %}
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
 export MPICH_MPIIO_DVS_MAXNODES=1
