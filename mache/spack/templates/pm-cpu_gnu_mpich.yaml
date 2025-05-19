@@ -1,22 +1,26 @@
+{%- set compiler = "gcc@12.3" %}
+{%- set mpi = "cray-mpich@8.1.28" %}
 spack:
   specs:
-  - gcc
-  - cray-mpich
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
   - cray-libsci
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: when_possible
   packages:
     all:
-      compiler: [gcc@12.3]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.28]
+        mpi: [{{ mpi }}%{{ compiler }}]
         lapack: [cray-libsci@23.12.5]
         blas: [cray-libsci@23.12.5]
     bzip2:
@@ -103,7 +107,7 @@ spack:
       buildable: false
     gcc:
       externals:
-      - spec: gcc@12.3
+      - spec: {{ compiler }}
         modules:
         - PrgEnv-gnu/8.5.0
         - gcc-native/12.3
@@ -119,7 +123,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.28
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.20.1
         - cray-mpich/8.1.28
@@ -130,7 +134,7 @@ spack:
         modules:
         - cray-libsci/23.12.5
       buildable: false
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.9~cxx+fortran+hl~java+mpi+shared
@@ -151,10 +155,10 @@ spack:
       - spec: netcdf-fortran@4.5.3
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/gnu/12.3
       buildable: false
-{% endif %}
+{%- endif %}
   compilers:
   - compiler:
-      spec: gcc@12.3
+      spec: {{ compiler }}
       paths:
         cc: cc
         cxx: CC

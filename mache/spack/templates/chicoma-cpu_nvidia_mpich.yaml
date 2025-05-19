@@ -1,21 +1,25 @@
+{%- set compiler = "nvhpc@24.7" %}
+{%- set mpi = "cray-mpich@8.1.28" %}
 spack:
   specs:
-  - cray-mpich
+  - {{ mpi }}%{{ compiler }}
   - cray-libsci
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   packages:
     all:
-      compiler: [nvhpc@24.7]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [cray-mpich@8.1.28]
+        mpi: [{{ mpi }}%{{ compiler }}]
         lapack: [cray-libsci@23.12.5]
     bzip2:
       externals:
@@ -91,7 +95,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: cray-mpich@8.1.28
+      - spec: {{ mpi }}%{{ compiler }}
         modules:
         - cray-mpich/8.1.28
       buildable: false
@@ -101,7 +105,7 @@ spack:
         modules:
         - cray-libsci/23.12.5
       buildable: false
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.12.2.9~cxx+fortran+hl~java+mpi+shared
@@ -122,10 +126,10 @@ spack:
       - spec: netcdf-fortran@4.5.3
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.9/nvidia/23.3
       buildable: false
-{% endif %}
+{%- endif %}
   compilers:
   - compiler:
-      spec: nvhpc@24.7
+      spec: {{ compiler }}
       paths:
         cc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.7/compilers/bin/nvc
         cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/24.7/compilers/bin/nvc++

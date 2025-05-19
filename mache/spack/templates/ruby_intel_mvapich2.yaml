@@ -1,22 +1,26 @@
+{%- set compiler = "intel@2021.6.0" %}
+{%- set mpi = "mvapich2@2.3.7" %}
 spack:
   specs:
-  - intel
-  - mvapich2
-{% if e3sm_lapack %}
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+{%- if e3sm_lapack %}
   - intel-oneapi-mkl
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
-  - hdf5
-  - netcdf-c
-  - netcdf-fortran
-  - parallel-netcdf
-{% endif %}
-{{ specs }}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- endif %}
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
   concretizer:
     unify: true
   compilers:
   - compiler:
-      spec: intel@=2021.6.0
+      spec: {{ compiler }}
       paths:
         cc: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icc
         cxx: /usr/tce/packages/intel-classic/intel-classic-2021.6.0-magic/bin/icpc
@@ -45,15 +49,15 @@ spack:
       extra_rpaths: []
   packages:
     all:
-      compiler: [intel@2021.6.0]
+      compiler: [{{ compiler }}]
       providers:
-        mpi: [mvapich2@2.3.7]
-{% if e3sm_lapack %}
+        mpi: [{{ mpi }}%{{ compiler }}]
+{%- if e3sm_lapack %}
         lapack: [intel-oneapi-mkl@2022.1.0]
-{% endif %}
+{%- endif %}
     intel:
       externals:
-      - spec: intel@2021.6.0
+      - spec: {{ compilers}}
         modules:
         - StdEnv
         - intel-classic/2021.6.0-magic
@@ -188,7 +192,7 @@ spack:
       buildable: false
     mvapich2:
       externals:
-      - spec: mvapich2@2.3.7~cuda~debug+regcache+wrapperrpath ch3_rank_bits=32 file_systems=lustre,nfs,ufs
+      - spec: {{ mpi }}%{{ compiler }}~cuda~debug+regcache+wrapperrpath ch3_rank_bits=32 file_systems=lustre,nfs,ufs
           process_managers=hydra threads=multiple
         modules:
         - mvapich2/2.3.7
@@ -277,15 +281,15 @@ spack:
       - spec: tar@1.30
         prefix: /usr
       buildable: false
-{% if e3sm_lapack %}
+{%- if e3sm_lapack %}
     intel-oneapi-mkl:
       externals:
       - spec: intel-oneapi-mkl@2022.1.0
         modules:
         - mkl-interfaces/2022.1.0
       buildable: false
-{% endif %}
-{% if e3sm_hdf5_netcdf %}
+{%- endif %}
+{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.14.0+cxx+fortran+hl~java+mpi~szip+threadsafe+tools api=v18
@@ -310,6 +314,6 @@ spack:
         modules:
         - parallel-netcdf/1.12.3
       buildable: false
-{% endif %}
+{%- endif %}
   config:
     install_missing_compilers: false

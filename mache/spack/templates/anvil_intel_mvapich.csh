@@ -13,13 +13,13 @@ module load \
     intel-mkl/2020.4.304-voqlapk \
     mvapich2/2.3.6-verbs-x4iz7lq
 
-{% if e3sm_hdf5_netcdf %}
+{%- if e3sm_hdf5_netcdf %}
 module load \
     netcdf-c/4.4.1-gei7x7w \
     netcdf-cxx/4.2-db2f5or \
     netcdf-fortran/4.4.4-b4ldb3a \
     parallel-netcdf/1.11.0-kj4jsvt
-{% endif %}
+{%- endif %}
 
 setenv UCX_TLS "self,sm,ud"
 setenv UCX_UD_MLX5_RX_QUEUE_LEN "16384"

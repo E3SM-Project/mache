@@ -1,3 +1,5 @@
+module load cmake
+
 setenv OMPI_MCA_sharedfp "^lockedfile,individual"
 setenv UCX_TLS "^xpmem"
 ## purposefully omitting OMP variables that slow down MPAS-Ocean runs
