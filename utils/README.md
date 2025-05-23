@@ -21,3 +21,8 @@ The `extract_all_spack_from_config_machines.py` produces shell scripts for
 each machine, compiler and MPI library supported for spack builds from `mache`.
 The scripts are places in `new_spack` and can be moved or copied to
 `mache/spack` (after vetting!).
+
+To run the utiltiy, make sure the `mache_dev` environment is active, then run:
+```
+./utils/extract_all_spack_from_config_machines.py
+```
