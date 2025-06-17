@@ -10,7 +10,7 @@ Then, run the following script to build the docs:
 
 ```bash
 cd docs
-make clean && make html
+DOCS_VERSION=test make clean versioned-html
 ```
 
 You can view the documentation by opening `_build/html/index.html`.
