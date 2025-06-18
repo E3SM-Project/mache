@@ -13,4 +13,14 @@ cd docs
 DOCS_VERSION=test make clean versioned-html
 ```
 
-You can view the documentation by opening `_build/html/index.html`.
+# Previewing the Documentation
+
+To preview the documentation locally, open the `index.html` file in the
+`_build/html/test` directory with your browser or try:
+
+```bash
+  cd _build/html
+  python -m http.server 8000
+```
+
+Then, open http://0.0.0.0:8000/test/ in your browser.
