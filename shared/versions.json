@@ -1,0 +1,38 @@
+[
+  {
+    "version": "main",
+    "url": "/mache/main/"
+  },
+  {
+    "version": "1.31.0",
+    "url": "/mache/1.31.0/"
+  },
+  {
+    "version": "1.30.0",
+    "url": "/mache/1.30.0/"
+  },
+  {
+    "version": "1.29.0",
+    "url": "/mache/1.29.0/"
+  },
+  {
+    "version": "1.28.0",
+    "url": "/mache/1.28.0/"
+  },
+  {
+    "version": "1.27.0",
+    "url": "/mache/1.27.0/"
+  },
+  {
+    "version": "1.26.0",
+    "url": "/mache/1.26.0/"
+  },
+  {
+    "version": "1.25.0",
+    "url": "/mache/1.25.0/"
+  },
+  {
+    "version": "1.24.0",
+    "url": "/mache/1.24.0/"
+  }
+]
