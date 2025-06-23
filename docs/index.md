@@ -8,9 +8,8 @@
 :maxdepth: 2
 
 users_guide/quick_start
+users_guide/spack/build
 ```
-
-
 
 ```{toctree}
 :caption: Developer's guide
@@ -19,7 +18,7 @@ users_guide/quick_start
 developers_guide/quick_start
 developers_guide/contributing
 developers_guide/adding_new_machine
+developers_guide/spack
 developers_guide/building_docs
 developers_guide/api
 ```
-
