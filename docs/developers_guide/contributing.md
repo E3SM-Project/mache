@@ -63,10 +63,12 @@ If a pre-commit hook fails, fix the reported issues and recommit.
 
 ## Pull Request Checklist
 
+- [ ] User's Guide has been updated if needed
 - [ ] Developer's Guide has been updated if needed
 - [ ] API documentation lists any new or modified class, method, or function
 - [ ] Documentation builds cleanly and changes look as expected
 - [ ] Tests pass and new features are covered by tests
 - [ ] PR description includes a summary and any relevant issue references
+- [ ] `Testing` comment, if appropriate, in the PR documents testing used to verify the changes
 
 Thank you for helping improve `mache`!
