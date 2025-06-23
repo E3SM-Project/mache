@@ -255,13 +255,15 @@ class MachineInfo:
         machines = next(root.iter('config_machines'))
 
         mach = None
-        found = False
-        for mach in machines:
-            if mach.tag == 'machine' and mach.attrib['MACH'] == machine:
-                found = True
+        for machine_xml in machines:
+            if (
+                machine_xml.tag == 'machine'
+                and machine_xml.attrib['MACH'] == machine
+            ):
+                mach = machine_xml
                 break
 
-        if not found:
+        if mach is None:
             # this is not an E3SM supported machine, so we're done
             self.e3sm_supported = False
             return
