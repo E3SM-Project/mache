@@ -31,7 +31,7 @@ documentation.
 ## spack
 
 ```{eval-rst}
-.. currentmodule:: mache.spack.templates
+.. currentmodule:: mache.spack
 
 .. autosummary::
     :toctree: generated/
