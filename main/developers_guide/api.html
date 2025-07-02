@@ -44,10 +44,17 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
@@ -59,7 +66,16 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.update_permissions.html">mache.permissions.update_permissions</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#spack">spack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.make_spack_env.html">mache.spack.make_spack_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_spack_script.html">mache.spack.get_spack_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html">mache.spack.get_modules_env_vars_and_mpi_compilers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_machine_config.html">mache.spack.extract_machine_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#sync">sync</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html">mache.sync.diags.sync_diags</a></li>
 </ul>
@@ -126,6 +142,27 @@ documentation.</p>
 <h2>spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
+<td><p>Build a Spack environment for a given machine, compiler, and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>(spack_path, env_name, ...)</p></td>
+<td><p>Generate a shell script snippet to activate a Spack environment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers" title="mache.spack.get_modules_env_vars_and_mpi_compilers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a>(...)</p></td>
+<td><p>Query modules, environment variables, and MPI compiler wrappers for a given machine, compiler, and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_machine_config.html#mache.spack.extract_machine_config" title="mache.spack.extract_machine_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_machine_config</span></code></a>(xml_file, machine, ...)</p></td>
+<td><p>Extract the machine configuration from the XML file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html#mache.spack.config_to_shell_script" title="mache.spack.config_to_shell_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_to_shell_script</span></code></a>(config, shell_type)</p></td>
+<td><p>Convert the machine configuration to a shell script.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html#mache.spack.extract_spack_from_config_machines" title="mache.spack.extract_spack_from_config_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_spack_from_config_machines</span></code></a>(machine, ...)</p></td>
+<td><p>Extract machine configuration from XML and write it to a shell script.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html#mache.spack.list_machine_compiler_mpilib" title="mache.spack.list_machine_compiler_mpilib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_machine_compiler_mpilib</span></code></a>()</p></td>
+<td><p>List tuples of machine, compiler, and MPI library parsed from the name of YAML files in the <cite>mache.spack.templates</cite> directory.</p></td>
+</tr>
 </tbody>
 </table>
 </section>

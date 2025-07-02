@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.spack.get_modules_env_vars_and_mpi_compilers</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="mache.spack.extract_machine_config" href="mache.spack.extract_machine_config.html" />
+    <link rel="prev" title="mache.spack.get_spack_script" href="mache.spack.get_spack_script.html" />
+    <link href="../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#discover">discover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#permissions">permissions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#spack">spack</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.make_spack_env.html">mache.spack.make_spack_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.get_spack_script.html">mache.spack.get_spack_script</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.spack.get_modules_env_vars_and_mpi_compilers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mache.spack.get_modules_env_vars_and_mpi_compilers"><code class="docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.extract_machine_config.html">mache.spack.extract_machine_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#sync">sync</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#machineinfo">MachineInfo</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API reference</a></li>
+      <li class="breadcrumb-item active">mache.spack.get_modules_env_vars_and_mpi_compilers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/developers_guide/generated/mache.spack.get_modules_env_vars_and_mpi_compilers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mache-spack-get-modules-env-vars-and-mpi-compilers">
+<h1>mache.spack.get_modules_env_vars_and_mpi_compilers<a class="headerlink" href="#mache-spack-get-modules-env-vars-and-mpi-compilers" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="mache.spack.get_modules_env_vars_and_mpi_compilers">
+<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_lapack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaml_template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack.html#get_modules_env_vars_and_mpi_compilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.get_modules_env_vars_and_mpi_compilers" title="Link to this definition"></a></dt>
+<dd><p>Query modules, environment variables, and MPI compiler wrappers for a given
+machine, compiler, and MPI library.</p>
+<p>This function returns the names of the MPI compiler wrappers and a shell
+snippet to load modules and set environment variables needed for building
+or running MPI-dependent software.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Machine name (auto-detected if not provided).</p></li>
+<li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Compiler name.</p></li>
+<li><p><strong>mpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – MPI library name.</p></li>
+<li><p><strong>shell</strong> (<em>{'sh'</em><em>, </em><em>'csh'}</em>) – Shell type for the script.</p></li>
+<li><p><strong>include_e3sm_lapack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include E3SM-specific LAPACK.</p></li>
+<li><p><strong>include_e3sm_hdf5_netcdf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include E3SM-specific HDF5/NetCDF packages.</p></li>
+<li><p><strong>yaml_template</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Path to a custom Jinja2 YAML template.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>mpicc</strong> (<em>str</em>) – Name of the MPI C compiler wrapper.</p></li>
+<li><p><strong>mpicxx</strong> (<em>str</em>) – Name of the MPI C++ compiler wrapper.</p></li>
+<li><p><strong>mpifc</strong> (<em>str</em>) – Name of the MPI Fortran compiler wrapper.</p></li>
+<li><p><strong>mod_env_commands</strong> (<em>str</em>) – Shell commands to load modules and set environment variables.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mache.spack.get_spack_script.html" class="btn btn-neutral float-left" title="mache.spack.get_spack_script" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mache.spack.extract_machine_config.html" class="btn btn-neutral float-right" title="mache.spack.extract_machine_config" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

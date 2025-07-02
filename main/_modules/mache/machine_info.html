@@ -41,10 +41,17 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/contributing.html">Contributing to mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/api.html">API reference</a></li>
@@ -340,13 +347,15 @@
         <span class="n">machines</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;config_machines&#39;</span><span class="p">))</span>
 
         <span class="n">mach</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">for</span> <span class="n">mach</span> <span class="ow">in</span> <span class="n">machines</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">mach</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;machine&#39;</span> <span class="ow">and</span> <span class="n">mach</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;MACH&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">machine</span><span class="p">:</span>
-                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">machine_xml</span> <span class="ow">in</span> <span class="n">machines</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">machine_xml</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;machine&#39;</span>
+                <span class="ow">and</span> <span class="n">machine_xml</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;MACH&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">machine</span>
+            <span class="p">):</span>
+                <span class="n">mach</span> <span class="o">=</span> <span class="n">machine_xml</span>
                 <span class="k">break</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mach</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># this is not an E3SM supported machine, so we&#39;re done</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_supported</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">return</span>

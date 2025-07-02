@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mache</title>
+  <title>&lt;no title&gt;</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quick Start" href="developers_guide/quick_start.html" />
+    <link rel="next" title="Quick Start" href="users_guide/quick_start.html" />
     <link href="_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -43,10 +43,17 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="developers_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/contributing.html">Contributing to mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/api.html">API reference</a></li>
@@ -66,7 +73,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Mache</li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -78,24 +85,56 @@
              
   <a class="reference internal image-reference" href="_images/mache-logo.png"><img alt="_images/mache-logo.png" class="align-center" src="_images/mache-logo.png" style="width: 400px;" />
 </a>
-<section class="tex2jax_ignore mathjax_ignore" id="mache">
-<span id="id1"></span><h1>Mache<a class="headerlink" href="#mache" title="Link to this heading"></a></h1>
-<p>A package for providing configuration data relate to E3SM supported machines.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/quick_start.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#installing-mache">Installing mache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#example-usage">Example usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#public-functions">Public Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#make-spack-env"><code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#get-spack-script"><code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#get-modules-env-vars-and-mpi-compilers"><code class="docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#example-how-downstream-packages-use-these-functions">Example: How Downstream Packages Use These Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/spack/build.html#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="developers_guide/quick_start.html">Quick Start</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#installing-mache">Installing mache</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#code-styling-and-linting">Code styling and linting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#example-usage">Example usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#attributes">Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#syncing-diagnostics">Syncing diagnostics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#syncing-on-lcrc">Syncing on LCRC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/quick_start.html">Quick Start for Developers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#setting-up-for-development">Setting up for Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#code-styling-and-linting">Code Styling and Linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#running-tests">Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/quick_start.html#contributing">Contributing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/contributing.html">Contributing to mache</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#development-environment">Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#code-style-and-linting">Code Style and Linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/adding_new_machine.html#adding-a-new-config-file">Adding a new config file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/adding_new_machine.html#adding-the-new-machine-to-discover-py">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/spack.html">Adding Spack Support for a New Machine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#yaml-template-files">YAML Template Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#shell-script-templates">Shell Script Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html">Building the Documentation</a></li>
@@ -110,13 +149,12 @@
 </li>
 </ul>
 </div>
-</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="developers_guide/quick_start.html" class="btn btn-neutral float-right" title="Quick Start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="users_guide/quick_start.html" class="btn btn-neutral float-right" title="Quick Start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
