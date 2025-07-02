@@ -12,7 +12,7 @@ To enable Spack-based environments for a new machine, you will need to:
 
 1. Create one or more YAML template files in `mache/spack/templates/` for each
    supported compiler and MPI library combination.
-2. Add system-provided (external) packages, saving time and prefenting build
+2. Add system-provided (external) packages, saving time and preventing build
    failures if Spack attempts to build them from source.
 3. Optionally, provide shell script templates for module/environment setup if
    needed.
