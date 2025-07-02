@@ -42,57 +42,58 @@ def make_spack_env(
     custom_spack='',
 ):
     """
-    Clone the ``spack_for_mache_{{version}}`` branch from
-    `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
-    a spack environment for the given machine, compiler and MPI library.
+    Build a Spack environment for a given machine, compiler, and MPI library.
+
+    This function automates the creation of a Spack environment with the
+    specified packages and configuration, including support for
+    machine-specific modules and environment variables.
 
     Parameters
     ----------
     spack_path : str
-        The base path where spack has been (or will be) cloned
+        Path to the Spack clone to use.
 
     env_name : str
-        The name of the spack environment to be created or recreated
+        Name for the Spack environment.
 
     spack_specs : list of str
-        A list of spack package specs to include in the environment
+        List of Spack package specs to include in the environment.
 
     compiler : str
-        One of the E3SM supported compilers for the ``machine``
+        Compiler name.
 
     mpi : str
-        One of the E3SM supported MPI libraries for the given ``compiler`` and
-        ``machine``
+        MPI library name.
 
     machine : str, optional
-        The name of an E3SM supported machine.  If none is given, the machine
-        will be detected automatically via the host name.
+        Machine name (auto-detected if not provided).
 
     config_file : str, optional
-        The name of a config file to load config options from.
+        Path to a machine config file.
 
     include_e3sm_lapack : bool, optional
-        Whether to include the same lapack (typically from MKL) as used in E3SM
+        Whether to include E3SM-specific LAPACK.
 
     include_e3sm_hdf5_netcdf : bool, optional
-        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
-        as used in E3SM
+        Whether to include E3SM-specific HDF5/NetCDF packages.
 
     yaml_template : str, optional
-        A jinja template for a yaml file to be used for the environment instead
-        of the mache template.  This allows you to use compilers and other
-        modules that differ from E3SM.
+        Path to a custom Jinja2 YAML template.
 
     tmpdir : str, optional
-        A temporary directory for building spack packages
+        Temporary directory for builds.
 
     spack_mirror : str, optional
-        The absolute path to a local spack mirror (e.g. for files a given
-        machine isn't allowed to download)
+        Path to a local Spack mirror.
 
     custom_spack : str, optional
-        Spack commands to run at the end of the script after the environment
-        has been installed.
+        Additional Spack commands to run after environment creation.
+
+    Behavior
+    --------
+    - Writes a YAML file describing the environment.
+    - Generates and runs a shell script to create the Spack environment.
+    - Loads required modules and sets up environment variables as needed.
     """
 
     if machine is None:
@@ -194,52 +195,49 @@ def get_spack_script(
     yaml_template=None,
 ):
     """
-    Build a snippet of a load script for the given spack environment
+    Generate a shell script snippet to activate a Spack environment.
+
+    This function returns a string containing shell commands to load required
+    modules, source the Spack setup script, activate the specified Spack
+    environment, and set any additional environment variables.
 
     Parameters
     ----------
     spack_path : str
-        The base path where spack has been (or will be) cloned
+        Path to the Spack clone to use.
 
     env_name : str
-        The name of the spack environment to be created or recreated
+        Name of the Spack environment.
 
     compiler : str
-        One of the E3SM supported compilers for the ``machine``
+        Compiler name.
 
     mpi : str
-        One of the E3SM supported MPI libraries for the given ``compiler`` and
-        ``machine``
+        MPI library name.
 
     shell : {'sh', 'csh'}
-        Which shell the script is for
+        Shell type for the script.
 
     machine : str, optional
-        The name of an E3SM supported machine.  If none is given, the machine
-        will be detected automatically via the host name.
+        Machine name (auto-detected if not provided).
 
     config_file : str, optional
-        The name of a config file to load config options from.
+        Path to a machine config file.
 
     include_e3sm_lapack : bool, optional
-        Whether to include the same lapack (typically from MKL) as used in E3SM
+        Whether to include E3SM-specific LAPACK.
 
     include_e3sm_hdf5_netcdf : bool, optional
-        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
-        as used in E3SM
+        Whether to include E3SM-specific HDF5/NetCDF packages.
 
     yaml_template : str, optional
-        A jinja template for a yaml file to be used for the environment instead
-        of the mache template.  This allows you to use compilers and other
-        modules that differ from E3SM.
+        Path to a custom Jinja2 YAML template.
 
     Returns
     -------
     load_script : str
-        A snippet of a shell script that will load the given spack
-        environment and add any additional steps required for using the
-        environment such as setting environment variables or loading modules
-        not handled by the spack environment directly
+        Shell commands to load modules, activate the Spack environment, and
+        set up the environment for use.
     """
 
     if machine is None:
@@ -319,51 +317,49 @@ def get_modules_env_vars_and_mpi_compilers(
     yaml_template=None,
 ):
     """
-    Get the non-spack modules, environment variables and compiler names for a
-    given machine, compiler and MPI library.
+    Query modules, environment variables, and MPI compiler wrappers for a given
+    machine, compiler, and MPI library.
+
+    This function returns the names of the MPI compiler wrappers and a shell
+    snippet to load modules and set environment variables needed for building
+    or running MPI-dependent software.
 
     Parameters
     ----------
+    machine : str
+        Machine name (auto-detected if not provided).
+
     compiler : str
-        One of the E3SM supported compilers for the ``machine``
+        Compiler name.
 
     mpi : str
-        One of the E3SM supported MPI libraries for the given ``compiler`` and
-        ``machine``
-
-    machine : str, optional
-        The name of an E3SM supported machine.  If none is given, the machine
-        will be detected automatically via the host name.
+        MPI library name.
 
     shell : {'sh', 'csh'}
-        Which shell the script is for
+        Shell type for the script.
 
     include_e3sm_lapack : bool, optional
-        Whether to include the same lapack (typically from MKL) as used in E3SM
+        Whether to include E3SM-specific LAPACK.
 
     include_e3sm_hdf5_netcdf : bool, optional
-        Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
-        as used in E3SM
+        Whether to include E3SM-specific HDF5/NetCDF packages.
 
     yaml_template : str, optional
-        A jinja template for a yaml file to be used for the environment instead
-        of the mache template.  This allows you to use compilers and other
-        modules that differ from E3SM.
+        Path to a custom Jinja2 YAML template.
 
     Returns
     -------
     mpicc : str
-        The MPI c compiler for this machine
+        Name of the MPI C compiler wrapper.
 
     mpicxx : str
-        The MPI c++ compiler for this machine
+        Name of the MPI C++ compiler wrapper.
 
     mpifc : str
-        The MPI Fortran compiler for this machine
+        Name of the MPI Fortran compiler wrapper.
 
     mod_env_commands : str
-        Modules and environment variables needed to set up the compilers, MPI
-        libraries and other dependencies like NetCDF and PNetCDF
+        Shell commands to load modules and set environment variables.
     """
 
     if machine is None:
