@@ -3,6 +3,8 @@
 :width: 400 px
 ```
 
+# Mache
+
 ```{toctree}
 :caption: User's guide
 :maxdepth: 2
