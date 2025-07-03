@@ -143,13 +143,13 @@ documentation.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
-<td><p>Build a Spack environment for a given machine, compiler, and MPI library.</p></td>
+<td><p>Clone the <code class="docutils literal notranslate"><span class="pre">spack_for_mache_{{version}}</span></code> branch from <a class="reference external" href="https://github.com/E3SM-Project/spack">E3SM's spack clone</a> and build a spack environment for the given machine, compiler and MPI library.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>(spack_path, env_name, ...)</p></td>
-<td><p>Generate a shell script snippet to activate a Spack environment.</p></td>
+<td><p>Build a snippet of a load script for the given spack environment</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers" title="mache.spack.get_modules_env_vars_and_mpi_compilers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a>(...)</p></td>
-<td><p>Query modules, environment variables, and MPI compiler wrappers for a given machine, compiler, and MPI library.</p></td>
+<td><p>Get the non-spack modules, environment variables and compiler names for a given machine, compiler and MPI library.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_machine_config.html#mache.spack.extract_machine_config" title="mache.spack.extract_machine_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_machine_config</span></code></a>(xml_file, machine, ...)</p></td>
 <td><p>Extract the machine configuration from the XML file.</p></td>

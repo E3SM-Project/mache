@@ -108,30 +108,33 @@
 <h1>mache.spack.get_modules_env_vars_and_mpi_compilers<a class="headerlink" href="#mache-spack-get-modules-env-vars-and-mpi-compilers" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="mache.spack.get_modules_env_vars_and_mpi_compilers">
-<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_lapack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaml_template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack.html#get_modules_env_vars_and_mpi_compilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.get_modules_env_vars_and_mpi_compilers" title="Link to this definition"></a></dt>
-<dd><p>Query modules, environment variables, and MPI compiler wrappers for a given
-machine, compiler, and MPI library.</p>
-<p>This function returns the names of the MPI compiler wrappers and a shell
-snippet to load modules and set environment variables needed for building
-or running MPI-dependent software.</p>
+<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_lapack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaml_template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack/env.html#get_modules_env_vars_and_mpi_compilers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.get_modules_env_vars_and_mpi_compilers" title="Link to this definition"></a></dt>
+<dd><p>Get the non-spack modules, environment variables and compiler names for a
+given machine, compiler and MPI library.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Machine name (auto-detected if not provided).</p></li>
-<li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Compiler name.</p></li>
-<li><p><strong>mpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – MPI library name.</p></li>
-<li><p><strong>shell</strong> (<em>{'sh'</em><em>, </em><em>'csh'}</em>) – Shell type for the script.</p></li>
-<li><p><strong>include_e3sm_lapack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include E3SM-specific LAPACK.</p></li>
-<li><p><strong>include_e3sm_hdf5_netcdf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include E3SM-specific HDF5/NetCDF packages.</p></li>
-<li><p><strong>yaml_template</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Path to a custom Jinja2 YAML template.</p></li>
+<li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – One of the E3SM supported compilers for the <code class="docutils literal notranslate"><span class="pre">machine</span></code></p></li>
+<li><p><strong>mpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – One of the E3SM supported MPI libraries for the given <code class="docutils literal notranslate"><span class="pre">compiler</span></code> and
+<code class="docutils literal notranslate"><span class="pre">machine</span></code></p></li>
+<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The name of an E3SM supported machine.  If none is given, the machine
+will be detected automatically via the host name.</p></li>
+<li><p><strong>shell</strong> (<em>{'sh'</em><em>, </em><em>'csh'}</em>) – Which shell the script is for</p></li>
+<li><p><strong>include_e3sm_lapack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same lapack (typically from MKL) as used in E3SM</p></li>
+<li><p><strong>include_e3sm_hdf5_netcdf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
+as used in E3SM</p></li>
+<li><p><strong>yaml_template</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – A jinja template for a yaml file to be used for the environment instead
+of the mache template.  This allows you to use compilers and other
+modules that differ from E3SM.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>mpicc</strong> (<em>str</em>) – Name of the MPI C compiler wrapper.</p></li>
-<li><p><strong>mpicxx</strong> (<em>str</em>) – Name of the MPI C++ compiler wrapper.</p></li>
-<li><p><strong>mpifc</strong> (<em>str</em>) – Name of the MPI Fortran compiler wrapper.</p></li>
-<li><p><strong>mod_env_commands</strong> (<em>str</em>) – Shell commands to load modules and set environment variables.</p></li>
+<li><p><strong>mpicc</strong> (<em>str</em>) – The MPI c compiler for this machine</p></li>
+<li><p><strong>mpicxx</strong> (<em>str</em>) – The MPI c++ compiler for this machine</p></li>
+<li><p><strong>mpifc</strong> (<em>str</em>) – The MPI Fortran compiler for this machine</p></li>
+<li><p><strong>mod_env_commands</strong> (<em>str</em>) – Modules and environment variables needed to set up the compilers, MPI
+libraries and other dependencies like NetCDF and PNetCDF</p></li>
 </ul>
 </p>
 </dd>
