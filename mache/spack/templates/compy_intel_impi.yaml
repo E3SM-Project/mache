@@ -36,6 +36,11 @@ spack:
       - spec: bzip2@1.0.6
         prefix: /usr
       buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.26.0
+        prefix: /share/apps/cmake/3.26.0
+      buildable: false
     curl:
       externals:
       - spec: curl@7.29.0
