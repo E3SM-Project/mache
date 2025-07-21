@@ -140,6 +140,9 @@ def make_spack_env(
     with open(str(path)) as fp:
         template = Template(fp.read())
     if tmpdir is not None:
+        if not os.path.exists(tmpdir):
+            os.mkdir(tmpdir)
+
         modules = f'{modules}\nexport TMPDIR={tmpdir}'
 
     template_args = dict(
