@@ -20,13 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Conda Environment
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          environment-name: pre_commit_dev
+          init-shell: bash
+          condarc: |
+            channel_priority: strict
+            channels: 
+                - conda-forge
+          create-args: >-
+            python=${{ env.PYTHON_VERSION }}
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Install pre-commit and gh
+        # permissions issue with 2.76.0
+        run: |
+          conda install -y pre-commit "gh !=2.76.0"
+          gh --version
 
       - name: Apply and commit updates
         run: |
