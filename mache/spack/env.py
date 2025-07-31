@@ -1,16 +1,15 @@
+import configparser
 import os
-import subprocess
 from importlib import resources as importlib_resources
 
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
 from mache.spack.shared import _get_modules, _get_yaml_data
-from mache.version import __version__
 
 
 def make_spack_env(
-    spack_path,
+    base_path,
     env_name,
     spack_specs,
     compiler,
@@ -31,8 +30,8 @@ def make_spack_env(
 
     Parameters
     ----------
-    spack_path : str
-        The base path where spack has been (or will be) cloned
+    base_path : str
+        TBD
 
     env_name : str
         The name of the spack environment to be created or recreated
@@ -77,6 +76,14 @@ def make_spack_env(
         Spack commands to run at the end of the script after the environment
         has been installed.
     """
+
+    (
+        spack_tag,
+        spack_pkgs_remote,
+        e3sm_pkgs_remote,
+        spack_pkgs_update_flag,
+        e3sm_pkgs_update_flag,
+    ) = _get_spack_vars_and_flags()
 
     if machine is None:
         machine = discover_machine()
@@ -139,16 +146,33 @@ def make_spack_env(
     )
     with open(str(path)) as fp:
         template = Template(fp.read())
+
     if tmpdir is not None:
         if not os.path.exists(tmpdir):
             os.mkdir(tmpdir)
 
         modules = f'{modules}\nexport TMPDIR={tmpdir}'
 
+    ###########################################################################
+    # TODO:
+    #   - replace `env_name` with a string containing compiler and mpi
+    #   - if file paths are set this way, we need to add the machine in there
+    #       - check if `base_path` contains machine, otherwise add it
+    ###########################################################################
+    spack_path = f'{base_path}/spack/{env_name}'
+    spack_pkgs_path = f'{base_path}/spack-packages'
+    e3sm_pkgs_path = f'{base_path}/e3sm-spack-packages'
+
     template_args = dict(
         modules=modules,
-        version=__version__,
         spack_path=spack_path,
+        spack_tag=spack_tag,
+        spack_pkgs_remote=spack_pkgs_remote,
+        spack_pkgs_path=spack_pkgs_path,
+        spack_pkgs_update_flag=spack_pkgs_update_flag,
+        e3sm_pkgs_remote=e3sm_pkgs_remote,
+        e3sm_pkgs_path=e3sm_pkgs_path,
+        e3sm_pkgs_update_flag=e3sm_pkgs_update_flag,
         env_name=env_name,
         yaml_filename=yaml_filename,
         custom_spack=custom_spack,
@@ -164,7 +188,67 @@ def make_spack_env(
 
     # clear environment variables and start fresh with those from login
     # so spack doesn't get confused by conda
-    subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+    # subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+
+
+def _get_spack_vars_and_flags():
+    """
+    Get the variables and flags needed to checkout the spack, spack-packages
+    and our e3sm-spack-pkgs repositories
+    """
+    config = configparser.ConfigParser(allow_no_value=True)
+    cfg_path = importlib_resources.files('mache.spack') / 'config.cfg'
+    config.read(str(cfg_path))
+
+    spack_tag = config.get('spack', 'tag')
+    spack_pkgs_remote = config.get('spack_packages', 'remote')
+    e3sm_pkgs_remote = config.get('e3sm_spack_packages', 'remote')
+
+    spack_pkgs_update_flag = get_spack_repo_update_flag(
+        config['spack_packages']
+    )
+    if spack_pkgs_update_flag is None:
+        raise ValueError('')
+
+    e3sm_pkgs_update_flag = get_spack_repo_update_flag(
+        config['e3sm_spack_packages']
+    )
+
+    return (
+        spack_tag,
+        spack_pkgs_remote,
+        e3sm_pkgs_remote,
+        spack_pkgs_update_flag,
+        e3sm_pkgs_update_flag,
+    )
+
+
+def get_spack_repo_update_flag(config):
+    """
+    Format the string passed to `spack repo update` based on the value
+    provided in the config file. Ensures if a value is provided, only
+    one of: branch, tag, or commit are used.
+    """
+
+    checkout_vars = dict(
+        tag=config.get('tag'),
+        commit=config.get('commit'),
+        branch=config.get('branch'),
+    )
+
+    non_none = {k: v for k, v in checkout_vars.items() if v is not None}
+
+    if len(non_none) == 1:
+        key, value = next(iter(non_none.items()))
+        return f'--{key} {value}'
+    elif len(non_none) == 0:
+        return None
+    else:
+        raise ValueError(f"""
+        Only one of {list(checkout_vars)} can be provided.
+        But {list(non_none)} were specified in {config.name} section of
+        the `config.cfg` file.
+        """)
 
 
 def get_modules_env_vars_and_mpi_compilers(
