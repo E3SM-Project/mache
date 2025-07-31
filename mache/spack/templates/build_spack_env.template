@@ -6,13 +6,42 @@ set -e
 
 if [ -d {{ spack_path }} ]; then
   cd {{ spack_path }}
-  git fetch origin
-  git reset --hard origin/spack_for_mache_{{ version }}
+  git fetch origin tag {{ spack_tag }} --no-tags
+  git reset --hard {{ spack_tag }}
 else
-  git clone -b spack_for_mache_{{ version }} git@github.com:E3SM-Project/spack.git {{ spack_path }}
+  git clone -b {{ spack_tag }} git@github.com:spack/spack.git {{ spack_path }}
   cd {{ spack_path }}
 fi
 source share/spack/setup-env.sh
+
+spack repo remove --scope site spack-packages >& /dev/null || true
+spack repo remove --scope site e3sm-spack-pkgs >& /dev/null || true
+
+spack repo add \
+    --scope site \
+    --name spack-packages \
+    {{ spack_pkgs_remote }} \
+    {{ spack_pkgs_path }}
+
+spack repo update \
+    --scope site \
+    {{ spack_pkgs_update_flag }} \
+    spack-packages
+
+spack repo add \
+    --scope site \
+    --name e3sm-spack-pkgs \
+    {{ e3sm_pkgs_remote }} \
+    {{ e3sm_pkgs_path }}
+
+{%- if e3sm_pkgs_update_flag is defined %}
+
+spack repo update \
+    --scope site  \
+    {{ e3sm_pkgs_update_flag }} \
+    e3sm-spack-pkgs
+
+{%- endif %}
 
 {%- if spack_mirror is defined %}
     spack mirror remove spack_mirror >& /dev/null || true
