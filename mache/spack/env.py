@@ -1,5 +1,6 @@
 import configparser
 import os
+import subprocess
 from importlib import resources as importlib_resources
 
 from jinja2 import Template
@@ -187,7 +188,7 @@ def make_spack_env(
 
     # clear environment variables and start fresh with those from login
     # so spack doesn't get confused by conda
-    # subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+    subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
 
 
 def _get_spack_vars_and_flags():
