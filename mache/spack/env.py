@@ -155,11 +155,10 @@ def make_spack_env(
 
     ###########################################################################
     # TODO:
-    #   - replace `env_name` with a string containing compiler and mpi
     #   - if file paths are set this way, we need to add the machine in there
     #       - check if `base_path` contains machine, otherwise add it
     ###########################################################################
-    spack_path = f'{base_path}/spack/{env_name}'
+    spack_path = f'{base_path}/spack/spack_for_{compiler}_{mpi}'
     spack_pkgs_path = f'{base_path}/spack-packages'
     e3sm_pkgs_path = f'{base_path}/e3sm-spack-packages'
 
