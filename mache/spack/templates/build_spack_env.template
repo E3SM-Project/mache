@@ -14,19 +14,19 @@ else
 fi
 source share/spack/setup-env.sh
 
-spack repo remove --scope site spack-packages >& /dev/null || true
+spack repo remove --scope site builtin >& /dev/null || true
 spack repo remove --scope site e3sm-spack-pkgs >& /dev/null || true
 
 spack repo add \
     --scope site \
-    --name spack-packages \
+    --name builtin \
     {{ spack_pkgs_remote }} \
     {{ spack_pkgs_path }}
 
 spack repo update \
     --scope site \
     {{ spack_pkgs_update_flag }} \
-    spack-packages
+    builtin
 
 spack repo add \
     --scope site \
