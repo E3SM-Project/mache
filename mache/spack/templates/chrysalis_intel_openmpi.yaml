@@ -20,7 +20,6 @@ spack:
     unify: true
   packages:
     all:
-      compiler: [{{ compiler }}]
       providers:
         mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
@@ -99,6 +98,17 @@ spack:
         prefix: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g
         modules:
         - intel/20.0.4-kodw73g
+        extra_attributes:
+          compilers:
+            cc: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/icc
+            cxx: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/icpc
+            f77: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/ifort
+            fc: /gpfs/fs1/soft/chrysalis/spack/opt/spack/linux-centos8-x86_64/gcc-9.3.0/intel-20.0.4-kodw73g/compilers_and_libraries_2020.4.304/linux/bin/intel64/ifort
+          flags: {}
+          operating_system: rhel8
+          target: x86_64
+          environment: {}
+          extra_rpaths: []
       buildable: false
     openmpi:
       externals:
