@@ -127,25 +127,25 @@ spack:
 {%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
-      - spec: hdf5@1.10.7+cxx+fortran+hl+mpi
+      - spec: hdf5@1.10.7+cxx+fortran+hl+mpi%{{ compiler }}
         modules:
         - hdf5/1.10.7-4cghwvq
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.7.4+mpi~parallel-netcdf
+      - spec: netcdf-c@4.7.4+mpi~parallel-netcdf%{{ compiler }}
         modules:
         - netcdf-c/4.7.4-4qjdadt
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.5.3
+      - spec: netcdf-fortran@4.5.3%{{ compiler }}
         modules:
         - netcdf-fortran/4.5.3-qozrykr
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.11.0+cxx+fortran
+      - spec: parallel-netcdf@1.11.0+cxx+fortran%{{ compiler }}
         modules:
         - parallel-netcdf/1.11.0-icrpxty
       buildable: false
