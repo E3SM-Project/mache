@@ -44,7 +44,7 @@ jobs:
           # The second command will fail if no changes were present, so we ignore it
           git commit -m "Update pre-commit dependencies" || ( echo "UP_TO_DATE=true" >> "$GITHUB_ENV")
 
-      - name: Push Changes
+      - name: Push Changes with github-actions bot
         if: ${{ env.UP_TO_DATE == 'false' }}
         uses: ad-m/github-push-action@master
         with:
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Make PR and add reviewers and labels
+      - name: Create PR with github-actions bot
         if: ${{ env.UP_TO_DATE == 'false' }}
         run: |
           cd update-pre-commit-deps
@@ -68,3 +68,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Add reviewers and labels with PAT
+        if: ${{ env.UP_TO_DATE == 'false' }}
+        run: |
+          cd update-pre-commit-deps
+
+          gh pr edit --add-label ci
+
+          IFS=',' read -ra reviewers <<< "${REVIEWERS}"
+          for reviewer in "${reviewers[@]}"; do
+            echo "Adding reviewer: $reviewer"
+            gh pr edit --add-reviewer "$reviewer"
+          done
+
+        env:
+          REVIEWERS: ${{ env.REVIEWERS }}
+          GH_TOKEN: ${{ secrets.GH_CLI_TOKEN }}
