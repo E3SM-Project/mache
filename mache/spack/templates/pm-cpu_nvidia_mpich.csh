@@ -26,7 +26,7 @@ module load PrgEnv-nvidia \
             cray-libsci/23.12.5 \
             craype-accel-host \
             craype/2.7.30 \
-            libfabric/1.20.1 \
+            libfabric/1.22.0 \
             cray-mpich/8.1.28 \
             cmake/3.24.3
 {%- if e3sm_hdf5_netcdf %}

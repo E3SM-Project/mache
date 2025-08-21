@@ -27,7 +27,7 @@ module load PrgEnv-nvidia \
             craype-accel-nvidia80 \
             gcc-native-mixed/12.3 \
             cray-libsci/23.12.5 \
-            libfabric/1.20.1 \
+            libfabric/1.22.0 \
             craype/2.7.30 \
             cray-mpich/8.1.28 \
             cmake/3.24.3
