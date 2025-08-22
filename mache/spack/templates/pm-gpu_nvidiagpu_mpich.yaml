@@ -111,7 +111,7 @@ spack:
         - nvidia/24.5
         - craype-accel-nvidia80
         - cray-libsci/23.12.5
-        - libfabric/1.20.1
+        - libfabric/1.22.0
         - craype/2.7.30
         - cudatoolkit/12.4
       buildable: false
@@ -119,7 +119,7 @@ spack:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
-        - libfabric/1.20.1
+        - libfabric/1.22.0
         - cray-mpich/8.1.28
       buildable: false
     cray-libsci:
@@ -166,7 +166,7 @@ spack:
       - nvidia/24.5
       - craype-accel-nvidia80
       - cray-libsci/23.12.5
-      - libfabric/1.20.1
+      - libfabric/1.22.0
       - craype/2.7.30
       - cudatoolkit/12.4
       environment:

@@ -108,7 +108,7 @@ spack:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
-        - libfabric/1.20.1
+        - libfabric/1.22.0
         - cray-mpich/8.1.28
       buildable: false
     cray-libsci:

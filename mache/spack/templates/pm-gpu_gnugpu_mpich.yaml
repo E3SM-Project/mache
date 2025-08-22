@@ -112,7 +112,7 @@ spack:
         - gcc-native/12.3
         - craype-accel-nvidia80
         - cray-libsci/23.12.5
-        - libfabric/1.20.1
+        - libfabric/1.22.0
         - craype/2.7.30
         - cudatoolkit/12.4
         extra_attributes:
@@ -129,7 +129,7 @@ spack:
         - gcc-native/12.3
         - craype-accel-nvidia80
         - cray-libsci/23.12.5
-        - libfabric/1.20.1
+        - libfabric/1.22.0
         - craype/2.7.30
         - cudatoolkit/12.4
       buildable: false
@@ -182,7 +182,7 @@ spack:
       - gcc-native/12.3
       - craype-accel-nvidia80
       - cray-libsci/23.12.5
-      - libfabric/1.20.1
+      - libfabric/1.22.0
       - craype/2.7.30
       - cudatoolkit/12.4
       environment:
