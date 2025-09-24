@@ -40,7 +40,7 @@ module load PrgEnv-gnu/8.5.0 \
             craype-accel-host \
             craype/2.7.30 \
             cray-mpich/8.1.28 \
-            cmake/3.27.7
+            cmake/3.29.6
 {%- if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
             cray-netcdf-hdf5parallel/4.9.0.9 \
