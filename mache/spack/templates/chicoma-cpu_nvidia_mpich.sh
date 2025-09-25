@@ -1,10 +1,3 @@
-export http_proxy=http://proxyout.lanl.gov:8080/
-export https_proxy=http://proxyout.lanl.gov:8080/
-export ftp_proxy=http://proxyout.lanl.gov:8080
-export HTTP_PROXY=http://proxyout.lanl.gov:8080
-export HTTPS_PROXY=http://proxyout.lanl.gov:8080
-export FTP_PROXY=http://proxyout.lanl.gov:8080
-
 source /usr/share/lmod/lmod/init/sh
 
 module rm cray-hdf5-parallel \
@@ -39,7 +32,7 @@ module load PrgEnv-nvidia/8.5.0 \
             craype-accel-host \
             craype/2.7.30 \
             cray-mpich/8.1.28 \
-            cmake/3.27.7
+            cmake/3.29.6
 {%- if e3sm_hdf5_netcdf %}
 module load cray-hdf5-parallel/1.12.2.9 \
             cray-netcdf-hdf5parallel/4.9.0.9 \
