@@ -3,7 +3,6 @@ from importlib import resources as importlib_resources
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
-from mache.spack.shared import _get_modules, _get_yaml_data
 
 
 def get_spack_script(
@@ -78,31 +77,7 @@ def get_spack_script(
     if config_file is not None:
         config.read(config_file)
 
-    section = config['spack']
-
-    modules_before = section.getboolean('modules_before')
-    modules_after = section.getboolean('modules_after')
-
-    yaml_data = _get_yaml_data(
-        machine,
-        compiler,
-        mpi,
-        include_e3sm_lapack,
-        include_e3sm_hdf5_netcdf,
-        specs=[],
-        yaml_template=yaml_template,
-    )
-
-    if modules_before or modules_after:
-        load_script = 'module purge\n'
-        if modules_before:
-            mods = _get_modules(yaml_data)
-            load_script = f'{load_script}\n{mods}\n'
-    else:
-        load_script = ''
-
     load_script = (
-        f'{load_script}'
         f'source {spack_path}/share/spack/setup-env.{shell}\n'
         f'spack env activate {env_name}'
     )
@@ -121,14 +96,13 @@ def get_spack_script(
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
-        shell_script = template.render(
+        # TODO: set shell_script to the contents of automated shell script
+        shell_script = ''  # TODO
+        # append a template if one exists
+        shell_script += template.render(
             e3sm_lapack=include_e3sm_lapack,
             e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         )
         load_script = f'{load_script}\n{shell_script}'
-
-    if modules_after:
-        mods = _get_modules(yaml_data)
-        load_script = f'{load_script}\n{mods}'
 
     return load_script
