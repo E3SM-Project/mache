@@ -29,8 +29,8 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.27.7
-        prefix: /usr/projects/hpcsoft/tce/23-05/cos2-x86_64-cc80/packages/cmake/cmake-3.27.7/
+      - spec: cmake@3.29.6
+        prefix: /usr/projects/hpcsoft/tce/23-12/cos2-x86_64-cc80/packages/cmake/cmake-3.29.6/
       buildable: false
     curl:
       externals:
