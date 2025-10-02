@@ -15,7 +15,6 @@ def get_spack_script(
     config_file=None,
     include_e3sm_lapack=False,
     include_e3sm_hdf5_netcdf=False,
-    yaml_template=None,
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -51,11 +50,6 @@ def get_spack_script(
     include_e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
-
-    yaml_template : str, optional
-        A jinja template for a yaml file to be used for the environment instead
-        of the mache template.  This allows you to use compilers and other
-        modules that differ from E3SM.
 
     Returns
     -------
