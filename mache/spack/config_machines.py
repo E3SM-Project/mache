@@ -121,7 +121,7 @@ def config_to_shell_script(config, shell_type):
 
 
 def extract_spack_from_config_machines(
-    machine, compiler, mpilib, shell, output
+    machine, compiler, mpilib, shell, output=None
 ):
     """
     Extract machine configuration from XML and write it to a shell script.
@@ -136,8 +136,13 @@ def extract_spack_from_config_machines(
         MPI library name.
     shell : str
         Shell script type ('sh' or 'csh').
-    output : str
+    output : str, optional
         Output file to write the shell script.
+
+    Returns
+    -------
+    script: str
+        The generated shell script as a string.
     """
     config_filename = 'mache/cime_machine_config/config_machines.xml'
 
@@ -149,8 +154,11 @@ def extract_spack_from_config_machines(
         )
 
     script = config_to_shell_script(config, shell)
-    with open(output, 'w') as f:
-        f.write(script)
+    if output is not None:
+        with open(output, 'w') as f:
+            f.write(script)
+
+    return script
 
 
 def _convert_module_commands_to_script_lines(module_commands, shell_type):

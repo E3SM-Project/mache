@@ -3,6 +3,7 @@ from importlib import resources as importlib_resources
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
+from mache.spack.config_machines import extract_spack_from_config_machines
 
 
 def get_spack_script(
@@ -76,6 +77,12 @@ def get_spack_script(
         f'spack env activate {env_name}'
     )
 
+    # start with the shell script from the config_machines.xml for the
+    # given machine, compiler, and mpi
+    load_script += '\n' + extract_spack_from_config_machines(
+        machine, compiler, mpi, shell
+    )
+
     for shell_filename in [
         f'{machine}.{shell}',
         f'{machine}_{compiler}_{mpi}.{shell}',
@@ -90,13 +97,11 @@ def get_spack_script(
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
-        # TODO: set shell_script to the contents of automated shell script
-        shell_script = ''  # TODO
+
         # append a template if one exists
-        shell_script += template.render(
+        load_script += '\n' + template.render(
             e3sm_lapack=include_e3sm_lapack,
             e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         )
-        load_script = f'{load_script}\n{shell_script}'
 
     return load_script
