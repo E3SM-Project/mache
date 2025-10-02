@@ -104,13 +104,13 @@ def config_to_shell_script(config, shell_type):
     script_lines.append('')
 
     if e3sm_hdf5_netcdf_modules:
-        script_lines.append('{% if e3sm_hdf5_netcdf %}')
+        script_lines.append('{%- if e3sm_hdf5_netcdf %}')
         script_lines.extend(
             _convert_module_commands_to_script_lines(
                 e3sm_hdf5_netcdf_modules, shell_type
             )
         )
-        script_lines.append('{% endif %}')
+        script_lines.append('{%- endif %}')
         script_lines.append('')
 
     script_lines.extend(_convert_env_vars_to_script_lines(config, shell_type))
@@ -257,12 +257,12 @@ def _convert_env_vars_to_script_lines(config, shell_type):
     script_lines.append('')
 
     if e3sm_hdf5_netcdf_env_vars:
-        script_lines.append('{% if e3sm_hdf5_netcdf %}')
+        script_lines.append('{%- if e3sm_hdf5_netcdf %}')
         for name, value in e3sm_hdf5_netcdf_env_vars:
             if shell_type == 'sh':
                 script_lines.append(f'export {name}="{value}"')
             elif shell_type == 'csh':
                 script_lines.append(f'setenv {name} "{value}"')
-        script_lines.append('{% endif %}')
+        script_lines.append('{%- endif %}')
 
     return script_lines
