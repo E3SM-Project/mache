@@ -1,5 +1,6 @@
 include mache/cime_machine_config/*.xml
 include mache/machines/*.cfg
+include mache/spack/config.cfg
 include mache/spack/templates/*.yaml
 include mache/spack/templates/*.template
 include mache/spack/templates/*.sh
