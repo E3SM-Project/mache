@@ -1,2 +1,3 @@
-__version_info__ = (1, 32, 0)
-__version__ = '.'.join(str(vi) for vi in __version_info__)
+__version_info__ = (2, 0, 0)
+# __version__ = '.'.join(str(vi) for vi in __version_info__)
+__version__ = '2.0.0rc1'
