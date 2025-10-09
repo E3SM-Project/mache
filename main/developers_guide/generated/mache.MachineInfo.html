@@ -109,23 +109,23 @@
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The name of an E3SM supported machine</p></li>
-<li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.13)"><em>configparser.ConfigParser</em></a>) – Config options for this machine</p></li>
-<li><p><strong>e3sm_supported</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether this machine supports running E3SM itself, and therefore has
+<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of an E3SM supported machine</p></li>
+<li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><em>configparser.ConfigParser</em></a>) – Config options for this machine</p></li>
+<li><p><strong>e3sm_supported</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether this machine supports running E3SM itself, and therefore has
 a list of compilers, MPI libraries, and the modules needed to load them</p></li>
-<li><p><strong>compilers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – A list of compilers for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
-<li><p><strong>mpilibs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – A list of MPI libraries for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
-<li><p><strong>os</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The machine’s operating system if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
+<li><p><strong>compilers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – A list of compilers for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
+<li><p><strong>mpilibs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – A list of MPI libraries for this machine if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
+<li><p><strong>os</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The machine’s operating system if <code class="docutils literal notranslate"><span class="pre">e3sm_supported</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
 <li><p><strong>e3sm_unified_mpi</strong> (<em>{'nompi'</em><em>, </em><em>'system'</em><em>, </em><em>None}</em>) – Which MPI type is included in the E3SM-Unified environment (if one is
 loaded)</p></li>
-<li><p><strong>e3sm_unified_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The base path where E3SM-Unified and its activation scripts are
+<li><p><strong>e3sm_unified_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The base path where E3SM-Unified and its activation scripts are
 installed if <code class="docutils literal notranslate"><span class="pre">e3sm_unified</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-<li><p><strong>e3sm_unified_activation</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The activation script used to activate E3SM-Unified if <code class="docutils literal notranslate"><span class="pre">e3sm_unified</span></code>
+<li><p><strong>e3sm_unified_activation</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The activation script used to activate E3SM-Unified if <code class="docutils literal notranslate"><span class="pre">e3sm_unified</span></code>
 is not <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-<li><p><strong>diagnostics_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The base directory for diagnostics data</p></li>
-<li><p><strong>web_portal_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The base directory for the web portal</p></li>
-<li><p><strong>web_portal_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The base URL for the web portal</p></li>
-<li><p><strong>username</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The name of the current user, for use in web-portal directories. This
+<li><p><strong>diagnostics_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The base directory for diagnostics data</p></li>
+<li><p><strong>web_portal_base</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The base directory for the web portal</p></li>
+<li><p><strong>web_portal_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The base URL for the web portal</p></li>
+<li><p><strong>username</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the current user, for use in web-portal directories. This
 value is also added to the <code class="docutils literal notranslate"><span class="pre">web_portal</span></code> and <code class="docutils literal notranslate"><span class="pre">username</span></code> option of
 the <code class="docutils literal notranslate"><span class="pre">config</span></code> attribute.</p></li>
 </ul>
@@ -138,9 +138,9 @@ the <code class="docutils literal notranslate"><span class="pre">config</span></
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The name of an E3SM supported machine.  By default, the machine
+<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The name of an E3SM supported machine.  By default, the machine
 will be inferred from the host name</p></li>
-<li><p><strong>quiet</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to print warnings if the machine name is ambiguous</p></li>
+<li><p><strong>quiet</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to print warnings if the machine name is ambiguous</p></li>
 </ul>
 </dd>
 </dl>

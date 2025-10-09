@@ -114,19 +114,19 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spack_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The base path where spack has been (or will be) cloned</p></li>
-<li><p><strong>env_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The name of the spack environment to be created or recreated</p></li>
-<li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – One of the E3SM supported compilers for the <code class="docutils literal notranslate"><span class="pre">machine</span></code></p></li>
-<li><p><strong>mpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – One of the E3SM supported MPI libraries for the given <code class="docutils literal notranslate"><span class="pre">compiler</span></code> and
+<li><p><strong>spack_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The base path where spack has been (or will be) cloned</p></li>
+<li><p><strong>env_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the spack environment to be created or recreated</p></li>
+<li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – One of the E3SM supported compilers for the <code class="docutils literal notranslate"><span class="pre">machine</span></code></p></li>
+<li><p><strong>mpi</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – One of the E3SM supported MPI libraries for the given <code class="docutils literal notranslate"><span class="pre">compiler</span></code> and
 <code class="docutils literal notranslate"><span class="pre">machine</span></code></p></li>
 <li><p><strong>shell</strong> (<em>{'sh'</em><em>, </em><em>'csh'}</em>) – Which shell the script is for</p></li>
-<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The name of an E3SM supported machine.  If none is given, the machine
+<li><p><strong>machine</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The name of an E3SM supported machine.  If none is given, the machine
 will be detected automatically via the host name.</p></li>
-<li><p><strong>config_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The name of a config file to load config options from.</p></li>
-<li><p><strong>include_e3sm_lapack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same lapack (typically from MKL) as used in E3SM</p></li>
-<li><p><strong>include_e3sm_hdf5_netcdf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
+<li><p><strong>config_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The name of a config file to load config options from.</p></li>
+<li><p><strong>include_e3sm_lapack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same lapack (typically from MKL) as used in E3SM</p></li>
+<li><p><strong>include_e3sm_hdf5_netcdf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
 as used in E3SM</p></li>
-<li><p><strong>yaml_template</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – A jinja template for a yaml file to be used for the environment instead
+<li><p><strong>yaml_template</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A jinja template for a yaml file to be used for the environment instead
 of the mache template.  This allows you to use compilers and other
 modules that differ from E3SM.</p></li>
 </ul>
