@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from importlib import resources as importlib_resources
 
 from lxml import etree
 
@@ -144,7 +145,10 @@ def extract_spack_from_config_machines(
     script: str
         The generated shell script as a string.
     """
-    config_filename = 'mache/cime_machine_config/config_machines.xml'
+    config_filename = (
+        importlib_resources.files('mache.cime_machine_config')
+        / 'config_machines.xml'
+    )
 
     config = extract_machine_config(config_filename, machine, compiler, mpilib)
     if config is None:
