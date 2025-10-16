@@ -111,8 +111,7 @@ def update_permissions(  # noqa: C901
             and dir_stat.st_uid == new_uid
             and dir_stat.st_gid == new_gid
         ):
-            # continue
-            pass
+            continue
 
         try:
             os.chown(directory, new_uid, new_gid)
