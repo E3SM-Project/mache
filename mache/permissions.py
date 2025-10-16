@@ -7,38 +7,6 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-def _update(
-    path: Path,
-    uid: int,
-    gid: int,
-    read_write_perm: int,
-    exec_perm: int,
-    mask: int,
-) -> None:
-    """
-    Update file permissions for a single path
-    """
-    try:
-        _stat = os.stat(path)
-        _perm = _stat.st_mode & mask
-
-        if path.is_file():
-            if _perm & stat.S_IXUSR:
-                new_perm = exec_perm
-            else:
-                new_perm = read_write_perm
-        elif path.is_dir():
-            new_perm = exec_perm
-
-        if _perm == new_perm and _stat.st_uid == uid and _stat.st_gid == gid:
-            return
-
-        os.chown(path, uid, gid)
-        os.chmod(path, new_perm)
-    except OSError as e:
-        print(f'{e} – skipping {path}')
-
-
 def update_permissions(  # noqa: C901
     base_paths,
     group,
@@ -68,6 +36,9 @@ def update_permissions(  # noqa: C901
     other_readable : bool, optional
         Whether to allow world read (and, where appropriate, execute)
         permissions
+
+    workers : int, optional
+        Number of threads to parallelize across
     """
 
     if isinstance(base_paths, str):
@@ -119,14 +90,20 @@ def update_permissions(  # noqa: C901
         except OSError:
             continue
 
-        paths_iter = (p for p in Path(directory).rglob('*'))
-        n_files = sum(1 for _ in Path(directory).rglob('*'))
+        files = Path(directory).rglob('*')
+        paths_iter = (p for p in files)
+        n_files = sum(1 for _ in files)
 
         print(f'Updating file permissions for: {directory}')
 
         with (
             ThreadPoolExecutor(max_workers=workers) as pool,
-            tqdm(total=n_files, unit='item', dynamic_ncols=True) as bar,
+            tqdm(
+                total=n_files,
+                unit='item',
+                dynamic_ncols=True,
+                disable=(not show_progress),
+            ) as bar,
         ):
             futures = [
                 pool.submit(
@@ -144,3 +121,35 @@ def update_permissions(  # noqa: C901
             for fut in as_completed(futures):
                 bar.update(1)
                 fut.result()
+
+
+def _update(
+    path: Path,
+    uid: int,
+    gid: int,
+    read_write_perm: int,
+    exec_perm: int,
+    mask: int,
+) -> None:
+    """
+    Update file permissions for a single path
+    """
+    try:
+        _stat = os.stat(path)
+        _perm = _stat.st_mode & mask
+
+        if path.is_file():
+            if _perm & stat.S_IXUSR:
+                new_perm = exec_perm
+            else:
+                new_perm = read_write_perm
+        elif path.is_dir():
+            new_perm = exec_perm
+
+        if _perm == new_perm and _stat.st_uid == uid and _stat.st_gid == gid:
+            return
+
+        os.chown(path, uid, gid)
+        os.chmod(path, new_perm)
+    except OSError as e:
+        print(f'{e} – skipping {path}')
