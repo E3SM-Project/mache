@@ -23,9 +23,9 @@ requirements:
     - jinja2
     - lxml
     - pyyaml
-    - progressbar2
     - rsync
     - termcolor
+    - tqdm
 
 test:
   source_files:
