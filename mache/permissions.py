@@ -82,17 +82,16 @@ def update_permissions(  # noqa: C901
             and dir_stat.st_uid == new_uid
             and dir_stat.st_gid == new_gid
         ):
-            continue
+            pass
 
         try:
             os.chown(directory, new_uid, new_gid)
             os.chmod(directory, exec_perm)
-        except OSError:
-            continue
+        except OSError as e:
+            print(f"{e} – skipping {path}")
 
-        files = Path(directory).rglob('*')
-        paths_iter = (p for p in files)
-        n_files = sum(1 for _ in files)
+        paths_iter = (p for p in Path(directory).rglob('*'))
+        n_files = sum(1 for _ in Path(directory).rglob('*'))
 
         print(f'Updating file permissions for: {directory}')
 
@@ -152,4 +151,4 @@ def _update(
         os.chown(path, uid, gid)
         os.chmod(path, new_perm)
     except OSError as e:
-        print(f'{e} – skipping {path}')
+        pass
