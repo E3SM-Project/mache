@@ -72,14 +72,14 @@ def get_spack_script(
     if config_file is not None:
         config.read(config_file)
 
-    load_script = (
+    load_script_template = (
         f'source {spack_path}/share/spack/setup-env.{shell}\n'
         f'spack env activate {env_name}'
     )
 
     # start with the shell script from the config_machines.xml for the
     # given machine, compiler, and mpi
-    load_script += '\n' + extract_spack_from_config_machines(
+    load_script_template += '\n' + extract_spack_from_config_machines(
         machine, compiler, mpi, shell
     )
 
@@ -93,15 +93,18 @@ def get_spack_script(
         )
         try:
             with open(str(path)) as fp:
-                template = Template(fp.read())
+                script_template = fp.read()
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
 
         # append a template if one exists
-        load_script += '\n' + template.render(
-            e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-        )
+        load_script_template += '\n' + script_template
+
+    # render the jinja template
+    load_script = Template(load_script_template).render(
+        e3sm_lapack=include_e3sm_lapack,
+        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+    )
 
     return load_script
