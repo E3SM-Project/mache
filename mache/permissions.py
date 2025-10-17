@@ -1,8 +1,10 @@
 import grp
 import os
 import stat
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
-import progressbar
+from tqdm import tqdm
 
 
 def update_permissions(  # noqa: C901
@@ -11,6 +13,7 @@ def update_permissions(  # noqa: C901
     show_progress=True,
     group_writable=False,
     other_readable=True,
+    workers=4,
 ):
     """
     Update the group that a directory belongs to along with the "group" and
@@ -33,6 +36,9 @@ def update_permissions(  # noqa: C901
     other_readable : bool, optional
         Whether to allow world read (and, where appropriate, execute)
         permissions
+
+    workers : int, optional
+        Number of threads to parallelize across
     """
 
     if isinstance(base_paths, str):
@@ -76,92 +82,73 @@ def update_permissions(  # noqa: C901
             and dir_stat.st_uid == new_uid
             and dir_stat.st_gid == new_gid
         ):
-            continue
+            pass
 
         try:
             os.chown(directory, new_uid, new_gid)
             os.chmod(directory, exec_perm)
-        except OSError:
-            continue
+        except OSError as e:
+            print(f'{e} – skipping {directory}')
 
-    files_and_dirs = []
-    for base in directories:
-        for _, dirs, files in os.walk(base):
-            files_and_dirs.extend(dirs)
-            files_and_dirs.extend(files)
+        paths_iter = (p for p in Path(directory).rglob('*'))
+        n_files = sum(1 for _ in Path(directory).rglob('*'))
 
-    if show_progress:
-        widgets = [
-            progressbar.Percentage(),
-            ' ',
-            progressbar.Bar(),
-            ' ',
-            progressbar.ETA(),
-        ]
-        bar = progressbar.ProgressBar(
-            widgets=widgets, maxval=len(files_and_dirs), maxerror=False
-        ).start()
-    else:
-        bar = None
-    progress = 0
-    for base in directories:
-        for root, dirs, files in os.walk(base):
-            for directory in dirs:
-                progress += 1
-                if show_progress:
-                    bar.update(progress)
+        print(f'Updating file permissions for: {directory}')
 
-                directory = os.path.join(root, directory)
+        with (
+            ThreadPoolExecutor(max_workers=workers) as pool,
+            tqdm(
+                total=n_files,
+                unit='item',
+                dynamic_ncols=True,
+                disable=(not show_progress),
+            ) as bar,
+        ):
+            futures = [
+                pool.submit(
+                    _update,
+                    p,
+                    uid=new_uid,
+                    gid=new_gid,
+                    read_write_perm=read_write_perm,
+                    exec_perm=exec_perm,
+                    mask=mask,
+                )
+                for p in paths_iter
+            ]
 
-                try:
-                    dir_stat = os.stat(directory)
-                except OSError:
-                    continue
+            for fut in as_completed(futures):
+                bar.update(1)
+                fut.result()
 
-                perm = dir_stat.st_mode & mask
 
-                if (
-                    perm == exec_perm
-                    and dir_stat.st_uid == new_uid
-                    and dir_stat.st_gid == new_gid
-                ):
-                    continue
+def _update(
+    path: Path,
+    uid: int,
+    gid: int,
+    read_write_perm: int,
+    exec_perm: int,
+    mask: int,
+) -> None:
+    """
+    Update file permissions for a single path
+    """
+    try:
+        _stat = os.stat(path)
+        _perm = _stat.st_mode & mask
 
-                try:
-                    os.chown(directory, new_uid, new_gid)
-                    os.chmod(directory, exec_perm)
-                except OSError:
-                    continue
+        if path.is_file():
+            if _perm & stat.S_IXUSR:
+                new_perm = exec_perm
+            else:
+                new_perm = read_write_perm
+        elif path.is_dir():
+            new_perm = exec_perm
 
-            for file_name in files:
-                progress += 1
-                bar.update(progress)
-                file_name = os.path.join(root, file_name)
-                try:
-                    file_stat = os.stat(file_name)
-                except OSError:
-                    continue
+        if _perm == new_perm and _stat.st_uid == uid and _stat.st_gid == gid:
+            return
 
-                perm = file_stat.st_mode & mask
-
-                if perm & stat.S_IXUSR:
-                    # executable, so make sure others can execute it
-                    new_perm = exec_perm
-                else:
-                    new_perm = read_write_perm
-
-                if (
-                    perm == new_perm
-                    and file_stat.st_uid == new_uid
-                    and file_stat.st_gid == new_gid
-                ):
-                    continue
-
-                try:
-                    os.chown(file_name, new_uid, new_gid)
-                    os.chmod(file_name, new_perm)
-                except OSError:
-                    continue
-
-    if show_progress:
-        bar.finish()
+        os.chown(path, uid, gid)
+        os.chmod(path, new_perm)
+    except OSError:
+        pass

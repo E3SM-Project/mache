@@ -3,10 +3,10 @@ importlib_resources
 jinja2
 lxml
 pyyaml
-progressbar2
 requests
 rsync
 termcolor
+tqdm
 
 # Building
 setuptools >=60
