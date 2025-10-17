@@ -1,5 +1,5 @@
-{%- set compiler = "intel@2023.2.0" %}
-{%- set mpi = "cray-mpich@8.1.28" %}
+{%- set compiler = "intel@2024.1.0" %}
+{%- set mpi = "cray-mpich@8.1.30" %}
 spack:
   specs:
   - {{ compiler }}
@@ -35,8 +35,8 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.24.3
-        prefix: /global/common/software/nersc9/cmake/3.24.3
+      - spec: cmake@3.30.2
+        prefix: /global/common/software/nersc9/cmake/3.30.2
       buildable: false
     findutils:
       externals:
@@ -110,17 +110,17 @@ spack:
       - spec: {{ compiler }}
         modules:
         - PrgEnv-intel/8.5.0
-        - intel/2023.2.0
+        - intel/2024.1.0
         - cray-libsci/23.12.5
         - craype-accel-host
-        - craype/2.7.30
+        - craype/2.7.32
         - libfabric/1.22.0
       buildable: false
     cray-mpich:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
-        - cray-mpich/8.1.28
+        - cray-mpich/8.1.30
         - libfabric/1.22.0
       buildable: false
     cray-libsci:
@@ -137,8 +137,8 @@ spack:
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/intel/2023.2
+      - spec: parallel-netcdf@1.12.3.13+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.13/intel/2023.2
       buildable: false
     netcdf-c:
       externals:
@@ -164,10 +164,10 @@ spack:
       target: x86_64
       modules:
       - PrgEnv-intel/8.5.0
-      - intel/2023.2.0
+      - intel/2024.1.0
       - cray-libsci/23.12.5
       - craype-accel-host
-      - craype/2.7.30
+      - craype/2.7.32
       - libfabric/1.22.0
       environment:
         prepend_path:
