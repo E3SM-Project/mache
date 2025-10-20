@@ -5,6 +5,7 @@ from importlib import resources as importlib_resources
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
+from mache.spack.script import get_spack_script
 from mache.spack.shared import _get_yaml_data
 from mache.version import __version__
 
@@ -105,23 +106,18 @@ def make_spack_env(
 
     modules = ''
 
-    for shell_filename in [f'{machine}.sh', f'{machine}_{compiler}_{mpi}.sh']:
-        # load modules, etc. for this machine
-        path = (
-            importlib_resources.files('mache.spack.templates') / shell_filename
-        )
-        try:
-            with open(str(path)) as fp:
-                template = Template(fp.read())
-        except FileNotFoundError:
-            # there's nothing to add, which is fine
-            continue
-        bash_script = template.render(
-            e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-        )
-
-        modules = f'{modules}\n{bash_script}'
+    bash_script = get_spack_script(
+        spack_path,
+        env_name,
+        compiler,
+        mpi,
+        'sh',
+        machine,
+        None,
+        include_e3sm_lapack,
+        include_e3sm_hdf5_netcdf,
+    )
+    modules = f'{modules}\n{bash_script}'
 
     path = (
         importlib_resources.files('mache.spack.templates')
