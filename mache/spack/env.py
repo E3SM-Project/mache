@@ -116,6 +116,7 @@ def make_spack_env(
         None,
         include_e3sm_lapack,
         include_e3sm_hdf5_netcdf,
+        load_spack_env=False,
     )
     modules = f'{modules}\n{bash_script}'
 

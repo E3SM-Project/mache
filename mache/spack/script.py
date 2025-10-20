@@ -16,6 +16,7 @@ def get_spack_script(
     config_file=None,
     include_e3sm_lapack=False,
     include_e3sm_hdf5_netcdf=False,
+    load_spack_env=True,
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -52,6 +53,10 @@ def get_spack_script(
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
 
+    load_spack_env : bool, optional
+        Whether to load the spack environment at the start of script.
+        Must be set to False when initially building the environment
+
     Returns
     -------
     load_script : str
@@ -72,10 +77,13 @@ def get_spack_script(
     if config_file is not None:
         config.read(config_file)
 
-    load_script_template = (
-        f'source {spack_path}/share/spack/setup-env.{shell}\n'
-        f'spack env activate {env_name}'
-    )
+    load_script_template = ''
+
+    if load_spack_env:
+        load_script_template += (
+            f'source {spack_path}/share/spack/setup-env.{shell}\n'
+            f'spack env activate {env_name}'
+        )
 
     # start with the shell script from the config_machines.xml for the
     # given machine, compiler, and mpi
