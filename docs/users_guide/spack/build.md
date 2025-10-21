@@ -113,7 +113,6 @@ spack_script = get_spack_script(
     mpi=mpi,
     shell='sh',  # or 'csh'
     machine=machine,
-    config_file=machine_config,
     include_e3sm_lapack=include_e3sm_lapack,
     include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
 )

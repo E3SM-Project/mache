@@ -2,7 +2,7 @@ from importlib import resources as importlib_resources
 
 from jinja2 import Template
 
-from mache.machine_info import MachineInfo, discover_machine
+from mache.machine_info import discover_machine
 from mache.spack.config_machines import extract_spack_from_config_machines
 
 
@@ -13,7 +13,6 @@ def get_spack_script(
     mpi,
     shell,
     machine=None,
-    config_file=None,
     include_e3sm_lapack=False,
     include_e3sm_hdf5_netcdf=False,
     load_spack_env=True,
@@ -43,9 +42,6 @@ def get_spack_script(
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
 
-    config_file : str, optional
-        The name of a config file to load config options from.
-
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
@@ -70,12 +66,6 @@ def get_spack_script(
         machine = discover_machine()
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
-
-    machine_info = MachineInfo(machine)
-
-    config = machine_info.config
-    if config_file is not None:
-        config.read(config_file)
 
     load_script_template = ''
 
