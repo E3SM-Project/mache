@@ -113,7 +113,6 @@ def make_spack_env(
         mpi,
         'sh',
         machine,
-        None,
         include_e3sm_lapack,
         include_e3sm_hdf5_netcdf,
         load_spack_env=False,
