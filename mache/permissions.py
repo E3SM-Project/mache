@@ -42,9 +42,9 @@ def update_permissions(  # noqa: C901
     """
 
     if isinstance(base_paths, str):
-        directories = [base_paths]
+        paths = [Path(base_paths)]
     else:
-        directories = base_paths
+        paths = [Path(path) for path in base_paths]
 
     new_uid = os.getuid()
     new_gid = grp.getgrnam(group).gr_gid
@@ -67,33 +67,25 @@ def update_permissions(  # noqa: C901
 
     mask = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
 
-    # first the base directories that don't seem to be included in
-    # os.walk()
-    for directory in directories:
-        try:
-            dir_stat = os.stat(directory)
-        except OSError:
+    for path in paths:
+        print(f'Updating file permissions for: {path}')
+
+        # start by updating the top level path (file or directory)
+        _update(
+            path,
+            uid=new_uid,
+            gid=new_gid,
+            read_write_perm=read_write_perm,
+            exec_perm=exec_perm,
+            mask=mask,
+        )
+
+        # iterate over the path recursively, only if it's a direcotry
+        if path.is_file():
             continue
 
-        perm = dir_stat.st_mode & mask
-
-        if (
-            perm == exec_perm
-            and dir_stat.st_uid == new_uid
-            and dir_stat.st_gid == new_gid
-        ):
-            pass
-
-        try:
-            os.chown(directory, new_uid, new_gid)
-            os.chmod(directory, exec_perm)
-        except OSError as e:
-            print(f'{e} – skipping {directory}')
-
-        paths_iter = (p for p in Path(directory).rglob('*'))
-        n_files = sum(1 for _ in Path(directory).rglob('*'))
-
-        print(f'Updating file permissions for: {directory}')
+        paths_iter = (p for p in Path(path).rglob('*'))
+        n_files = sum(1 for _ in Path(path).rglob('*'))
 
         with (
             ThreadPoolExecutor(max_workers=workers) as pool,
