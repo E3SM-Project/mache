@@ -94,7 +94,8 @@ from mache.spack import get_spack_script
 ```
 
 **Purpose:**
-Generates a shell script snippet to activate a Spack environment and load any required modules or environment variables.
+Generates a shell script snippet to activate a Spack environment and load the
+required modules or environment variables.
 
 **Typical usage in downstream packages:**
 
@@ -118,13 +119,19 @@ spack_script = get_spack_script(
 )
 ```
 
-**Returns:**
-A string containing shell commands to:
+**How the script is composed:**
 
-- Load required modules (if any).
-- Source the Spack setup script.
-- Activate the specified Spack environment.
-- Set any additional environment variables.
+The returned snippet is assembled in three steps:
+
+1. Optionally source Spack and activate the requested environment.
+2. Auto-generate module loads and environment exports from the E3SM CIME
+  machine configuration (`mache/cime_machine_config/config_machines.xml`) for
+  the given `(machine, compiler, mpi)` and target shell (`sh` or `csh`).
+3. Append any Mache template override present in `mache/spack/templates/` named
+  `<machine>.<sh|csh>` or `<machine>_<compiler>_<mpi>.<sh|csh>`.
+
+This design keeps Mache aligned with E3SM’s authoritative machine
+configuration and minimizes maintenance.
 
 **Usage in activation scripts:**
 
@@ -142,7 +149,8 @@ from mache.spack import get_modules_env_vars_and_mpi_compilers
 ```
 
 **Purpose:**
-Returns the MPI compiler wrappers and a shell snippet to load modules and set environment variables for a given machine, compiler, and MPI library.
+Returns the MPI compiler wrappers and a shell snippet to load modules and set
+environment variables for a given machine, compiler, and MPI library.
 
 **Typical usage in downstream packages:**
 
@@ -169,12 +177,17 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
 - `mpifc`: Name of the MPI Fortran compiler wrapper (e.g., `mpif90` or `ftn`).
 - `mod_env_commands`: Shell commands to load modules and set environment variables.
 
-**Usage in build scripts:**
+**Notes and usage in build scripts:**
 
 ```bash
 {{ mod_env_commands }}
 # Now safe to use $mpicc, $mpicxx, $mpifc for building MPI-dependent software
 ```
+
+- This helper produces a minimal snippet based on Mache’s template overrides
+  (when present). It does not auto-generate content from
+  `config_machines.xml`. If you need the full environment setup used by
+  downstream activation scripts, prefer `get_spack_script`.
 
 ---
 
