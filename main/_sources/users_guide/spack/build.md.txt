@@ -116,6 +116,7 @@ spack_script = get_spack_script(
     config_file=machine_config,
     include_e3sm_lapack=include_e3sm_lapack,
     include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    yaml_template=yaml_template
 )
 ```
 
@@ -160,6 +161,7 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
     shell='sh',  # or 'csh'
     include_e3sm_lapack=include_e3sm_lapack,
     include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    yaml_template=yaml_template
 )
 ```
 

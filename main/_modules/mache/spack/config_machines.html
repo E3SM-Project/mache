@@ -85,7 +85,6 @@
   <h1>Source code for mache.spack.config_machines</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
 
@@ -195,13 +194,13 @@
     <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">e3sm_hdf5_netcdf_modules</span><span class="p">:</span>
-        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">%- i</span><span class="s1">f e3sm_hdf5_netcdf %}&#39;</span><span class="p">)</span>
+        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">% i</span><span class="s1">f e3sm_hdf5_netcdf %}&#39;</span><span class="p">)</span>
         <span class="n">script_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="n">_convert_module_commands_to_script_lines</span><span class="p">(</span>
                 <span class="n">e3sm_hdf5_netcdf_modules</span><span class="p">,</span> <span class="n">shell_type</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">%- e</span><span class="s1">ndif %}&#39;</span><span class="p">)</span>
+        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">% e</span><span class="s1">ndif %}&#39;</span><span class="p">)</span>
         <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
     <span class="n">script_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_convert_env_vars_to_script_lines</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">shell_type</span><span class="p">))</span>
@@ -215,7 +214,7 @@
 <div class="viewcode-block" id="extract_spack_from_config_machines">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.extract_spack_from_config_machines.html#mache.spack.extract_spack_from_config_machines">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_spack_from_config_machines</span><span class="p">(</span>
-    <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">output</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract machine configuration from XML and write it to a shell script.</span>
@@ -230,18 +229,10 @@
 <span class="sd">        MPI library name.</span>
 <span class="sd">    shell : str</span>
 <span class="sd">        Shell script type (&#39;sh&#39; or &#39;csh&#39;).</span>
-<span class="sd">    output : str, optional</span>
+<span class="sd">    output : str</span>
 <span class="sd">        Output file to write the shell script.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    script: str</span>
-<span class="sd">        The generated shell script as a string.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">config_filename</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">&#39;mache.cime_machine_config&#39;</span><span class="p">)</span>
-        <span class="o">/</span> <span class="s1">&#39;config_machines.xml&#39;</span>
-    <span class="p">)</span>
+    <span class="n">config_filename</span> <span class="o">=</span> <span class="s1">&#39;mache/cime_machine_config/config_machines.xml&#39;</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">extract_machine_config</span><span class="p">(</span><span class="n">config_filename</span><span class="p">,</span> <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -251,11 +242,8 @@
         <span class="p">)</span>
 
     <span class="n">script</span> <span class="o">=</span> <span class="n">config_to_shell_script</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">shell</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">script</span></div>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">script</span><span class="p">)</span></div>
 
 
 
@@ -355,13 +343,13 @@
     <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">e3sm_hdf5_netcdf_env_vars</span><span class="p">:</span>
-        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">%- i</span><span class="s1">f e3sm_hdf5_netcdf %}&#39;</span><span class="p">)</span>
+        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">% i</span><span class="s1">f e3sm_hdf5_netcdf %}&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">e3sm_hdf5_netcdf_env_vars</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">shell_type</span> <span class="o">==</span> <span class="s1">&#39;sh&#39;</span><span class="p">:</span>
                 <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;export </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">=&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">shell_type</span> <span class="o">==</span> <span class="s1">&#39;csh&#39;</span><span class="p">:</span>
                 <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;setenv </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> &quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
-        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">%- e</span><span class="s1">ndif %}&#39;</span><span class="p">)</span>
+        <span class="n">script_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;{</span><span class="si">% e</span><span class="s1">ndif %}&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">script_lines</span>
 </pre></div>
