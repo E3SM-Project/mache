@@ -5,7 +5,7 @@ from importlib import resources as importlib_resources
 from jinja2 import Template
 
 from mache.machine_info import MachineInfo, discover_machine
-from mache.spack.shared import _get_yaml_data
+from mache.spack.shared import _get_modules, _get_yaml_data
 from mache.version import __version__
 
 
@@ -89,6 +89,12 @@ def make_spack_env(
     if config_file is not None:
         config.read(config_file)
 
+    section = config['spack']
+
+    with_modules = section.getboolean('modules_before') or section.getboolean(
+        'modules_after'
+    )
+
     yaml_data = _get_yaml_data(
         machine,
         compiler,
@@ -103,7 +109,11 @@ def make_spack_env(
     with open(yaml_filename, 'w') as handle:
         handle.write(yaml_data)
 
-    modules = ''
+    if with_modules:
+        mods = _get_modules(yaml_data)
+        modules = f'module purge\n{mods}'
+    else:
+        modules = ''
 
     for shell_filename in [f'{machine}.sh', f'{machine}_{compiler}_{mpi}.sh']:
         # load modules, etc. for this machine
@@ -164,6 +174,7 @@ def get_modules_env_vars_and_mpi_compilers(
     shell,
     include_e3sm_lapack=False,
     include_e3sm_hdf5_netcdf=False,
+    yaml_template=None,
 ):
     """
     Get the non-spack modules, environment variables and compiler names for a
@@ -191,6 +202,11 @@ def get_modules_env_vars_and_mpi_compilers(
     include_e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
+
+    yaml_template : str, optional
+        A jinja template for a yaml file to be used for the environment instead
+        of the mache template.  This allows you to use compilers and other
+        modules that differ from E3SM.
 
     Returns
     -------
@@ -220,10 +236,27 @@ def get_modules_env_vars_and_mpi_compilers(
     if config.has_section('spack'):
         section = config['spack']
 
+        with_modules = section.getboolean(
+            'modules_before'
+        ) or section.getboolean('modules_after')
         if config.has_option('spack', 'cray_compilers'):
             cray_compilers = section.getboolean('cray_compilers')
+    else:
+        with_modules = False
 
     mod_env_commands = 'module purge\n'
+    if with_modules:
+        yaml_data = _get_yaml_data(
+            machine,
+            compiler,
+            mpi,
+            include_e3sm_lapack,
+            include_e3sm_hdf5_netcdf,
+            specs=[],
+            yaml_template=yaml_template,
+        )
+        mods = _get_modules(yaml_data)
+        mod_env_commands = f'{mod_env_commands}\n{mods}\n'
 
     for shell_filename in [
         f'{machine}.{shell}',
