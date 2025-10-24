@@ -1,5 +1,5 @@
-{%- set compiler = "nvhpc@25.5" %}
-{%- set mpi = "cray-mpich@8.1.30" %}
+{%- set compiler = "nvhpc@24.5" %}
+{%- set mpi = "cray-mpich@8.1.28" %}
 spack:
   specs:
   - {{ mpi }}%{{ compiler }}
@@ -34,8 +34,8 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.30.2
-        prefix: /global/common/software/nersc9/cmake/3.30.2
+      - spec: cmake@3.24.3
+        prefix: /global/common/software/nersc9/cmake/3.24.3
       buildable: false
     findutils:
       externals:
@@ -109,7 +109,7 @@ spack:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.22.0
-        - cray-mpich/8.1.30
+        - cray-mpich/8.1.28
       buildable: false
     cray-libsci:
       externals:
@@ -125,8 +125,8 @@ spack:
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.12.3.13+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.13/nvidia/23.3
+      - spec: parallel-netcdf@1.12.3.9+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.9/nvidia/23.3
       buildable: false
     netcdf-c:
       externals:
@@ -143,19 +143,19 @@ spack:
   - compiler:
       spec: {{ compiler }}
       paths:
-        cc: /opt/nvidia/hpc_sdk/Linux_x86_64/25.5/compilers/bin/nvc
-        cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/25.5/compilers/bin/nvc++
-        f77: /opt/nvidia/hpc_sdk/Linux_x86_64/25.5/compilers/bin/nvfortran
-        fc: /opt/nvidia/hpc_sdk/Linux_x86_64/25.5/compilers/bin/nvfortran
+        cc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc
+        cxx: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvc++
+        f77: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvfortran
+        fc: /opt/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/bin/nvfortran
       flags: {}
       operating_system: sles15
       target: any
       modules:
       - PrgEnv-nvidia
-      - nvidia/25.5
+      - nvidia/24.5
       - cray-libsci/23.12.5
       - craype-accel-host
-      - craype/2.7.32
+      - craype/2.7.30
       - libfabric/1.20
       environment:
         prepend_path:
