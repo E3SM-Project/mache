@@ -8,6 +8,14 @@ from mache.machine_info import MachineInfo, discover_machine
 from mache.spack.shared import _get_modules, _get_yaml_data
 from mache.version import __version__
 
+MPI_COMPILERS = {
+    'gnu': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
+    'intel': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
+    'oneapi-ifx': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
+    'impi': {'mpicc': 'mpiicc', 'mpicxx': 'mpiicpc', 'mpifc': 'mpiifort'},
+    'cray': {'mpicc': 'cc', 'mpicxx': 'CC', 'mpifc': 'ftn'},
+}
+
 
 def make_spack_env(
     spack_path,
@@ -287,29 +295,23 @@ def get_modules_env_vars_and_mpi_compilers(
 def _get_mpi_compilers(machine, compiler, mpi, cray_compilers):
     """Get a list of compilers from a yaml file"""
 
-    mpi_compilers = {
-        'gnu': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
-        'intel': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
-        'impi': {'mpicc': 'mpiicc', 'mpicxx': 'mpiicpc', 'mpifc': 'mpiifort'},
-        'cray': {'mpicc': 'cc', 'mpicxx': 'CC', 'mpifc': 'ftn'},
-    }
-
     mpi_compiler = None
     # first, get mpi compilers based on compiler
-    if compiler in mpi_compilers:
-        mpi_compiler = mpi_compilers[compiler]
+    if compiler in MPI_COMPILERS:
+        mpi_compiler = MPI_COMPILERS[compiler]
 
     # next, get mpi compilers based on mpi (higher priority)
-    if mpi in mpi_compilers:
-        mpi_compiler = mpi_compilers[mpi]
+    if mpi in MPI_COMPILERS:
+        mpi_compiler = MPI_COMPILERS[mpi]
 
     # finally, get mpi compilers if this is a cray machine (highest priority)
     if cray_compilers:
-        mpi_compiler = mpi_compilers['cray']
+        mpi_compiler = MPI_COMPILERS['cray']
 
     if mpi_compiler is None:
         raise ValueError(
-            f"Couldn't figure out MPI compilers for {machine} {compiler} {mpi}"
+            f"Couldn't figure out MPI compiler wrappers for {machine} "
+            f'{compiler} {mpi}'
         )
 
     return mpi_compiler['mpicc'], mpi_compiler['mpicxx'], mpi_compiler['mpifc']
