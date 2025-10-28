@@ -25,6 +25,7 @@ dependencies = [
     "jinja2",
     "lxml",
     "pyyaml",
+    "requests",
     "termcolor",
     "tqdm"
 ]
