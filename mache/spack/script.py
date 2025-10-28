@@ -2,8 +2,8 @@ from importlib import resources as importlib_resources
 
 from jinja2 import Template
 
-from mache.machine_info import MachineInfo, discover_machine
-from mache.spack.shared import _get_modules, _get_yaml_data
+from mache.machine_info import discover_machine
+from mache.spack.config_machines import extract_spack_from_config_machines
 
 
 def get_spack_script(
@@ -13,10 +13,9 @@ def get_spack_script(
     mpi,
     shell,
     machine=None,
-    config_file=None,
     include_e3sm_lapack=False,
     include_e3sm_hdf5_netcdf=False,
-    yaml_template=None,
+    load_spack_env=True,
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -43,9 +42,6 @@ def get_spack_script(
         The name of an E3SM supported machine.  If none is given, the machine
         will be detected automatically via the host name.
 
-    config_file : str, optional
-        The name of a config file to load config options from.
-
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
@@ -53,10 +49,9 @@ def get_spack_script(
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
 
-    yaml_template : str, optional
-        A jinja template for a yaml file to be used for the environment instead
-        of the mache template.  This allows you to use compilers and other
-        modules that differ from E3SM.
+    load_spack_env : bool, optional
+        Whether to load the spack environment at the start of script.
+        Must be set to False when initially building the environment
 
     Returns
     -------
@@ -72,39 +67,18 @@ def get_spack_script(
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
 
-    machine_info = MachineInfo(machine)
+    load_script_template = ''
 
-    config = machine_info.config
-    if config_file is not None:
-        config.read(config_file)
+    if load_spack_env:
+        load_script_template += (
+            f'source {spack_path}/share/spack/setup-env.{shell}\n'
+            f'spack env activate {env_name}'
+        )
 
-    section = config['spack']
-
-    modules_before = section.getboolean('modules_before')
-    modules_after = section.getboolean('modules_after')
-
-    yaml_data = _get_yaml_data(
-        machine,
-        compiler,
-        mpi,
-        include_e3sm_lapack,
-        include_e3sm_hdf5_netcdf,
-        specs=[],
-        yaml_template=yaml_template,
-    )
-
-    if modules_before or modules_after:
-        load_script = 'module purge\n'
-        if modules_before:
-            mods = _get_modules(yaml_data)
-            load_script = f'{load_script}\n{mods}\n'
-    else:
-        load_script = ''
-
-    load_script = (
-        f'{load_script}'
-        f'source {spack_path}/share/spack/setup-env.{shell}\n'
-        f'spack env activate {env_name}'
+    # start with the shell script from the config_machines.xml for the
+    # given machine, compiler, and mpi
+    load_script_template += '\n' + extract_spack_from_config_machines(
+        machine, compiler, mpi, shell
     )
 
     for shell_filename in [
@@ -117,18 +91,18 @@ def get_spack_script(
         )
         try:
             with open(str(path)) as fp:
-                template = Template(fp.read())
+                script_template = fp.read()
         except FileNotFoundError:
             # there's nothing to add, which is fine
             continue
-        shell_script = template.render(
-            e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-        )
-        load_script = f'{load_script}\n{shell_script}'
 
-    if modules_after:
-        mods = _get_modules(yaml_data)
-        load_script = f'{load_script}\n{mods}'
+        # append a template if one exists
+        load_script_template += '\n' + script_template
+
+    # render the jinja template
+    load_script = Template(load_script_template).render(
+        e3sm_lapack=include_e3sm_lapack,
+        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+    )
 
     return load_script
