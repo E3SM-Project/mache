@@ -63,7 +63,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#providers">Providers</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#shell-script-templates">Shell Script Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#automatic-shell-script-generation-preferred">Automatic shell script generation (preferred)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#when-to-add-a-template-override">When to add a template override</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#further-reading">Further Reading</a></li>
 </ul>
@@ -113,8 +116,11 @@ libraries. For instructions on adding a new machine to mache in general
 supported compiler and MPI library combination.</p></li>
 <li><p>Add system-provided (external) packages, saving time and preventing build
 failures if Spack attempts to build them from source.</p></li>
-<li><p>Optionally, provide shell script templates for module/environment setup if
-needed.</p></li>
+<li><p>Prefer automatic shell script generation. Shell snippets used to be
+maintained as templates in <code class="docutils literal notranslate"><span class="pre">mache.spack.templates</span></code>, but are now derived
+primarily from the E3SM CIME machine configuration
+(<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>). Only add a minimal
+template override when strictly necessary (see below).</p></li>
 </ol>
 </section>
 <section id="yaml-template-files">
@@ -177,21 +183,46 @@ should be marked as <code class="docutils literal notranslate"><span class="pre"
 </div>
 </section>
 </section>
-<section id="shell-script-templates">
-<h2>Shell Script Templates<a class="headerlink" href="#shell-script-templates" title="Link to this heading"></a></h2>
-<p>If the machine requires special module loads or environment variables not handled by Spack, add corresponding shell script templates:</p>
+<section id="automatic-shell-script-generation-preferred">
+<h2>Automatic shell script generation (preferred)<a class="headerlink" href="#automatic-shell-script-generation-preferred" title="Link to this heading"></a></h2>
+<p>When downstream packages call
+<a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-func docutils literal notranslate"><span class="pre">mache.spack.get_spack_script()</span></code></a>, the module loads and
+environment-variable setup are constructed as follows:</p>
+<ol class="arabic simple">
+<li><p>Optional: activate Spack and the requested environment.</p></li>
+<li><p>Auto-generate a shell snippet from the E3SM CIME machine configuration
+stored in <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>, filtered for the
+requested <code class="docutils literal notranslate"><span class="pre">(machine,</span> <span class="pre">compiler,</span> <span class="pre">mpilib)</span></code> and rendered for the target shell
+(<code class="docutils literal notranslate"><span class="pre">sh</span></code> or <code class="docutils literal notranslate"><span class="pre">csh</span></code>).</p></li>
+<li><p>Append any Jinja2 template override found in
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> named either <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.&lt;sh|csh&gt;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpilib&gt;.&lt;sh|csh&gt;</span></code>.</p></li>
+</ol>
+<p>This pipeline greatly reduces maintenance and prevents drift between Mache and
+E3SM’s authoritative machine configuration. In most cases, you do not need to
+author or maintain shell script templates in Mache.</p>
+<section id="when-to-add-a-template-override">
+<h3>When to add a template override<a class="headerlink" href="#when-to-add-a-template-override" title="Link to this heading"></a></h3>
+<p>Only provide a small override in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> if you need to:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.sh</span></code> and/or <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpilib&gt;.sh</span></code> for bash</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.csh</span></code> and/or <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpilib&gt;.csh</span></code> for csh/tcsh</p></li>
+<li><p>Apply an adjustment that’s not appropriate for the shared E3SM CIME config
+(machine-local quirk, temporary workaround, etc.).</p></li>
+<li><p>Add conditional behavior toggled by
+<code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code> or <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code> (both exposed as Jinja
+booleans in templates) that cannot be expressed in the CIME config.</p></li>
 </ul>
-<p>These scripts are also Jinja2 templates and can use the same conditional logic as the YAML files.</p>
+<p>Templates are Jinja2 files and can use the same conditional logic as YAML
+templates.</p>
+</section>
 </section>
 <section id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
-<p>After adding or modifying YAML and shell script templates:</p>
+<p>After adding or modifying YAML templates (or an exceptional shell override):</p>
 <ol class="arabic simple">
-<li><p>Use the <code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code> or <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code> functions in <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> to generate and test the environment.</p></li>
-<li><p>Confirm that all modules load and all external packages are correctly detected by Spack.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code> or <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code> in <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> to generate and
+test the environment and load scripts.</p></li>
+<li><p>Confirm that the generated shell snippet includes the expected module loads
+from the CIME machine config and that Spack detects all external packages.</p></li>
 <li><p>Build and run a simple test application to verify the environment.</p></li>
 </ol>
 </section>

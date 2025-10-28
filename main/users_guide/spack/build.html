@@ -182,7 +182,8 @@ E3SM-specific LAPACK or HDF5/NetCDF packages.</p></li>
 </pre></div>
 </div>
 <p><strong>Purpose:</strong>
-Generates a shell script snippet to activate a Spack environment and load any required modules or environment variables.</p>
+Generates a shell script snippet to activate a Spack environment and load the
+required modules or environment variables.</p>
 <p><strong>Typical usage in downstream packages:</strong></p>
 <ul class="simple">
 <li><p>Used to generate activation scripts for users (e.g., <code class="docutils literal notranslate"><span class="pre">load_compass.sh</span></code>,
@@ -198,21 +199,23 @@ activated in the user’s shell.</p></li>
     <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
     <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
-    <span class="n">config_file</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
-    <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Returns:</strong>
-A string containing shell commands to:</p>
-<ul class="simple">
-<li><p>Load required modules (if any).</p></li>
-<li><p>Source the Spack setup script.</p></li>
-<li><p>Activate the specified Spack environment.</p></li>
-<li><p>Set any additional environment variables.</p></li>
-</ul>
+<p><strong>How the script is composed:</strong></p>
+<p>The returned snippet is assembled in three steps:</p>
+<ol class="arabic simple">
+<li><p>Optionally source Spack and activate the requested environment.</p></li>
+<li><p>Auto-generate module loads and environment exports from the E3SM CIME
+machine configuration (<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>) for
+the given <code class="docutils literal notranslate"><span class="pre">(machine,</span> <span class="pre">compiler,</span> <span class="pre">mpi)</span></code> and target shell (<code class="docutils literal notranslate"><span class="pre">sh</span></code> or <code class="docutils literal notranslate"><span class="pre">csh</span></code>).</p></li>
+<li><p>Append any Mache template override present in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> named
+<code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.&lt;sh|csh&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.&lt;sh|csh&gt;</span></code>.</p></li>
+</ol>
+<p>This design keeps Mache aligned with E3SM’s authoritative machine
+configuration and minimizes maintenance.</p>
 <p><strong>Usage in activation scripts:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example in a load script</span>
 <span class="o">{{</span><span class="w"> </span>spack_script<span class="w"> </span><span class="o">}}</span>
@@ -226,7 +229,8 @@ A string containing shell commands to:</p>
 </pre></div>
 </div>
 <p><strong>Purpose:</strong>
-Returns the MPI compiler wrappers and a shell snippet to load modules and set environment variables for a given machine, compiler, and MPI library.</p>
+Returns the MPI compiler wrappers and a shell snippet to load modules and set
+environment variables for a given machine, compiler, and MPI library.</p>
 <p><strong>Typical usage in downstream packages:</strong></p>
 <ul class="simple">
 <li><p>Used when building or installing packages that require knowledge of the correct MPI compiler wrappers (e.g., <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>, <code class="docutils literal notranslate"><span class="pre">mpifc</span></code>).</p></li>
@@ -240,7 +244,6 @@ Returns the MPI compiler wrappers and a shell snippet to load modules and set en
     <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
-    <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -251,11 +254,17 @@ Returns the MPI compiler wrappers and a shell snippet to load modules and set en
 <li><p><code class="docutils literal notranslate"><span class="pre">mpifc</span></code>: Name of the MPI Fortran compiler wrapper (e.g., <code class="docutils literal notranslate"><span class="pre">mpif90</span></code> or <code class="docutils literal notranslate"><span class="pre">ftn</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mod_env_commands</span></code>: Shell commands to load modules and set environment variables.</p></li>
 </ul>
-<p><strong>Usage in build scripts:</strong></p>
+<p><strong>Notes and usage in build scripts:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{{</span><span class="w"> </span>mod_env_commands<span class="w"> </span><span class="o">}}</span>
 <span class="c1"># Now safe to use $mpicc, $mpicxx, $mpifc for building MPI-dependent software</span>
 </pre></div>
 </div>
+<ul class="simple">
+<li><p>This helper produces a minimal snippet based on Mache’s template overrides
+(when present). It does not auto-generate content from
+<code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>. If you need the full environment setup used by
+downstream activation scripts, prefer <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code>.</p></li>
+</ul>
 </section>
 <hr class="docutils" />
 <section id="example-how-downstream-packages-use-these-functions">

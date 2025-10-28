@@ -109,7 +109,7 @@
 <h1>mache.spack.extract_spack_from_config_machines<a class="headerlink" href="#mache-spack-extract-spack-from-config-machines" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="mache.spack.extract_spack_from_config_machines">
-<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">extract_spack_from_config_machines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpilib</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack/config_machines.html#extract_spack_from_config_machines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.extract_spack_from_config_machines" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">extract_spack_from_config_machines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpilib</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack/config_machines.html#extract_spack_from_config_machines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.extract_spack_from_config_machines" title="Link to this definition"></a></dt>
 <dd><p>Extract machine configuration from XML and write it to a shell script.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -118,8 +118,11 @@
 <li><p><strong>compiler</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Compiler name.</p></li>
 <li><p><strong>mpilib</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – MPI library name.</p></li>
 <li><p><strong>shell</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Shell script type (‘sh’ or ‘csh’).</p></li>
-<li><p><strong>output</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Output file to write the shell script.</p></li>
+<li><p><strong>output</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Output file to write the shell script.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>script</strong> (<em>str</em>) – The generated shell script as a string.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -14,8 +14,11 @@ To enable Spack-based environments for a new machine, you will need to:
    supported compiler and MPI library combination.
 2. Add system-provided (external) packages, saving time and preventing build
    failures if Spack attempts to build them from source.
-3. Optionally, provide shell script templates for module/environment setup if
-   needed.
+3. Prefer automatic shell script generation. Shell snippets used to be
+   maintained as templates in `mache.spack.templates`, but are now derived
+   primarily from the E3SM CIME machine configuration
+   (`mache/cime_machine_config/config_machines.xml`). Only add a minimal
+   template override when strictly necessary (see below).
 
 ## YAML Template Files
 
@@ -82,21 +85,46 @@ all:
     lapack: [cray-libsci@24.11.0]
 ```
 
-## Shell Script Templates
+## Automatic shell script generation (preferred)
 
-If the machine requires special module loads or environment variables not handled by Spack, add corresponding shell script templates:
+When downstream packages call
+{py:func}`mache.spack.get_spack_script`, the module loads and
+environment-variable setup are constructed as follows:
 
-- `<machine>.sh` and/or `<machine>_<compiler>_<mpilib>.sh` for bash
-- `<machine>.csh` and/or `<machine>_<compiler>_<mpilib>.csh` for csh/tcsh
+1. Optional: activate Spack and the requested environment.
+2. Auto-generate a shell snippet from the E3SM CIME machine configuration
+   stored in `mache/cime_machine_config/config_machines.xml`, filtered for the
+   requested `(machine, compiler, mpilib)` and rendered for the target shell
+   (`sh` or `csh`).
+3. Append any Jinja2 template override found in
+   `mache/spack/templates/` named either `<machine>.<sh|csh>` or
+   `<machine>_<compiler>_<mpilib>.<sh|csh>`.
 
-These scripts are also Jinja2 templates and can use the same conditional logic as the YAML files.
+This pipeline greatly reduces maintenance and prevents drift between Mache and
+E3SM’s authoritative machine configuration. In most cases, you do not need to
+author or maintain shell script templates in Mache.
+
+### When to add a template override
+
+Only provide a small override in `mache/spack/templates/` if you need to:
+
+- Apply an adjustment that’s not appropriate for the shared E3SM CIME config
+  (machine-local quirk, temporary workaround, etc.).
+- Add conditional behavior toggled by
+  `include_e3sm_lapack` or `include_e3sm_hdf5_netcdf` (both exposed as Jinja
+  booleans in templates) that cannot be expressed in the CIME config.
+
+Templates are Jinja2 files and can use the same conditional logic as YAML
+templates.
 
 ## Testing
 
-After adding or modifying YAML and shell script templates:
+After adding or modifying YAML templates (or an exceptional shell override):
 
-1. Use the `make_spack_env` or `get_spack_script` functions in `mache.spack` to generate and test the environment.
-2. Confirm that all modules load and all external packages are correctly detected by Spack.
+1. Use `make_spack_env` or `get_spack_script` in `mache.spack` to generate and
+  test the environment and load scripts.
+2. Confirm that the generated shell snippet includes the expected module loads
+  from the CIME machine config and that Spack detects all external packages.
 3. Build and run a simple test application to verify the environment.
 
 ## Further Reading
