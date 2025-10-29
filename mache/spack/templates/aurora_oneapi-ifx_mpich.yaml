@@ -127,10 +127,10 @@ spack:
   - compiler:
       spec: {{ compiler }}
       paths:
-        cc: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/icx
-        cxx: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/icpx
-        f77: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/ifx
-        fc: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/ifx
+        cc: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icx
+        cxx: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icpx
+        f77: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
+        fc: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
       flags: {}
       operating_system: sles15
       target: x86_64
