@@ -109,7 +109,7 @@ spack:
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.3c-4.6.2f+mpi~parallel-netcdf
+      - spec: netcdf-c@4.9.3+mpi~parallel-netcdf
         prefix: /lus/flare/projects/E3SMinput/soft/netcdf/4.9.3c-4.6.2f/oneapi.2025.2.0
       buildable: false
     netcdf-fortran:
