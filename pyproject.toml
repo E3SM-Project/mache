@@ -24,6 +24,7 @@ dependencies = [
     "importlib_resources",
     "jinja2",
     "lxml",
+    "packaging",
     "pyyaml",
     "requests",
     "termcolor",
