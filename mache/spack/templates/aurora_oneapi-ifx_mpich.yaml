@@ -1,4 +1,4 @@
-{%- set compiler = "oneapi@2025.0.5" %}
+{%- set compiler = "oneapi@2025.2.0" %}
 {%- set mpi = "mpich@4.3.0" %}
 
 spack:
