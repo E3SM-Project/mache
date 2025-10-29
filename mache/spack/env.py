@@ -3,6 +3,7 @@ import subprocess
 from importlib import resources as importlib_resources
 
 from jinja2 import Template
+from packaging.version import Version
 
 from mache.machine_info import MachineInfo, discover_machine
 from mache.spack.script import get_spack_script
@@ -139,9 +140,13 @@ def make_spack_env(
 
         modules = f'{modules}\nexport TMPDIR={tmpdir}'
 
+    # Use PEP 440 parsing to strip any pre/dev/post release tags and keep only
+    # the base release version (e.g., "1.2.3rc1" -> "1.2.3").
+    version = Version(__version__).base_version
+
     template_args = dict(
         modules=modules,
-        version=__version__,
+        version=version,
         spack_path=spack_path,
         env_name=env_name,
         yaml_filename=yaml_filename,
