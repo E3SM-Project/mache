@@ -33,7 +33,7 @@ spack:
     cmake:
       externals:
       - spec: cmake@3.31.8
-        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/cmake-3.31.8-mvhtj5u/bin/cmake
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/cmake-3.31.8-mvhtj5u
       buildable: false
     curl:
       externals:
