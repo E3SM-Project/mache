@@ -14,6 +14,7 @@ def update_permissions(  # noqa: C901
     group_writable=False,
     other_readable=True,
     workers=4,
+    recursive=True,
 ):
     """
     Update the group that a directory belongs to along with the "group" and
@@ -39,6 +40,9 @@ def update_permissions(  # noqa: C901
 
     workers : int, optional
         Number of threads to parallelize across
+
+    recursive : bool, optional
+        Whether to traverse the path(s) provided recursively
     """
 
     if isinstance(base_paths, str):
@@ -68,7 +72,7 @@ def update_permissions(  # noqa: C901
     mask = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
 
     for path in paths:
-        print(f'Updating file permissions for: {path}')
+        print(f'Updating file permissions (recursively) for: {path}')
 
         # start by updating the top level path (file or directory)
         _update(
@@ -82,6 +86,9 @@ def update_permissions(  # noqa: C901
 
         # iterate over the path recursively, only if it's a direcotry
         if path.is_file():
+            continue
+        # only iterate directories recursively if requested
+        elif not recursive:
             continue
 
         paths_iter = (p for p in Path(path).rglob('*'))
