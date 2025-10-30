@@ -53,17 +53,12 @@ spack:
     gmake:
       externals:
       - spec: gmake@4.4.1
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/gmake-4.4.1-wza7sk4
-      buildable: false
-    libiconv:
-      externals:
-      - spec: libiconv@1.17
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/libiconv-1.17-jjpb4sl
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gmake-4.4.1-wza7sk4
       buildable: false
     libxml2:
       externals:
       - spec: libxml2@2.13.5
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/libxml2-2.13.5-jxhkqdj
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/libxml2-2.13.5-dhzcbk4
       buildable: false
     openssl:
       externals:
@@ -94,12 +89,12 @@ spack:
     gcc-runtime:
       externals:
       - spec: gcc-runtime@13.3.0
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
       buildable: false
     mpich:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/oneapi-2025.0.5/mpich-develop-git.6037a7a-sxnhr7p
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/oneapi-2025.2.0/mpich-develop-git.6037a7a-cym6jg6
       buildable: false
 {%- if e3sm_hdf5_netcdf %}
     hdf5:
