@@ -17,7 +17,7 @@ spack:
     unify: true
   packages:
     all:
-      compiler: [{{ compiler }}]
+      compiler: [{{ compiler }}, gcc@13.3.0]
       providers:
         mpi: [{{ mpi }}]
     bison:
@@ -91,9 +91,15 @@ spack:
             cxx: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icpx
             fortran: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
       buildable: false
+    gcc:
+      externals:
+      - spec: gcc@13.3.0
+        modules:
+        - gcc/13.3.0
+      buildable: false
     gcc-runtime:
       externals:
-      - spec: gcc-runtime@13.3.0
+      - spec: gcc-runtime@13.3.0%gcc@13.3.0
         prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
       buildable: false
     mpich:
@@ -135,5 +141,18 @@ spack:
       operating_system: sles15
       target: x86_64
       modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@13.3.0
+      paths:
+        cc:  /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gcc
+        cxx: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/g++
+        f77: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gfortran
+        fc: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gfortran
+      operating_system: sles15
+      target: x86_64
+      modules: [gcc/13.3.0]
+      flags: {}
       environment: {}
       extra_rpaths: []
