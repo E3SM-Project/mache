@@ -85,6 +85,11 @@ spack:
       - spec: {{ compiler }}
         modules:
         - oneapi/release/2025.2.0
+        extra_attributes:
+          compilers:
+            c: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icx
+            cxx: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icpx
+            fortran: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
       buildable: false
     gcc-runtime:
       externals:
