@@ -101,6 +101,7 @@
     <span class="n">group_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">other_readable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Update the group that a directory belongs to along with the &quot;group&quot; and</span>
@@ -126,6 +127,9 @@
 
 <span class="sd">    workers : int, optional</span>
 <span class="sd">        Number of threads to parallelize across</span>
+
+<span class="sd">    recursive : bool, optional</span>
+<span class="sd">        Whether to traverse the path(s) provided recursively</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_paths</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -155,7 +159,7 @@
     <span class="n">mask</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXU</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXG</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXO</span>
 
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating file permissions for: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating file permissions (recursively) for: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="c1"># start by updating the top level path (file or directory)</span>
         <span class="n">_update</span><span class="p">(</span>
@@ -169,6 +173,9 @@
 
         <span class="c1"># iterate over the path recursively, only if it&#39;s a direcotry</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="c1"># only iterate directories recursively if requested</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">recursive</span><span class="p">:</span>
             <span class="k">continue</span>
 
         <span class="n">paths_iter</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">))</span>
