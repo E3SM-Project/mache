@@ -1,4 +1,4 @@
-{%- set compiler = "oneapi@2025.0.5" %}
+{%- set compiler = "oneapi@2025.2.0" %}
 {%- set mpi = "mpich@4.3.0" %}
 
 spack:
@@ -17,7 +17,7 @@ spack:
     unify: true
   packages:
     all:
-      compiler: [{{ compiler }}]
+      compiler: [{{ compiler }}, gcc@13.3.0]
       providers:
         mpi: [{{ mpi }}]
     bison:
@@ -32,8 +32,8 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.30.5
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/cmake-3.30.5-igar7ts
+      - spec: cmake@3.31.8
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/cmake-3.31.8-mvhtj5u
       buildable: false
     curl:
       externals:
@@ -53,17 +53,12 @@ spack:
     gmake:
       externals:
       - spec: gmake@4.4.1
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/gmake-4.4.1-wza7sk4
-      buildable: false
-    libiconv:
-      externals:
-      - spec: libiconv@1.17
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/libiconv-1.17-jjpb4sl
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gmake-4.4.1-wza7sk4
       buildable: false
     libxml2:
       externals:
       - spec: libxml2@2.13.5
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/libxml2-2.13.5-jxhkqdj
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/libxml2-2.13.5-dhzcbk4
       buildable: false
     openssl:
       externals:
@@ -89,51 +84,75 @@ spack:
       externals:
       - spec: {{ compiler }}
         modules:
-        - oneapi/release/2025.0.5
+        - oneapi/release/2025.2.0
+        extra_attributes:
+          compilers:
+            c: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icx
+            cxx: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icpx
+            fortran: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
+      buildable: false
+    gcc:
+      externals:
+      - spec: gcc@13.3.0
+        modules:
+        - gcc/13.3.0
       buildable: false
     gcc-runtime:
       externals:
-      - spec: gcc-runtime@13.3.0
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
+      - spec: gcc-runtime@13.3.0%gcc@13.3.0
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
       buildable: false
     mpich:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
-        prefix: /opt/aurora/24.347.0/spack/unified/0.9.2/install/linux-sles15-x86_64/oneapi-2025.0.5/mpich-develop-git.6037a7a-sxnhr7p
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/oneapi-2025.2.0/mpich-develop-git.6037a7a-cym6jg6
       buildable: false
 {%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
-      - spec: hdf5@1.14.5+cxx+fortran+hl+mpi
-        prefix: /lus/flare/projects/E3SM_Dec/soft/hdf5/1.14.5/oneapi.eng.2024.07.30.002/
+      - spec: hdf5@1.14.6+cxx+fortran+hl+mpi
+        prefix: /lus/flare/projects/E3SMinput/soft/hdf5/1.14.6/oneapi.2025.2.0
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.2+mpi~parallel-netcdf
-        prefix: /lus/flare/projects/E3SM_Dec/soft/netcdf/4.9.2c-4.6.1f/oneapi.eng.2024.07.30.002
+      - spec: netcdf-c@4.9.3+mpi~parallel-netcdf
+        prefix: /lus/flare/projects/E3SMinput/soft/netcdf/4.9.3c-4.6.2f/oneapi.2025.2.0
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.6.1
-        prefix: /lus/flare/projects/E3SM_Dec/soft/netcdf/4.9.2c-4.6.1f/oneapi.eng.2024.07.30.002
+      - spec: netcdf-fortran@4.6.2
+        prefix: /lus/flare/projects/E3SMinput/soft/netcdf/4.9.3c-4.6.2f/oneapi.2025.2.0
       buildable: false
     parallel-netcdf:
       externals:
-      - spec: parallel-netcdf@1.11.0+cxx+fortran
-        prefix: /lus/flare/projects/E3SM_Dec/soft/pnetcdf/1.14.0/oneapi.eng.2024.07.30.002
+      - spec: parallel-netcdf@1.14.0+cxx+fortran
+        prefix: /lus/flare/projects/E3SMinput/soft/pnetcdf/1.14.0/oneapi.2025.2.0
       buildable: false
 {%- endif %}
   compilers:
   - compiler:
       spec: {{ compiler }}
       paths:
-        cc: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/icx
-        cxx: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/icpx
-        f77: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/ifx
-        fc: /opt/aurora/24.347.0/oneapi/compiler/latest/bin/ifx
+        cc: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icx
+        cxx: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/icpx
+        f77: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
+        fc: /opt/aurora/25.190.0/oneapi/compiler/latest/bin/ifx
       flags: {}
       operating_system: sles15
       target: x86_64
       modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@13.3.0
+      paths:
+        cc:  /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gcc
+        cxx: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/g++
+        f77: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gfortran
+        fc: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-13.3.0-4enwbrb/bin/gfortran
+      operating_system: sles15
+      target: x86_64
+      modules: [gcc/13.3.0]
+      flags: {}
       environment: {}
       extra_rpaths: []
