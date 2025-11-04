@@ -232,26 +232,17 @@ def get_modules_env_vars_and_mpi_compilers(
         if config.has_option('spack', 'cray_compilers'):
             cray_compilers = section.getboolean('cray_compilers')
 
-    mod_env_commands = 'module purge\n'
-
-    for shell_filename in [
-        f'{machine}.{shell}',
-        f'{machine}_{compiler}_{mpi}.{shell}',
-    ]:
-        path = (
-            importlib_resources.files('mache.spack.templates') / shell_filename
-        )
-        try:
-            with open(str(path)) as fp:
-                template = Template(fp.read())
-        except FileNotFoundError:
-            # there's nothing to add, which is fine
-            continue
-        shell_script = template.render(
-            e3sm_lapack=include_e3sm_lapack,
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
-        )
-        mod_env_commands = f'{mod_env_commands}\n{shell_script}'
+    mod_env_commands = get_spack_script(
+        spack_path=None,
+        env_name=None,
+        compiler=compiler,
+        mpi=mpi,
+        shell=shell,
+        machine=machine,
+        load_spack_env=False,
+        include_e3sm_lapack=include_e3sm_lapack,
+        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+    )
 
     mpicc, mpicxx, mpifc = _get_mpi_compilers(
         machine, compiler, mpi, cray_compilers
