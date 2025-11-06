@@ -11,6 +11,7 @@
 
 users_guide/quick_start
 users_guide/spack/build
+users_guide/sync/diags
 ```
 
 ```{toctree}
