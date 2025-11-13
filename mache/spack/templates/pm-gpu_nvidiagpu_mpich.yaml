@@ -110,6 +110,7 @@ spack:
         - PrgEnv-nvidia
         - nvidia/25.5
         - craype-accel-nvidia80
+        - gcc-native-mixed/12.3
         - cray-libsci/23.12.5
         - libfabric/1.22.0
         - craype/2.7.32
@@ -165,6 +166,7 @@ spack:
       - PrgEnv-nvidia
       - nvidia/25.5
       - craype-accel-nvidia80
+      - gcc-native-mixed/12.3
       - cray-libsci/23.12.5
       - libfabric/1.22.0
       - craype/2.7.32
