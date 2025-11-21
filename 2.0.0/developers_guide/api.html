@@ -1,0 +1,247 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API reference</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="mache.discover.discover_machine" href="generated/mache.discover.discover_machine.html" />
+    <link rel="prev" title="Releasing a New Version" href="releasing.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#discover">discover</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.discover.discover_machine.html">mache.discover.discover_machine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#permissions">permissions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.update_permissions.html">mache.permissions.update_permissions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.make_spack_env.html">mache.spack.make_spack_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_spack_script.html">mache.spack.get_spack_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html">mache.spack.get_modules_env_vars_and_mpi_compilers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_machine_config.html">mache.spack.extract_machine_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sync">sync</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html">mache.sync.diags.sync_diags</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#machineinfo">MachineInfo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.html">mache.MachineInfo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html">mache.MachineInfo.get_account_defaults</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="api-reference">
+<span id="dev-api"></span><h1>API reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>This page provides an auto-generated summary of the mache API. For more
+details and examples, refer to the relevant sections in the main part of the
+documentation.</p>
+<section id="discover">
+<h2>discover<a class="headerlink" href="#discover" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.discover.discover_machine.html#mache.discover.discover_machine" title="mache.discover.discover_machine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_machine</span></code></a>([quiet])</p></td>
+<td><p>Figure out the machine from the host name</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="permissions">
+<h2>permissions<a class="headerlink" href="#permissions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions" title="mache.permissions.update_permissions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_permissions</span></code></a>(base_paths, group[, ...])</p></td>
+<td><p>Update the group that a directory belongs to along with the &quot;group&quot; and &quot;other&quot; permissions for the directory</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="spack">
+<h2>spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
+<td><p>Clone the <code class="docutils literal notranslate"><span class="pre">spack_for_mache_{{version}}</span></code> branch from <a class="reference external" href="https://github.com/E3SM-Project/spack">E3SM's spack clone</a> and build a spack environment for the given machine, compiler and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>(spack_path, env_name, ...)</p></td>
+<td><p>Build a snippet of a load script for the given spack environment</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers" title="mache.spack.get_modules_env_vars_and_mpi_compilers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a>(...)</p></td>
+<td><p>Get the non-spack modules, environment variables and compiler names for a given machine, compiler and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_machine_config.html#mache.spack.extract_machine_config" title="mache.spack.extract_machine_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_machine_config</span></code></a>(xml_file, machine, ...)</p></td>
+<td><p>Extract the machine configuration from the XML file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html#mache.spack.config_to_shell_script" title="mache.spack.config_to_shell_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_to_shell_script</span></code></a>(config, shell_type)</p></td>
+<td><p>Convert the machine configuration to a shell script.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html#mache.spack.extract_spack_from_config_machines" title="mache.spack.extract_spack_from_config_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_spack_from_config_machines</span></code></a>(machine, ...)</p></td>
+<td><p>Extract machine configuration from XML and write it to a shell script.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html#mache.spack.list_machine_compiler_mpilib" title="mache.spack.list_machine_compiler_mpilib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_machine_compiler_mpilib</span></code></a>()</p></td>
+<td><p>List tuples of machine, compiler, and MPI library parsed from the name of YAML files in the <cite>mache.spack.templates</cite> directory.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sync">
+<h2>sync<a class="headerlink" href="#sync" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html#mache.sync.diags.sync_diags" title="mache.sync.diags.sync_diags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync_diags</span></code></a>(other[, direction, machine, ...])</p></td>
+<td><p>Synchronize diagnostics files between supported machines</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="machineinfo">
+<h2>MachineInfo<a class="headerlink" href="#machineinfo" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.html#mache.MachineInfo" title="mache.MachineInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo</span></code></a>([machine, quiet])</p></td>
+<td><p>An object containing information about an E3SM supported machine</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults" title="mache.MachineInfo.get_account_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_account_defaults</span></code></a>()</p></td>
+<td><p>Get default account, partition and quality of service (QOS) for this machine.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="releasing.html" class="btn btn-neutral float-left" title="Releasing a New Version" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/mache.discover.discover_machine.html" class="btn btn-neutral float-right" title="mache.discover.discover_machine" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="2.0.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

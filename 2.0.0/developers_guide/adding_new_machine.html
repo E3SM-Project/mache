@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adding a New Machine to Mache</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding Spack Support for a New Machine" href="spack.html" />
+    <link rel="prev" title="Contributing to mache" href="contributing.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine to Mache</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#adding-a-new-config-file">Adding a new config file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-the-new-machine-to-discover-py">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Adding a New Machine to Mache</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/adding_new_machine.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="adding-a-new-machine-to-mache">
+<span id="dev-adding-new-machine"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#adding-a-new-machine-to-mache" title="Link to this heading"></a></h1>
+<p>Adding an E3SM-known machine to mache requires adding a new config file, as
+well as updating the list of machines in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only machines that are included in mache’s
+<a class="reference external" href="https://github.com/E3SM-Project/mache/blob/main/mache/cime_machine_config/config_machines.xml">machine config list</a>
+can be added to mache. This list is a <em>copy</em> of the
+<a class="reference external" href="https://github.com/E3SM-Project/E3SM/blob/master/cime_config/machines/config_machines.xml">E3SM cime machine config list</a>
+which we try to keep up-to-date. If you wish to add a machine that is not
+included in this list, you must contact the E3SM-Project developers to add your
+machine.</p>
+</div>
+<section id="adding-a-new-config-file">
+<span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Link to this heading"></a></h2>
+<p>Adding a new config file is usually straightforward if you follow the format of
+an existing config file.</p>
+</section>
+<section id="adding-the-new-machine-to-discover-py">
+<span id="dev-discover-new-machine"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#adding-the-new-machine-to-discover-py" title="Link to this heading"></a></h2>
+<p>You will need to amend the list of machine names in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code> so that mache
+can identify the new machine via its hostname. This process is typically done
+using a regular expression, which is often possible whenever the machine’s
+hostname follows a standardized format. For example, we can identify known
+machines from hostnames with the following regular expressions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;^chr-\d</span><span class="si">{4}</span><span class="s1">&#39;</span>  <span class="c1"># Chrysalis compute nodes with hostnames chr-0000 to chr-9999</span>
+<span class="s1">&#39;^compy&#39;</span>      <span class="c1"># Compy nodes with hostname compy</span>
+<span class="s1">&#39;^n\d</span><span class="si">{4}</span><span class="s1">&#39;</span>     <span class="c1"># Anvil nodes with hostnames n0000 to n9999</span>
+</pre></div>
+</div>
+<p>In some cases, the hostname assigned to a machine is too generic to
+differentiate it from other machines. In these cases, we must identify the
+machine by its environment variables. However, this is <em>not</em> the recommended
+procedure and should only be done as a last resort. For example, we identify
+<code class="docutils literal notranslate"><span class="pre">frontier</span></code> by its <code class="docutils literal notranslate"><span class="pre">LMOD_SYSTEM_NAME</span></code> environment variable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;LMOD_SYSTEM_NAME&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LMOD_SYSTEM_NAME&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">hostname</span> <span class="o">==</span> <span class="s1">&#39;frontier&#39;</span><span class="p">:</span>
+        <span class="c1"># frontier&#39;s hostname is too generic to detect, so relying on</span>
+        <span class="c1"># LMOD_SYSTEM_NAME</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="s1">&#39;frontier&#39;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Identifying the machine by environment variables is <strong>not recommended</strong> unless
+absolutely necessary.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contributing.html" class="btn btn-neutral float-left" title="Contributing to mache" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spack.html" class="btn btn-neutral float-right" title="Adding Spack Support for a New Machine" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="2.0.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
