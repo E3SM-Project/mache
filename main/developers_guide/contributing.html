@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributing to mache</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding a New Machine to Mache" href="adding_new_machine.html" />
+    <link rel="prev" title="Quick Start for Developers" href="quick_start.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing to mache</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-environment">Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-style-and-linting">Code Style and Linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pull-request-checklist">Pull Request Checklist</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contributing to mache</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/contributing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="contributing-to-mache">
+<h1>Contributing to mache<a class="headerlink" href="#contributing-to-mache" title="Link to this heading"></a></h1>
+<p>Thank you for your interest in contributing to <code class="docutils literal notranslate"><span class="pre">mache</span></code>! We welcome
+contributions of all kinds, including bug reports, feature requests, code, and
+documentation improvements.</p>
+<section id="how-to-contribute">
+<h2>How to Contribute<a class="headerlink" href="#how-to-contribute" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Bug Reports &amp; Feature Requests:</strong>
+Please use <a class="reference external" href="https://github.com/E3SM-Project/mache/issues">GitHub Issues</a> to
+report bugs or request features.</p></li>
+<li><p><strong>Pull Requests:</strong>
+Fork the repository, create a new branch for your changes, and submit a pull
+request (PR) to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch. Please provide a clear description of
+your changes.</p></li>
+</ul>
+</section>
+<section id="development-environment">
+<h2>Development Environment<a class="headerlink" href="#development-environment" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Set up an isolated environment:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_priority<span class="w"> </span>strict
+conda<span class="w"> </span>create<span class="w"> </span>-y<span class="w"> </span>-n<span class="w"> </span>mache_dev<span class="w"> </span>--file<span class="w"> </span>spec-file.txt
+conda<span class="w"> </span>activate<span class="w"> </span>mache_dev
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</li>
+<li><p><strong>Install pre-commit hooks:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>This ensures code style and quality checks run automatically on each
+commit.</p>
+</li>
+</ol>
+</section>
+<section id="code-style-and-linting">
+<h2>Code Style and Linting<a class="headerlink" href="#code-style-and-linting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Follow <a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> and project code style.</p></li>
+<li><p>The following tools are used (via <a class="reference external" href="https://pre-commit.com/">pre-commit</a>):</p>
+<ul>
+<li><p><a class="reference external" href="https://docs.astral.sh/ruff/">ruff</a> for linting and formatting</p></li>
+<li><p><a class="reference external" href="https://github.com/ikamensh/flynt">flynt</a> for f-string conversion</p></li>
+<li><p><a class="reference external" href="https://mypy-lang.org/">mypy</a> for type checking</p></li>
+</ul>
+</li>
+</ul>
+<p>If a pre-commit hook fails, fix the reported issues and recommit.</p>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
+<ul>
+<li><p>Add or update tests for new features or bug fixes.</p></li>
+<li><p>Run the test suite before submitting a PR:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h2>
+<ul>
+<li><p>Document all public functions and classes using docstrings.</p></li>
+<li><p>Update the <a class="reference internal" href="api.html"><span class="std std-doc">API documentation</span></a> if you add or modify public APIs.</p></li>
+<li><p>Build and preview the documentation locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+<span class="nv">DOCS_VERSION</span><span class="o">=</span><span class="nb">test</span><span class="w"> </span>make<span class="w"> </span>clean<span class="w"> </span>versioned-html
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="pull-request-checklist">
+<h2>Pull Request Checklist<a class="headerlink" href="#pull-request-checklist" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>[ ] User’s Guide has been updated if needed</p></li>
+<li><p>[ ] Developer’s Guide has been updated if needed</p></li>
+<li><p>[ ] API documentation lists any new or modified class, method, or function</p></li>
+<li><p>[ ] Documentation builds cleanly and changes look as expected</p></li>
+<li><p>[ ] Tests pass and new features are covered by tests</p></li>
+<li><p>[ ] PR description includes a summary and any relevant issue references</p></li>
+<li><p>[ ] <code class="docutils literal notranslate"><span class="pre">Testing</span></code> comment, if appropriate, in the PR documents testing used to verify the changes</p></li>
+</ul>
+<p>Thank you for helping improve <code class="docutils literal notranslate"><span class="pre">mache</span></code>!</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quick_start.html" class="btn btn-neutral float-left" title="Quick Start for Developers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="adding_new_machine.html" class="btn btn-neutral float-right" title="Adding a New Machine to Mache" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
