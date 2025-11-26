@@ -1,4 +1,4 @@
-{%- set compiler = "gcc@13.2" %}
+{%- set compiler = "gcc@12.3" %}
 {%- set mpi = "cray-mpich@8.1.30" %}
 spack:
   specs:
@@ -109,7 +109,7 @@ spack:
       - spec: {{ compiler }}
         modules:
         - PrgEnv-gnu/8.5.0
-        - gcc-native/13.2
+        - gcc-native/12.3
         - craype-accel-nvidia80
         - cray-libsci/24.07.0
         - libfabric/1.22.0
@@ -126,7 +126,7 @@ spack:
       - spec: cuda@12.4
         modules:
         - PrgEnv-gnu/8.5.0
-        - gcc-native/13.2
+        - gcc-native/12.3
         - craype-accel-nvidia80
         - cray-libsci/24.07.0
         - libfabric/1.22.0
@@ -179,7 +179,7 @@ spack:
       target: any
       modules:
       - PrgEnv-gnu/8.5.0
-      - gcc-native/13.2
+      - gcc-native/12.3
       - craype-accel-nvidia80
       - cray-libsci/24.07.0
       - libfabric/1.22.0
