@@ -124,8 +124,8 @@ spack:
         - Core/25.03
         - PrgEnv-gnu
         - cpe/24.11
-        - libunwind/1.8.1
-        - gcc-native/13.2
+        - libunwind
+        - gcc-native/12.3
         - craype/2.7.33
         - libfabric/1.22.0
         extra_attributes:
@@ -141,7 +141,7 @@ spack:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libfabric/1.22.0
-        - libunwind/1.8.1
+        - libunwind
         - cray-mpich/8.1.31
       buildable: false
     libfabric:
@@ -195,7 +195,7 @@ spack:
       - Core/25.03
       - PrgEnv-gnu
       - cpe/24.11
-      - libunwind/1.8.1
-      - gcc-native/13.2
+      - libunwind
+      - gcc-native/12.3
       - craype/2.7.33
       - libfabric/1.22.0
