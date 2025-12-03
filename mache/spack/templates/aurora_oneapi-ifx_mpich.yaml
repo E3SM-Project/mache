@@ -65,6 +65,16 @@ spack:
       - spec: openssl@1.1.1l
         prefix: /usr
       buildable: false
+    python:
+      externals:
+      - spec: python@3.10.14
+        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/python-3.10.14-x4dd26d
+      buildable: false
+    re2c:
+      externals:
+      - spec: re2c@1.0.3
+        prefix: /usr
+      buildable: false
     xz:
       externals:
       - spec: xz@5.2.3
@@ -80,6 +90,7 @@ spack:
       - spec: perl@5.26.1
         prefix: /usr
       buildable: false
+
     oneapi:
       externals:
       - spec: {{ compiler }}
