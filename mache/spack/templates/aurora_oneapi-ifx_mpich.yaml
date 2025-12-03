@@ -65,6 +65,17 @@ spack:
       - spec: openssl@1.1.1l
         prefix: /usr
       buildable: false
+    python:
+      externals:
+      - spec: python@3.10.14
+        modules:
+        - python/3.10.14
+      buildable: false
+    re2c:
+      externals:
+      - spec: re2c@1.0.3
+        prefix: /usr
+      buildable: false
     xz:
       externals:
       - spec: xz@5.2.3
@@ -80,6 +91,7 @@ spack:
       - spec: perl@5.26.1
         prefix: /usr
       buildable: false
+
     oneapi:
       externals:
       - spec: {{ compiler }}
