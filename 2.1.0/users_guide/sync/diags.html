@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synchronize diagnostics between machines (mache sync diags)</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=20623aea"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Quick Start for Developers" href="../../developers_guide/quick_start.html" />
+    <link rel="prev" title="Building and Using Spack Environments with mache.spack" href="../spack/build.html" />
+    <link href="../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generate-an-ssh-key-if-you-dont-already-have-one">1) Generate an SSH key (if you don’t already have one)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add-your-public-key-to-your-cels-account">2) Add your public key to your CELS account</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configure-your-ssh-config">3) Configure your <code class="docutils literal notranslate"><span class="pre">~/.ssh/config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#olcf-andes-frontier-extra-settings">OLCF (Andes, Frontier) extra settings</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#recommended-workflow">Recommended workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#command-reference">Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/api.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/users_guide/sync/diags.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="synchronize-diagnostics-between-machines-mache-sync-diags">
+<h1>Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)<a class="headerlink" href="#synchronize-diagnostics-between-machines-mache-sync-diags" title="Link to this heading"></a></h1>
+<p>This command copies precomputed E3SM diagnostics (both public and private)
+between supported HPC systems using rsync. A common use is to pull diagnostics
+stored on the LCRC filesystem (Chrysalis) down to another site so local
+post-processing and plotting tools can find them.</p>
+<p>The command supports two directions:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">&lt;other&gt;</span></code>: Pull diagnostics from an LCRC machine (e.g., <code class="docutils literal notranslate"><span class="pre">chrysalis</span></code>) to
+your current machine</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">to</span> <span class="pre">&lt;other&gt;</span></code>: Push diagnostics from your current LCRC machine to another
+machine</p></li>
+</ul>
+<p>Important constraints:</p>
+<ul class="simple">
+<li><p>LCRC machines are <code class="docutils literal notranslate"><span class="pre">anvil</span></code> and <code class="docutils literal notranslate"><span class="pre">chrysalis</span></code></p></li>
+<li><p>You may only:</p>
+<ul>
+<li><p>run <code class="docutils literal notranslate"><span class="pre">to</span></code> when you are currently on an LCRC machine; and</p></li>
+<li><p>run <code class="docutils literal notranslate"><span class="pre">from</span></code> when the other machine is an LCRC machine.</p></li>
+</ul>
+</li>
+<li><p>If you try to sync between two different LCRC machines, you’ll be told to
+sync with the same machine instead, since the files are local/shared.</p></li>
+<li><p>It is <em>highly</em> recommended that you sync <code class="docutils literal notranslate"><span class="pre">from</span></code> an LCRC machine to another
+HPC system because this allows permissions to be updated after the sync.</p></li>
+</ul>
+<hr class="docutils" />
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>A valid LCRC/CELS account and username (used below as <code class="docutils literal notranslate"><span class="pre">&lt;cels_username&gt;</span></code>)</p></li>
+<li><p>SSH key-based access configured for each machine from which you will run the
+sync</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache</span></code> installed and configured on the machine where you run the command</p></li>
+</ul>
+<section id="generate-an-ssh-key-if-you-dont-already-have-one">
+<h3>1) Generate an SSH key (if you don’t already have one)<a class="headerlink" href="#generate-an-ssh-key-if-you-dont-already-have-one" title="Link to this heading"></a></h3>
+<p>On each HPC machine where you plan to run the sync:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519
+</pre></div>
+</div>
+<p>Accept the default path (<code class="docutils literal notranslate"><span class="pre">~/.ssh/id_ed25519</span></code>) unless you have a reason to use a
+different one. Don’t share your private key.</p>
+</section>
+<section id="add-your-public-key-to-your-cels-account">
+<h3>2) Add your public key to your CELS account<a class="headerlink" href="#add-your-public-key-to-your-cels-account" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Copy the content of your public key (typically <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_ed25519.pub</span></code>).</p></li>
+<li><p>Visit https://accounts.cels.anl.gov/ and add it under your account’s SSH
+keys.</p></li>
+<li><p>Give it a descriptive name (e.g., <code class="docutils literal notranslate"><span class="pre">andes</span></code>, <code class="docutils literal notranslate"><span class="pre">frontier</span></code>, <code class="docutils literal notranslate"><span class="pre">compy</span></code>).</p></li>
+<li><p>Allow a few minutes for the new key to propagate.</p></li>
+</ul>
+</section>
+<section id="configure-your-ssh-config">
+<h3>3) Configure your <code class="docutils literal notranslate"><span class="pre">~/.ssh/config</span></code><a class="headerlink" href="#configure-your-ssh-config" title="Link to this heading"></a></h3>
+<p>We recommend a control connection and a short host alias for Chrysalis:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">Host *</span>
+<span class="w">    </span><span class="na">ControlMaster auto</span>
+<span class="w">    </span><span class="na">ControlPath ~/.ssh/connections/%r@%h</span><span class="o">:</span><span class="s">%p</span>
+<span class="w">    </span><span class="na">ServerAliveInterval 300</span>
+<span class="w">    </span><span class="na">ServerAliveCountMax 3</span>
+
+<span class="na">Host chrys</span>
+<span class="w">    </span><span class="na">Hostname chrysalis.lcrc.anl.gov</span>
+<span class="w">    </span><span class="na">User &lt;cels_username&gt;</span>
+<span class="w">    </span><span class="na">ProxyJump &lt;cels_username&gt;@logins.lcrc.anl.gov</span>
+</pre></div>
+</div>
+<p>Also create the connections directory if it doesn’t exist:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.ssh/connections
+chmod<span class="w"> </span><span class="m">700</span><span class="w"> </span>~/.ssh<span class="w"> </span>~/.ssh/connections
+</pre></div>
+</div>
+<section id="olcf-andes-frontier-extra-settings">
+<h4>OLCF (Andes, Frontier) extra settings<a class="headerlink" href="#olcf-andes-frontier-extra-settings" title="Link to this heading"></a></h4>
+<p>Some OLCF systems require explicit auth options. Add these lines to the
+<code class="docutils literal notranslate"><span class="pre">chrys</span></code> host in your SSH config if you’re on Andes/Frontier:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">Host chrys</span>
+<span class="w">    </span><span class="na">Hostname chrysalis.lcrc.anl.gov</span>
+<span class="w">    </span><span class="na">User &lt;cels_username&gt;</span>
+<span class="w">    </span><span class="na">ProxyJump &lt;cels_username&gt;@logins.lcrc.anl.gov</span>
+<span class="w">    </span><span class="na">IdentityFile ~/.ssh/id_ed25519</span>
+<span class="w">    </span><span class="na">PreferredAuthentications publickey,keyboard-interactive</span>
+<span class="w">    </span><span class="na">PasswordAuthentication no</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="recommended-workflow">
+<h2>Recommended workflow<a class="headerlink" href="#recommended-workflow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Start a background control connection to Chrysalis (you’ll be prompted for
+Duo):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-MNf<span class="w"> </span>chrys
+</pre></div>
+</div>
+<p>You should be returned to your original login shell after MFA.</p>
+<ol class="arabic simple" start="2">
+<li><p>Run the sync. For example, to pull diagnostics from Chrysalis to your
+current machine:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>sync<span class="w"> </span>diags<span class="w"> </span>from<span class="w"> </span>chrysalis<span class="w"> </span>-u<span class="w"> </span>&lt;cels_username&gt;
+</pre></div>
+</div>
+<p>If the control connection is active, you shouldn’t be prompted for Duo again.
+You’ll see <code class="docutils literal notranslate"><span class="pre">rsync</span></code> output similar to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">running</span><span class="p">:</span> <span class="n">rsync</span> <span class="o">--</span><span class="n">verbose</span> <span class="o">--</span><span class="n">recursive</span> <span class="o">--</span><span class="n">times</span> <span class="o">--</span><span class="n">links</span> <span class="o">--</span><span class="n">compress</span> <span class="o">--</span><span class="n">progress</span> <span class="o">--</span><span class="n">update</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">perms</span> <span class="o">--</span><span class="n">omit</span><span class="o">-</span><span class="nb">dir</span><span class="o">-</span><span class="n">times</span> <span class="o">&lt;</span><span class="n">cels_username</span><span class="o">&gt;</span><span class="nd">@chrysalis</span><span class="o">.</span><span class="n">lcrc</span><span class="o">.</span><span class="n">anl</span><span class="o">.</span><span class="n">gov</span><span class="p">:</span><span class="o">/</span><span class="n">lcrc</span><span class="o">/</span><span class="n">group</span><span class="o">/</span><span class="n">e3sm</span><span class="o">/</span><span class="n">public_html</span><span class="o">/</span><span class="n">diagnostics</span><span class="o">/</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">diagnostics</span>
+<span class="n">receiving</span> <span class="n">incremental</span> <span class="n">file</span> <span class="nb">list</span>
+<span class="n">grids</span><span class="o">/</span><span class="n">ocean</span><span class="o">.</span><span class="n">RRSwISC6to18E3r5</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">scrip</span><span class="mf">.20240327</span><span class="o">.</span><span class="n">nc</span>
+    <span class="mi">633</span><span class="p">,</span><span class="mi">767</span><span class="p">,</span><span class="mi">353</span> <span class="mi">100</span><span class="o">%</span>   <span class="mf">16.58</span><span class="n">MB</span><span class="o">/</span><span class="n">s</span>    <span class="mi">0</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">36</span> <span class="p">(</span><span class="n">xfr</span><span class="c1">#1, ir-chk=1293/1488)</span>
+<span class="n">grids</span><span class="o">/</span><span class="n">ocean</span><span class="o">.</span><span class="n">RRSwISC6to18E3r5</span><span class="o">.</span><span class="n">nomask</span><span class="o">.</span><span class="n">scrip</span><span class="mf">.20240327</span><span class="o">.</span><span class="n">nc</span>
+    <span class="mi">633</span><span class="p">,</span><span class="mi">767</span><span class="p">,</span><span class="mi">353</span> <span class="mi">100</span><span class="o">%</span>   <span class="mf">26.88</span><span class="n">MB</span><span class="o">/</span><span class="n">s</span>    <span class="mi">0</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">22</span> <span class="p">(</span><span class="n">xfr</span><span class="c1">#2, ir-chk=1292/1488)</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>When you’re done, close the control connection:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-O<span class="w"> </span><span class="nb">exit</span><span class="w"> </span>chrys
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>When pulling data (<code class="docutils literal notranslate"><span class="pre">from</span></code>), <code class="docutils literal notranslate"><span class="pre">mache</span></code> will automatically fix permissions on
+the local destination according to machine settings.</p></li>
+<li><p>Destination paths are derived from your machine configuration (diagnostics
+base path), and source paths from the LCRC machine configuration.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="command-reference">
+<h2>Command reference<a class="headerlink" href="#command-reference" title="Link to this heading"></a></h2>
+<p>Basic usage:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>mache sync diags to &lt;other&gt;   [-u &lt;username&gt;] [-m &lt;this_machine&gt;] [-f &lt;config_file&gt;]
+mache sync diags from &lt;other&gt; [-u &lt;username&gt;] [-m &lt;this_machine&gt;] [-f &lt;config_file&gt;]
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">to</span> <span class="pre">|</span> <span class="pre">from</span></code> — direction of sync</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;other&gt;</span></code> — the other machine name (e.g., <code class="docutils literal notranslate"><span class="pre">chrysalis</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-u,</span> <span class="pre">--username</span></code> — the username to use on the other machine (required in
+practice)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-m,</span> <span class="pre">--machine</span></code> — explicitly set the name of the current machine
+(auto-detected if omitted)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-f,</span> <span class="pre">--config_file</span></code> — path to a config file that overrides defaults for the
+current machine</p></li>
+</ul>
+<p>Constraints enforced by the command:</p>
+<ul class="simple">
+<li><p>Only <code class="docutils literal notranslate"><span class="pre">anvil</span></code>/<code class="docutils literal notranslate"><span class="pre">chrysalis</span></code> are considered LCRC machines</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">to</span></code> is only allowed when you are on an LCRC machine</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span></code> is only allowed when the other machine is an LCRC machine</p></li>
+<li><p>Do not attempt to sync between two different LCRC machines (there is no need
+and this wastes bandwidth)</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>You get Duo prompts during rsync:</p>
+<ul>
+<li><p>Ensure the control connection is active (<code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-MNf</span> <span class="pre">chrys</span></code>) and your
+<code class="docutils literal notranslate"><span class="pre">Host</span> <span class="pre">chrys</span></code> alias matches the command you used to connect.</p></li>
+</ul>
+</li>
+<li><p>Permission errors on the destination:</p>
+<ul>
+<li><p>Verify your local diagnostics base path exists and that you have write
+access; <code class="docutils literal notranslate"><span class="pre">mache</span></code> adjusts group/world permissions on pull, but can’t create
+parent paths that don’t exist.</p></li>
+</ul>
+</li>
+<li><p>Connection fails through the login proxy:</p>
+<ul>
+<li><p>Double-check <code class="docutils literal notranslate"><span class="pre">ProxyJump</span> <span class="pre">&lt;cels_username&gt;&#64;logins.lcrc.anl.gov</span></code> and that your
+public key is present at https://accounts.cels.anl.gov/.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../spack/build.html" class="btn btn-neutral float-left" title="Building and Using Spack Environments with mache.spack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../developers_guide/quick_start.html" class="btn btn-neutral float-right" title="Quick Start for Developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="2.1.0">
+  <meta name="doc-site-root" content="../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

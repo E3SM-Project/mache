@@ -1,6 +1,0 @@
-﻿mache.MachineInfo.get\_account\_defaults
-========================================
-
-.. currentmodule:: mache
-
-.. automethod:: MachineInfo.get_account_defaults

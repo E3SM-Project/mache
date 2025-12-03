@@ -1,6 +1,0 @@
-﻿mache.sync.diags.sync\_diags
-============================
-
-.. currentmodule:: mache.sync.diags
-
-.. autofunction:: sync_diags
