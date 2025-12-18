@@ -142,7 +142,7 @@ def extract_spack_from_config_machines(
 
     Returns
     -------
-    script: str
+    script: str or None
         The generated shell script as a string.
     """
     config_filename = (
@@ -152,10 +152,7 @@ def extract_spack_from_config_machines(
 
     config = extract_machine_config(config_filename, machine, compiler, mpilib)
     if config is None:
-        raise ValueError(
-            f'No configuration found for machine={machine}, '
-            f'compiler={compiler}, mpilib={mpilib}'
-        )
+        return None
 
     script = config_to_shell_script(config, shell)
     if output is not None:

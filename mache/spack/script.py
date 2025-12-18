@@ -75,11 +75,18 @@ def get_spack_script(
             f'spack env activate {env_name}'
         )
 
-    # start with the shell script from the config_machines.xml for the
-    # given machine, compiler, and mpi
-    load_script_template += '\n' + extract_spack_from_config_machines(
+    # add the shell script from the config_machines.xml for the
+    # given machine, compiler, and mpi, if any
+    spack_config_script = extract_spack_from_config_machines(
         machine, compiler, mpi, shell
     )
+    if spack_config_script is not None:
+        load_script_template += '\n' + spack_config_script
+    else:
+        print(
+            f'Warning: Could not find an E3SM supported config for '
+            f'machine={machine}, compiler={compiler}, mpi={mpi}'
+        )
 
     for shell_filename in [
         f'{machine}.{shell}',
