@@ -163,11 +163,18 @@
             <span class="sa">f</span><span class="s1">&#39;spack env activate </span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="p">)</span>
 
-    <span class="c1"># start with the shell script from the config_machines.xml for the</span>
-    <span class="c1"># given machine, compiler, and mpi</span>
-    <span class="n">load_script_template</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">extract_spack_from_config_machines</span><span class="p">(</span>
+    <span class="c1"># add the shell script from the config_machines.xml for the</span>
+    <span class="c1"># given machine, compiler, and mpi, if any</span>
+    <span class="n">spack_config_script</span> <span class="o">=</span> <span class="n">extract_spack_from_config_machines</span><span class="p">(</span>
         <span class="n">machine</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">shell</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">spack_config_script</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">load_script_template</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">spack_config_script</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Warning: Could not find an E3SM supported config for &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;machine=</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1">, compiler=</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1">, mpi=</span><span class="si">{</span><span class="n">mpi</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
 
     <span class="k">for</span> <span class="n">shell_filename</span> <span class="ow">in</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">shell</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
