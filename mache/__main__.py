@@ -2,26 +2,29 @@ import argparse
 import sys
 
 import mache.version
-from mache import sync
+from mache.sync.cli import add_sync_subparser
 
 
 def main():
     """
     Entry point for the main script ``mache``
     """
+    parser = _build_parser()
+    args = parser.parse_args(sys.argv[1:])
 
+    if not hasattr(args, 'func'):
+        parser.print_help()
+        raise SystemExit(2)
+
+    args.func(args)
+
+
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description='Perform mache commands',
-        usage="""
-mache <command> [<args>]
-The available mache commands are:
-    sync    Sync files between supported machines
- To get help on an individual command, run:
-    mache <command> --help
-    """,
+        prog='mache',
     )
 
-    parser.add_argument('command', help='command to run')
     parser.add_argument(
         '-v',
         '--version',
@@ -29,18 +32,7 @@ The available mache commands are:
         version=f'mache {mache.version.__version__}',
         help='Show version number and exit',
     )
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(0)
 
-    args = parser.parse_args(sys.argv[1:2])
-
-    commands = {'sync': sync.main}
-
-    if args.command not in commands:
-        print(f'Unrecognized command {args.command}')
-        parser.print_help()
-        exit(1)
-
-    # call the function associated with the requested command
-    commands[args.command]()
+    subparsers = parser.add_subparsers(dest='command', required=True)
+    add_sync_subparser(subparsers)
+    return parser

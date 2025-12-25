@@ -152,46 +152,43 @@ def sync_diags(  # noqa: C901
         print('Done.')
 
 
-def main():
-    """
-    Defines the ``mache sync diags`` command
-    """
-    parser = argparse.ArgumentParser(
-        description='Synchronize diagnostics files between supported machines',
-        usage="""
-    mache sync diags to <other> [<args>]
-        or
-    mache sync diags from <other> [<args>]
+def add_diags_subparser(subparsers: argparse._SubParsersAction) -> None:
+    diags = subparsers.add_parser(
+        'diags',
+        help='Synchronize diagnostics files between supported machines',
+    )
 
-    To get help on an individual command, run:
-        mache sync <command> --help
-        """,
+    diags.add_argument(
+        'direction',
+        choices=['to', 'from'],
+        help='Whether to sync "to" or "from" the other machine',
     )
-    parser.add_argument(
-        'direction', help='whether to sync "to" or "from" the other machine'
-    )
-    parser.add_argument('other', help='The other machine to sync to or from')
-    parser.add_argument(
+    diags.add_argument('other', help='The other machine to sync to or from')
+    diags.add_argument(
         '-m',
         '--machine',
         dest='machine',
-        help='The name of this machine.  If not provided, it '
-        'will be detected automatically',
+        help='The name of this machine. If not provided, it will be detected '
+        'automatically',
     )
-    parser.add_argument(
+    diags.add_argument(
         '-u',
         '--username',
         dest='username',
         help='The username to use on the other machine',
     )
-    parser.add_argument(
+    diags.add_argument(
         '-f',
         '--config_file',
         dest='config_file',
-        help='A config file to override default config '
-        'options for the machine',
+        help='A config file to override default config options for the '
+        'machine',
     )
-    args = parser.parse_args(sys.argv[3:])
+
+    diags.set_defaults(func=_dispatch_diags)
+
+
+def _dispatch_diags(args: argparse.Namespace) -> None:
     sync_diags(
         args.other,
         args.direction,
@@ -199,3 +196,17 @@ def main():
         args.username,
         args.config_file,
     )
+
+
+def main():
+    """
+    Defines the ``mache sync diags`` command
+    """
+    parser = argparse.ArgumentParser(
+        prog='mache sync diags',
+        description='Synchronize diagnostics files between supported machines',
+    )
+    # Backwards-compatible wrapper: parse args after `mache sync diags`
+    add_diags_subparser(parser.add_subparsers(dest='cmd', required=True))
+    args = parser.parse_args(['diags', *sys.argv[3:]])
+    args.func(args)
