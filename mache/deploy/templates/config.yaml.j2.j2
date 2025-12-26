@@ -1,0 +1,38 @@
+# config.yaml.j2
+# Rendered/consumed by `mache deploy` *after* bootstrap, so jinja2 + yaml are OK here.
+
+project:
+  software: "[[ software ]]"
+
+conda:
+  # env name can still be jinja2-templated at deploy-time if you want
+  env_name: "[[ conda_env_name ]]"  # e.g. "polaris_dev"
+  conda_base: "{{ conda | default('') }}"  # CLI may pass --conda; empty means "infer"
+  channels:
+    - conda-forge
+  channel_priority: strict
+
+spack:
+  # Polaris default: off; E3SM-Unified default: on.
+  # `--deploy-spack` should override this at runtime.
+  enabled: false
+
+  # Where spack env or shared spack install lives (placeholders for now)
+  spack_base: "{{ spack | default('') }}"
+  env_name: "[[ spack_env_name ]]"
+
+  # Variants you mentioned (expected to matter mostly for spack)
+  variants:
+    machine: "{{ machine | default('') }}"
+    compiler: "{{ compiler | default('') }}"
+    mpi: "{{ mpi | default('') }}"
+    blas_lapack: "{{ blas_lapack | default('') }}"
+
+modules:
+  # Placeholder: list of module operations needed before spack/conda usage
+  load: []
+  unload: []
+
+env_vars:
+  # Placeholder: env vars to export in the "load" script
+  set: {}

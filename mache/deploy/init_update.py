@@ -92,6 +92,24 @@ def init_or_update_repo(
             deploy_dir / 'pins.cfg', pins_rendered, overwrite=overwrite
         )
 
+        # conda-spec.txt.j2.j2 rendered once using square-bracket delimiters so
+        # any remaining curly-brace Jinja (deployment-time) stays untouched.
+        conda_spec_tmpl = _read_pkg_template(
+            f'{TEMPLATE_DIR}/conda-spec.txt.j2.j2'
+        )
+        conda_spec_rendered = _render_double_jinja_template_square_brackets(
+            conda_spec_tmpl,
+            {
+                'software': software,
+                'mache_version': mache_version,
+            },
+        )
+        _write_text(
+            deploy_dir / 'conda-spec.txt.j2',
+            conda_spec_rendered,
+            overwrite=overwrite,
+        )
+
         # config.yaml.j2.j2 rendered once using square-bracket delimiters so
         # any remaining curly-brace Jinja (deployment-time) stays untouched.
         config_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/config.yaml.j2.j2')
