@@ -12,20 +12,36 @@ from mache.version import __version__
 TEMPLATE_DIR = 'templates'
 
 
-def init_repo(
+def init_or_update_repo(
     repo_root: str,
     software: str,
     mache_version: str | None,
+    update: bool = False,
     overwrite: bool = False,
 ) -> None:
     """
-    Create/refresh the deploy starter kit in a target-software repo.
+    Init: Create/refresh the deploy starter kit in a target-software repo.
+    Update: Update only a subset of deployed files for a new mache version.
 
     Writes:
       - deploy.py (repo root)
       - deploy/cli_spec.json
-      - deploy/pins.cfg
-            - deploy/config.yaml.j2
+      - deploy/pins.cfg (init only)
+      - deploy/config.yaml.j2 (init only)
+
+    Parameters
+    ----------
+    repo_root : str
+        Path to target repo root.
+    software : str
+        Target software name (e.g. polaris).
+    mache_version : str | None
+        Pinned mache version for this repo, default is the current mache
+        version.
+    update : bool, optional
+        If True, perform an update rather than an init.
+    overwrite : bool, optional
+        If True, overwrite existing deploy files.
     """
     root = Path(repo_root).resolve()
     deploy_dir = root / 'deploy'
@@ -49,17 +65,6 @@ def init_repo(
         deploy_dir / 'cli_spec.json', rendered_cli_spec, overwrite=overwrite
     )
 
-    # pins.cfg.j2 rendered
-    pins_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/pins.cfg.j2')
-    pins_rendered = _render_jinja_template(
-        pins_tmpl,
-        {
-            'software': software,
-            'mache_version': mache_version,
-        },
-    )
-    _write_text(deploy_dir / 'pins.cfg', pins_rendered, overwrite=overwrite)
-
     # deploy.py.j2 rendered -> deploy.py at repo root
     deploy_py_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/deploy.py.j2')
     deploy_py_rendered = _render_jinja_template(
@@ -73,21 +78,35 @@ def init_repo(
     _write_text(deploy_py_path, deploy_py_rendered, overwrite=overwrite)
     _make_executable(deploy_py_path)
 
-    # config.yaml.j2.j2 rendered once using square-bracket delimiters so any
-    # remaining curly-brace Jinja (deployment-time) stays untouched.
-    config_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/config.yaml.j2.j2')
-    config_rendered = _render_double_jinja_template_square_brackets(
-        config_tmpl,
-        {
-            'software': software,
-            'mache_version': mache_version,
-        },
-    )
-    _write_text(
-        deploy_dir / 'config.yaml.j2',
-        config_rendered,
-        overwrite=overwrite,
-    )
+    if not update:
+        # pins.cfg.j2 rendered
+        pins_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/pins.cfg.j2')
+        pins_rendered = _render_jinja_template(
+            pins_tmpl,
+            {
+                'software': software,
+                'mache_version': mache_version,
+            },
+        )
+        _write_text(
+            deploy_dir / 'pins.cfg', pins_rendered, overwrite=overwrite
+        )
+
+        # config.yaml.j2.j2 rendered once using square-bracket delimiters so
+        # any remaining curly-brace Jinja (deployment-time) stays untouched.
+        config_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/config.yaml.j2.j2')
+        config_rendered = _render_double_jinja_template_square_brackets(
+            config_tmpl,
+            {
+                'software': software,
+                'mache_version': mache_version,
+            },
+        )
+        _write_text(
+            deploy_dir / 'config.yaml.j2',
+            config_rendered,
+            overwrite=overwrite,
+        )
 
 
 def _read_pkg_template(relpath: str) -> str:
