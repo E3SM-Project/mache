@@ -77,6 +77,24 @@ def main() -> None:
     cmd = [sys.executable, BOOTSTRAP_PATH] + bootstrap_argv
     subprocess.check_call(cmd)
 
+    # Now that the bootstrap env exists and has mache installed, run
+    # deployment. Forward args routed to "mache".
+    mache_run_argv = _build_mache_run_argv(cli_spec, args)
+
+    # Use conda base from args if provided; otherwise use what bootstrap
+    # inferred (but deploy.py also needs a conda_base to activate, so prefer
+    # explicit).
+    conda_base = getattr(args, "conda", None)
+    if conda_base is None:
+        conda_base = _get_conda_base(None)
+
+    _run_mache_deploy_run(
+        conda_base=conda_base,
+        env_name="mache_deploy",
+        repo_root=".",
+        mache_run_argv=mache_run_argv,
+    )
+
 
 def _check_location():
     """Fail fast if not run from repo root."""
@@ -309,6 +327,99 @@ def _build_bootstrap_argv(cli_spec, args):
                 argv.extend([flag0, str(value)])
 
     return argv
+
+
+def _get_conda_base(conda_base):
+    """
+    Get the absolute path to the files for the conda base environment
+    """
+
+    if conda_base is None:
+        try:
+            conda_base = subprocess.check_output(
+                ['conda', 'info', '--base'], text=True
+            ).strip()
+            print(
+                f'\nWarning: --conda path not supplied.  Using conda '
+                f'installed at:\n'
+                f'   {conda_base}\n'
+            )
+        except subprocess.CalledProcessError as e:
+            raise ValueError(
+                'No conda base provided with --conda and '
+                'none could be inferred.'
+            ) from e
+    # handle "~" in the path
+    conda_base = os.path.abspath(os.path.expanduser(conda_base))
+    return conda_base
+
+
+def _build_mache_run_argv(cli_spec, args):
+    """
+    Build argv for `mache deploy run` from args where mache is in route.
+    """
+    argv = []
+    for entry in cli_spec["arguments"]:
+        route = entry.get("route")
+        if not isinstance(route, list):
+            raise SystemExit(
+                f"ERROR: cli_spec.json argument {entry.get('flags')} has "
+                f"invalid 'route'; must be a list"
+            )
+        if "mache" not in route:
+            continue
+
+        flags = entry.get("flags") or []
+        if not flags:
+            continue
+
+        dest = entry.get("dest")
+        if not dest:
+            raise SystemExit(
+                f"ERROR: cli_spec.json argument {flags} missing 'dest'"
+            )
+
+        value = getattr(args, dest, None)
+        action = entry.get("action")
+
+        flag0 = flags[0]
+
+        if action == "store_true":
+            if value:
+                argv.append(flag0)
+        else:
+            if value is not None:
+                argv.extend([flag0, str(value)])
+
+    return argv
+
+
+def _run_mache_deploy_run(conda_base, env_name, repo_root, mache_run_argv):
+    """
+    Activate the bootstrap env and run `mache deploy run ...`.
+    """
+    conda_base = os.path.abspath(os.path.expanduser(conda_base))
+    repo_root = os.path.abspath(repo_root)
+
+    conda_sh = os.path.join(conda_base, "etc", "profile.d", "conda.sh")
+    if not os.path.exists(conda_sh):
+        raise SystemExit(
+            f"ERROR: Expected conda activation script not found:\n"
+            f"  {conda_sh}\n"
+            f"Did bootstrap install conda at --conda {conda_base}?"
+        )
+
+    # Build a bash command that activates conda + env, then runs mache.
+    cmd_parts = [
+        f'source "{conda_sh}"',
+        f'conda activate "{env_name}"',
+        f'cd "{repo_root}"',
+        "mache deploy run ",
+    ] + [subprocess.list2cmdline([a]) for a in mache_run_argv]
+
+    bash_cmd = " && ".join(cmd_parts)
+
+    subprocess.check_call(["/bin/bash", "-lc", bash_cmd])
 
 
 if __name__ == "__main__":

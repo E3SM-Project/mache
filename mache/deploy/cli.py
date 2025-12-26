@@ -4,6 +4,7 @@ import argparse
 import os
 
 from .init_update import init_or_update_repo
+from .run import run_deploy
 
 
 def add_deploy_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -45,7 +46,11 @@ def add_deploy_subparser(subparsers: argparse._SubParsersAction) -> None:
         help='Overwrite existing deploy files',
     )
 
-    deploy_sub.add_parser('', help='(placeholder) Run deployment')
+    deploy_sub.add_parser(
+        'run',
+        help='Run deployment (typically invoked by a target-software '
+        'deploy.py)',
+    )
 
     deploy.set_defaults(func=_dispatch_deploy)
 
@@ -61,6 +66,7 @@ def _dispatch_deploy(args: argparse.Namespace) -> None:
         )
         print(f'Initialized deploy files in {os.path.abspath(args.repo_root)}')
         return
+
     if args.deploy_cmd == 'update':
         init_or_update_repo(
             repo_root=args.repo_root,
@@ -70,6 +76,10 @@ def _dispatch_deploy(args: argparse.Namespace) -> None:
             overwrite=True,
         )
         print(f'Updated deploy files in {os.path.abspath(args.repo_root)}')
+        return
+
+    if args.deploy_cmd == 'run':
+        run_deploy()
         return
 
     raise NotImplementedError(

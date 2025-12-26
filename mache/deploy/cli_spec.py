@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from dataclasses import dataclass
 from typing import Any
@@ -89,3 +90,16 @@ def routes_include(arg: CliArgSpec, route: str) -> bool:
 
 def filter_args_by_route(spec: CliSpec, route: str) -> list[CliArgSpec]:
     return [a for a in spec.args if routes_include(a, route)]
+
+
+def load_cli_spec_file(path: str) -> CliSpec:
+    with open(path, 'r', encoding='utf-8') as f:
+        return parse_cli_spec(f.read())
+
+
+def add_args_to_parser(
+    parser: argparse.ArgumentParser,
+    args: list[CliArgSpec],
+) -> None:
+    for a in args:
+        parser.add_argument(*a.flags, dest=a.dest, **a.kwargs)
