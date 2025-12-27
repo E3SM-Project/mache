@@ -19,6 +19,12 @@
       "route": ["deploy", "bootstrap", "run"]
     },
     {
+      "flags": ["--env-name"],
+      "dest": "env_name",
+      "help": "Name of the conda environment to create or update.",
+      "route": ["deploy", "run"]
+    },
+    {
       "flags": ["--mache-version"],
       "dest": "mache_version",
       "help": "The mache version to use if not using an org/fork/branch.",
