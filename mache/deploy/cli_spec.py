@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
+from importlib import resources
 from typing import Any
 
 
@@ -92,8 +93,10 @@ def filter_args_by_route(spec: CliSpec, route: str) -> list[CliArgSpec]:
     return [a for a in spec.args if routes_include(a, route)]
 
 
-def load_cli_spec_file(path: str) -> CliSpec:
-    with open(path, 'r', encoding='utf-8') as f:
+def load_cli_spec_file() -> CliSpec:
+    with resources.open_text(
+        'mache.deploy.templates', 'cli_spec.json.j2'
+    ) as f:
         return parse_cli_spec(f.read())
 
 

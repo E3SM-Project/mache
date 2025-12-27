@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 import os
 
+from .cli_spec import (
+    add_args_to_parser,
+    filter_args_by_route,
+    load_cli_spec_file,
+)
 from .init_update import init_or_update_repo
 from .run import run_deploy
 
@@ -46,11 +51,15 @@ def add_deploy_subparser(subparsers: argparse._SubParsersAction) -> None:
         help='Overwrite existing deploy files',
     )
 
-    deploy_sub.add_parser(
+    p_run = deploy_sub.add_parser(
         'run',
         help='Run deployment (typically invoked by a target-software '
         'deploy.py)',
     )
+
+    spec = load_cli_spec_file()
+    run_args = filter_args_by_route(spec, 'run')
+    add_args_to_parser(p_run, run_args)
 
     deploy.set_defaults(func=_dispatch_deploy)
 
