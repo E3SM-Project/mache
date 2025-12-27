@@ -7,6 +7,258 @@ import sys
 from urllib.request import Request, urlopen
 
 
+def check_call(commands, log_filename, quiet):
+    """
+    Wrapper for making a shell call with logging and error management
+
+    Parameters
+    ----------
+    commands : str
+        A single shell command string (possibly chaining commands with "&&" or
+        ";")
+
+    log_filename : str
+        The path to the log file to append to
+
+    quiet : bool
+        If True, only log to the log file, not to the terminal
+    """
+
+    # Echo the commands being run (like a lightweight trace) so the log is
+    # self-contained and debuggable.
+    command_list = commands.replace(' && ', '; ').split('; ')
+
+    print_command = '\n   '.join(command_list)
+    print_command = f'\n Running:\n   {print_command}\n'
+
+    os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
+
+    # append to log file
+    with open(log_filename, 'a', encoding='utf-8') as log_file:
+        log_file.write(print_command + '\n')
+
+    if not quiet:
+        print(print_command)
+
+    if quiet:
+        # Fast path: let the subprocess write directly to the log.
+        with open(log_filename, 'a', encoding='utf-8') as log_file:
+            process = subprocess.Popen(
+                commands,
+                executable='/bin/bash',
+                shell=True,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            process.wait()
+    else:
+        # Tee-like behavior without spawning a separate `tee` process.
+        # Merge stderr into stdout to preserve ordering.
+        with open(log_filename, 'a', encoding='utf-8') as log_file:
+            process = subprocess.Popen(
+                commands,
+                executable='/bin/bash',
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+
+            assert process.stdout is not None
+            for line in process.stdout:
+                log_file.write(line)
+                log_file.flush()
+                sys.stdout.write(line)
+                sys.stdout.flush()
+
+            process.wait()
+
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, commands)
+
+
+def check_location(software):
+    """
+    Ensure that the bootstrap script is being run from the root of the target
+    software
+
+    Parameters
+    ----------
+    software : str
+        The target software name
+    """
+    expected_files = [
+        'deploy.py',
+        'deploy/cli_spec.json',
+        'deploy/config.yaml.j2',
+        'deploy/pins.cfg',
+    ]
+    missing_files = []
+    for filename in expected_files:
+        if not os.path.exists(filename):
+            missing_files.append(filename)
+
+    if missing_files:
+        missing_str = '\n  - '.join(missing_files)
+        raise RuntimeError(
+            f'The bootstrap script must be run from the '
+            f'root of the local {software} branch. '
+            f'Expected files that were not found:\n  - {missing_str}'
+        )
+
+
+def get_conda_base(conda_base):
+    """
+    Get the absolute path to the files for the conda base environment
+
+    Parameters
+    ----------
+    conda_base : str
+        The relative or absolute path to the conda base files
+
+    Returns
+    -------
+    conda_base : str
+        Path to the conda base environment
+    """
+
+    if conda_base is None:
+        try:
+            conda_base = subprocess.check_output(
+                ['conda', 'info', '--base'], text=True
+            ).strip()
+            print(
+                f'\nWarning: --conda path not supplied.  Using conda '
+                f'installed at:\n'
+                f'   {conda_base}\n'
+            )
+        except subprocess.CalledProcessError as e:
+            raise ValueError(
+                'No conda base provided with --conda and '
+                'none could be inferred.'
+            ) from e
+    # handle "~" in the path
+    conda_base = os.path.abspath(os.path.expanduser(conda_base))
+    return conda_base
+
+
+def install_miniforge(
+    conda_base, activate_base, log_filename, quiet, update_base
+):
+    """
+    Install Miniforge if it isn't installed already
+
+    Parameters
+    ----------
+    conda_base : str
+        Absolute path to the conda base environment files
+
+    activate_base : str
+        Command to activate the conda base environment
+
+    log_filename : str
+        The path to the log file to append to
+
+    quiet : bool
+        If True, only log to the log file, not to the terminal
+    """
+
+    if not os.path.exists(conda_base):
+        print('Installing Miniforge3')
+        if platform.system() == 'Darwin':
+            system = 'MacOSX'
+        else:
+            system = 'Linux'
+        machine = platform.machine().lower()
+        if machine in ('amd64',):
+            machine = 'x86_64'
+        if machine in ('arm64',) and system == 'Linux':
+            # sometimes Linux arm64 should be aarch64 for toolchains
+            machine = 'aarch64'
+        miniforge = f'Miniforge3-{system}-{machine}.sh'
+        url = f'https://github.com/conda-forge/miniforge/releases/latest/download/{miniforge}'  # noqa: E501
+        print(url)
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        try:
+            with urlopen(req, timeout=60) as f:
+                html = f.read()
+
+                first_line = html.splitlines()[0].strip()
+                if b'bash' not in first_line:
+                    raise RuntimeError(
+                        'Downloaded Miniforge installer does not look like a '
+                        'shell script. This may indicate a proxy or redirect '
+                        'problem.'
+                    )
+                with open(miniforge, 'wb') as outfile:
+                    outfile.write(html)
+        except (OSError, TimeoutError) as e:
+            raise RuntimeError(
+                f'Failed to download the Miniforge installer from {url}. '
+                f'You may need to download and install it manually, and use '
+                f' the --conda flag to point to the resulting installation.'
+            ) from e
+        command = f'/bin/bash "{miniforge}" -b -p "{conda_base}"'
+        check_call(command, log_filename, quiet)
+        os.remove(miniforge)
+
+    # check that "conda" command is available
+    try:
+        check_call(f'{activate_base} && conda --version', log_filename, quiet)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            'Conda installation failed or conda command not found.'
+        ) from e
+
+    print('Update conda config\n')
+    commands = (
+        f'{activate_base} && '
+        f'conda config --add channels conda-forge && '
+        f'conda config --set channel_priority strict'
+    )
+
+    check_call(commands, log_filename, quiet)
+
+    if update_base:
+        print('Update config and base conda environment\n')
+        commands = f'{activate_base} && conda update -y --all'
+
+        check_call(commands, log_filename, quiet)
+
+
+def install_dev_mache(
+    activate_install_env, mache_fork, mache_branch, log_filename, quiet
+):
+    """
+    Install mache from a fork and branch for development and testing
+    """
+    print('Clone and install local mache\n')
+    commands = (
+        f'{activate_install_env} && '
+        f'rm -rf deploy_tmp/build_mache && '
+        f'mkdir -p deploy_tmp/build_mache && '
+        f'cd deploy_tmp/build_mache && '
+        f"GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
+        f'--depth 1 --single-branch -b "{mache_branch}" '
+        f'"git@github.com:{mache_fork}.git" mache && '
+        f'cd mache && '
+        f'conda install -y --file spec-file.txt && '
+        f'python -m pip install --no-deps --no-build-isolation .'
+    )
+
+    try:
+        check_call(commands, log_filename, quiet)
+    except subprocess.CalledProcessError:
+        if quiet:
+            print(
+                f'Failed to clone and install local mache.  See '
+                f'{log_filename} for details.\n'
+            )
+        raise
+
+
 def main():
     """
     Entry point for the configure script
@@ -37,11 +289,11 @@ def _run(log_filename):
     quiet = args.quiet
     mache_version = args.mache_version
 
-    _check_location(software)
+    check_location(software)
 
     os.makedirs('deploy_tmp', exist_ok=True)
 
-    conda_base = _get_conda_base(args.conda)
+    conda_base = get_conda_base(args.conda)
     conda_base = os.path.abspath(conda_base)
 
     env_name = 'mache_deploy'
@@ -55,7 +307,7 @@ def _run(log_filename):
     )
 
     # install miniforge if needed
-    _install_miniforge(
+    install_miniforge(
         conda_base, activate_base, log_filename, quiet, args.update_base
     )
 
@@ -75,7 +327,7 @@ def _run(log_filename):
     )
 
     if mache_version is None:
-        _install_dev_mache(
+        install_dev_mache(
             activate_install_env,
             args.mache_fork,
             args.mache_branch,
@@ -156,78 +408,6 @@ def _parse_args():
     return args
 
 
-def _check_call(commands, log_filename, quiet):
-    """
-    Wrapper for making a shell call with logging and error management
-
-    Parameters
-    ----------
-    commands : str
-        A single shell command string (possibly chaining commands with "&&" or
-        ";")
-
-    log_filename : str
-        The path to the log file to append to
-
-    quiet : bool
-        If True, only log to the log file, not to the terminal
-    """
-
-    # Echo the commands being run (like a lightweight trace) so the log is
-    # self-contained and debuggable.
-    command_list = commands.replace(' && ', '; ').split('; ')
-
-    print_command = '\n   '.join(command_list)
-    print_command = f'\n Running:\n   {print_command}\n'
-
-    os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
-
-    # append to log file
-    with open(log_filename, 'a', encoding='utf-8') as log_file:
-        log_file.write(print_command + '\n')
-
-    if not quiet:
-        print(print_command)
-
-    if quiet:
-        # Fast path: let the subprocess write directly to the log.
-        with open(log_filename, 'a', encoding='utf-8') as log_file:
-            process = subprocess.Popen(
-                commands,
-                executable='/bin/bash',
-                shell=True,
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
-            process.wait()
-    else:
-        # Tee-like behavior without spawning a separate `tee` process.
-        # Merge stderr into stdout to preserve ordering.
-        with open(log_filename, 'a', encoding='utf-8') as log_file:
-            process = subprocess.Popen(
-                commands,
-                executable='/bin/bash',
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
-
-            assert process.stdout is not None
-            for line in process.stdout:
-                log_file.write(line)
-                log_file.flush()
-                sys.stdout.write(line)
-                sys.stdout.flush()
-
-            process.wait()
-
-    if process.returncode != 0:
-        raise subprocess.CalledProcessError(process.returncode, commands)
-
-
 def _print_failure_summary(err, log_filename, tail_lines=60):
     print('\nERROR: bootstrap failed.')
     print(f'See log: {os.path.abspath(log_filename)}')
@@ -246,150 +426,6 @@ def _print_failure_summary(err, log_filename, tail_lines=60):
         print(f'\nLast {min(tail_lines, len(lines))} log lines:\n{tail}')
     except OSError:
         pass
-
-
-def _check_location(software):
-    """
-    Ensure that the bootstrap script is being run from the root of the target
-    software
-    """
-    expected_files = [
-        'deploy.py',
-        'deploy/cli_spec.json',
-        'deploy/config.yaml.j2',
-        'deploy/pins.cfg',
-    ]
-    missing_files = []
-    for filename in expected_files:
-        if not os.path.exists(filename):
-            missing_files.append(filename)
-
-    if missing_files:
-        missing_str = '\n  - '.join(missing_files)
-        raise RuntimeError(
-            f'The bootstrap script must be run from the '
-            f'root of the local {software} branch. '
-            f'Expected files that were not found:\n  - {missing_str}'
-        )
-
-
-def _get_conda_base(conda_base):
-    """
-    Get the absolute path to the files for the conda base environment
-
-    Parameters
-    ----------
-    conda_base : str
-        The relative or absolute path to the conda base files
-
-    Returns
-    -------
-    conda_base : str
-        Path to the conda base environment
-    """
-
-    if conda_base is None:
-        try:
-            conda_base = subprocess.check_output(
-                ['conda', 'info', '--base'], text=True
-            ).strip()
-            print(
-                f'\nWarning: --conda path not supplied.  Using conda '
-                f'installed at:\n'
-                f'   {conda_base}\n'
-            )
-        except subprocess.CalledProcessError as e:
-            raise ValueError(
-                'No conda base provided with --conda and '
-                'none could be inferred.'
-            ) from e
-    # handle "~" in the path
-    conda_base = os.path.abspath(os.path.expanduser(conda_base))
-    return conda_base
-
-
-def _install_miniforge(
-    conda_base, activate_base, log_filename, quiet, update_base
-):
-    """
-    Install Miniforge if it isn't installed already
-
-    Parameters
-    ----------
-    conda_base : str
-        Absolute path to the conda base environment files
-
-    activate_base : str
-        Command to activate the conda base environment
-
-    log_filename : str
-        The path to the log file to append to
-
-    quiet : bool
-        If True, only log to the log file, not to the terminal
-    """
-
-    if not os.path.exists(conda_base):
-        print('Installing Miniforge3')
-        if platform.system() == 'Darwin':
-            system = 'MacOSX'
-        else:
-            system = 'Linux'
-        machine = platform.machine().lower()
-        if machine in ('amd64',):
-            machine = 'x86_64'
-        if machine in ('arm64',) and system == 'Linux':
-            # sometimes Linux arm64 should be aarch64 for toolchains
-            machine = 'aarch64'
-        miniforge = f'Miniforge3-{system}-{machine}.sh'
-        url = f'https://github.com/conda-forge/miniforge/releases/latest/download/{miniforge}'  # noqa: E501
-        print(url)
-        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        try:
-            with urlopen(req, timeout=60) as f:
-                html = f.read()
-
-                first_line = html.splitlines()[0].strip()
-                if b'bash' not in first_line:
-                    raise RuntimeError(
-                        'Downloaded Miniforge installer does not look like a '
-                        'shell script. This may indicate a proxy or redirect '
-                        'problem.'
-                    )
-                with open(miniforge, 'wb') as outfile:
-                    outfile.write(html)
-        except (OSError, TimeoutError) as e:
-            raise RuntimeError(
-                f'Failed to download the Miniforge installer from {url}. '
-                f'You may need to download and install it manually, and use '
-                f' the --conda flag to point to the resulting installation.'
-            ) from e
-        command = f'/bin/bash "{miniforge}" -b -p "{conda_base}"'
-        _check_call(command, log_filename, quiet)
-        os.remove(miniforge)
-
-    # check that "conda" command is available
-    try:
-        _check_call(f'{activate_base} && conda --version', log_filename, quiet)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            'Conda installation failed or conda command not found.'
-        ) from e
-
-    print('Update conda config\n')
-    commands = (
-        f'{activate_base} && '
-        f'conda config --add channels conda-forge && '
-        f'conda config --set channel_priority strict'
-    )
-
-    _check_call(commands, log_filename, quiet)
-
-    if update_base:
-        print('Update config and base conda environment\n')
-        commands = f'{activate_base} && conda update -y --all'
-
-        _check_call(commands, log_filename, quiet)
 
 
 def _setup_install_env(
@@ -421,38 +457,7 @@ def _setup_install_env(
         f'conda {conda_command} -y -n "{env_name}" {channels} {packages}'
     )
 
-    _check_call(commands, log_filename, quiet)
-
-
-def _install_dev_mache(
-    activate_install_env, mache_fork, mache_branch, log_filename, quiet
-):
-    """
-    Install mache from a fork and branch for development and testing
-    """
-    print('Clone and install local mache\n')
-    commands = (
-        f'{activate_install_env} && '
-        f'rm -rf deploy_tmp/build_mache && '
-        f'mkdir -p deploy_tmp/build_mache && '
-        f'cd deploy_tmp/build_mache && '
-        f"GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
-        f'--depth 1 --single-branch -b "{mache_branch}" '
-        f'"git@github.com:{mache_fork}.git" mache && '
-        f'cd mache && '
-        f'conda install -y --file spec-file.txt && '
-        f'python -m pip install --no-deps --no-build-isolation .'
-    )
-
-    try:
-        _check_call(commands, log_filename, quiet)
-    except subprocess.CalledProcessError:
-        if quiet:
-            print(
-                f'Failed to clone and install local mache.  See '
-                f'{log_filename} for details.\n'
-            )
-        raise
+    check_call(commands, log_filename, quiet)
 
 
 if __name__ == '__main__':
