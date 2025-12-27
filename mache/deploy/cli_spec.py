@@ -10,7 +10,7 @@ from typing import Any
 class CliArgSpec:
     flags: list[str]
     dest: str
-    route: list[str]  # e.g. ["deploy", "bootstrap", "mache"] etc.
+    route: list[str]  # one or more of ["deploy", "bootstrap", "run"]
     kwargs: dict[str, Any]  # safe subset to pass to argparse
 
 

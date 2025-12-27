@@ -437,7 +437,7 @@ def _install_dev_mache(
         f'mkdir -p deploy_tmp/build_mache && '
         f'cd deploy_tmp/build_mache && '
         f"GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
-        f'-b "{mache_branch}" '
+        f'--depth 1 --single-branch -b "{mache_branch}" '
         f'"git@github.com:{mache_fork}.git" mache && '
         f'cd mache && '
         f'conda install -y --file spec-file.txt && '

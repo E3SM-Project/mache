@@ -23,7 +23,7 @@ def run_deploy() -> None:
         description=spec.meta.get('description', 'Run deployment'),
     )
 
-    run_args = filter_args_by_route(spec, 'mache')
+    run_args = filter_args_by_route(spec, 'run')
     add_args_to_parser(parser, run_args)
 
     # Important: parse ONLY the argv after `deploy run`.
