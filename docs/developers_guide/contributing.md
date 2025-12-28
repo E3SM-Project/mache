@@ -17,10 +17,26 @@ documentation improvements.
 
 ## Development Environment
 
+Install `pixi`, a faster package manager similar to `conda`, if you don't
+already have it:
+```bash
+curl -fsSL https://pixi.sh/install.sh | sh
+```
+Then, open a new terminal or shell so `pixi` will be in your path.
+
+Alternatively, you can install it into a conda environment via the `pixi`
+packge on conda-forge.
+
+Note: `pixi install` creates the environment but does not automatically
+activate it in your current shell. To use tools from the environment (like
+`python`), either run commands with `pixi run ...` or start a subshell with
+`pixi shell`.
+
 1. **Set up an isolated environment:**
     ```bash
     pixi install
-    pixi run python -m pip install --no-deps --no-build-isolation -e .
+    pixi shell
+    python -m pip install --no-deps --no-build-isolation -e .
     ```
 
 2. **Install pre-commit hooks:**
