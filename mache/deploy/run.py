@@ -104,6 +104,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         config,
         env_name=env_name,
         spec_file='deploy_tmp/conda-spec.txt',
+        reacreate=args.recreate,
     )
 
     if mache_from_fork:
@@ -218,6 +219,7 @@ def _create_conda_environment(
     config: dict,
     env_name: str | None,
     spec_file: str,
+    reacreate: bool,
 ) -> None:
     """Create the conda environment described by the rendered config."""
     conda_config = config['conda']
@@ -229,8 +231,13 @@ def _create_conda_environment(
     channels = conda_config['channels']
     channels_str = ' -c '.join(channels)
 
+    if reacreate:
+        command = 'conda create'
+    else:
+        command = 'conda install'
+
     command = (
-        f'conda create -y -n {env_name} -c {channels_str} --file {spec_file}'
+        f'{command} -y -n {env_name} -c {channels_str} --file {spec_file}'
     )
     print(f'Running command: {command}')
     subprocess.run(command, shell=True, check=True)
