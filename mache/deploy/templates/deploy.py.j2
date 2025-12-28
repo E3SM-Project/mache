@@ -14,6 +14,7 @@ import configparser
 import json
 import os
 import shlex
+import shutil
 import stat
 import subprocess
 import sys
@@ -49,7 +50,11 @@ def main():
     if not using_fork:
         _validate_cli_spec_matches_pins(cli_spec, pinned_mache_version)
 
-    os.makedirs(DEPLOY_TMP_DIR, exist_ok=True)
+    # remove tmp dir
+    if os.path.exists(DEPLOY_TMP_DIR):
+        shutil.rmtree(DEPLOY_TMP_DIR)
+
+    os.makedirs(DEPLOY_TMP_DIR)
 
     bootstrap_url = _bootstrap_url(
         mache_version=pinned_mache_version,
