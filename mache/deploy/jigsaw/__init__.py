@@ -1,20 +1,31 @@
 from __future__ import annotations
 
 import os
-import platform
 import subprocess
+from importlib import resources
 from pathlib import Path
 
-from .bootstrap import check_call
+import tomllib
+
+from mache.deploy.bootstrap import check_call
+from mache.deploy.conda import get_conda_platform_and_system
+from mache.deploy.jinja import define_square_bracket_environment
 
 JIGSAW_PYTHON_URL = 'git@github.com:dengwirda/jigsaw-python.git'
+
+PYTHON_VARIANTS = {
+    '3.10': '3.10.* *_cpython',
+    '3.11': '3.11.* *_cpython',
+    '3.12': '3.12.* *_cpython',
+    '3.13': '3.13.* *_cp313',
+    '3.14': '3.14.* *_cp314',
+}
 
 
 def install_jigsaw(
     config: dict,
     activate_bootstrap_env: str,
     activate_install_env: str,
-    install_env_path: str,
     repo_root: str,
     log_filename: str,
     quiet: bool,
@@ -67,6 +78,12 @@ def install_jigsaw(
 
     jigsaw_python_dir = (repo_root_path / rel_path).resolve()
 
+    python_version = _get_python_major_minor_version(
+        activate_env=activate_install_env,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
+
     # build with the bootstrap env
     _ensure_jigsaw_python_source(
         repo_root=repo_root_path,
@@ -77,10 +94,13 @@ def install_jigsaw(
         quiet=quiet,
     )
 
+    jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
+
     _build_external_jigsaw(
         activate_env=activate_bootstrap_env,
-        install_env_path=install_env_path,
         jigsaw_python_dir=jigsaw_python_dir,
+        python_version=python_version,
+        jigsaw_version=jigsaw_version,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -94,10 +114,45 @@ def install_jigsaw(
 
     _install_jigsaw_python(
         activate_env=activate_install_env,
-        jigsaw_python_dir=jigsaw_python_dir,
         log_filename=log_filename,
         quiet=quiet,
     )
+
+
+def _get_python_major_minor_version(
+    activate_env: str,
+    log_filename: str,
+    quiet: bool,
+) -> str:
+    commands = (
+        f'{activate_env} && '
+        f'python -c "import sys; print(\'.\'.join(map(str, sys.version_info[:2])))"'  # noqa: E501
+    )
+    result = check_call(
+        commands, log_filename=log_filename, quiet=quiet, capture_output=True
+    )
+    stdout = result.stdout
+    if isinstance(stdout, bytes):
+        python_version = stdout.decode().strip()
+    else:
+        assert isinstance(stdout, str)
+        python_version = stdout.strip()
+    return python_version
+
+
+def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
+    version_file = jigsaw_python_dir / 'pyproject.toml'
+    # parse the version from the porject section of pyproject.toml
+
+    with open(version_file, 'rb') as f:
+        pyproject_data = tomllib.load(f)
+    version = pyproject_data.get('project', {}).get('version', '').strip()
+
+    if not version:
+        raise RuntimeError(
+            f'Failed to determine JIGSAW-Python version from {version_file}.'
+        )
+    return version
 
 
 def _ensure_jigsaw_python_source(
@@ -160,67 +215,99 @@ def _remove_conda_jigsaw_packages(
 
 def _build_external_jigsaw(
     activate_env: str,
-    install_env_path: str,
+    python_version: str,
+    jigsaw_version: str,
     jigsaw_python_dir: Path,
     log_filename: str,
     quiet: bool,
 ) -> None:
     print('Building JIGSAW')
 
-    jigsaw_build_deps = 'cxx-compiler cmake make'
-    system = platform.system()
-    if system == 'Linux':
-        jigsaw_build_deps = f'{jigsaw_build_deps} sysroot_linux-64=2.17'
-        netcdf_lib = f'{install_env_path}/lib/libnetcdf.so'
-    elif system == 'Darwin':
-        jigsaw_build_deps = (
-            f'{jigsaw_build_deps} macosx_deployment_target_osx-64=10.13'
+    if python_version not in PYTHON_VARIANTS:
+        raise ValueError(f'Unsupported python version: {python_version}')
+
+    python_variant = PYTHON_VARIANTS.get(python_version)
+
+    os.makedirs('deploy_tmp/jigsaw_build/recipe', exist_ok=True)
+    os.makedirs('deploy_tmp/jigsaw_build/variant', exist_ok=True)
+
+    # render the recipe and variant file for the rattler build
+
+    # first the recipe.yaml, which is a double Jinja template.  We only want
+    # to replace the square-bracket delimiters here
+    env = define_square_bracket_environment()
+    with resources.open_text('mache.deploy.jigsaw', 'recipe.yaml.j2') as f:
+        recipe_template = env.from_string(f.read())
+
+    recipe = (
+        recipe_template.render(
+            jigsaw_version=jigsaw_version,
+            jigsaw_python_src_dir=str(jigsaw_python_dir),
         )
-        netcdf_lib = f'{install_env_path}/lib/libnetcdf.dylib'
-    else:
-        raise ValueError(f'Unsupported platform for JIGSAW build: {system!r}')
-
-    if not os.path.exists(netcdf_lib):
-        raise RuntimeError(
-            f'Expected NetCDF library not found at {netcdf_lib} '
-            f'(is NetCDF installed in the target environment?)'
-        )
-
-    cmake_args = f'-DCMAKE_BUILD_TYPE=Release -DNETCDF_LIBRARY={netcdf_lib}'
-
-    external_jigsaw_dir = jigsaw_python_dir / 'external' / 'jigsaw'
-    if not external_jigsaw_dir.is_dir():
-        raise RuntimeError(
-            'Expected JIGSAW source not found at '
-            f'{external_jigsaw_dir} (is your JIGSAW-Python checkout complete?)'
-        )
-
-    commands = (
-        f'{activate_env} && '
-        f'conda install -y {jigsaw_build_deps} && '
-        f'cd "{external_jigsaw_dir}" && '
-        f'rm -rf tmp && mkdir tmp && cd tmp && '
-        f'cmake .. {cmake_args} && '
-        f'cmake --build . --config Release --target install --parallel 4 && '
-        f'cd "{jigsaw_python_dir}" && '
-        f'rm -rf jigsawpy/_bin jigsawpy/_lib && '
-        f'cp -r external/jigsaw/bin/ jigsawpy/_bin && '
-        f'cp -r external/jigsaw/lib/ jigsawpy/_lib'
+        + '\n'
     )
-    check_call(commands, log_filename=log_filename, quiet=quiet)
+    recipe_file = 'deploy_tmp/jigsaw_build/recipe/recipe.yaml'
+    with open(recipe_file, 'w', encoding='utf-8') as f:
+        f.write(recipe)
+
+    # then "copy" the build.sh script
+    with resources.open_text('mache.deploy.jigsaw', 'build.sh') as f:
+        build_sh = f.read()
+    build_sh_file = 'deploy_tmp/jigsaw_build/recipe/build.sh'
+    with open(build_sh_file, 'w', encoding='utf-8') as f:
+        f.write(build_sh)
+
+    # now the variant for the platfform, where we also use square-bracket
+    # delimiters for consistency
+    platform, _ = get_conda_platform_and_system()
+
+    try:
+        with resources.open_text(
+            'mache.deploy.jigsaw', f'{platform}.yaml.j2'
+        ) as f:
+            variant_template = env.from_string(f.read())
+    except FileNotFoundError as e:
+        raise ValueError(
+            f'Unsupported platform for JIGSAW build: {platform}'
+        ) from e
+
+    variant = variant_template.render(python_variant=python_variant) + '\n'
+    variant_file = f'deploy_tmp/jigsaw_build/variant/{platform}.yaml'
+    with open(variant_file, 'w', encoding='utf-8') as f:
+        f.write(variant)
+
+    command = (
+        f'{activate_env} && '
+        f'conda install -y rattler-build pixi && '
+        f'rattler-build build '
+        f'--recipe-dir deploy_tmp/jigsaw_build/recipe '
+        f'--variant-config {variant_file} '
+        f'--output-dir deploy_tmp/jigsaw_build/output '
+    )
+    check_call(command, log_filename=log_filename, quiet=quiet)
 
 
 def _install_jigsaw_python(
     activate_env: str,
-    jigsaw_python_dir: Path,
     log_filename: str,
     quiet: bool,
 ) -> None:
     print('Installing JIGSAW and JIGSAW-Python')
+    output_dir = Path('deploy_tmp/jigsaw_build/output').resolve()
+    if not output_dir.is_dir():
+        raise RuntimeError(
+            f'JIGSAW build output directory not found: {output_dir}'
+        )
+    platform, _ = get_conda_platform_and_system()
+    repodata = output_dir / platform / 'repodata.json'
+
+    if not repodata.is_file():
+        raise RuntimeError(
+            f'JIGSAW build output repodata not found: {repodata}'
+        )
+
     commands = (
         f'{activate_env} && '
-        f'cd "{jigsaw_python_dir}" && '
-        f'python -m pip install --no-deps --no-build-isolation -e . && '
-        f'cp jigsawpy/_bin/* "${{CONDA_PREFIX}}/bin"'
+        f'conda install -y -c "{output_dir}" -c conda-forge jigsawpy'
     )
     check_call(commands, log_filename=log_filename, quiet=quiet)

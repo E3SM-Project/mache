@@ -5,8 +5,9 @@ import stat
 from importlib import resources
 from pathlib import Path
 
-from jinja2 import Environment, StrictUndefined, Template
+from jinja2 import Template
 
+from mache.deploy.jinja import define_square_bracket_environment
 from mache.version import __version__
 
 TEMPLATE_DIR = 'templates'
@@ -144,26 +145,7 @@ def _render_jinja_template(template_text: str, context: dict) -> str:
 def _render_double_jinja_template_square_brackets(
     template_text: str, context: dict
 ) -> str:
-    """Render a template once using square-bracket Jinja delimiters.
-
-    This is used for templates that themselves contain *deployment-time* Jinja
-    using the standard curly delimiters (e.g. ``{{ var }}``, ``{% if %}``).
-    By switching *all* delimiters (variables, blocks, comments) to
-    square-bracket forms, we can safely render placeholders like
-    ``[[ software ]]`` while leaving all curly-brace Jinja untouched for later.
-    """
-
-    env = Environment(
-        undefined=StrictUndefined,
-        autoescape=False,
-        keep_trailing_newline=True,
-        variable_start_string='[[',
-        variable_end_string=']]',
-        block_start_string='[%',
-        block_end_string='%]',
-        comment_start_string='[#',
-        comment_end_string='#]',
-    )
+    env = define_square_bracket_environment()
     tmpl = env.from_string(template_text)
     rendered = tmpl.render(**dict(context)) + '\n'
     return rendered

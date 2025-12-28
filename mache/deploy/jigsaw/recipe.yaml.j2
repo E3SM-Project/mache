@@ -1,0 +1,85 @@
+schema_version: 1
+
+context:
+  version: "[[ jigsaw_version ]]"
+
+package:
+  name: jigsawpy
+  version: ${{ version }}
+
+source:
+  path: [[ jigsaw_python_src_dir ]]
+
+build:
+  number: 0
+  skip: win
+
+requirements:
+  build:
+    - ${{ compiler('c') }}
+    - ${{ stdlib('c') }}
+    - ${{ compiler('cxx') }}
+    - cmake
+    - make
+    - pkg-config
+    - if: osx
+      then: llvm-openmp
+    - if: linux
+      then: libgomp
+  host:
+    - python
+    - pip
+    - setuptools
+    - libnetcdf
+    - numpy
+    - scipy
+    - if: osx
+      then: llvm-openmp
+    - if: linux
+      then: libgomp
+  run:
+    - python
+    - libnetcdf
+    - numpy
+    - scipy
+
+# disable tesing for efficiency
+# tests:
+#   - python:
+#       pip_check: true
+#       imports:
+#         - jigsawpy
+
+#   - script:
+#     - python example.py --IDnumber 0
+#     - python example.py --IDnumber 1
+#     - python example.py --IDnumber 2
+#     - python example.py --IDnumber 3
+#     - python example.py --IDnumber 4
+#     - python example.py --IDnumber 5
+#     - python example.py --IDnumber 6
+#     - python example.py --IDnumber 7
+#     - python example.py --IDnumber 8
+#     files:
+#       source:
+#         - files/*.msh
+#         - tests/*.py
+#         - example.py
+#         - cache/.keep
+#     requirements:
+#       run:
+#         - matplotlib-base
+
+about:
+  summary: |
+    jigsawpy is the python interface to JIGSAW, which is a Delaunay-based
+    unstructured mesh generator for two- and three-dimensional geometries.
+  license: LicenseRef-custom
+  license_file:
+    - LICENSE.md
+  homepage: https://github.com/dengwirda/jigsaw-python
+  documentation: https://github.com/dengwirda/jigsaw-python
+
+extra:
+  recipe-maintainers:
+    - xylar
