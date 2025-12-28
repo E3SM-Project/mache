@@ -15,6 +15,7 @@ from .bootstrap import (
     install_dev_mache,
     install_miniforge,
 )
+from .jigsaw import install_jigsaw
 
 CONDA_PLATFORM_MAP = {
     ('linux', 'x86_64'): 'linux-64',
@@ -95,9 +96,14 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     activate_base = f'{source_activation_scripts} && conda activate base'
 
+    activate_bootstrap_env = (
+        f'{source_activation_scripts} && conda activate "mache_deploy"'
+    )
     activate_install_env = (
         f'{source_activation_scripts} && conda activate "{env_name}"'
     )
+
+    install_env_path = os.path.join(conda_base, 'envs', env_name)
 
     _write_conda_spec(
         'deploy/conda-spec.txt.j2',
@@ -118,6 +124,16 @@ def run_deploy(args: argparse.Namespace) -> None:
             log_filename=log_filename,
             quiet=quiet,
         )
+
+    install_jigsaw(
+        config=config,
+        activate_bootstrap_env=activate_bootstrap_env,
+        activate_install_env=activate_install_env,
+        install_env_path=install_env_path,
+        repo_root=os.getcwd(),
+        log_filename=log_filename,
+        quiet=quiet,
+    )
 
 
 def _read_pins(pins_path: str) -> ConfigParser:
