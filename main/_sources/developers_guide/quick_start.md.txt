@@ -7,22 +7,31 @@ see the [User's Guide](../users_guide/quick_start.md).
 
 ## Setting up for Development
 
+Install `pixi`, a faster package manager similar to `conda`, if you don't
+already have it:
+```bash
+curl -fsSL https://pixi.sh/install.sh | sh
+```
+Then, open a new terminal or shell so `pixi` will be in your path.
+
+Alternatively, you can install it into a conda environment via the `pixi`
+packge on conda-forge.
+
+Note: `pixi install` creates the environment but does not automatically
+activate it in your current shell. To use tools from the environment (like
+`python`), either run commands with `pixi run ...` or start a subshell with
+`pixi shell`.
+
 To work on `mache`, you should install the development version in an isolated environment:
 
 ```bash
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda create -y -n mache_dev --file spec-file.txt
-conda activate mache_dev
+pixi install
+pixi shell
 python -m pip install --no-deps --no-build-isolation -e .
 ```
 
-If you want to install into an existing environment:
-
-```bash
-conda install --file spec-file.txt
-python -m pip install --no-deps --no-build-isolation -e .
-```
+This creates a Pixi environment based on the root `pixi.toml` and then installs
+`mache` in editable mode.
 
 (dev-code-styling)=
 

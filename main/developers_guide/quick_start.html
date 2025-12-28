@@ -98,19 +98,26 @@
 see the <a class="reference internal" href="../users_guide/quick_start.html"><span class="std std-doc">User’s Guide</span></a>.</p>
 <section id="setting-up-for-development">
 <span id="dev-installing-mache"></span><h2>Setting up for Development<a class="headerlink" href="#setting-up-for-development" title="Link to this heading"></a></h2>
+<p>Install <code class="docutils literal notranslate"><span class="pre">pixi</span></code>, a faster package manager similar to <code class="docutils literal notranslate"><span class="pre">conda</span></code>, if you don’t
+already have it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://pixi.sh/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</pre></div>
+</div>
+<p>Then, open a new terminal or shell so <code class="docutils literal notranslate"><span class="pre">pixi</span></code> will be in your path.</p>
+<p>Alternatively, you can install it into a conda environment via the <code class="docutils literal notranslate"><span class="pre">pixi</span></code>
+packge on conda-forge.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code> creates the environment but does not automatically
+activate it in your current shell. To use tools from the environment (like
+<code class="docutils literal notranslate"><span class="pre">python</span></code>), either run commands with <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">...</span></code> or start a subshell with
+<code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell</span></code>.</p>
 <p>To work on <code class="docutils literal notranslate"><span class="pre">mache</span></code>, you should install the development version in an isolated environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
-conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_priority<span class="w"> </span>strict
-conda<span class="w"> </span>create<span class="w"> </span>-y<span class="w"> </span>-n<span class="w"> </span>mache_dev<span class="w"> </span>--file<span class="w"> </span>spec-file.txt
-conda<span class="w"> </span>activate<span class="w"> </span>mache_dev
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>install
+pixi<span class="w"> </span>shell
 python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
-<p>If you want to install into an existing environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>--file<span class="w"> </span>spec-file.txt
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
-</pre></div>
-</div>
+<p>This creates a Pixi environment based on the root <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> and then installs
+<code class="docutils literal notranslate"><span class="pre">mache</span></code> in editable mode.</p>
 </section>
 <section id="code-styling-and-linting">
 <span id="dev-code-styling"></span><h2>Code Styling and Linting<a class="headerlink" href="#code-styling-and-linting" title="Link to this heading"></a></h2>
