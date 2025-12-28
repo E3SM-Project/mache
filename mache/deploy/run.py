@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import platform
 import subprocess
 from configparser import ConfigParser
 
@@ -15,15 +14,8 @@ from .bootstrap import (
     install_dev_mache,
     install_miniforge,
 )
+from .conda import get_conda_platform_and_system
 from .jigsaw import install_jigsaw
-
-CONDA_PLATFORM_MAP = {
-    ('linux', 'x86_64'): 'linux-64',
-    ('linux', 'aarch64'): 'linux-aarch64',
-    ('linux', 'ppc64le'): 'linux-ppc64le',
-    ('osx', 'x86_64'): 'osx-64',
-    ('osx', 'arm64'): 'osx-arm64',
-}
 
 
 def run_deploy(args: argparse.Namespace) -> None:
@@ -103,8 +95,6 @@ def run_deploy(args: argparse.Namespace) -> None:
         f'{source_activation_scripts} && conda activate "{env_name}"'
     )
 
-    install_env_path = os.path.join(conda_base, 'envs', env_name)
-
     _write_conda_spec(
         'deploy/conda-spec.txt.j2',
         replacements,
@@ -129,7 +119,6 @@ def run_deploy(args: argparse.Namespace) -> None:
         config=config,
         activate_bootstrap_env=activate_bootstrap_env,
         activate_install_env=activate_install_env,
-        install_env_path=install_env_path,
         repo_root=os.getcwd(),
         log_filename=log_filename,
         quiet=quiet,
@@ -145,17 +134,11 @@ def _read_pins(pins_path: str) -> ConfigParser:
 
 def _get_default_replacements() -> dict[str, str]:
     """Get default replacements such as machine architecture."""
-    replacements = {}
-    system = platform.system().lower()
-    if system == 'darwin':
-        system = 'osx'
-    machine = platform.machine().lower()
-    if (system, machine) in CONDA_PLATFORM_MAP:
-        conda_platform = CONDA_PLATFORM_MAP[(system, machine)]
-    else:
-        raise ValueError(f'Unsupported platform for conda: {system} {machine}')
-    replacements['platform'] = conda_platform
-    replacements['system'] = system
+    conda_platform, system = get_conda_platform_and_system()
+    replacements = {
+        'platform': conda_platform,
+        'system': system,
+    }
     return replacements
 
 
