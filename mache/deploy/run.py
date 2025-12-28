@@ -1,23 +1,103 @@
 from __future__ import annotations
 
+import argparse
 import os
+import platform
 import subprocess
 from configparser import ConfigParser
 
 from jinja2 import Template
 from yaml import safe_load
 
+from .bootstrap import (
+    check_location,
+    get_conda_base,
+    install_dev_mache,
+    install_miniforge,
+)
 
-def run_deploy(env_name: str | None = None) -> None:
+CONDA_PLATFORM_MAP = {
+    ('linux', 'x86_64'): 'linux-64',
+    ('linux', 'aarch64'): 'linux-aarch64',
+    ('linux', 'ppc64le'): 'linux-ppc64le',
+    ('osx', 'x86_64'): 'osx-64',
+    ('osx', 'arm64'): 'osx-arm64',
+}
+
+
+def run_deploy(args: argparse.Namespace) -> None:
     """
     Docstring for run_deploy
     """
+    check_location(software='polaris')
+
     pins = _read_pins('deploy/pins.cfg')
-    replacements = _pins_to_replacements(pins, section='conda')
+    replacements = _get_default_replacements()
+    # we don't want mache from conda if we will install it from an
+    # org/fork/branch
+    mache_from_fork = args.mache_fork is not None
+    _add_pins_to_replacements(
+        replacements,
+        pins,
+        sections=['conda', 'all'],
+        exclude_mache=mache_from_fork,
+    )
     config = _render_config_yaml('deploy/config.yaml.j2', replacements)
+    _update_replacements_from_config(replacements, config)
 
     if not _is_deploy_enabled(config):
         return
+
+    quiet = args.quiet
+    env_name = args.env_name
+    if env_name is None:
+        env_name = config['conda']['env_name']
+        if env_name is None:
+            raise ValueError(
+                "'env_name' not found in [conda] section of "
+                'deploy/config.yaml.j2 and --env-name not provided'
+            )
+
+    os.makedirs('deploy_tmp', exist_ok=True)
+    os.makedirs('deploy_tmp/logs', exist_ok=True)
+    log_filename = 'deploy_tmp/logs/mache_deploy_run.log'
+
+    conda_base = args.conda
+    # TODO: need to get conda base from config options if installing to shared
+    # space
+
+    conda_base = get_conda_base(conda_base)
+    conda_base = os.path.abspath(conda_base)
+
+    source_activation_scripts = f'source "{conda_base}/etc/profile.d/conda.sh"'
+
+    activate_base = f'{source_activation_scripts} && conda activate base'
+
+    # install miniforge if needed
+    install_miniforge(
+        conda_base=conda_base,
+        activate_base=activate_base,
+        log_filename=log_filename,
+        quiet=quiet,
+        update_base=args.update_base,
+    )
+
+    activate_install_env = (
+        f'{source_activation_scripts} && conda activate "{env_name}"'
+    )
+
+    # install miniforge if needed
+    install_miniforge(
+        conda_base, activate_base, log_filename, quiet, args.update_base
+    )
+
+    source_activation_scripts = f'source "{conda_base}/etc/profile.d/conda.sh"'
+
+    activate_base = f'{source_activation_scripts} && conda activate base'
+
+    activate_install_env = (
+        f'{source_activation_scripts} && conda activate "{env_name}"'
+    )
 
     _write_conda_spec(
         'deploy/conda-spec.txt.j2',
@@ -30,6 +110,15 @@ def run_deploy(env_name: str | None = None) -> None:
         spec_file='deploy_tmp/conda-spec.txt',
     )
 
+    if mache_from_fork:
+        install_dev_mache(
+            activate_install_env=activate_install_env,
+            mache_fork=args.mache_fork,
+            mache_branch=args.mache_branch,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+
 
 def _read_pins(pins_path: str) -> ConfigParser:
     """Read pins configuration from a file."""
@@ -38,10 +127,36 @@ def _read_pins(pins_path: str) -> ConfigParser:
     return pins
 
 
-def _pins_to_replacements(pins: ConfigParser, section: str) -> dict[str, str]:
+def _get_default_replacements() -> dict[str, str]:
+    """Get default replacements such as machine architecture."""
+    replacements = {}
+    system = platform.system().lower()
+    if system == 'darwin':
+        system = 'osx'
+    machine = platform.machine().lower()
+    if (system, machine) in CONDA_PLATFORM_MAP:
+        conda_platform = CONDA_PLATFORM_MAP[(system, machine)]
+    else:
+        raise ValueError(f'Unsupported platform for conda: {system} {machine}')
+    replacements['platform'] = conda_platform
+    replacements['system'] = system
+    return replacements
+
+
+def _add_pins_to_replacements(
+    replacements: dict[str, str],
+    pins: ConfigParser,
+    sections: list[str],
+    exclude_mache: bool,
+) -> None:
     """Convert a ConfigParser section into a Jinja2 replacements mapping."""
-    section_obj = pins[section]
-    return {key: section_obj[key] for key in section_obj}
+    for section in sections:
+        if section not in pins:
+            continue
+        section_obj = pins[section]
+        replacements.update({key: section_obj[key] for key in section_obj})
+    if exclude_mache and 'mache' in replacements:
+        del replacements['mache']
 
 
 def _render_config_yaml(
@@ -53,6 +168,26 @@ def _render_config_yaml(
         config_tmpl = Template(file_handle.read())
     rendered = config_tmpl.render(**replacements)
     return safe_load(rendered)
+
+
+def _update_replacements_from_config(
+    replacements: dict[str, str],
+    config: dict,
+) -> None:
+    """Update replacements mapping with values from the rendered config."""
+    conda_config = config['conda']
+    if 'mpi' in conda_config:
+        mpi = conda_config['mpi']
+        if mpi not in ['nompi', 'openmpi', 'mpich']:
+            raise ValueError(
+                f'Invalid MPI option in deploy/config.yaml.j2: {mpi!r}'
+            )
+        mpi_prefix = 'nompi' if mpi == 'nompi' else f'mpi_{mpi}'
+        replacements['mpi'] = mpi
+        replacements['mpi_prefix'] = mpi_prefix
+    for key in ['mpi']:
+        if key in conda_config:
+            replacements[key] = conda_config[key]
 
 
 def _is_deploy_enabled(config: dict) -> bool:
@@ -87,9 +222,6 @@ def _create_conda_environment(
 ) -> None:
     """Create the conda environment described by the rendered config."""
     conda_config = config['conda']
-
-    if env_name is None:
-        env_name = conda_config['env_name']
 
     if 'channels' not in conda_config:
         raise ValueError(

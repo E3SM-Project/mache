@@ -88,9 +88,7 @@ def _dispatch_deploy(args: argparse.Namespace) -> None:
         return
 
     if args.deploy_cmd == 'run':
-        run_deploy(
-            env_name=args.env_name,
-        )
+        run_deploy(args=args)
         return
 
     raise NotImplementedError(
