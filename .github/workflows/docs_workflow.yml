@@ -9,6 +9,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.14"
+  PIXI_ENV: py314
 
 jobs:
   publish-docs:
@@ -23,32 +24,24 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Set up Conda Environment
-        uses: mamba-org/setup-micromamba@v2
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.9.2
         with:
-          environment-name: mache_dev
-          init-shell: bash
-          condarc: |
-            channel_priority: strict
-            channels:
-                - conda-forge
-          create-args: >-
-            python=${{ env.PYTHON_VERSION }}
+          pixi-version: v0.62.2
+          # Project environment caching uses pixi.lock as the cache key input.
+          # If you don't commit a lockfile, disable caching to avoid ENOENT.
+          cache: ${{ hashFiles('pixi.lock') != '' }}
+          environments: ${{ env.PIXI_ENV }}
 
-      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Install mache
+      - name: Install mache
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
-          conda install -y --file spec-file.txt \
-            python=${{ env.PYTHON_VERSION }}
-          python -m pip install -vv --no-deps --no-build-isolation -e .
+          pixi run -e ${{ env.PIXI_ENV }} python -m pip install -vv --no-deps --no-build-isolation -e .
 
       - name: Build Sphinx Docs
         run: |
           set -e
-          cd docs
-          DOCS_VERSION=${{ github.ref_name }} make versioned-html
+          pixi run -e ${{ env.PIXI_ENV }} bash -e -c "cd docs && DOCS_VERSION=${{ github.ref_name }} make versioned-html"
       - name: Copy Docs and Commit
         run: |
           set -e
@@ -66,7 +59,7 @@ jobs:
           cp shared/version-switcher.js gh-pages/shared/version-switcher.js
 
           # Update the list of versions with all versions in the gh-pages directory.
-          python generate_versions_json.py
+          pixi run -e ${{ env.PIXI_ENV }} python generate_versions_json.py
 
           # Make sure we're in the gh-pages directory.
           cd gh-pages

@@ -6,3 +6,5 @@ include mache/spack/templates/*.yaml
 include mache/spack/templates/*.template
 include mache/spack/templates/*.sh
 include mache/spack/templates/*.csh
+
+include pixi.toml

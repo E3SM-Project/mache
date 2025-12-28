@@ -56,12 +56,19 @@ jobs:
     name: test mache - python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - python-version: "3.10"
+            pixi-env: py310
+          - python-version: "3.11"
+            pixi-env: py311
+          - python-version: "3.12"
+            pixi-env: py312
+          - python-version: "3.13"
+            pixi-env: py313
+          - python-version: "3.14"
+            pixi-env: py314
       fail-fast: false
     steps:
       - id: skip_check
@@ -74,24 +81,19 @@ jobs:
         uses: actions/checkout@v6
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        name: Set up Conda Environment
-        uses: mamba-org/setup-micromamba@v2
+        name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.9.2
         with:
-          environment-name: mache_dev
-          init-shell: bash
-          condarc: |
-            channel_priority: strict
-            channels: 
-                - conda-forge
-          create-args: >-
-            python=${{ matrix.python-version }}
+          pixi-version: v0.62.2
+          # Project environment caching uses pixi.lock as the cache key input.
+          # If you don't commit a lockfile, disable caching to avoid ENOENT.
+          cache: ${{ hashFiles('pixi.lock') != '' }}
+          environments: ${{ matrix.pixi-env }}
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Install mache
         run: |
-          conda install -y --file spec-file.txt \
-            python=${{ matrix.python-version }}
-          python -m pip install --no-deps --no-build-isolation -vv -e .
+          pixi run -e ${{ matrix.pixi-env }} python -m pip install --no-deps --no-build-isolation -vv -e .
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Run Tests
@@ -99,12 +101,11 @@ jobs:
            CHECK_IMAGES: False
         run: |
           set -e
-          pip check
-          mache sync diags --help
-          pytest tests
+          pixi run -e ${{ matrix.pixi-env }} pip check
+          pixi run -e ${{ matrix.pixi-env }} mache sync diags --help
+          pixi run -e ${{ matrix.pixi-env }} pytest tests
 
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Build Sphinx Docs
         run: |
-          cd docs
-          DOCS_VERSION=test make versioned-html
+          pixi run -e ${{ matrix.pixi-env }} bash -e -c "cd docs && DOCS_VERSION=test make versioned-html"

@@ -142,3 +142,10 @@ cython_debug/
 
 # xml files in the root directory
 /*.xml
+
+# vs code
+.vscode/
+
+# pixi caches and environment files
+.pixi/
+pixi.lock
