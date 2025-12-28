@@ -19,11 +19,8 @@ documentation improvements.
 
 1. **Set up an isolated environment:**
     ```bash
-    conda config --add channels conda-forge
-    conda config --set channel_priority strict
-    conda create -y -n mache_dev --file spec-file.txt
-    conda activate mache_dev
-    python -m pip install --no-deps --no-build-isolation -e .
+    pixi install
+    pixi run python -m pip install --no-deps --no-build-isolation -e .
     ```
 
 2. **Install pre-commit hooks:**

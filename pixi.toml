@@ -1,0 +1,60 @@
+[workspace]
+name = "mache"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+channel-priority = "strict"
+
+[dependencies]
+python = ">=3.10,<3.15"
+pip = "*"
+
+# Runtime
+importlib_resources = "*"
+jinja2 = "*"
+lxml = "*"
+packaging = "*"
+pyyaml = "*"
+requests = "*"
+rsync = "*"
+termcolor = "*"
+tqdm = "*"
+
+# Building
+setuptools = ">=60"
+wheel = "*"
+
+# Linting and testing
+pytest = "*"
+flynt = "*"
+mypy = "*"
+pre-commit = "*"
+ruff = "*"
+
+# Documentation
+sphinx = ">=7.0.0"
+sphinx_rtd_theme = "*"
+myst-parser = "*"
+
+
+# Features and environments for CI
+[feature.py310.dependencies]
+python = "3.10.*"
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[environments]
+py310 = ["py310"]
+py311 = ["py311"]
+py312 = ["py312"]
+py313 = ["py313"]
+py314 = ["py314"]

@@ -10,19 +10,12 @@ see the [User's Guide](../users_guide/quick_start.md).
 To work on `mache`, you should install the development version in an isolated environment:
 
 ```bash
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda create -y -n mache_dev --file spec-file.txt
-conda activate mache_dev
-python -m pip install --no-deps --no-build-isolation -e .
+pixi install
+pixi run python -m pip install --no-deps --no-build-isolation -e .
 ```
 
-If you want to install into an existing environment:
-
-```bash
-conda install --file spec-file.txt
-python -m pip install --no-deps --no-build-isolation -e .
-```
+This creates a Pixi environment based on the root `pixi.toml` and then installs
+`mache` in editable mode.
 
 (dev-code-styling)=
 
