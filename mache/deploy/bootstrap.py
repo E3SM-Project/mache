@@ -7,9 +7,20 @@ import sys
 from urllib.request import Request, urlopen
 
 
-def check_call(commands, log_filename, quiet):
+def check_call(
+    commands,
+    log_filename,
+    quiet,
+    *,
+    capture_output=False,
+    check=True,
+    **popen_kwargs,
+):
     """
-    Wrapper for making a shell call with logging and error management
+    Wrapper for making a shell call with logging and error management.
+
+    This function is intentionally similar to :pyfunc:`subprocess.run`, while
+    still providing the project-specific logging and "tee" behavior.
 
     Parameters
     ----------
@@ -22,7 +33,53 @@ def check_call(commands, log_filename, quiet):
 
     quiet : bool
         If True, only log to the log file, not to the terminal
+
+    capture_output : bool, optional
+        If True, capture stdout (and merged stderr) and return it in the
+        returned :class:`subprocess.CompletedProcess`.
+
+    check : bool, optional
+        If True (default), raise :class:`subprocess.CalledProcessError` when
+        the command returns a nonzero status.
+
+    **popen_kwargs
+        Additional keyword arguments passed through to
+        :class:`subprocess.Popen`.
+
+    Returns
+    -------
+    result : subprocess.CompletedProcess
+        The result of the command. When ``capture_output`` is True, the
+        combined output is available as ``result.stdout``.
     """
+
+    if capture_output and (
+        'stdout' in popen_kwargs
+        or 'stderr' in popen_kwargs
+        or 'capture_output' in popen_kwargs
+    ):
+        raise ValueError(
+            'capture_output=True cannot be used with stdout/stderr/'
+            'capture_output in popen_kwargs.'
+        )
+
+    if (capture_output or not quiet) and (
+        'stdout' in popen_kwargs or 'stderr' in popen_kwargs
+    ):
+        raise ValueError(
+            'stdout/stderr cannot be set when capture_output=True or '
+            'quiet=False because this wrapper needs to stream output for '
+            'logging/tee behavior.'
+        )
+
+    # Determine whether stdout is text or bytes (match subprocess defaults,
+    # but keep this wrapper text-friendly by default).
+    text = popen_kwargs.get('text')
+    if text is None:
+        text = popen_kwargs.get('universal_newlines')
+    if text is None:
+        text = True
+    bufsize = popen_kwargs.get('bufsize', 1 if text else 0)
 
     # Echo the commands being run (like a lightweight trace) so the log is
     # self-contained and debuggable.
@@ -33,50 +90,100 @@ def check_call(commands, log_filename, quiet):
 
     os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
 
+    log_mode = 'a' if text else 'ab'
+    log_encoding = 'utf-8' if text else None
+
     # append to log file
-    with open(log_filename, 'a', encoding='utf-8') as log_file:
-        log_file.write(print_command + '\n')
+    with open(log_filename, log_mode, encoding=log_encoding) as log_file:
+        if text:
+            log_file.write(print_command + '\n')
+        else:
+            log_file.write((print_command + '\n').encode('utf-8'))
 
     if not quiet:
         print(print_command)
 
-    if quiet:
-        # Fast path: let the subprocess write directly to the log.
-        with open(log_filename, 'a', encoding='utf-8') as log_file:
-            process = subprocess.Popen(
-                commands,
-                executable='/bin/bash',
-                shell=True,
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
-            process.wait()
-    else:
-        # Tee-like behavior without spawning a separate `tee` process.
-        # Merge stderr into stdout to preserve ordering.
-        with open(log_filename, 'a', encoding='utf-8') as log_file:
-            process = subprocess.Popen(
-                commands,
-                executable='/bin/bash',
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
+    stdout_data: str | bytes | None = None
+
+    base_popen_kwargs = {
+        'executable': '/bin/bash',
+        'shell': True,
+        'text': text,
+        'bufsize': bufsize,
+    }
+    # Allow callers to override defaults.
+    base_popen_kwargs.update(popen_kwargs)
+
+    if capture_output or not quiet:
+        # We'll stream stdout ourselves so we can tee to the log and terminal
+        # and optionally capture output.
+        base_popen_kwargs.setdefault('stdout', subprocess.PIPE)
+        base_popen_kwargs.setdefault('stderr', subprocess.STDOUT)
+
+        with open(log_filename, log_mode, encoding=log_encoding) as log_file:
+            process = subprocess.Popen(commands, **base_popen_kwargs)
 
             assert process.stdout is not None
-            for line in process.stdout:
-                log_file.write(line)
-                log_file.flush()
-                sys.stdout.write(line)
-                sys.stdout.flush()
+            captured_chunks = []
+
+            for chunk in process.stdout:
+                # chunk is str (text=True) or bytes (text=False)
+                if capture_output:
+                    captured_chunks.append(chunk)
+
+                if text:
+                    log_file.write(chunk)
+                    log_file.flush()
+                    if not quiet:
+                        sys.stdout.write(chunk)
+                        sys.stdout.flush()
+                else:
+                    if isinstance(chunk, str):
+                        chunk_bytes = chunk.encode('utf-8')
+                    else:
+                        chunk_bytes = chunk
+
+                    log_file.write(chunk_bytes)
+                    log_file.flush()
+                    if not quiet:
+                        sys.stdout.buffer.write(chunk_bytes)
+                        sys.stdout.buffer.flush()
 
             process.wait()
 
-    if process.returncode != 0:
-        raise subprocess.CalledProcessError(process.returncode, commands)
+        if capture_output:
+            if text:
+                stdout_data = ''.join(
+                    chunk if isinstance(chunk, str) else chunk.decode('utf-8')
+                    for chunk in captured_chunks
+                )
+            else:
+                stdout_data = b''.join(
+                    chunk.encode('utf-8') if isinstance(chunk, str) else chunk
+                    for chunk in captured_chunks
+                )
+    else:
+        # Fast path: let the subprocess write directly to the log.
+        base_popen_kwargs.setdefault('stdout', None)
+        base_popen_kwargs.setdefault('stderr', subprocess.STDOUT)
+        with open(log_filename, log_mode, encoding=log_encoding) as log_file:
+            base_popen_kwargs['stdout'] = log_file
+            process = subprocess.Popen(commands, **base_popen_kwargs)
+            process.wait()
+
+    result = subprocess.CompletedProcess(
+        args=commands,
+        returncode=process.returncode,
+        stdout=stdout_data,
+        stderr=None,
+    )
+
+    if check and process.returncode != 0:
+        raise subprocess.CalledProcessError(
+            process.returncode, commands, output=stdout_data
+        )
+
+    return result
 
 
 def check_location(software):
