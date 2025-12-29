@@ -13,6 +13,7 @@ from yaml import safe_load
 from .bootstrap import (
     check_call,
     check_location,
+    install_dev_mache,
 )
 from .conda import get_conda_platform_and_system
 from .jigsaw import install_jigsaw
@@ -60,6 +61,11 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     pixi_exe = _get_pixi_executable(getattr(args, 'pixi', None))
 
+    using_mache_fork = (
+        getattr(args, 'mache_fork', None) is not None
+        and getattr(args, 'mache_branch', None) is not None
+    )
+
     prefix = getattr(args, 'prefix', None)
     if prefix is None:
         prefix = config.get('pixi', {}).get('prefix')
@@ -77,6 +83,8 @@ def run_deploy(args: argparse.Namespace) -> None:
         raise ValueError(
             "'pixi' section missing or invalid in deploy/config.yaml.j2"
         )
+
+    mpi, mpi_prefix = _get_mpi_settings(pixi_cfg=pixi_cfg)
 
     if 'python' not in pixi_cfg:
         raise ValueError(
@@ -102,13 +110,31 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
 
+    # Determine which mache to put in the deployed environment.
+    # - If using a fork/branch, do NOT install conda-forge mache; we'll install
+    #   mache from source into the environment after creation.
+    # - Otherwise, include a pinned conda-forge mache.
+    mache_version_arg = getattr(args, 'mache_version', None)
+    if mache_version_arg is not None and str(mache_version_arg).strip():
+        replacements['mache'] = str(mache_version_arg).strip()
+
+    include_mache = not using_mache_fork
+    if include_mache and not str(replacements.get('mache', '')).strip():
+        raise ValueError(
+            'mache version is required to include mache in the deployed pixi '
+            'environment. Set it in deploy/pins.cfg ([pixi] mache = ...) or '
+            'pass --mache-version.'
+        )
+
     # First, install a base environment without jigsawpy. If jigsaw is enabled,
     # we will build jigsawpy from source and then add it from a local channel.
     replacements.update(
         {
             'python': python_req,
             'pixi_channels': channels,
-            'include_mache': False,
+            'mpi': mpi,
+            'mpi_prefix': mpi_prefix,
+            'include_mache': include_mache,
             'include_jigsaw': False,
         }
     )
@@ -126,6 +152,18 @@ def run_deploy(args: argparse.Namespace) -> None:
         log_filename=log_filename,
         quiet=quiet,
     )
+
+    if using_mache_fork:
+        pixi_run_bash_lc_prefix = (
+            f'cd {shlex.quote(os.path.abspath(prefix))} && '
+            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'{shlex.quote(pixi_exe)} run bash -lc'
+        )
+        install_dev_mache(
+            pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
 
     if jigsaw_enabled:
         local_channel = install_jigsaw(
@@ -251,3 +289,42 @@ def _pixi_install(
         f'{shlex.quote(pixi_exe)} install'
     )
     check_call(cmd, log_filename=log_filename, quiet=quiet)
+
+
+def _get_mpi_settings(
+    pixi_cfg: dict[str, Any],
+) -> tuple[str, str]:
+    """Determine MPI-related template replacements.
+
+    Returns
+    -------
+    mpi : str
+        The conda package name for MPI (e.g. "mpich", "openmpi", or "nompi").
+    mpi_prefix : str
+        The conda-forge variant prefix used in build-string selectors
+        (e.g. "nompi", "mpi_mpich", "mpi_openmpi").
+    """
+
+    if 'mpi' not in pixi_cfg:
+        raise ValueError(
+            "'mpi' not found in [pixi] section of deploy/config.yaml.j2"
+        )
+
+    mpi_raw = pixi_cfg.get('mpi')
+    mpi = str(mpi_raw).strip().lower() if mpi_raw is not None else ''
+    if not mpi:
+        raise ValueError(
+            "'mpi' in [pixi] section of deploy/config.yaml.j2 is empty"
+        )
+    if any(ch.isspace() for ch in mpi):
+        raise ValueError(
+            "'mpi' in [pixi] section of deploy/config.yaml.j2 must not "
+            'contain whitespace'
+        )
+
+    # Legacy Polaris deploy behavior:
+    #   - nompi -> "nompi"
+    #   - otherwise -> "mpi_<mpi>" (e.g. mpi_mpich, mpi_openmpi)
+    mpi_prefix = 'nompi' if mpi == 'nompi' else f'mpi_{mpi}'
+
+    return mpi, mpi_prefix

@@ -224,7 +224,14 @@ def check_location(software):
         )
 
 
-def install_dev_mache(pixi_run_bash_lc_prefix, log_filename, quiet):
+def install_dev_mache(
+    pixi_run_bash_lc_prefix,
+    log_filename,
+    quiet,
+    *,
+    repo_root=None,
+    src_dir=None,
+):
     """
     Install mache from a fork and branch for development and testing
     """
@@ -234,8 +241,23 @@ def install_dev_mache(pixi_run_bash_lc_prefix, log_filename, quiet):
     # commands.  Therefore, the pip install must be executed *through* pixi.
     # Also, the caller may have `cd`'d into the bootstrap pixi project, so we
     # explicitly `cd` back to the repo root first.
-    repo_root = os.path.abspath(os.getcwd())
-    src_dir = os.path.join(repo_root, 'deploy_tmp', 'build_mache', 'mache')
+    if repo_root is None:
+        repo_root = os.path.abspath(os.getcwd())
+    else:
+        repo_root = os.path.abspath(os.path.expanduser(str(repo_root)))
+
+    if src_dir is None:
+        src_dir = os.path.join(repo_root, 'deploy_tmp', 'build_mache', 'mache')
+    else:
+        src_dir = os.path.abspath(os.path.expanduser(str(src_dir)))
+
+    if not os.path.isdir(src_dir):
+        raise FileNotFoundError(
+            'Expected mache source clone not found at '
+            f'{src_dir}. This should have been created during bootstrap when '
+            'using --mache-fork/--mache-branch.'
+        )
+
     bash_cmd = (
         f'cd {shlex.quote(src_dir)} && '
         'python -m pip install --no-deps --no-build-isolation .'

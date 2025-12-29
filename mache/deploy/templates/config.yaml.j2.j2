@@ -17,6 +17,13 @@ pixi:
   channels:
     - conda-forge
 
+  # MPI provider for conda packages.
+  # Supported values in `mache deploy run`:
+  #   - nompi
+  #   - mpich
+  #   - openmpi
+  mpi: nompi
+
 env_vars:
   # Placeholder: env vars to export in the "load" script
   set: {}
