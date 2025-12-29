@@ -344,10 +344,11 @@ def _run(log_filename):
         )
         check_call(cmd_install, log_filename, quiet)
 
+        pixi_toml = str(pixi_toml_path.resolve())
         pixi_run_bash_lc_prefix = (
-            f'cd "{bootstrap_dir}" && '
             'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-            f'"{pixi_exe}" run bash -lc'
+            f'{shlex.quote(pixi_exe)} run -m {shlex.quote(pixi_toml)} '
+            'bash -lc'
         )
         install_dev_mache(
             pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,

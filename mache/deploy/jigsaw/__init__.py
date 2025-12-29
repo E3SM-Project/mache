@@ -254,7 +254,8 @@ def _build_external_jigsaw(
         f.write(variant)
 
     bootstrap_project_dir = Path('deploy_tmp/bootstrap_pixi').resolve()
-    if not (bootstrap_project_dir / 'pixi.toml').is_file():
+    pixi_toml = bootstrap_project_dir / 'pixi.toml'
+    if not pixi_toml.is_file():
         raise RuntimeError(
             'Expected bootstrap pixi project at '
             f'{bootstrap_project_dir} but pixi.toml was not found. '
@@ -262,9 +263,9 @@ def _build_external_jigsaw(
         )
 
     command = (
-        f'cd {shlex.quote(str(bootstrap_project_dir))} && '
         'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-        f'{shlex.quote(pixi_exe)} run rattler-build build '
+        f'{shlex.quote(pixi_exe)} run -m {shlex.quote(str(pixi_toml))} '
+        'rattler-build build '
         f'--recipe-dir '
         f'{shlex.quote(os.path.abspath("deploy_tmp/jigsaw_build/recipe"))} '
         f'--variant-config {shlex.quote(os.path.abspath(variant_file))} '

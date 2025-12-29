@@ -159,10 +159,11 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
 
     if using_mache_fork:
+        prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
         pixi_run_bash_lc_prefix = (
-            f'cd {shlex.quote(os.path.abspath(prefix))} && '
             'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-            f'{shlex.quote(pixi_exe)} run bash -lc'
+            f'{shlex.quote(pixi_exe)} run -m {shlex.quote(prefix_pixi_toml)} '
+            'bash -lc'
         )
         install_dev_mache(
             pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
@@ -428,10 +429,11 @@ def _install_software_in_dev_mode(
     quiet: bool,
 ) -> None:
     """Install the target software in development mode into the pixi env."""
+    prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
     pixi_run_bash_lc_prefix = (
-        f'cd {shlex.quote(os.path.abspath(prefix))} && '
         'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-        f'{shlex.quote(pixi_exe)} run bash -lc'
+        f'{shlex.quote(pixi_exe)} run -m {shlex.quote(prefix_pixi_toml)} '
+        'bash -lc'
     )
 
     cmd_install_software = (

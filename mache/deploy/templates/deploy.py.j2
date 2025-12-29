@@ -430,15 +430,12 @@ def _run_mache_deploy_run(pixi_exe, repo_root, mache_run_argv):
             shlex.quote(a) for a in mache_run_argv
         )
 
-    cmd_parts = [
-        f'cd {shlex.quote(bootstrap_dir)}',
-        f'{shlex.quote(pixi_exe)} run bash -lc '
-        f'{shlex.quote("cd " + repo_root + " && " + mache_cmd)}',
-    ]
-
-    bash_cmd = ' && '.join(cmd_parts)
-
-    subprocess.check_call(['/bin/bash', '-lc', bash_cmd])
+    cmd = (
+        f'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{shlex.quote(pixi_exe)} run -m {shlex.quote(pixi_toml)} bash -lc '
+        f'{shlex.quote("cd " + repo_root + " && " + mache_cmd)}'
+    )
+    subprocess.check_call(['/bin/bash', '-lc', cmd])
 
 
 if __name__ == '__main__':
