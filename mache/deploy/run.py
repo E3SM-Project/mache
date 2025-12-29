@@ -86,15 +86,16 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     mpi, mpi_prefix = _get_mpi_settings(pixi_cfg=pixi_cfg)
 
-    if 'python' not in pixi_cfg:
-        raise ValueError(
-            "'python' not found in [pixi] section of deploy/config.yaml.j2"
-        )
-    python_req = str(pixi_cfg.get('python'))
-    if not python_req.strip():
-        raise ValueError(
-            "'python' in [pixi] section of deploy/config.yaml.j2 is empty"
-        )
+    python_version = args.python
+    if python_version is None:
+        python_version = pins.get('pixi', 'python')
+
+        if python_version is None:
+            raise ValueError(
+                'Python version is required to deploy the pixi environment. '
+                'Set it in deploy/pins.cfg ([pixi] python = ...) or pass '
+                '--python.'
+            )
 
     if 'channels' not in pixi_cfg:
         raise ValueError(
@@ -130,7 +131,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     # we will build jigsawpy from source and then add it from a local channel.
     replacements.update(
         {
-            'python': python_req,
+            'python': python_version,
             'pixi_channels': channels,
             'mpi': mpi,
             'mpi_prefix': mpi_prefix,
@@ -169,7 +170,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         local_channel = install_jigsaw(
             config=config,
             pixi_exe=pixi_exe,
-            python_req=python_req,
+            python_version=python_version,
             repo_root='.',
             log_filename=log_filename,
             quiet=quiet,

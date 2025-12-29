@@ -361,7 +361,7 @@ def _run(log_filename):
             pixi_toml_path=pixi_toml_path,
             software=software,
             mache_version=mache_version,
-            python_version=args.bootstrap_python,
+            python_version=args.python,
         )
 
         cmd_install = (
@@ -422,10 +422,10 @@ def _parse_args():
         help='The version of mache to install if not from a branch.',
     )
     parser.add_argument(
-        '--bootstrap-python',
-        dest='bootstrap_python',
+        '--python',
+        dest='python',
         required=True,
-        help='The python version to use during bootstrap.',
+        help='The python major and minor version to use.',
     )
     parser.add_argument(
         '--quiet',

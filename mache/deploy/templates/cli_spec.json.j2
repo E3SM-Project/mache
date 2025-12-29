@@ -8,13 +8,13 @@
     {
       "flags": ["--pixi"],
       "dest": "pixi",
-      "help": "(Preview) Path to the pixi executable. If not provided, pixi is found on PATH.",
+      "help": "Path to the pixi executable. If not provided, pixi is found on PATH.",
       "route": ["deploy", "bootstrap", "run"]
     },
     {
       "flags": ["--prefix"],
       "dest": "prefix",
-      "help": "(Preview) Install the environment into this prefix (directory). Overrides deploy/config.yaml.j2.",
+      "help": "Install the environment into this prefix (directory). Overrides deploy/config.yaml.j2.",
       "route": ["deploy", "bootstrap", "run"]
     },
     {
@@ -31,10 +31,10 @@
       "route": ["bootstrap", "run"]
     },
     {
-      "flags": ["--bootstrap-python"],
-      "dest": "bootstrap_python",
-      "help": "The python version to use during bootstrap.",
-      "route": ["deploy", "bootstrap"]
+      "flags": ["--python"],
+      "dest": "python",
+      "help": "The python major and minor version to use. Overrides deploy/pins.cfg.j2.",
+      "route": ["deploy", "bootstrap", "run"]
     },
     {
       "flags": ["--mache-fork"],

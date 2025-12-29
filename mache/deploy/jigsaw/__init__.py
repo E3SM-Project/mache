@@ -24,7 +24,7 @@ PYTHON_VARIANTS = {
 def install_jigsaw(
     config: dict,
     pixi_exe: str,
-    python_req: str,
+    python_version: str,
     repo_root: str,
     log_filename: str,
     quiet: bool,
@@ -51,8 +51,8 @@ def install_jigsaw(
         The full deployment configuration dictionary.
     pixi_exe : str
         Path to the pixi executable.
-    python_req : str
-        The pixi python version requirement (e.g. "3.14.*").
+    python_version : str
+        The python major and minor version (e.g. "3.14").
     repo_root : str
         The path to the target software repository root.
     log_filename : str
@@ -76,14 +76,6 @@ def install_jigsaw(
         )
 
     jigsaw_python_dir = (repo_root_path / rel_path).resolve()
-
-    python_version = _extract_major_minor_from_requirement(python_req)
-    if not python_version:
-        raise ValueError(
-            'Unable to determine python major.minor for JIGSAW build from '
-            f'pixi.python requirement: {python_req!r}. '
-            'Use a pinned major.minor (e.g. "3.14" or "3.14.*").'
-        )
 
     _ensure_jigsaw_python_source(
         repo_root=repo_root_path,
@@ -111,12 +103,6 @@ def install_jigsaw(
     # NOTE: a pixi/conda environment does not reference the cache or channel
     # at runtime; these are install-time only.
     return _get_local_channel_uri()
-
-
-def _extract_major_minor_from_requirement(req: str) -> str:
-    """Extract python major.minor (e.g. '3.14') from a pixi requirement."""
-    m = re.search(r'(?<!\d)(\d+\.\d+)(?!\d)', str(req))
-    return m.group(1) if m else ''
 
 
 def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
