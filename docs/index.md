@@ -27,3 +27,10 @@ developers_guide/building_docs
 developers_guide/releasing
 developers_guide/api
 ```
+
+```{toctree}
+:caption: Design documents
+:maxdepth: 2
+
+design/mache_deploy
+```
