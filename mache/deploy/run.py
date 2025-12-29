@@ -284,8 +284,9 @@ def _write_load_script(
     with open(script_path, 'w', encoding='utf-8') as file_handle:
         file_handle.write(rendered)
 
-    # Make executable for the common "just run it" workflow.
-    os.chmod(script_path, 0o755)
+    # Intentionally *not* executable: developers should `source` this script.
+    # Also clear any existing exec bits from previous generations.
+    os.chmod(script_path, 0o644)
     return script_path
 
 
