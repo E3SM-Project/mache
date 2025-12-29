@@ -10,7 +10,7 @@ pip = "*"
 
 # Runtime
 importlib_resources = "*"
-jinja2 = "*"
+jinja2 = ">=2.9"
 lxml = "*"
 packaging = "*"
 pyyaml = "*"
