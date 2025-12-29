@@ -50,6 +50,10 @@ def run_deploy(args: argparse.Namespace) -> None:
             'deploy/config.yaml.j2'
         )
 
+    install_dev_software = config.get('pixi', {}).get(
+        'install_dev_software', False
+    )
+
     quiet = args.quiet
 
     os.makedirs('deploy_tmp', exist_ok=True)
@@ -194,6 +198,14 @@ def run_deploy(args: argparse.Namespace) -> None:
             pixi_exe=pixi_exe,
             project_dir=prefix,
             recreate=False,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+
+    if install_dev_software:
+        _install_software_in_dev_mode(
+            pixi_exe=pixi_exe,
+            prefix=prefix,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -406,3 +418,29 @@ def _get_mpi_settings(
     mpi_prefix = 'nompi' if mpi == 'nompi' else f'mpi_{mpi}'
 
     return mpi, mpi_prefix
+
+
+def _install_software_in_dev_mode(
+    *,
+    pixi_exe: str,
+    prefix: str,
+    log_filename: str,
+    quiet: bool,
+) -> None:
+    """Install the target software in development mode into the pixi env."""
+    pixi_run_bash_lc_prefix = (
+        f'cd {shlex.quote(os.path.abspath(prefix))} && '
+        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{shlex.quote(pixi_exe)} run bash -lc'
+    )
+
+    cmd_install_software = (
+        f'{pixi_run_bash_lc_prefix} '
+        f'"pip install  --no-deps --no-build-isolation -e ."'
+    )
+
+    check_call(
+        cmd_install_software,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
