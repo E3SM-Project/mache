@@ -6,9 +6,15 @@
   },
   "arguments": [
     {
-      "flags": ["--conda"],
-      "dest": "conda",
-      "help": "Path to the conda installation. If not provided, the path will be determined from \"conda info\".",
+      "flags": ["--pixi"],
+      "dest": "pixi",
+      "help": "(Preview) Path to the pixi executable. If not provided, pixi is found on PATH.",
+      "route": ["deploy", "bootstrap", "run"]
+    },
+    {
+      "flags": ["--prefix"],
+      "dest": "prefix",
+      "help": "(Preview) Install the environment into this prefix (directory). Overrides deploy/config.yaml.j2.",
       "route": ["deploy", "bootstrap", "run"]
     },
     {
@@ -17,12 +23,6 @@
       "action": "store_true",
       "help": "Recreate the environment if it exists.",
       "route": ["deploy", "bootstrap", "run"]
-    },
-    {
-      "flags": ["--env-name"],
-      "dest": "env_name",
-      "help": "Name of the conda environment to create or update.",
-      "route": ["deploy", "run"]
     },
     {
       "flags": ["--mache-version"],
@@ -50,17 +50,10 @@
       "route": ["deploy", "bootstrap", "run"]
     },
     {
-      "flags": ["--update-base"],
-      "dest": "update_base",
-      "action": "store_true",
-      "help": "Update packages in the conda base environment.",
-      "route": ["deploy", "bootstrap", "run"]
-    },
-    {
       "flags": ["--bootstrap-only"],
       "dest": "bootstrap_only",
       "action": "store_true",
-      "help": "Only create or update the bootstrap conda environment.",
+      "help": "Only create or update the bootstrap pixi environment.",
       "route": ["deploy"]
     }
   ]

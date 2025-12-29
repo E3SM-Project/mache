@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+
 import argparse
 import os
-import platform
+import shlex
+import shutil
 import subprocess
 import sys
-from urllib.request import Request, urlopen
+from pathlib import Path
 
 
 def check_call(
@@ -83,9 +85,12 @@ def check_call(
 
     # Echo the commands being run (like a lightweight trace) so the log is
     # self-contained and debuggable.
-    command_list = commands.replace(' && ', '; ').split('; ')
-
-    print_command = '\n   '.join(command_list)
+    # Keep nested quoted commands intact (e.g. bash -lc '... && ...').
+    command_list = _split_shell_on_andand(commands)
+    if command_list:
+        print_command = '\n   '.join(command_list)
+    else:
+        print_command = commands
     print_command = f'\n Running:\n   {print_command}\n'
 
     os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
@@ -103,7 +108,7 @@ def check_call(
     if not quiet:
         print(print_command)
 
-    stdout_data: str | bytes | None = None
+    stdout_data = None
 
     base_popen_kwargs = {
         'executable': '/bin/bash',
@@ -158,10 +163,13 @@ def check_call(
                     for chunk in captured_chunks
                 )
             else:
-                stdout_data = b''.join(
+                stdout_bytes = b''.join(
                     chunk.encode('utf-8') if isinstance(chunk, str) else chunk
                     for chunk in captured_chunks
                 )
+                # Keep this wrapper text-friendly: even when text=False, decode
+                # captured output so stdout_data remains str.
+                stdout_data = stdout_bytes.decode('utf-8', errors='replace')
     else:
         # Fast path: let the subprocess write directly to the log.
         base_popen_kwargs.setdefault('stdout', None)
@@ -216,144 +224,23 @@ def check_location(software):
         )
 
 
-def get_conda_base(conda_base):
-    """
-    Get the absolute path to the files for the conda base environment
-
-    Parameters
-    ----------
-    conda_base : str
-        The relative or absolute path to the conda base files
-
-    Returns
-    -------
-    conda_base : str
-        Path to the conda base environment
-    """
-
-    if conda_base is None:
-        try:
-            conda_base = subprocess.check_output(
-                ['conda', 'info', '--base'], text=True
-            ).strip()
-            print(
-                f'\nWarning: --conda path not supplied.  Using conda '
-                f'installed at:\n'
-                f'   {conda_base}\n'
-            )
-        except subprocess.CalledProcessError as e:
-            raise ValueError(
-                'No conda base provided with --conda and '
-                'none could be inferred.'
-            ) from e
-    # handle "~" in the path
-    conda_base = os.path.abspath(os.path.expanduser(conda_base))
-    return conda_base
-
-
-def install_miniforge(
-    conda_base, activate_base, log_filename, quiet, update_base
-):
-    """
-    Install Miniforge if it isn't installed already
-
-    Parameters
-    ----------
-    conda_base : str
-        Absolute path to the conda base environment files
-
-    activate_base : str
-        Command to activate the conda base environment
-
-    log_filename : str
-        The path to the log file to append to
-
-    quiet : bool
-        If True, only log to the log file, not to the terminal
-    """
-
-    if not os.path.exists(conda_base):
-        print('Installing Miniforge3')
-        if platform.system() == 'Darwin':
-            system = 'MacOSX'
-        else:
-            system = 'Linux'
-        machine = platform.machine().lower()
-        if machine in ('amd64',):
-            machine = 'x86_64'
-        if machine in ('arm64',) and system == 'Linux':
-            # sometimes Linux arm64 should be aarch64 for toolchains
-            machine = 'aarch64'
-        miniforge = f'Miniforge3-{system}-{machine}.sh'
-        url = f'https://github.com/conda-forge/miniforge/releases/latest/download/{miniforge}'  # noqa: E501
-        print(url)
-        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        try:
-            with urlopen(req, timeout=60) as f:
-                html = f.read()
-
-                first_line = html.splitlines()[0].strip()
-                if b'bash' not in first_line:
-                    raise RuntimeError(
-                        'Downloaded Miniforge installer does not look like a '
-                        'shell script. This may indicate a proxy or redirect '
-                        'problem.'
-                    )
-                with open(miniforge, 'wb') as outfile:
-                    outfile.write(html)
-        except (OSError, TimeoutError) as e:
-            raise RuntimeError(
-                f'Failed to download the Miniforge installer from {url}. '
-                f'You may need to download and install it manually, and use '
-                f' the --conda flag to point to the resulting installation.'
-            ) from e
-        command = f'/bin/bash "{miniforge}" -b -p "{conda_base}"'
-        check_call(command, log_filename, quiet)
-        os.remove(miniforge)
-
-    # check that "conda" command is available
-    try:
-        check_call(f'{activate_base} && conda --version', log_filename, quiet)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            'Conda installation failed or conda command not found.'
-        ) from e
-
-    print('Update conda config\n')
-    commands = (
-        f'{activate_base} && '
-        f'conda config --add channels conda-forge && '
-        f'conda config --set channel_priority strict'
-    )
-
-    check_call(commands, log_filename, quiet)
-
-    if update_base:
-        print('Update config and base conda environment\n')
-        commands = f'{activate_base} && conda update -y --all'
-
-        check_call(commands, log_filename, quiet)
-
-
-def install_dev_mache(
-    activate_install_env, mache_fork, mache_branch, log_filename, quiet
-):
+def install_dev_mache(pixi_run_bash_lc_prefix, log_filename, quiet):
     """
     Install mache from a fork and branch for development and testing
     """
     print('Clone and install local mache\n')
-    commands = (
-        f'{activate_install_env} && '
-        f'rm -rf deploy_tmp/build_mache && '
-        f'mkdir -p deploy_tmp/build_mache && '
-        f'cd deploy_tmp/build_mache && '
-        f"GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
-        f'--depth 1 --single-branch -b "{mache_branch}" '
-        f'"git@github.com:{mache_fork}.git" mache && '
-        f'cd mache && '
-        f'conda install -y --file spec-file.txt && '
-        f'python -m pip install --no-deps --no-build-isolation .'
+
+    # NOTE: `pixi run` does not "activate" an environment for subsequent shell
+    # commands.  Therefore, the pip install must be executed *through* pixi.
+    # Also, the caller may have `cd`'d into the bootstrap pixi project, so we
+    # explicitly `cd` back to the repo root first.
+    repo_root = os.path.abspath(os.getcwd())
+    src_dir = os.path.join(repo_root, 'deploy_tmp', 'build_mache', 'mache')
+    bash_cmd = (
+        f'cd {shlex.quote(src_dir)} && '
+        'python -m pip install --no-deps --no-build-isolation .'
     )
+    commands = f'{pixi_run_bash_lc_prefix} {shlex.quote(bash_cmd)}'
 
     try:
         check_call(commands, log_filename, quiet)
@@ -400,47 +287,54 @@ def _run(log_filename):
 
     os.makedirs('deploy_tmp', exist_ok=True)
 
-    conda_base = get_conda_base(args.conda)
-    conda_base = os.path.abspath(conda_base)
+    pixi_exe = _get_pixi_executable(args.pixi)
 
-    env_name = 'mache_deploy'
+    bootstrap_dir = Path('deploy_tmp/bootstrap_pixi').resolve()
+    bootstrap_dir.mkdir(parents=True, exist_ok=True)
 
-    source_activation_scripts = f'source "{conda_base}/etc/profile.d/conda.sh"'
+    if args.recreate and (bootstrap_dir / '.pixi').exists():
+        shutil.rmtree(bootstrap_dir / '.pixi')
 
-    activate_base = f'{source_activation_scripts} && conda activate base'
-
-    activate_install_env = (
-        f'{source_activation_scripts} && conda activate "{env_name}"'
-    )
-
-    # install miniforge if needed
-    install_miniforge(
-        conda_base, activate_base, log_filename, quiet, args.update_base
-    )
-
-    packages = 'pip'
-    if mache_version is not None:
-        packages = f'{packages} "mache={mache_version}"'
-
-    _setup_install_env(
-        env_name,
-        activate_base,
-        log_filename,
-        quiet,
-        args.recreate,
-        conda_base,
-        packages,
-        software,
-    )
-
-    if mache_version is None:
-        install_dev_mache(
-            activate_install_env,
-            args.mache_fork,
-            args.mache_branch,
-            log_filename,
-            quiet,
+    # Create/update the bootstrap env
+    if args.mache_fork is not None and args.mache_branch is not None:
+        _clone_mache_repo(
+            mache_fork=args.mache_fork,
+            mache_branch=args.mache_branch,
+            log_filename=log_filename,
+            quiet=quiet,
+            recreate=args.recreate,
         )
+
+        # Developer-style install path: use mache's own pixi.toml to create
+        # the environment, then install mache from source without PyPI deps.
+        pixi_toml_path = bootstrap_dir / 'pixi.toml'
+        _copy_mache_pixi_toml(
+            dest_pixi_toml=pixi_toml_path,
+            source_repo_dir=Path('deploy_tmp/build_mache/mache'),
+        )
+
+        cmd_install = f'cd "{bootstrap_dir}" && "{pixi_exe}" install'
+        check_call(cmd_install, log_filename, quiet)
+
+        pixi_run_bash_lc_prefix = (
+            f'cd "{bootstrap_dir}" && "{pixi_exe}" run bash -lc'
+        )
+        install_dev_mache(
+            pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+    else:
+        # Release/tag install path: install mache from conda-forge directly.
+        pixi_toml_path = bootstrap_dir / 'pixi.toml'
+        _write_bootstrap_pixi_toml_with_mache(
+            pixi_toml_path=pixi_toml_path,
+            software=software,
+            mache_version=mache_version,
+        )
+
+        cmd_install = f'cd "{bootstrap_dir}" && "{pixi_exe}" install'
+        check_call(cmd_install, log_filename, quiet)
 
 
 def _parse_args():
@@ -449,7 +343,7 @@ def _parse_args():
     """
 
     parser = argparse.ArgumentParser(
-        description='Deploy conda and spack environment'
+        description='Bootstrap a pixi environment for running mache deploy'
     )
     parser.add_argument(
         '--software',
@@ -458,10 +352,17 @@ def _parse_args():
         help='The name of the target software.',
     )
     parser.add_argument(
-        '--conda',
-        dest='conda',
-        help='Path to the conda installation. If not provided, the path '
-        'will be determined from "conda info".',
+        '--pixi',
+        dest='pixi',
+        help='Path to the pixi executable. If not provided, pixi is found '
+        'on PATH.',
+    )
+    parser.add_argument(
+        '--prefix',
+        dest='prefix',
+        help='Install the environment into this prefix (directory). '
+        'This is a deploy-time option; bootstrap accepts it for CLI '
+        'contract compatibility but does not use it.',
     )
     parser.add_argument(
         '--recreate',
@@ -491,12 +392,6 @@ def _parse_args():
         action='store_true',
         help='Only print output to log files, not to the terminal.',
     )
-    parser.add_argument(
-        '--update-base',
-        dest='update_base',
-        action='store_true',
-        help='Update packages in the conda base environment.',
-    )
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -506,13 +401,71 @@ def _parse_args():
             '--mache-fork and --mache-branch'
         )
 
-    if (args.mache_fork is None) == (args.mache_version is None):
+    if (
+        args.mache_version is None
+        and args.mache_fork is None
+        and args.mache_branch is None
+    ):
         raise ValueError(
-            'You must either supply --mache-version or both --mache-fork '
+            'You must supply --mache-version and/or both --mache-fork '
             'and --mache-branch.'
         )
 
     return args
+
+
+def _split_shell_on_andand(commands):
+    """Split a shell command string on top-level '&&' (quote-aware).
+
+    This is used only for logging/pretty-printing in check_call(). It is not a
+    full shell parser; it is a best-effort splitter that avoids breaking
+    quoted sub-commands (e.g. bash -lc '... && ...').
+    """
+    parts = []
+    buf = []
+    quote = None
+    i = 0
+    n = len(commands)
+
+    while i < n:
+        ch = commands[i]
+
+        if quote is not None:
+            # In double quotes, backslash can escape characters.
+            if quote == '"' and ch == '\\' and i + 1 < n:
+                buf.append(ch)
+                buf.append(commands[i + 1])
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            buf.append(ch)
+            i += 1
+            continue
+
+        # Not currently in a quote
+        if ch == "'" or ch == '"':
+            quote = ch
+            buf.append(ch)
+            i += 1
+            continue
+
+        if ch == '&' and i + 1 < n and commands[i + 1] == '&':
+            part = ''.join(buf).strip()
+            if part:
+                parts.append(part)
+            buf = []
+            i += 2
+            continue
+
+        buf.append(ch)
+        i += 1
+
+    last = ''.join(buf).strip()
+    if last:
+        parts.append(last)
+
+    return parts
 
 
 def _print_failure_summary(err, log_filename, tail_lines=60):
@@ -535,35 +488,77 @@ def _print_failure_summary(err, log_filename, tail_lines=60):
         pass
 
 
-def _setup_install_env(
-    env_name,
-    activate_base,
+def _get_pixi_executable(pixi):
+    if pixi:
+        pixi_path = os.path.abspath(os.path.expanduser(pixi))
+        if not os.path.exists(pixi_path):
+            raise RuntimeError(f'pixi executable not found: {pixi_path}')
+        return pixi_path
+
+    which = shutil.which('pixi')
+    if which is None:
+        raise RuntimeError(
+            'pixi executable not found on PATH. Install pixi or pass --pixi.'
+        )
+    return which
+
+
+def _write_bootstrap_pixi_toml_with_mache(
+    *,
+    pixi_toml_path,
+    software,
+    mache_version,
+):
+    name = f'{software}-mache-bootstrap'
+    lines = [
+        '[workspace]',
+        f'name = "{name}"',
+        'channels = ["conda-forge"]',
+        'channel-priority = "strict"',
+        '',
+        '[dependencies]',
+        'python = "3.10.*"',
+        'pip = "*"',
+        f'mache = "=={mache_version}"',
+    ]
+    pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
+def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir):
+    src = Path(source_repo_dir) / 'pixi.toml'
+    if not src.is_file():
+        raise RuntimeError(
+            f'Expected mache pixi.toml not found in cloned repo: {src}'
+        )
+    shutil.copyfile(str(src), str(dest_pixi_toml))
+
+
+def _clone_mache_repo(
+    *,
+    mache_fork,
+    mache_branch,
     log_filename,
     quiet,
     recreate,
-    conda_base,
-    packages,
-    software,
 ):
-    """
-    Setup a conda environment for installing the target software
-    """
+    build_root = Path('deploy_tmp/build_mache').resolve()
+    repo_dir = build_root / 'mache'
 
-    env_path = os.path.join(conda_base, 'envs', env_name)
+    if recreate and build_root.exists():
+        shutil.rmtree(str(build_root))
 
-    channels = '-c conda-forge'
+    if repo_dir.exists():
+        # Avoid clobbering developer edits in an existing clone.
+        return
 
-    if recreate or not os.path.exists(env_path):
-        print(f'Setting up a conda environment for installing {software}\n')
-        conda_command = 'create'
-    else:
-        print(f'Updating conda environment for installing {software}\n')
-        conda_command = 'install'
+    build_root.mkdir(parents=True, exist_ok=True)
+
     commands = (
-        f'{activate_base} && '
-        f'conda {conda_command} -y -n "{env_name}" {channels} {packages}'
+        f'cd "{build_root!s}" && '
+        + "GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
+        + f'--depth 1 --single-branch -b "{mache_branch}" '
+        + f'"git@github.com:{mache_fork}.git" mache'
     )
-
     check_call(commands, log_filename, quiet)
 
 

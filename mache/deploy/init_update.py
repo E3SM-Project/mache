@@ -93,21 +93,21 @@ def init_or_update_repo(
             deploy_dir / 'pins.cfg', pins_rendered, overwrite=overwrite
         )
 
-        # conda-spec.txt.j2.j2 rendered once using square-bracket delimiters so
-        # any remaining curly-brace Jinja (deployment-time) stays untouched.
-        conda_spec_tmpl = _read_pkg_template(
-            f'{TEMPLATE_DIR}/conda-spec.txt.j2.j2'
-        )
-        conda_spec_rendered = _render_double_jinja_template_square_brackets(
-            conda_spec_tmpl,
+        # pixi.toml.j2.j2 rendered once using square-bracket
+        # delimiters so any remaining curly-brace Jinja (deployment-time) stays
+        # untouched. Not yet used by deploy.py, but shipped so repos can start
+        # iterating.
+        pixi_toml_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/pixi.toml.j2.j2')
+        pixi_toml_rendered = _render_double_jinja_template_square_brackets(
+            pixi_toml_tmpl,
             {
                 'software': software,
                 'mache_version': mache_version,
             },
         )
         _write_text(
-            deploy_dir / 'conda-spec.txt.j2',
-            conda_spec_rendered,
+            deploy_dir / 'pixi.toml.j2',
+            pixi_toml_rendered,
             overwrite=overwrite,
         )
 

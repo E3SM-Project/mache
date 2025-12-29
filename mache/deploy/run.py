@@ -2,125 +2,122 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
+import shlex
+import shutil
 from configparser import ConfigParser
+from typing import Any
 
 from jinja2 import Template
 from yaml import safe_load
 
 from .bootstrap import (
+    check_call,
     check_location,
-    get_conda_base,
-    install_dev_mache,
-    install_miniforge,
 )
 from .conda import get_conda_platform_and_system
-from .jigsaw import install_jigsaw
+
+
+def _get_pixi_executable(pixi: str | None) -> str:
+    if pixi:
+        pixi = os.path.abspath(os.path.expanduser(pixi))
+        if not os.path.exists(pixi):
+            raise FileNotFoundError(f'pixi executable not found: {pixi}')
+        return pixi
+
+    which = shutil.which('pixi')
+    if which is None:
+        raise FileNotFoundError(
+            'pixi executable not found on PATH. Install pixi or pass --pixi.'
+        )
+    return which
 
 
 def run_deploy(args: argparse.Namespace) -> None:
     """
     Docstring for run_deploy
     """
-    check_location(software='polaris')
-
+    # The target software name is stored in deploy/config.yaml.j2.
+    # We parse it early so check_location can provide a helpful error.
     pins = _read_pins('deploy/pins.cfg')
     replacements = _get_default_replacements()
-    # we don't want mache from conda if we will install it from an
-    # org/fork/branch
-    mache_from_fork = args.mache_fork is not None
-    _add_pins_to_replacements(
-        replacements,
-        pins,
-        sections=['conda', 'all'],
-        exclude_mache=mache_from_fork,
-    )
+    _add_pins_to_replacements(replacements, pins, sections=['pixi', 'all'])
     config = _render_config_yaml('deploy/config.yaml.j2', replacements)
-    _update_replacements_from_config(replacements, config)
 
-    if not _is_deploy_enabled(config):
-        return
+    software = str(config.get('project', {}).get('software', '')).strip()
+    if not software:
+        software = 'software'
+    check_location(software=software)
 
     quiet = args.quiet
-    env_name = args.env_name
-    if env_name is None:
-        env_name = config['conda']['env_name']
-        if env_name is None:
-            raise ValueError(
-                "'env_name' not found in [conda] section of "
-                'deploy/config.yaml.j2 and --env-name not provided'
-            )
 
     os.makedirs('deploy_tmp', exist_ok=True)
     os.makedirs('deploy_tmp/logs', exist_ok=True)
     log_filename = 'deploy_tmp/logs/mache_deploy_run.log'
 
-    conda_base = args.conda
-    # TODO: need to get conda base from config options if installing to shared
-    # space
+    if not _is_deploy_enabled(config):
+        return
 
-    conda_base = get_conda_base(conda_base)
-    conda_base = os.path.abspath(conda_base)
+    pixi_exe = _get_pixi_executable(getattr(args, 'pixi', None))
 
-    source_activation_scripts = f'source "{conda_base}/etc/profile.d/conda.sh"'
-
-    activate_base = f'{source_activation_scripts} && conda activate base'
-
-    # install miniforge if needed
-    install_miniforge(
-        conda_base=conda_base,
-        activate_base=activate_base,
-        log_filename=log_filename,
-        quiet=quiet,
-        update_base=args.update_base,
+    prefix = getattr(args, 'prefix', None)
+    if prefix is None:
+        prefix = config.get('pixi', {}).get('prefix')
+    if not prefix:
+        raise ValueError(
+            "'prefix' not found in [pixi] section of deploy/config.yaml.j2 "
+            'and --prefix not provided'
+        )
+    prefix = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(str(prefix)))
     )
 
-    activate_install_env = (
-        f'{source_activation_scripts} && conda activate "{env_name}"'
-    )
-
-    # install miniforge if needed
-    install_miniforge(
-        conda_base, activate_base, log_filename, quiet, args.update_base
-    )
-
-    source_activation_scripts = f'source "{conda_base}/etc/profile.d/conda.sh"'
-
-    activate_base = f'{source_activation_scripts} && conda activate base'
-
-    activate_bootstrap_env = (
-        f'{source_activation_scripts} && conda activate "mache_deploy"'
-    )
-    activate_install_env = (
-        f'{source_activation_scripts} && conda activate "{env_name}"'
-    )
-
-    _write_conda_spec(
-        'deploy/conda-spec.txt.j2',
-        replacements,
-        'deploy_tmp/conda-spec.txt',
-    )
-    _create_conda_environment(
-        config,
-        env_name=env_name,
-        spec_file='deploy_tmp/conda-spec.txt',
-        reacreate=args.recreate,
-    )
-
-    if mache_from_fork:
-        install_dev_mache(
-            activate_install_env=activate_install_env,
-            mache_fork=args.mache_fork,
-            mache_branch=args.mache_branch,
-            log_filename=log_filename,
-            quiet=quiet,
+    pixi_cfg = config.get('pixi')
+    if not isinstance(pixi_cfg, dict):
+        raise ValueError(
+            "'pixi' section missing or invalid in deploy/config.yaml.j2"
         )
 
-    install_jigsaw(
-        config=config,
-        activate_bootstrap_env=activate_bootstrap_env,
-        activate_install_env=activate_install_env,
-        repo_root=os.getcwd(),
+    if 'python' not in pixi_cfg:
+        raise ValueError(
+            "'python' not found in [pixi] section of deploy/config.yaml.j2"
+        )
+    python_req = str(pixi_cfg.get('python'))
+    if not python_req.strip():
+        raise ValueError(
+            "'python' in [pixi] section of deploy/config.yaml.j2 is empty"
+        )
+
+    if 'channels' not in pixi_cfg:
+        raise ValueError(
+            "'channels' not found in [pixi] section of deploy/config.yaml.j2"
+        )
+    channels = pixi_cfg.get('channels')
+    if (
+        not isinstance(channels, list)
+        or not channels
+        or not all(isinstance(c, str) and c.strip() for c in channels)
+    ):
+        raise ValueError('pixi.channels must be a non-empty list of strings')
+
+    replacements.update(
+        {
+            'python': python_req,
+            'pixi_channels': channels,
+            'include_mache': False,
+            'include_jigsaw': bool(config.get('jigsaw', {}).get('enabled')),
+        }
+    )
+
+    _write_pixi_toml(
+        template_path='deploy/pixi.toml.j2',
+        replacements=replacements,
+        output_dir=prefix,
+    )
+
+    _pixi_install(
+        pixi_exe=pixi_exe,
+        project_dir=prefix,
+        recreate=args.recreate,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -133,7 +130,7 @@ def _read_pins(pins_path: str) -> ConfigParser:
     return pins
 
 
-def _get_default_replacements() -> dict[str, str]:
+def _get_default_replacements() -> dict[str, Any]:
     """Get default replacements such as machine architecture."""
     conda_platform, system = get_conda_platform_and_system()
     replacements = {
@@ -144,24 +141,23 @@ def _get_default_replacements() -> dict[str, str]:
 
 
 def _add_pins_to_replacements(
-    replacements: dict[str, str],
+    replacements: dict[str, Any],
     pins: ConfigParser,
     sections: list[str],
-    exclude_mache: bool,
 ) -> None:
     """Convert a ConfigParser section into a Jinja2 replacements mapping."""
     for section in sections:
         if section not in pins:
             continue
         section_obj = pins[section]
-        replacements.update({key: section_obj[key] for key in section_obj})
-    if exclude_mache and 'mache' in replacements:
-        del replacements['mache']
+        replacements.update(
+            {key: str(section_obj[key]) for key in section_obj}
+        )
 
 
 def _render_config_yaml(
     template_path: str,
-    replacements: dict[str, str],
+    replacements: dict[str, Any],
 ) -> dict:
     """Render a YAML Jinja2 template and parse the resulting YAML."""
     with open(template_path, 'r', encoding='utf-8') as file_handle:
@@ -170,74 +166,47 @@ def _render_config_yaml(
     return safe_load(rendered)
 
 
-def _update_replacements_from_config(
-    replacements: dict[str, str],
-    config: dict,
-) -> None:
-    """Update replacements mapping with values from the rendered config."""
-    conda_config = config['conda']
-    if 'mpi' in conda_config:
-        mpi = conda_config['mpi']
-        if mpi not in ['nompi', 'openmpi', 'mpich']:
-            raise ValueError(
-                f'Invalid MPI option in deploy/config.yaml.j2: {mpi!r}'
-            )
-        mpi_prefix = 'nompi' if mpi == 'nompi' else f'mpi_{mpi}'
-        replacements['mpi'] = mpi
-        replacements['mpi_prefix'] = mpi_prefix
-    for key in ['mpi']:
-        if key in conda_config:
-            replacements[key] = conda_config[key]
-
-
 def _is_deploy_enabled(config: dict) -> bool:
     """Return True if deploy is enabled in the rendered config."""
-    conda_config = config['conda']
-    if 'deploy' not in conda_config:
+    pixi_config = config.get('pixi', {})
+    if 'deploy' not in pixi_config:
         raise ValueError(
-            "'deploy' not found in [conda] section of deploy/config.yaml.j2"
+            "'deploy' not found in [pixi] section of deploy/config.yaml.j2"
         )
-    return bool(conda_config.get('deploy'))
+    return bool(pixi_config.get('deploy'))
 
 
-def _write_conda_spec(
+def _write_pixi_toml(
     template_path: str,
-    replacements: dict[str, str],
-    output_path: str,
+    replacements: dict[str, Any],
+    output_dir: str,
 ) -> None:
-    """Render the conda spec template into the deploy_tmp spec file."""
     with open(template_path, 'r', encoding='utf-8') as file_handle:
-        conda_spec_tmpl = Template(file_handle.read())
-    conda_spec_rendered = conda_spec_tmpl.render(**replacements)
+        pixi_tmpl = Template(file_handle.read())
+    rendered = pixi_tmpl.render(**replacements)
 
-    os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, 'pixi.toml')
     with open(output_path, 'w', encoding='utf-8') as file_handle:
-        file_handle.write(conda_spec_rendered)
+        file_handle.write(rendered)
 
 
-def _create_conda_environment(
-    config: dict,
-    env_name: str | None,
-    spec_file: str,
-    reacreate: bool,
+def _pixi_install(
+    pixi_exe: str,
+    project_dir: str,
+    recreate: bool,
+    log_filename: str,
+    quiet: bool,
 ) -> None:
-    """Create the conda environment described by the rendered config."""
-    conda_config = config['conda']
+    project_dir = os.path.abspath(project_dir)
 
-    if 'channels' not in conda_config:
-        raise ValueError(
-            "'channels' not found in [conda] section of deploy/config.yaml.j2"
-        )
-    channels = conda_config['channels']
-    channels_str = ' -c '.join(channels)
+    pixi_dir = os.path.join(project_dir, '.pixi')
+    if recreate and os.path.exists(pixi_dir):
+        shutil.rmtree(pixi_dir)
 
-    if reacreate:
-        command = 'conda create'
-    else:
-        command = 'conda install'
-
-    command = (
-        f'{command} -y -n {env_name} -c {channels_str} --file {spec_file}'
-    )
-    print(f'Running command: {command}')
-    subprocess.run(command, shell=True, check=True)
+    # Do not force cache/home locations here.
+    # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
+    #   PIXI_CACHE_DIR in shell startup or modulefiles.
+    # - Otherwise pixi uses its own defaults (typically under $HOME).
+    cmd = f'cd {shlex.quote(project_dir)} && {shlex.quote(pixi_exe)} install'
+    check_call(cmd, log_filename=log_filename, quiet=quiet)

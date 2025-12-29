@@ -9,6 +9,7 @@ Target software deployment entrypoint.
     * the pinned mache version
 - Calls bootstrap.py with routed args (bootstrap|both) and stops
 """
+
 import argparse
 import configparser
 import json
@@ -22,16 +23,16 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-PINS_CFG = os.path.join("deploy", "pins.cfg")
-CLI_SPEC_JSON = os.path.join("deploy", "cli_spec.json")
-DEPLOY_TMP_DIR = "deploy_tmp"
-BOOTSTRAP_PATH = os.path.join(DEPLOY_TMP_DIR, "bootstrap.py")
+PINS_CFG = os.path.join('deploy', 'pins.cfg')
+CLI_SPEC_JSON = os.path.join('deploy', 'cli_spec.json')
+DEPLOY_TMP_DIR = 'deploy_tmp'
+BOOTSTRAP_PATH = os.path.join(DEPLOY_TMP_DIR, 'bootstrap.py')
 
 # Default upstream repo for release/tag downloads
-DEFAULT_MACHE_REPO = "E3SM-Project/mache"
+DEFAULT_MACHE_REPO = 'E3SM-Project/mache'
 
 # Where bootstrap.py lives inside the mache repo
-BOOTSTRAP_RELPATH = "mache/deploy/bootstrap.py"
+BOOTSTRAP_RELPATH = 'mache/deploy/bootstrap.py'
 
 
 def main():
@@ -45,7 +46,7 @@ def main():
 
     _validate_fork_branch_pair(args)
 
-    using_fork = (getattr(args, "mache_fork", None) is not None)
+    using_fork = getattr(args, 'mache_fork', None) is not None
 
     if not using_fork:
         _validate_cli_spec_matches_pins(cli_spec, pinned_mache_version)
@@ -58,8 +59,8 @@ def main():
 
     bootstrap_url = _bootstrap_url(
         mache_version=pinned_mache_version,
-        mache_fork=getattr(args, "mache_fork", None),
-        mache_branch=getattr(args, "mache_branch", None),
+        mache_fork=getattr(args, 'mache_fork', None),
+        mache_branch=getattr(args, 'mache_branch', None),
     )
 
     _download_file(bootstrap_url, BOOTSTRAP_PATH)
@@ -68,35 +69,47 @@ def main():
     # sys.executable.
     _make_executable(BOOTSTRAP_PATH)
 
-    bootstrap_argv = _build_routed_argv(cli_spec, args, route_key="bootstrap")
+    bootstrap_argv = _build_routed_argv(cli_spec, args, route_key='bootstrap')
 
-    software = str(cli_spec.get("meta", {}).get("software", "")).strip()
+    software = str(cli_spec.get('meta', {}).get('software', '')).strip()
     if not software:
         raise SystemExit(
-            "ERROR: deploy/cli_spec.json meta.software must be set to the "
-            "target software name."
+            'ERROR: deploy/cli_spec.json meta.software must be set to the '
+            'target software name.'
         )
     # Always include target software name (not user-facing).
-    bootstrap_argv = ["--software", software] + bootstrap_argv
+    bootstrap_argv = ['--software', software] + bootstrap_argv
+
+    # Only pass a mache version when using a tagged release. If a fork/branch
+    # is requested, bootstrap must take dependencies from the branch's
+    # pixi.toml (not from a pinned release).
+    if not using_fork:
+        if '--mache-version' not in bootstrap_argv:
+            bootstrap_argv += ['--mache-version', pinned_mache_version]
 
     cmd = [sys.executable, BOOTSTRAP_PATH] + bootstrap_argv
     subprocess.check_call(cmd)
 
+    if args.bootstrap_only:
+        pixi_exe = _get_pixi_executable(getattr(args, 'pixi', None))
+        bootstrap_dir = os.path.join(DEPLOY_TMP_DIR, 'bootstrap_pixi')
+        print(
+            '\nBootstrap environment is ready. To use it interactively:\n'
+            f'  cd {bootstrap_dir}\n'
+            f'  pixi shell\n\n'
+            'Then, from the target repo root (two levels up), you can run:\n'
+            f'  cd ../.. && mache deploy update --software {software}\n'
+        )
+
     # Now that the bootstrap env exists and has mache installed, run
     # deployment. Forward args routed to "mache".
-    mache_run_argv = _build_routed_argv(cli_spec, args, route_key="run")
-
-    # Use conda base from args if provided; otherwise use what bootstrap
-    # inferred (but deploy.py also needs a conda_base to activate, so prefer
-    # explicit).
-    conda_base = _get_conda_base(getattr(args, "conda", None))
+    mache_run_argv = _build_routed_argv(cli_spec, args, route_key='run')
 
     if not args.bootstrap_only:
-
+        pixi_exe = _get_pixi_executable(getattr(args, 'pixi', None))
         _run_mache_deploy_run(
-            conda_base=conda_base,
-            env_name="mache_deploy",
-            repo_root=".",
+            pixi_exe=pixi_exe,
+            repo_root='.',
             mache_run_argv=mache_run_argv,
         )
 
@@ -104,90 +117,93 @@ def main():
 def _check_location():
     """Fail fast if not run from repo root."""
     expected = [
-        "deploy.py",
+        'deploy.py',
         PINS_CFG,
         CLI_SPEC_JSON,
     ]
     missing = [p for p in expected if not os.path.exists(p)]
     if missing:
-        missing_str = "\n  - " + "\n  - ".join(missing)
+        missing_str = '\n  - ' + '\n  - '.join(missing)
         raise SystemExit(
-            f"ERROR: deploy.py must be run from the root of the target "
-            f"software repository.\n"
-            f"Current location: {os.getcwd()}\n"
-            f"Missing expected files:{missing_str}"
+            f'ERROR: deploy.py must be run from the root of the target '
+            f'software repository.\n'
+            f'Current location: {os.getcwd()}\n'
+            f'Missing expected files:{missing_str}'
         )
 
 
 def _read_pinned_mache_version(pins_path):
     if not os.path.exists(pins_path):
-        raise SystemExit(f"ERROR: Required pins file not found: {pins_path}")
+        raise SystemExit(f'ERROR: Required pins file not found: {pins_path}')
 
     cfg = configparser.ConfigParser(interpolation=None)
     try:
-        with open(pins_path, "r", encoding="utf-8") as f:
+        with open(pins_path, 'r', encoding='utf-8') as f:
             cfg.read_file(f)
     except OSError as e:
-        raise SystemExit(f"ERROR: Failed to read {pins_path}: {e!r}") from e
+        raise SystemExit(f'ERROR: Failed to read {pins_path}: {e!r}') from e
 
-    if not cfg.has_section("conda"):
-        raise SystemExit(
-            f"ERROR: {pins_path} is missing required [conda] section"
-        )
+    section = None
+    if cfg.has_section('pixi') and cfg.has_option('pixi', 'mache'):
+        section = 'pixi'
 
-    if not cfg.has_option("conda", "mache"):
-        raise SystemExit(
-            f"ERROR: {pins_path} is missing required option [conda] mache"
-        )
+    if section is None:
+        raise SystemExit(f'ERROR: {pins_path} must contain [pixi] mache')
 
-    version = cfg.get("conda", "mache").strip()
+    version = cfg.get(section, 'mache').strip()
     if not version:
-        raise SystemExit(f"ERROR: {pins_path} option [conda] mache is empty")
+        raise SystemExit(
+            f'ERROR: {pins_path} option [{section}] mache is empty'
+        )
 
     return version
 
 
 def _read_cli_spec(spec_path):
     if not os.path.exists(spec_path):
-        raise SystemExit(f"ERROR: Required CLI spec not found: {spec_path}")
+        raise SystemExit(f'ERROR: Required CLI spec not found: {spec_path}')
 
     try:
-        with open(spec_path, "r", encoding="utf-8") as f:
+        with open(spec_path, 'r', encoding='utf-8') as f:
             spec = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
-        raise SystemExit(f"ERROR: Failed to parse {spec_path}: {e!r}") from e
+        raise SystemExit(f'ERROR: Failed to parse {spec_path}: {e!r}') from e
 
-    if "meta" not in spec or "arguments" not in spec:
+    if 'meta' not in spec or 'arguments' not in spec:
         raise SystemExit(
             f"ERROR: {spec_path} must contain top-level keys 'meta' and "
             f"'arguments'"
         )
 
-    if "mache_version" not in spec["meta"]:
+    if 'mache_version' not in spec['meta']:
         raise SystemExit(
             f"ERROR: {spec_path} meta must include 'mache_version'"
         )
 
-    if not isinstance(spec["arguments"], list):
+    if not isinstance(spec['arguments'], list):
         raise SystemExit(f"ERROR: {spec_path} 'arguments' must be a list")
 
     return spec
 
 
 def _build_parser_from_cli_spec(cli_spec):
-    description = cli_spec.get("meta", {}).get(
-        "description", "Deploy E3SM software environment"
+    description = cli_spec.get('meta', {}).get(
+        'description', 'Deploy E3SM software environment'
     )
     parser = argparse.ArgumentParser(description=description)
 
     for entry, flags in _iter_routed_cli_spec_entries(
-        cli_spec, route_key="deploy"
+        cli_spec, route_key='deploy'
     ):
-
         # Build kwargs for argparse. Only allow a small, safe subset.
         kwargs = {}
         for key in (
-            "dest", "help", "action", "default", "required", "choices"
+            'dest',
+            'help',
+            'action',
+            'default',
+            'required',
+            'choices',
         ):
             if key in entry:
                 kwargs[key] = entry[key]
@@ -200,7 +216,7 @@ def _build_parser_from_cli_spec(cli_spec):
             parser.add_argument(*flags, **kwargs)
         except TypeError as e:
             raise SystemExit(
-                f"ERROR: Bad argparse spec for flags {flags}: {e}"
+                f'ERROR: Bad argparse spec for flags {flags}: {e}'
             ) from e
 
     return parser
@@ -212,13 +228,13 @@ def _iter_routed_cli_spec_entries(cli_spec, route_key):
     This function centralizes CLI-spec validation shared between parser
     construction and argv forwarding.
     """
-    for entry in cli_spec["arguments"]:
-        flags = entry.get("flags")
-        route = entry.get("route")
+    for entry in cli_spec['arguments']:
+        flags = entry.get('flags')
+        route = entry.get('route')
 
         if not isinstance(route, list):
             raise SystemExit(
-                f"ERROR: cli_spec.json argument {entry.get('flags')} has "
+                f'ERROR: cli_spec.json argument {entry.get("flags")} has '
                 f"invalid 'route'; must be a list"
             )
 
@@ -232,29 +248,27 @@ def _iter_routed_cli_spec_entries(cli_spec, route_key):
 
 
 def _validate_fork_branch_pair(args):
-    fork = getattr(args, "mache_fork", None)
-    branch = getattr(args, "mache_branch", None)
+    fork = getattr(args, 'mache_fork', None)
+    branch = getattr(args, 'mache_branch', None)
     if (fork is None) != (branch is None):
         raise SystemExit(
-            "ERROR: You must supply both --mache-fork and --mache-branch, or "
-            "neither."
+            'ERROR: You must supply both --mache-fork and --mache-branch, or '
+            'neither.'
         )
 
 
-def _validate_cli_spec_matches_pins(
-    cli_spec, pinned_mache_version
-):
-    meta_version = str(cli_spec["meta"].get("mache_version", "")).strip()
+def _validate_cli_spec_matches_pins(cli_spec, pinned_mache_version):
+    meta_version = str(cli_spec['meta'].get('mache_version', '')).strip()
     if not meta_version:
-        raise SystemExit("ERROR: cli_spec.json meta.mache_version is empty")
+        raise SystemExit('ERROR: cli_spec.json meta.mache_version is empty')
 
     if meta_version != pinned_mache_version:
         raise SystemExit(
-            f"ERROR: Mache version mismatch.\n"
-            f"  deploy/pins.cfg pins mache = {pinned_mache_version}\n"
-            f"  deploy/cli_spec.json meta.mache_version = {meta_version}\n\n"
-            f"Fix: copy deploy/cli_spec.json from the matching mache version "
-            f"into this repo (or update both together)."
+            f'ERROR: Mache version mismatch.\n'
+            f'  deploy/pins.cfg pins mache = {pinned_mache_version}\n'
+            f'  deploy/cli_spec.json meta.mache_version = {meta_version}\n\n'
+            f'Fix: copy deploy/cli_spec.json from the matching mache version '
+            f'into this repo (or update both together).'
         )
 
 
@@ -265,10 +279,10 @@ def _bootstrap_url(
 ):
     if mache_fork is not None and mache_branch is not None:
         # Raw file from a fork/branch
-        return f"https://raw.githubusercontent.com/{mache_fork}/{mache_branch}/{BOOTSTRAP_RELPATH}"  # noqa: E501
+        return f'https://raw.githubusercontent.com/{mache_fork}/{mache_branch}/{BOOTSTRAP_RELPATH}'  # noqa: E501
 
     # Raw file from a version tag. Convention: tags are "X.Y.Z".
-    return f"https://raw.githubusercontent.com/{DEFAULT_MACHE_REPO}/{mache_version}/{BOOTSTRAP_RELPATH}"  # noqa: E501
+    return f'https://raw.githubusercontent.com/{DEFAULT_MACHE_REPO}/{mache_version}/{BOOTSTRAP_RELPATH}'  # noqa: E501
 
 
 def _download_file(url, dest_path):
@@ -276,16 +290,16 @@ def _download_file(url, dest_path):
     # GitHub raw content supports query strings; adding a cache-buster forces a
     # fresh fetch even if an intermediate cache is misbehaving.
     effective_url = url
-    if "raw.githubusercontent.com" in url:
-        sep = "&" if "?" in url else "?"
-        effective_url = f"{url}{sep}_cb={int(time.time())}"
+    if 'raw.githubusercontent.com' in url:
+        sep = '&' if '?' in url else '?'
+        effective_url = f'{url}{sep}_cb={int(time.time())}'
 
     req = Request(
         effective_url,
         headers={
-            "User-Agent": "Mozilla/5.0",
-            "Cache-Control": "no-cache, no-store, max-age=0",
-            "Pragma": "no-cache",
+            'User-Agent': 'Mozilla/5.0',
+            'Cache-Control': 'no-cache, no-store, max-age=0',
+            'Pragma': 'no-cache',
         },
     )
     try:
@@ -293,36 +307,36 @@ def _download_file(url, dest_path):
             data = resp.read()
     except HTTPError as e:
         raise SystemExit(
-            f"ERROR: Failed to download bootstrap.py (HTTP {e.code}) from "
-            f"{effective_url}"
+            f'ERROR: Failed to download bootstrap.py (HTTP {e.code}) from '
+            f'{effective_url}'
         ) from e
     except URLError as e:
         raise SystemExit(
-            f"ERROR: Failed to download bootstrap.py from {effective_url}: "
-            f"{e.reason}"
+            f'ERROR: Failed to download bootstrap.py from {effective_url}: '
+            f'{e.reason}'
         ) from e
     except Exception as e:
         raise SystemExit(
-            f"ERROR: Unexpected error downloading bootstrap.py from "
-            f"{effective_url}: "
-            f"{e!r}"
+            f'ERROR: Unexpected error downloading bootstrap.py from '
+            f'{effective_url}: '
+            f'{e!r}'
         ) from e
 
     # Basic sanity check: should look like a python script.
-    first_line = data.splitlines()[0].strip() if data else b""
-    if b"python" not in first_line and b"#!/" not in first_line:
+    first_line = data.splitlines()[0].strip() if data else b''
+    if b'python' not in first_line and b'#!/' not in first_line:
         raise SystemExit(
-            f"ERROR: Downloaded bootstrap.py does not look like a python "
-            f"script.\n"
-            f"URL: {effective_url}\n"
-            f"This may indicate a proxy/redirect issue."
+            f'ERROR: Downloaded bootstrap.py does not look like a python '
+            f'script.\n'
+            f'URL: {effective_url}\n'
+            f'This may indicate a proxy/redirect issue.'
         )
 
     try:
-        with open(dest_path, "wb") as f:
+        with open(dest_path, 'wb') as f:
             f.write(data)
     except OSError as e:
-        raise SystemExit(f"ERROR: Failed to write {dest_path}: {e!r}") from e
+        raise SystemExit(f'ERROR: Failed to write {dest_path}: {e!r}') from e
 
 
 def _make_executable(path):
@@ -334,29 +348,20 @@ def _make_executable(path):
         pass
 
 
-def _get_conda_base(conda_base):
-    """
-    Get the absolute path to the files for the conda base environment
-    """
+def _get_pixi_executable(pixi):
+    if pixi:
+        pixi = os.path.abspath(os.path.expanduser(pixi))
+        if not os.path.exists(pixi):
+            raise SystemExit(f'ERROR: pixi executable not found: {pixi}')
+        return pixi
 
-    if conda_base is None:
-        try:
-            conda_base = subprocess.check_output(
-                ['conda', 'info', '--base'], universal_newlines=True
-            ).strip()
-            print(
-                f'\nWarning: --conda path not supplied.  Using conda '
-                f'installed at:\n'
-                f'   {conda_base}\n'
-            )
-        except subprocess.CalledProcessError as e:
-            raise ValueError(
-                'No conda base provided with --conda and '
-                'none could be inferred.'
-            ) from e
-    # handle "~" in the path
-    conda_base = os.path.abspath(os.path.expanduser(conda_base))
-    return conda_base
+    which = shutil.which('pixi')
+    if which is None:
+        raise SystemExit(
+            'ERROR: pixi executable not found on PATH. Install pixi or pass '
+            '--pixi.'
+        )
+    return which
 
 
 def _build_routed_argv(cli_spec, args, route_key):
@@ -365,19 +370,19 @@ def _build_routed_argv(cli_spec, args, route_key):
     for entry, flags in _iter_routed_cli_spec_entries(
         cli_spec, route_key=route_key
     ):
-        dest = entry.get("dest")
+        dest = entry.get('dest')
         if not dest:
             raise SystemExit(
                 f"ERROR: cli_spec.json argument {flags} missing 'dest'"
             )
 
         value = getattr(args, dest, None)
-        action = entry.get("action")
+        action = entry.get('action')
 
         # Use the first flag as the canonical one when forwarding.
         flag0 = flags[0]
 
-        if action == "store_true":
+        if action == 'store_true':
             if value:
                 argv.append(flag0)
         else:
@@ -387,39 +392,38 @@ def _build_routed_argv(cli_spec, args, route_key):
     return argv
 
 
-def _run_mache_deploy_run(conda_base, env_name, repo_root, mache_run_argv):
+def _run_mache_deploy_run(pixi_exe, repo_root, mache_run_argv):
     """
-    Activate the bootstrap env and run `mache deploy run ...`.
+    Run `mache deploy run ...` inside the bootstrap pixi environment.
     """
-    conda_base = os.path.abspath(os.path.expanduser(conda_base))
     repo_root = os.path.abspath(repo_root)
 
-    conda_sh = os.path.join(conda_base, "etc", "profile.d", "conda.sh")
-    if not os.path.exists(conda_sh):
+    bootstrap_dir = os.path.abspath(
+        os.path.join(DEPLOY_TMP_DIR, 'bootstrap_pixi')
+    )
+    pixi_toml = os.path.join(bootstrap_dir, 'pixi.toml')
+    if not os.path.exists(pixi_toml):
         raise SystemExit(
-            f"ERROR: Expected conda activation script not found:\n"
-            f"  {conda_sh}\n"
-            f"Did bootstrap install conda at --conda {conda_base}?"
+            f'ERROR: bootstrap pixi project not found. Expected: {pixi_toml}'
         )
 
-    # Build a bash command that activates conda + env, then runs mache.
-    mache_cmd = "mache deploy run"
+    # Build a bash command that runs mache inside pixi, then cd's to repo.
+    mache_cmd = 'mache deploy run'
     if mache_run_argv:
-        mache_cmd = f"{mache_cmd} " + " ".join(
+        mache_cmd = f'{mache_cmd} ' + ' '.join(
             shlex.quote(a) for a in mache_run_argv
         )
 
     cmd_parts = [
-        f"source {shlex.quote(conda_sh)}",
-        f"conda activate {shlex.quote(env_name)}",
-        f"cd {shlex.quote(repo_root)}",
-        mache_cmd,
+        f'cd {shlex.quote(bootstrap_dir)}',
+        f'{shlex.quote(pixi_exe)} run bash -lc '
+        f'{shlex.quote("cd " + repo_root + " && " + mache_cmd)}',
     ]
 
-    bash_cmd = " && ".join(cmd_parts)
+    bash_cmd = ' && '.join(cmd_parts)
 
-    subprocess.check_call(["/bin/bash", "-lc", bash_cmd])
+    subprocess.check_call(['/bin/bash', '-lc', bash_cmd])
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

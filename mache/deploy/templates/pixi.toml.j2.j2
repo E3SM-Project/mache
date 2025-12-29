@@ -1,0 +1,21 @@
+[workspace]
+name = "[[ software ]]-dev"
+channels = [
+{%- for channel in pixi_channels %}
+  "{{ channel }}"{%- if not loop.last %},{% endif %}
+{%- endfor %}
+]
+platforms = ["{{ platform }}"]
+channel-priority = "strict"
+
+[dependencies]
+python = "{{ python }}"
+pip = "*"
+
+{%- if include_mache %}
+mache = "=={{ mache }}"
+{%- endif %}
+
+{%- if include_jigsaw %}
+jigsawpy = "*"
+{%- endif %}

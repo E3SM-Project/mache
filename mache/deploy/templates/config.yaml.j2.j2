@@ -1,9 +1,19 @@
 project:
   software: "[[ software ]]"
 
-conda:
-  # env name can still be jinja2-templated at deploy-time if you want
-  env_name: "[[ conda_env_name ]]"  # e.g. "polaris_dev"
+pixi:
+  # Whether to deploy the pixi environment
+  deploy: true
+
+  # Where to install the pixi project (and its .pixi directory).
+  # Absolute path is recommended for shared deployments.
+  # Environment variables will be expanded at runtime (e.g. $SCRATCH).
+  prefix: "."
+
+  # Python requirement for the deployed environment.
+  python: ">=3.10,<3.15"
+
+  # Channels used by pixi for this environment.
   channels:
     - conda-forge
 
@@ -12,7 +22,7 @@ env_vars:
   set: {}
 
 jigsaw:
-  # If true, build/install JIGSAW + JIGSAW-Python into the conda env
+  # If true, build/install JIGSAW + JIGSAW-Python into the pixi env
   enabled: false
 
   # Relative path in the target repo where JIGSAW-Python lives.
