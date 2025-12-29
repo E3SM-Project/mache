@@ -22,6 +22,7 @@ tqdm = "*"
 # Building
 setuptools = ">=60"
 wheel = "*"
+rattler-build = "*"
 
 # Linting and testing
 pytest = "*"

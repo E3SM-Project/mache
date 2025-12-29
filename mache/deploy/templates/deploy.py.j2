@@ -38,11 +38,16 @@ BOOTSTRAP_RELPATH = 'mache/deploy/bootstrap.py'
 def main():
     _check_location()
 
-    pinned_mache_version = _read_pinned_mache_version(PINS_CFG)
+    pinned_mache_version, pinned_bootstrap_python = _read_pins(PINS_CFG)
     cli_spec = _read_cli_spec(CLI_SPEC_JSON)
 
     parser = _build_parser_from_cli_spec(cli_spec)
     args = parser.parse_args(sys.argv[1:])
+
+    if args.bootstrap_python:
+        bootstrap_python = args.bootstrap_python
+    else:
+        bootstrap_python = pinned_bootstrap_python
 
     _validate_fork_branch_pair(args)
 
@@ -78,7 +83,12 @@ def main():
             'target software name.'
         )
     # Always include target software name (not user-facing).
-    bootstrap_argv = ['--software', software] + bootstrap_argv
+    bootstrap_argv = [
+        '--software',
+        software,
+        '--bootstrap-python',
+        bootstrap_python,
+    ] + bootstrap_argv
 
     # Only pass a mache version when using a tagged release. If a fork/branch
     # is requested, bootstrap must take dependencies from the branch's
@@ -132,7 +142,7 @@ def _check_location():
         )
 
 
-def _read_pinned_mache_version(pins_path):
+def _read_pins(pins_path):
     if not os.path.exists(pins_path):
         raise SystemExit(f'ERROR: Required pins file not found: {pins_path}')
 
@@ -150,13 +160,19 @@ def _read_pinned_mache_version(pins_path):
     if section is None:
         raise SystemExit(f'ERROR: {pins_path} must contain [pixi] mache')
 
-    version = cfg.get(section, 'mache').strip()
-    if not version:
+    mache_version = cfg.get(section, 'mache').strip()
+    if not mache_version:
         raise SystemExit(
             f'ERROR: {pins_path} option [{section}] mache is empty'
         )
 
-    return version
+    bootstrap_python = cfg.get(section, 'bootstrap_python').strip()
+    if not bootstrap_python:
+        raise SystemExit(
+            f'ERROR: {pins_path} option [{section}] bootstrap_python is empty'
+        )
+
+    return mache_version, bootstrap_python
 
 
 def _read_cli_spec(spec_path):

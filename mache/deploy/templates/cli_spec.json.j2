@@ -31,6 +31,12 @@
       "route": ["bootstrap", "run"]
     },
     {
+      "flags": ["--bootstrap-python"],
+      "dest": "bootstrap_python",
+      "help": "The python version to use during bootstrap.",
+      "route": ["deploy", "bootstrap"]
+    },
+    {
       "flags": ["--mache-fork"],
       "dest": "mache_fork",
       "help": "Point to a mache org/fork (and branch) for testing. Example: E3SM-Project/mache",

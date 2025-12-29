@@ -15,6 +15,7 @@ from .bootstrap import (
     check_location,
 )
 from .conda import get_conda_platform_and_system
+from .jigsaw import install_jigsaw
 
 
 def _get_pixi_executable(pixi: str | None) -> str:
@@ -99,12 +100,16 @@ def run_deploy(args: argparse.Namespace) -> None:
     ):
         raise ValueError('pixi.channels must be a non-empty list of strings')
 
+    jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
+
+    # First, install a base environment without jigsawpy. If jigsaw is enabled,
+    # we will build jigsawpy from source and then add it from a local channel.
     replacements.update(
         {
             'python': python_req,
             'pixi_channels': channels,
             'include_mache': False,
-            'include_jigsaw': bool(config.get('jigsaw', {}).get('enabled')),
+            'include_jigsaw': False,
         }
     )
 
@@ -121,6 +126,38 @@ def run_deploy(args: argparse.Namespace) -> None:
         log_filename=log_filename,
         quiet=quiet,
     )
+
+    if jigsaw_enabled:
+        local_channel = install_jigsaw(
+            config=config,
+            pixi_exe=pixi_exe,
+            python_req=python_req,
+            repo_root='.',
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+
+        channels_with_local = [local_channel] + [
+            c for c in channels if c != local_channel
+        ]
+        replacements.update(
+            {
+                'pixi_channels': channels_with_local,
+                'include_jigsaw': True,
+            }
+        )
+        _write_pixi_toml(
+            template_path='deploy/pixi.toml.j2',
+            replacements=replacements,
+            output_dir=prefix,
+        )
+        _pixi_install(
+            pixi_exe=pixi_exe,
+            project_dir=prefix,
+            recreate=False,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
 
 
 def _read_pins(pins_path: str) -> ConfigParser:
@@ -208,5 +245,9 @@ def _pixi_install(
     # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
     #   PIXI_CACHE_DIR in shell startup or modulefiles.
     # - Otherwise pixi uses its own defaults (typically under $HOME).
-    cmd = f'cd {shlex.quote(project_dir)} && {shlex.quote(pixi_exe)} install'
+    cmd = (
+        f'cd {shlex.quote(project_dir)} && '
+        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{shlex.quote(pixi_exe)} install'
+    )
     check_call(cmd, log_filename=log_filename, quiet=quiet)

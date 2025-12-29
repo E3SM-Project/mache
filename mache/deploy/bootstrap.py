@@ -313,11 +313,17 @@ def _run(log_filename):
             source_repo_dir=Path('deploy_tmp/build_mache/mache'),
         )
 
-        cmd_install = f'cd "{bootstrap_dir}" && "{pixi_exe}" install'
+        cmd_install = (
+            f'cd "{bootstrap_dir}" && '
+            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'"{pixi_exe}" install'
+        )
         check_call(cmd_install, log_filename, quiet)
 
         pixi_run_bash_lc_prefix = (
-            f'cd "{bootstrap_dir}" && "{pixi_exe}" run bash -lc'
+            f'cd "{bootstrap_dir}" && '
+            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'"{pixi_exe}" run bash -lc'
         )
         install_dev_mache(
             pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
@@ -331,9 +337,14 @@ def _run(log_filename):
             pixi_toml_path=pixi_toml_path,
             software=software,
             mache_version=mache_version,
+            python_version=args.bootstrap_python,
         )
 
-        cmd_install = f'cd "{bootstrap_dir}" && "{pixi_exe}" install'
+        cmd_install = (
+            f'cd "{bootstrap_dir}" && '
+            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'"{pixi_exe}" install'
+        )
         check_call(cmd_install, log_filename, quiet)
 
 
@@ -385,6 +396,12 @@ def _parse_args():
         '--mache-version',
         dest='mache_version',
         help='The version of mache to install if not from a branch.',
+    )
+    parser.add_argument(
+        '--bootstrap-python',
+        dest='bootstrap_python',
+        required=True,
+        help='The python version to use during bootstrap.',
     )
     parser.add_argument(
         '--quiet',
@@ -508,6 +525,7 @@ def _write_bootstrap_pixi_toml_with_mache(
     pixi_toml_path,
     software,
     mache_version,
+    python_version,
 ):
     name = f'{software}-mache-bootstrap'
     lines = [
@@ -517,8 +535,9 @@ def _write_bootstrap_pixi_toml_with_mache(
         'channel-priority = "strict"',
         '',
         '[dependencies]',
-        'python = "3.10.*"',
+        f'python = "{python_version}.*"',
         'pip = "*"',
+        'rattler-build = "*"',
         f'mache = "=={mache_version}"',
     ]
     pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')

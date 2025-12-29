@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
-import subprocess
+import re
+import shlex
 from importlib import resources
 from pathlib import Path
-
-import tomllib
 
 from mache.deploy.bootstrap import check_call
 from mache.deploy.conda import get_conda_platform_and_system
@@ -24,12 +23,12 @@ PYTHON_VARIANTS = {
 
 def install_jigsaw(
     config: dict,
-    activate_bootstrap_env: str,
-    activate_install_env: str,
+    pixi_exe: str,
+    python_req: str,
     repo_root: str,
     log_filename: str,
     quiet: bool,
-) -> None:
+) -> str:
     """
     Optionally install JIGSAW and JIGSAW-Python in the deployment env.
 
@@ -50,12 +49,10 @@ def install_jigsaw(
     ----------
     config : dict
         The full deployment configuration dictionary.
-    activate_bootstrap_env : str
-        The command to activate the bootstrap conda environment.
-    activate_install_env : str
-        The command to activate the target software's conda environment.
-    install_env_path : str
-        The path to the target software's conda environment.
+    pixi_exe : str
+        Path to the pixi executable.
+    python_req : str
+        The pixi python version requirement (e.g. "3.14.*").
     repo_root : str
         The path to the target software repository root.
     log_filename : str
@@ -67,7 +64,9 @@ def install_jigsaw(
     jigsaw_cfg = (config or {}).get('jigsaw') or {}
     enabled = bool(jigsaw_cfg.get('enabled', False))
     if not enabled:
-        return
+        raise RuntimeError(
+            'install_jigsaw() called but config["jigsaw"]["enabled"] is false'
+        )
 
     repo_root_path = Path(repo_root).resolve()
     rel_path = jigsaw_cfg.get('jigsaw_python_path', None)
@@ -78,18 +77,18 @@ def install_jigsaw(
 
     jigsaw_python_dir = (repo_root_path / rel_path).resolve()
 
-    python_version = _get_python_major_minor_version(
-        activate_env=activate_install_env,
-        log_filename=log_filename,
-        quiet=quiet,
-    )
+    python_version = _extract_major_minor_from_requirement(python_req)
+    if not python_version:
+        raise ValueError(
+            'Unable to determine python major.minor for JIGSAW build from '
+            f'pixi.python requirement: {python_req!r}. '
+            'Use a pinned major.minor (e.g. "3.14" or "3.14.*").'
+        )
 
-    # build with the bootstrap env
     _ensure_jigsaw_python_source(
         repo_root=repo_root_path,
         jigsaw_python_dir=jigsaw_python_dir,
         rel_path=rel_path,
-        activate_env=activate_bootstrap_env,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -97,7 +96,7 @@ def install_jigsaw(
     jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
 
     _build_external_jigsaw(
-        activate_env=activate_bootstrap_env,
+        pixi_exe=pixi_exe,
         jigsaw_python_dir=jigsaw_python_dir,
         python_version=python_version,
         jigsaw_version=jigsaw_version,
@@ -105,48 +104,24 @@ def install_jigsaw(
         quiet=quiet,
     )
 
-    # install into the target software env
-    _remove_conda_jigsaw_packages(
-        activate_env=activate_install_env,
-        log_filename=log_filename,
-        quiet=quiet,
-    )
-
-    _install_jigsaw_python(
-        activate_env=activate_install_env,
-        log_filename=log_filename,
-        quiet=quiet,
-    )
+    # Return the local conda channel that contains the freshly-built package.
+    # The caller should add this channel (ahead of conda-forge) and run
+    # `pixi install` to bring jigsawpy into the environment.
+    #
+    # NOTE: a pixi/conda environment does not reference the cache or channel
+    # at runtime; these are install-time only.
+    return _get_local_channel_uri()
 
 
-def _get_python_major_minor_version(
-    activate_env: str,
-    log_filename: str,
-    quiet: bool,
-) -> str:
-    commands = (
-        f'{activate_env} && '
-        f'python -c "import sys; print(\'.\'.join(map(str, sys.version_info[:2])))"'  # noqa: E501
-    )
-    result = check_call(
-        commands, log_filename=log_filename, quiet=quiet, capture_output=True
-    )
-    stdout = result.stdout
-    if isinstance(stdout, bytes):
-        python_version = stdout.decode().strip()
-    else:
-        assert isinstance(stdout, str)
-        python_version = stdout.strip()
-    return python_version
+def _extract_major_minor_from_requirement(req: str) -> str:
+    """Extract python major.minor (e.g. '3.14') from a pixi requirement."""
+    m = re.search(r'(?<!\d)(\d+\.\d+)(?!\d)', str(req))
+    return m.group(1) if m else ''
 
 
 def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
     version_file = jigsaw_python_dir / 'pyproject.toml'
-    # parse the version from the porject section of pyproject.toml
-
-    with open(version_file, 'rb') as f:
-        pyproject_data = tomllib.load(f)
-    version = pyproject_data.get('project', {}).get('version', '').strip()
+    version = _parse_pyproject_version(version_file)
 
     if not version:
         raise RuntimeError(
@@ -155,11 +130,45 @@ def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
     return version
 
 
+def _parse_pyproject_version(pyproject_path: Path) -> str:
+    """Parse project.version from a pyproject.toml without tomllib.
+
+    We intentionally avoid tomllib/tomli here to keep dependencies minimal and
+    avoid relying on stdlib tomllib (Py>=3.11).
+    """
+    in_project = False
+    version = ''
+    try:
+        text = pyproject_path.read_text(encoding='utf-8')
+    except OSError as e:
+        raise RuntimeError(
+            f'Failed to read {pyproject_path} to determine version: {e!r}'
+        ) from e
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#'):
+            continue
+
+        if line.startswith('[') and line.endswith(']'):
+            in_project = line == '[project]'
+            continue
+
+        if not in_project:
+            continue
+
+        m = re.match(r'^version\s*=\s*(["\'])(.+)\1\s*$', line)
+        if m:
+            version = m.group(2).strip()
+            break
+
+    return version
+
+
 def _ensure_jigsaw_python_source(
     repo_root: Path,
     jigsaw_python_dir: Path,
     rel_path: str,
-    activate_env: str,
     log_filename: str,
     quiet: bool,
 ) -> None:
@@ -177,15 +186,12 @@ def _ensure_jigsaw_python_source(
         if not os.path.exists(f'{jigsaw_python_dir}/.git'):
             # only init if not already done to avoid undoing development edits
             commands = (
-                f'{activate_env} && '
-                f'cd "{repo_root}" && '
-                f'git submodule update --init "{rel_path}"'
+                f'cd "{repo_root}" && git submodule update --init "{rel_path}"'
             )
             check_call(commands, log_filename=log_filename, quiet=quiet)
 
     elif not jigsaw_python_dir.is_dir():
         commands = (
-            f'{activate_env} && '
             f'cd "{repo_root}" && '
             f'git clone --depth 1 "{JIGSAW_PYTHON_URL}" "{rel_path}"'
         )
@@ -198,23 +204,8 @@ def _ensure_jigsaw_python_source(
         )
 
 
-def _remove_conda_jigsaw_packages(
-    activate_env: str,
-    log_filename: str,
-    quiet: bool,
-) -> None:
-    commands = (
-        f'{activate_env} && conda remove -y --force-remove jigsaw jigsawpy'
-    )
-    try:
-        check_call(commands, log_filename=log_filename, quiet=quiet)
-    except subprocess.CalledProcessError:
-        # Fine if not installed.
-        pass
-
-
 def _build_external_jigsaw(
-    activate_env: str,
+    pixi_exe: str,
     python_version: str,
     jigsaw_version: str,
     jigsaw_python_dir: Path,
@@ -276,23 +267,28 @@ def _build_external_jigsaw(
     with open(variant_file, 'w', encoding='utf-8') as f:
         f.write(variant)
 
+    bootstrap_project_dir = Path('deploy_tmp/bootstrap_pixi').resolve()
+    if not (bootstrap_project_dir / 'pixi.toml').is_file():
+        raise RuntimeError(
+            'Expected bootstrap pixi project at '
+            f'{bootstrap_project_dir} but pixi.toml was not found. '
+            'Run the deploy bootstrap step first.'
+        )
+
     command = (
-        f'{activate_env} && '
-        f'conda install -y rattler-build pixi && '
-        f'rattler-build build '
-        f'--recipe-dir deploy_tmp/jigsaw_build/recipe '
-        f'--variant-config {variant_file} '
-        f'--output-dir deploy_tmp/jigsaw_build/output '
+        f'cd {shlex.quote(str(bootstrap_project_dir))} && '
+        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{shlex.quote(pixi_exe)} run rattler-build build '
+        f'--recipe-dir '
+        f'{shlex.quote(os.path.abspath("deploy_tmp/jigsaw_build/recipe"))} '
+        f'--variant-config {shlex.quote(os.path.abspath(variant_file))} '
+        f'--output-dir '
+        f'{shlex.quote(os.path.abspath("deploy_tmp/jigsaw_build/output"))} '
     )
     check_call(command, log_filename=log_filename, quiet=quiet)
 
 
-def _install_jigsaw_python(
-    activate_env: str,
-    log_filename: str,
-    quiet: bool,
-) -> None:
-    print('Installing JIGSAW and JIGSAW-Python')
+def _get_local_channel_uri() -> str:
     output_dir = Path('deploy_tmp/jigsaw_build/output').resolve()
     if not output_dir.is_dir():
         raise RuntimeError(
@@ -300,14 +296,9 @@ def _install_jigsaw_python(
         )
     platform, _ = get_conda_platform_and_system()
     repodata = output_dir / platform / 'repodata.json'
-
     if not repodata.is_file():
         raise RuntimeError(
             f'JIGSAW build output repodata not found: {repodata}'
         )
 
-    commands = (
-        f'{activate_env} && '
-        f'conda install -y -c "{output_dir}" -c conda-forge jigsawpy'
-    )
-    check_call(commands, log_filename=log_filename, quiet=quiet)
+    return output_dir.as_uri()
