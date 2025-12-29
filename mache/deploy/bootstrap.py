@@ -309,7 +309,9 @@ def _run(log_filename):
 
     os.makedirs('deploy_tmp', exist_ok=True)
 
-    pixi_exe = _get_pixi_executable(args.pixi)
+    pixi_exe = _get_pixi_executable(
+        args.pixi, log_filename=log_filename, quiet=quiet
+    )
 
     bootstrap_dir = Path('deploy_tmp/bootstrap_pixi').resolve()
     bootstrap_dir.mkdir(parents=True, exist_ok=True)
@@ -527,19 +529,94 @@ def _print_failure_summary(err, log_filename, tail_lines=60):
         pass
 
 
-def _get_pixi_executable(pixi):
+def _default_pixi_path():
+    home = os.path.expanduser('~')
+    return os.path.join(home, '.pixi', 'bin', 'pixi')
+
+
+def _install_pixi(*, log_filename, quiet, pixi_bin_dir=None):
+    env_prefix_parts = [
+        # Avoid modifying shell rc files during bootstrap.
+        'PIXI_NO_PATH_UPDATE=1',
+    ]
+    if pixi_bin_dir is not None:
+        env_prefix_parts.append(f'PIXI_BIN_DIR={shlex.quote(pixi_bin_dir)}')
+
+    env_prefix = ' '.join(env_prefix_parts)
+
+    cmd_curl = f'{env_prefix} curl -fsSL https://pixi.sh/install.sh | sh'
+    cmd_wget = f'{env_prefix} wget -qO- https://pixi.sh/install.sh | sh'
+
+    try:
+        check_call(cmd_curl, log_filename, quiet)
+    except subprocess.CalledProcessError:
+        # Fallback path, matching pixi installation instructions.
+        check_call(cmd_wget, log_filename, quiet)
+
+
+def _get_pixi_executable(pixi, *, log_filename, quiet):
+    """Find pixi, installing it if needed.
+
+    Behavior
+    --------
+    - If ``--pixi`` points to an existing executable, use it.
+    - If ``--pixi`` is supplied but does not exist, treat it as the desired
+      install location and install pixi there.
+    - If ``--pixi`` is not supplied and pixi is not on PATH, install pixi
+        in the default location (typically ``~/.pixi/bin``).
+
+    The upstream installer supports choosing a destination via environment
+    variables (not flags): ``PIXI_BIN_DIR`` and ``PIXI_HOME``.
+    """
+
+    # 1) Explicit path
     if pixi:
-        pixi_path = os.path.abspath(os.path.expanduser(pixi))
-        if not os.path.exists(pixi_path):
-            raise RuntimeError(f'pixi executable not found: {pixi_path}')
-        return pixi_path
+        pixi_path = os.path.abspath(os.path.expanduser(str(pixi)))
+
+        if os.path.isfile(pixi_path) and os.access(pixi_path, os.X_OK):
+            return pixi_path
+
+        # Not an existing executable: treat as install target.
+        if pixi_path.endswith(os.sep) or os.path.isdir(pixi_path):
+            pixi_bin_dir = os.path.abspath(pixi_path)
+            expected_exec = os.path.join(pixi_bin_dir, 'pixi')
+        else:
+            pixi_bin_dir = os.path.dirname(pixi_path)
+            expected_exec = pixi_path
+
+        _install_pixi(
+            log_filename=log_filename, quiet=quiet, pixi_bin_dir=pixi_bin_dir
+        )
+
+        if os.path.isfile(expected_exec) and os.access(expected_exec, os.X_OK):
+            return expected_exec
+
+        raise RuntimeError(
+            'pixi was installed but the executable was not found where '
+            f'expected. Looked for: {expected_exec}'
+        )
+
+    # 2) PATH
+    which = shutil.which('pixi')
+    if which is not None:
+        return which
+
+    # 3) Auto-install default
+    _install_pixi(log_filename=log_filename, quiet=quiet, pixi_bin_dir=None)
+
+    if os.path.isfile(_default_pixi_path()) and os.access(
+        _default_pixi_path(), os.X_OK
+    ):
+        return _default_pixi_path()
 
     which = shutil.which('pixi')
-    if which is None:
-        raise RuntimeError(
-            'pixi executable not found on PATH. Install pixi or pass --pixi.'
-        )
-    return which
+    if which is not None:
+        return which
+
+    raise RuntimeError(
+        'pixi was installed but could not be found. Expected it in the '
+        "default location (e.g. '~/.pixi/bin') or on PATH."
+    )
 
 
 def _write_bootstrap_pixi_toml_with_mache(
