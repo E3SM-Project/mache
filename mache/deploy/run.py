@@ -127,6 +127,10 @@ def run_deploy(args: argparse.Namespace) -> None:
         config=config,
         runtime=ctx.runtime,
     )
+    runtime_version_cmd = _resolve_runtime_version_cmd(
+        config=config,
+        runtime=ctx.runtime,
+    )
     mpi, mpi_prefix = _resolve_pixi_mpi(
         pixi_cfg=pixi_cfg,
         runtime=ctx.runtime,
@@ -265,6 +269,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         pixi_exe=pixi_exe,
         software=software,
         software_version=software_version,
+        runtime_version_cmd=runtime_version_cmd,
     )
     if not quiet:
         print(f'Wrote load script: {load_script_path}')
@@ -398,6 +403,37 @@ def _resolve_software_version(
     return value
 
 
+def _resolve_runtime_version_cmd(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+) -> str | None:
+    """Resolve an optional runtime version probe command.
+
+    If provided, this is embedded into the generated load script and executed
+    via `pixi run -m <pixi.toml> bash -lc <cmd>` before activation.
+
+    Priority:
+    1. runtime['project']['runtime_version_cmd'] (set by hooks)
+    2. config['project']['runtime_version_cmd']
+    3. None
+    """
+
+    override = None
+    runtime_project = runtime.get('project')
+    if isinstance(runtime_project, dict):
+        override = runtime_project.get('runtime_version_cmd')
+
+    if override is not None:
+        value = str(override).strip()
+    else:
+        value = str(
+            config.get('project', {}).get('runtime_version_cmd', '')
+        ).strip()
+
+    return value or None
+
+
 def _resolve_pixi_mpi(
     *,
     pixi_cfg: dict[str, Any],
@@ -435,6 +471,7 @@ def _write_load_script(
     pixi_exe: str,
     software: str,
     software_version: str,
+    runtime_version_cmd: str | None,
 ) -> str:
     """Write a simple "load" script that launches a pixi shell.
 
@@ -471,6 +508,7 @@ def _write_load_script(
         pixi_exe=pixi_exe,
         source_path=source_path,
         software_version=software_version,
+        runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
     )
 
     os.makedirs(prefix_abs, exist_ok=True)

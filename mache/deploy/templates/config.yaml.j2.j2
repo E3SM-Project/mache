@@ -3,6 +3,21 @@ project:
   # A specific version string or "dynamic" if provided by the "pre_pixi" hook.
   version: "dynamic"
 
+  # Optional: a command that prints the *runtime* version string for the
+  # deployed software.
+  #
+  # This command is run via `pixi run -m <pixi.toml> bash -lc <cmd>` *before*
+  # the load script activates the environment, so it can safely `return` on
+  # mismatch without changing your shell environment.
+  #
+  # The command should print a single version string on stdout that matches
+  # `project.version` exactly.
+  #
+  # Examples:
+  #   runtime_version_cmd: "python -c 'import importlib.metadata as m; print(m.version(\"mache\"))'"
+  #   runtime_version_cmd: "e3sm_diags --version"
+  runtime_version_cmd: null
+
   # Machine name selection.
   # Priority order in `mache deploy run`:
   #   1. CLI --machine
