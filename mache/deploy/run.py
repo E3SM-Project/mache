@@ -18,6 +18,7 @@ from .bootstrap import (
 )
 from .conda import get_conda_platform_and_system
 from .jigsaw import install_jigsaw
+from .machine import get_machine, get_machine_config
 
 
 def run_deploy(args: argparse.Namespace) -> None:
@@ -27,7 +28,12 @@ def run_deploy(args: argparse.Namespace) -> None:
     # The target software name is stored in deploy/config.yaml.j2.
     # We parse it early so check_location can provide a helpful error.
     pins = _read_pins('deploy/pins.cfg')
-    replacements = _get_default_replacements()
+    platform, system = get_conda_platform_and_system()
+    replacements: dict[str, Any] = {
+        'platform': platform,
+        'system': system,
+    }
+
     _add_pins_to_replacements(replacements, pins, sections=['pixi', 'all'])
     config = _render_config_yaml('deploy/config.yaml.j2', replacements)
 
@@ -55,6 +61,13 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
 
     quiet = args.quiet
+
+    machine, machine_config = _get_machine_and_config(  # noqa: F841
+        config=config,
+        args=args,
+        platform=platform,
+        quiet=quiet,
+    )
 
     os.makedirs('deploy_tmp', exist_ok=True)
     os.makedirs('deploy_tmp/logs', exist_ok=True)
@@ -221,6 +234,39 @@ def run_deploy(args: argparse.Namespace) -> None:
         print(f'Wrote load script: {load_script_path}')
 
 
+def _get_machine_and_config(
+    *,
+    config: dict[str, Any],
+    args: argparse.Namespace,
+    platform: str,
+    quiet: bool,
+) -> tuple[str | None, ConfigParser]:
+    machines_path = None
+    machines_cfg = config.get('machines')
+    if isinstance(machines_cfg, dict):
+        machines_path = machines_cfg.get('path')
+
+    if machines_path is not None:
+        machines_path = os.path.abspath(
+            os.path.expanduser(os.path.expandvars(str(machines_path)))
+        )
+
+    machine = get_machine(
+        requested_machine=getattr(args, 'machine', None),
+        machines_path=machines_path,
+        quiet=quiet,
+    )
+
+    machine_config = get_machine_config(
+        machine=machine,
+        machines_path=machines_path,
+        platform=platform,
+        quiet=quiet,
+    )
+
+    return machine, machine_config
+
+
 def _get_pixi_executable(pixi: str | None) -> str:
     if pixi:
         pixi = os.path.abspath(os.path.expanduser(pixi))
@@ -295,16 +341,6 @@ def _read_pins(pins_path: str) -> ConfigParser:
     pins = ConfigParser()
     pins.read(pins_path)
     return pins
-
-
-def _get_default_replacements() -> dict[str, Any]:
-    """Get default replacements such as machine architecture."""
-    conda_platform, system = get_conda_platform_and_system()
-    replacements = {
-        'platform': conda_platform,
-        'system': system,
-    }
-    return replacements
 
 
 def _add_pins_to_replacements(

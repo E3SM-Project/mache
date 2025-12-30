@@ -6,6 +6,12 @@
   },
   "arguments": [
     {
+      "flags": ["--machine"],
+      "dest": "machine",
+      "help": "Name of the machine to deploy for (must be known to mache). If not provided, mache will attempt to detect the machine from the host.",
+      "route": ["deploy", "bootstrap", "run"]
+    },
+    {
       "flags": ["--pixi"],
       "dest": "pixi",
       "help": "Path to the pixi executable. If not provided, pixi is found on PATH.",

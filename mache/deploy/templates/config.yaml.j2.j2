@@ -3,6 +3,24 @@ project:
   # TEMP: replace with a hook to get the version dynamically
   version: "latest"
 
+machines:
+  # Optional path containing machine config files in ini format.
+  #
+  # This MUST be a filesystem path (not a Python package) because we need to
+  # read machine configs before the target software (and its dependencies)
+  # have been installed into the pixi environment.
+  #
+  # Should be a relative path, relative to the target software repo root.
+  #
+  # Files should be named like "<machine>.cfg" (e.g. "chrysalis.cfg").
+  #
+  # Machine config is loaded in this order:
+  #   1. mache.machines/default.cfg
+  #   2. mache.machines/<machine>.cfg (if a known machine is selected)
+  #   3. <machines.path>/default.cfg (if machines.path is set)
+  #   4. <machines.path>/<machine>.cfg (if present)
+  path: null
+
 pixi:
   # Whether to deploy the pixi environment
   deploy: true
