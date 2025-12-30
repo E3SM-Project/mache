@@ -121,6 +121,19 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     hook_registry.run_hook('pre_pixi', ctx)
 
+    toolchain_pairs = _resolve_toolchain_pairs(
+        config=config,
+        runtime=ctx.runtime,
+        machine_config=machine_config,
+        args=args,
+        quiet=quiet,
+    )
+    # Make toolchain selection available to hooks and future Spack stages.
+    ctx.runtime.setdefault('toolchain', {})
+    ctx.runtime['toolchain']['pairs'] = [
+        {'compiler': c, 'mpi': m} for c, m in toolchain_pairs
+    ]
+
     # Runtime overrides (v1): hooks can override specific values via
     # ctx.runtime, falling back to rendered config.
     software_version = _resolve_software_version(
@@ -264,15 +277,15 @@ def run_deploy(args: argparse.Namespace) -> None:
             quiet=quiet,
         )
 
-    load_script_path = _write_load_script(
+    _write_load_scripts(
         prefix=prefix,
         pixi_exe=pixi_exe,
         software=software,
         software_version=software_version,
         runtime_version_cmd=runtime_version_cmd,
+        toolchain_pairs=toolchain_pairs,
+        quiet=quiet,
     )
-    if not quiet:
-        print(f'Wrote load script: {load_script_path}')
 
     hook_registry.run_hook('post_deploy', ctx)
 
@@ -450,6 +463,185 @@ def _resolve_pixi_mpi(
     return _get_mpi_settings(pixi_cfg=mpi_cfg)
 
 
+def _normalize_optional_token(value: Any) -> str | None:
+    """Normalize optional string-ish config/CLI values.
+
+    Treats common sentinels as None: '', 'none', 'null', 'dynamic'.
+    """
+
+    if value is None:
+        return None
+
+    candidate = str(value).strip()
+    if not candidate:
+        return None
+
+    if candidate.lower() in ('none', 'null', 'dynamic'):
+        return None
+
+    return candidate
+
+
+def _normalize_optional_tokens(value: Any) -> list[str] | None:
+    """Normalize a CLI/config value into a list of strings.
+
+    Accepts:
+      - None
+      - a single string
+      - a list/tuple of strings
+
+    Treats '', 'none', 'null', 'dynamic' as empty/None.
+    """
+
+    if value is None:
+        return None
+
+    if isinstance(value, (list, tuple)):
+        tokens: list[str] = []
+        for item in value:
+            t = _normalize_optional_token(item)
+            if t is not None:
+                tokens.append(t)
+        return tokens or None
+
+    token = _normalize_optional_token(value)
+    if token is None:
+        return None
+    return [token]
+
+
+def _sanitize_script_tag(value: str) -> str:
+    """Make a filesystem-safe token for use in script filenames."""
+
+    v = str(value).strip()
+    if not v:
+        return 'unknown'
+
+    out_chars: list[str] = []
+    for ch in v:
+        if ch.isalnum() or ch in ('-', '_', '.'):
+            out_chars.append(ch)
+        else:
+            out_chars.append('_')
+
+    tag = ''.join(out_chars)
+    while '__' in tag:
+        tag = tag.replace('__', '_')
+    return tag.strip('_') or 'unknown'
+
+
+def _resolve_toolchain_pairs(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+    machine_config: ConfigParser,
+    args: argparse.Namespace,
+    quiet: bool,
+) -> list[tuple[str, str]]:
+    """Resolve toolchain compiler/MPI pairs.
+
+    Priority order for each dimension:
+        1. CLI flags (--compiler/--mpi)
+        2. runtime overrides from hooks (runtime['toolchain'])
+        3. rendered deploy/config.yaml.j2 (config['toolchain'])
+        4. merged machine config [deploy]
+
+    Pairing rules:
+        - If both lists have the same length, they are zipped.
+        - If one list has length 1, it is broadcast across the other.
+        - If MPI is omitted, default MPI is resolved per-compiler via:
+                mpi_<compiler> (preferred), else mpi.
+
+    If no compiler is resolved, returns an empty list.
+    """
+
+    # 1) CLI
+    cli_compilers = _normalize_optional_tokens(getattr(args, 'compiler', None))
+    cli_mpis = _normalize_optional_tokens(getattr(args, 'mpi', None))
+    compiler_from_cli = cli_compilers is not None
+
+    # 2) runtime overrides (set by hooks)
+    rt_toolchain = runtime.get('toolchain')
+    rt_compilers = None
+    rt_mpis = None
+    if isinstance(rt_toolchain, dict):
+        rt_compilers = _normalize_optional_tokens(rt_toolchain.get('compiler'))
+        rt_mpis = _normalize_optional_tokens(rt_toolchain.get('mpi'))
+
+    # 3) rendered config
+    cfg_toolchain = config.get('toolchain')
+    cfg_compilers = None
+    cfg_mpis = None
+    if isinstance(cfg_toolchain, dict):
+        cfg_compilers = _normalize_optional_tokens(
+            cfg_toolchain.get('compiler')
+        )
+        cfg_mpis = _normalize_optional_tokens(cfg_toolchain.get('mpi'))
+
+    compilers = cli_compilers or rt_compilers or cfg_compilers
+    mpis = cli_mpis or rt_mpis or cfg_mpis
+
+    # 4) machine-config defaults
+    if compilers is None and machine_config.has_option('deploy', 'compiler'):
+        default_comp = _normalize_optional_token(
+            machine_config.get('deploy', 'compiler')
+        )
+        compilers = [default_comp] if default_comp else None
+
+    if not compilers:
+        # pixi-only deployments can legitimately skip toolchain
+        return []
+
+    if mpis is None:
+        # Derive an MPI per compiler when possible.
+        derived: list[str] = []
+        for compiler in compilers:
+            mpi_key = f'mpi_{compiler}'
+            mpi_val = None
+            if machine_config.has_option('deploy', mpi_key):
+                mpi_val = _normalize_optional_token(
+                    machine_config.get('deploy', mpi_key)
+                )
+            elif machine_config.has_option('deploy', 'mpi'):
+                mpi_val = _normalize_optional_token(
+                    machine_config.get('deploy', 'mpi')
+                )
+            if mpi_val is None:
+                derived = []
+                break
+            derived.append(mpi_val)
+        mpis = derived or None
+
+    if not mpis:
+        msg = (
+            'Toolchain MPI library is not set. Provide --mpi (or set '
+            'toolchain.mpi), or set [deploy] mpi_<compiler> (or mpi) in '
+            'machine config.'
+        )
+        if compiler_from_cli and cli_mpis is None:
+            raise ValueError(msg)
+        if not quiet:
+            print(f'Warning: {msg}')
+        return []
+
+    # Pairing
+    if len(compilers) == len(mpis):
+        return list(zip(compilers, mpis, strict=False))
+
+    if len(compilers) == 1 and len(mpis) > 1:
+        return [(compilers[0], mpi) for mpi in mpis]
+
+    if len(mpis) == 1 and len(compilers) > 1:
+        return [(compiler, mpis[0]) for compiler in compilers]
+
+    raise ValueError(
+        'Cannot pair compilers and MPI libraries: got '
+        f'{len(compilers)} compiler(s) and {len(mpis)} mpi value(s). '
+        'Provide equal-length lists, or a single value for one side to '
+        'broadcast across the other.'
+    )
+
+
 def _get_pixi_executable(pixi: str | None) -> str:
     if pixi:
         pixi = os.path.abspath(os.path.expanduser(pixi))
@@ -472,6 +664,8 @@ def _write_load_script(
     software: str,
     software_version: str,
     runtime_version_cmd: str | None,
+    toolchain_compiler: str | None,
+    toolchain_mpi: str | None,
 ) -> str:
     """Write a simple "load" script that launches a pixi shell.
 
@@ -488,7 +682,12 @@ def _write_load_script(
 
     # Keep the script name stable and discoverable.
     safe_software = software.strip() or 'software'
-    script_path = f'load_{safe_software}.sh'
+    if toolchain_compiler and toolchain_mpi:
+        compiler_tag = _sanitize_script_tag(toolchain_compiler)
+        mpi_tag = _sanitize_script_tag(toolchain_mpi)
+        script_path = f'load_{safe_software}_{compiler_tag}_{mpi_tag}.sh'
+    else:
+        script_path = f'load_{safe_software}.sh'
 
     template_text = (
         resources.files(__package__)
@@ -509,6 +708,8 @@ def _write_load_script(
         source_path=source_path,
         software_version=software_version,
         runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
+        toolchain_compiler=toolchain_compiler or '',
+        toolchain_mpi=toolchain_mpi or '',
     )
 
     os.makedirs(prefix_abs, exist_ok=True)
@@ -519,6 +720,52 @@ def _write_load_script(
     # Also clear any existing exec bits from previous generations.
     os.chmod(script_path, 0o644)
     return script_path
+
+
+def _write_load_scripts(
+    *,
+    prefix: str,
+    pixi_exe: str,
+    software: str,
+    software_version: str,
+    runtime_version_cmd: str | None,
+    toolchain_pairs: list[tuple[str, str]],
+    quiet: bool,
+) -> list[str]:
+    """Write one load script per toolchain pair, or a single default script."""
+
+    paths: list[str] = []
+    if toolchain_pairs:
+        for compiler, mpilib in toolchain_pairs:
+            paths.append(
+                _write_load_script(
+                    prefix=prefix,
+                    pixi_exe=pixi_exe,
+                    software=software,
+                    software_version=software_version,
+                    runtime_version_cmd=runtime_version_cmd,
+                    toolchain_compiler=compiler,
+                    toolchain_mpi=mpilib,
+                )
+            )
+    else:
+        paths.append(
+            _write_load_script(
+                prefix=prefix,
+                pixi_exe=pixi_exe,
+                software=software,
+                software_version=software_version,
+                runtime_version_cmd=runtime_version_cmd,
+                toolchain_compiler=None,
+                toolchain_mpi=None,
+            )
+        )
+
+    if not quiet:
+        for p in paths:
+            print(f'Wrote load script: {p}')
+
+    return paths
 
 
 def _read_pins(pins_path: str) -> ConfigParser:

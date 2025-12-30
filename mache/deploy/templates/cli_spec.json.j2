@@ -24,6 +24,20 @@
       "route": ["deploy", "bootstrap", "run"]
     },
     {
+      "flags": ["--compiler"],
+      "dest": "compiler",
+      "nargs": "+",
+      "help": "Name of the compiler toolchain (primarily for Spack). If not provided, defaults may come from merged machine config [deploy] compiler.",
+      "route": ["deploy", "run"]
+    },
+    {
+      "flags": ["--mpi"],
+      "dest": "mpi",
+      "nargs": "+",
+      "help": "Name of the MPI library (primarily for Spack). If not provided, defaults may come from merged machine config [deploy] mpi_<compiler> (or mpi).",
+      "route": ["deploy", "run"]
+    },
+    {
       "flags": ["--recreate"],
       "dest": "recreate",
       "action": "store_true",

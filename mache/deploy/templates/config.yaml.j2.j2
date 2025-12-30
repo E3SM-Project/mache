@@ -68,6 +68,37 @@ pixi:
   # Whether to install the target software in editable/development mode.
   install_dev_software: false
 
+# System toolchain selection (primarily for Spack-based dependencies).
+#
+# These values are resolved in `mache deploy run` with the following priority:
+#   1. CLI flags: --compiler / --mpi
+#   2. Values here
+#   3. Machine config defaults from [deploy] in merged machine config:
+#        compiler = <name>
+#        mpi_<compiler> = <mpilib>
+#
+# Use "dynamic" to request defaults from machine config.
+toolchain:
+  # One or more compiler names. Examples:
+  #   compiler: [gnu]
+  #   compiler: [gnu, intel]
+  #
+  # If empty (or "dynamic"), defaults come from merged machine config:
+  #   [deploy] compiler
+  compiler: []
+
+  # One or more MPI libraries. Examples:
+  #   mpi: [openmpi]
+  #   mpi: [mpich, openmpi]
+  #
+  # Pairing rules in `mache deploy run`:
+  #   - If both lists have the same length, they are zipped.
+  #   - If one list has length 1, it is broadcast across the other.
+  #   - If mpi is empty (or "dynamic"), defaults come from machine config:
+  #       [deploy] mpi_<compiler> (preferred)
+  #       [deploy] mpi (fallback)
+  mpi: []
+
 env_vars:
   # Placeholder: env vars to export in the "load" script
   set: {}

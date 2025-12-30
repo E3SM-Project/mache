@@ -74,7 +74,14 @@ def parse_cli_spec(rendered_json: str) -> CliSpec:
 
         # Allow only a safe subset of argparse kwargs
         kwargs: dict[str, Any] = {}
-        for k in ('help', 'action', 'default', 'required', 'choices'):
+        for k in (
+            'help',
+            'action',
+            'default',
+            'required',
+            'choices',
+            'nargs',
+        ):
             if k in entry:
                 kwargs[k] = entry[k]
 

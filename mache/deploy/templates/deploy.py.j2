@@ -220,6 +220,7 @@ def _build_parser_from_cli_spec(cli_spec):
             'default',
             'required',
             'choices',
+            'nargs',
         ):
             if key in entry:
                 kwargs[key] = entry[key]
@@ -402,7 +403,17 @@ def _build_routed_argv(cli_spec, args, route_key):
             if value:
                 argv.append(flag0)
         else:
-            if value is not None:
+            if value is None:
+                continue
+
+            # If the argparse entry used `nargs` (or otherwise produced a
+            # list), expand into repeated tokens: `--flag a b c`.
+            if isinstance(value, (list, tuple)):
+                if len(value) == 0:
+                    continue
+                argv.append(flag0)
+                argv.extend(str(v) for v in value)
+            else:
                 argv.extend([flag0, str(value)])
 
     return argv

@@ -5,11 +5,15 @@
 export MACHE_DEPLOY_TARGET_SOFTWARE={{ software | tojson }}
 export MACHE_DEPLOY_TARGET_VERSION={{ software_version | tojson }}
 export MACHE_DEPLOY_RUNTIME_VERSION_CMD={{ runtime_version_cmd_sh }}
+export MACHE_DEPLOY_TOOLCHAIN_COMPILER={{ toolchain_compiler | tojson }}
+export MACHE_DEPLOY_TOOLCHAIN_MPI={{ toolchain_mpi | tojson }}
 export PIXI={{ pixi_exe | tojson }}
 export PIXI_PREFIX={{ prefix | tojson }}
 export PIXI_TOML={{ pixi_toml | tojson }}
 export {{ software_upper }}_BRANCH={{ source_path | tojson }}
 export {{ software_upper }}_VERSION={{ software_version | tojson }}
+export {{ software_upper }}_COMPILER={{ toolchain_compiler | tojson }}
+export {{ software_upper }}_MPI={{ toolchain_mpi | tojson }}
 
 # Activate the pixi environment in the *current* shell.
 #
