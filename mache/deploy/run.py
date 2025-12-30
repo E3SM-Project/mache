@@ -286,8 +286,7 @@ def _get_deploy_logger(*, log_filename: str, quiet: bool) -> logging.Logger:
 
     if not logger.handlers:
         fmt = logging.Formatter(
-            fmt='%(asctime)s %(levelname)s %(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
+            fmt='%(message)s',
         )
 
         file_handler = logging.FileHandler(log_filename)
