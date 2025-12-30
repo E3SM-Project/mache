@@ -144,7 +144,7 @@ def get_machine(
         if candidate.lower() in ('', 'none', 'null'):
             candidate = None
     else:
-        candidate = discover_machine(quiet=quiet)
+        candidate = discover_machine(quiet=quiet, path=machines_path)
 
     if candidate is None:
         return None
