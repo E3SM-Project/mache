@@ -29,6 +29,7 @@ def init_or_update_repo(
       - deploy/cli_spec.json
       - deploy/pins.cfg (init only)
       - deploy/config.yaml.j2 (init only)
+      - deploy/hooks.py (init only, example-only)
 
     Parameters
     ----------
@@ -124,6 +125,14 @@ def init_or_update_repo(
         _write_text(
             deploy_dir / 'config.yaml.j2',
             config_rendered,
+            overwrite=overwrite,
+        )
+
+        # Optional example hook module (not enabled by default).
+        hooks_py_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/hooks.py.j2')
+        _write_text(
+            deploy_dir / 'hooks.py',
+            hooks_py_tmpl,
             overwrite=overwrite,
         )
 

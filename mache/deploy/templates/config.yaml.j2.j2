@@ -1,7 +1,14 @@
 project:
   software: "[[ software ]]"
-  # TEMP: replace with a hook to get the version dynamically
-  version: "latest"
+  # A specific version string or "dynamic" if provided by the "pre_pixi" hook.
+  version: "dynamic"
+
+  # Machine name selection.
+  # Priority order in `mache deploy run`:
+  #   1. CLI --machine
+  #   2. this value (project.machine)
+  #   3. automatic detection (if this is "dynamic")
+  machine: "dynamic"
 
 machines:
   # Optional path containing machine config files in ini format.
@@ -39,6 +46,8 @@ pixi:
   #   - nompi
   #   - mpich
   #   - openmpi
+  #   - hpc (E3SM-Unified only)
+  #   - dynamic (determine by the "pre_pixi" hook)
   mpi: nompi
 
   # Whether to install the target software in editable/development mode.
@@ -57,3 +66,17 @@ jigsaw:
   # If it is not, `mache deploy run` will clone it from the main JIGSAW-Python
   # repo if missing.
   jigsaw_python_path: jigsaw-python
+
+# Optional deployment hooks.
+#
+# Hooks run ONLY during `mache deploy run` and execute arbitrary Python code
+# from the target repository. Use only with trusted repositories.
+#
+# hooks:
+#   file: "deploy/hooks.py"   # default
+#   entrypoints:
+#     pre_pixi: "pre_pixi"        # optional
+#     post_pixi: "post_pixi"      # optional
+#     pre_spack: "pre_spack"      # optional
+#     post_spack: "post_spack"    # optional
+#     post_deploy: "post_deploy"  # optional

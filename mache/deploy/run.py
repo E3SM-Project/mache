@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import shlex
 import shutil
@@ -17,6 +18,7 @@ from .bootstrap import (
     install_dev_mache,
 )
 from .conda import get_conda_platform_and_system
+from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .jigsaw import install_jigsaw
 from .machine import get_machine, get_machine_config
 
@@ -45,24 +47,13 @@ def run_deploy(args: argparse.Namespace) -> None:
         )
     check_location(software=software)
 
-    # TODO: replace this with a hook that determines the software version
-    # dynamically from the repo.
-    software_version = str(
-        config.get('project', {}).get('version', '')
-    ).strip()
-    if not software_version:
-        raise ValueError(
-            "'version' not found or empty in [project] section of "
-            'deploy/config.yaml.j2'
-        )
-
     install_dev_software = config.get('pixi', {}).get(
         'install_dev_software', False
     )
 
     quiet = args.quiet
 
-    machine, machine_config = _get_machine_and_config(  # noqa: F841
+    machine, machine_config = _get_machine_and_config(
         config=config,
         args=args,
         platform=platform,
@@ -73,8 +64,22 @@ def run_deploy(args: argparse.Namespace) -> None:
     os.makedirs('deploy_tmp/logs', exist_ok=True)
     log_filename = 'deploy_tmp/logs/mache_deploy_run.log'
 
+    logger = _get_deploy_logger(log_filename=log_filename, quiet=args.quiet)
+
     if not _is_deploy_enabled(config):
         return
+
+    repo_root = os.path.abspath(os.getcwd())
+    deploy_dir = os.path.join(repo_root, 'deploy')
+    work_dir = os.path.join(repo_root, 'deploy_tmp')
+
+    # Hooks are optional and only run during `mache deploy run`.
+    # Behavior: `post_deploy` is invoked only on success.
+    hook_registry = load_hooks(
+        config=config,
+        repo_root=repo_root,
+        logger=logger,
+    )
 
     pixi_exe = _get_pixi_executable(getattr(args, 'pixi', None))
 
@@ -101,7 +106,31 @@ def run_deploy(args: argparse.Namespace) -> None:
             "'pixi' section missing or invalid in deploy/config.yaml.j2"
         )
 
-    mpi, mpi_prefix = _get_mpi_settings(pixi_cfg=pixi_cfg)
+    ctx = DeployContext(
+        software=software,
+        machine=machine,
+        repo_root=repo_root,
+        deploy_dir=deploy_dir,
+        work_dir=work_dir,
+        config=config,
+        pins=configparser_to_nested_dict(pins),
+        machine_config=machine_config,
+        args=args,
+        logger=logger,
+    )
+
+    hook_registry.run_hook('pre_pixi', ctx)
+
+    # Runtime overrides (v1): hooks can override specific values via
+    # ctx.runtime, falling back to rendered config.
+    software_version = _resolve_software_version(
+        config=config,
+        runtime=ctx.runtime,
+    )
+    mpi, mpi_prefix = _resolve_pixi_mpi(
+        pixi_cfg=pixi_cfg,
+        runtime=ctx.runtime,
+    )
 
     python_version = args.python
     if python_version is None:
@@ -216,6 +245,13 @@ def run_deploy(args: argparse.Namespace) -> None:
             quiet=quiet,
         )
 
+    hook_registry.run_hook('post_pixi', ctx)
+
+    # Future wiring: spack stages (no-ops unless implemented/configured)
+    hook_registry.run_hook('pre_spack', ctx)
+    # TODO: spack deployment would go here
+    hook_registry.run_hook('post_spack', ctx)
+
     if install_dev_software:
         _install_software_in_dev_mode(
             pixi_exe=pixi_exe,
@@ -232,6 +268,40 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
     if not quiet:
         print(f'Wrote load script: {load_script_path}')
+
+    hook_registry.run_hook('post_deploy', ctx)
+
+
+def _get_deploy_logger(*, log_filename: str, quiet: bool) -> logging.Logger:
+    """Get a logger for deploy-run messages.
+
+    We keep this lightweight: hooks get a standard ``logging.Logger`` while
+    the rest of the deploy flow continues to use the existing `check_call`
+    logging-to-file behavior.
+    """
+
+    logger = logging.getLogger('mache.deploy.run')
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    if not logger.handlers:
+        fmt = logging.Formatter(
+            fmt='%(asctime)s %(levelname)s %(name)s: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+        )
+
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(fmt)
+        logger.addHandler(file_handler)
+
+        if not quiet:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(logging.INFO)
+            stream_handler.setFormatter(fmt)
+            logger.addHandler(stream_handler)
+
+    return logger
 
 
 def _get_machine_and_config(
@@ -251,8 +321,10 @@ def _get_machine_and_config(
             os.path.expanduser(os.path.expandvars(str(machines_path)))
         )
 
+    requested_machine = _resolve_requested_machine(config=config, args=args)
+
     machine = get_machine(
-        requested_machine=getattr(args, 'machine', None),
+        requested_machine=requested_machine,
         machines_path=machines_path,
         quiet=quiet,
     )
@@ -265,6 +337,82 @@ def _get_machine_and_config(
     )
 
     return machine, machine_config
+
+
+def _normalize_machine_request(value: Any) -> str | None:
+    if value is None:
+        return None
+
+    candidate = str(value).strip()
+    if candidate.lower() in ('', 'none', 'null', 'dynamic'):
+        return None
+
+    return candidate
+
+
+def _resolve_requested_machine(
+    *,
+    config: dict[str, Any],
+    args: argparse.Namespace,
+) -> str | None:
+    """Resolve machine selection input.
+
+    Priority:
+    1. CLI `--machine` (if provided)
+    2. config['project']['machine']
+    3. None (auto-detect)
+    """
+
+    cli_raw = getattr(args, 'machine', None)
+    if cli_raw is not None:
+        return _normalize_machine_request(cli_raw)
+
+    project_cfg = config.get('project')
+    project_machine = None
+    if isinstance(project_cfg, dict):
+        project_machine = project_cfg.get('machine')
+
+    return _normalize_machine_request(project_machine)
+
+
+def _resolve_software_version(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+) -> str:
+    override = None
+    runtime_project = runtime.get('project')
+    if isinstance(runtime_project, dict):
+        override = runtime_project.get('version')
+    if override is not None:
+        value = str(override).strip()
+    else:
+        value = str(config.get('project', {}).get('version', '')).strip()
+
+    if not value:
+        raise ValueError(
+            'Software version is required. Set project.version in '
+            "deploy/config.yaml.j2 or provide runtime['project']['version'] "
+            'from a pre_pixi hook.'
+        )
+
+    return value
+
+
+def _resolve_pixi_mpi(
+    *,
+    pixi_cfg: dict[str, Any],
+    runtime: dict[str, Any],
+) -> tuple[str, str]:
+    mpi_override = None
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict):
+        mpi_override = runtime_pixi.get('mpi')
+    if mpi_override is not None:
+        mpi_cfg: dict[str, Any] = {'mpi': str(mpi_override)}
+    else:
+        mpi_cfg = pixi_cfg
+    return _get_mpi_settings(pixi_cfg=mpi_cfg)
 
 
 def _get_pixi_executable(pixi: str | None) -> str:
