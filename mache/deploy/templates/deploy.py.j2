@@ -105,10 +105,10 @@ def main():
         bootstrap_dir = os.path.join(DEPLOY_TMP_DIR, 'bootstrap_pixi')
         print(
             '\nBootstrap environment is ready. To use it interactively:\n'
-            f'  cd {bootstrap_dir}\n'
-            f'  pixi shell\n\n'
-            'Then, from the target repo root (two levels up), you can run:\n'
-            f'  cd ../.. && mache deploy update --software {software}\n'
+            f'  pixi shell -m {bootstrap_dir}/pixi.toml\n\n'
+            'Then, you can run:\n'
+            f'  mache deploy update --software {software}\n'
+            f'  exit\n'
         )
 
     # Now that the bootstrap env exists and has mache installed, run
