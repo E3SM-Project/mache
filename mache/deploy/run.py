@@ -21,6 +21,7 @@ from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .jigsaw import install_jigsaw
 from .machine import get_machine, get_machine_config
+from .spack import deploy_spack_envs
 
 
 def run_deploy(args: argparse.Namespace) -> None:
@@ -36,7 +37,9 @@ def run_deploy(args: argparse.Namespace) -> None:
         'system': system,
     }
 
-    _add_pins_to_replacements(replacements, pins, sections=['pixi', 'all'])
+    _add_pins_to_replacements(
+        replacements, pins, sections=['pixi', 'spack', 'all']
+    )
     config = _render_config_yaml('deploy/config.yaml.j2', replacements)
 
     software = str(config.get('project', {}).get('software', '')).strip()
@@ -266,7 +269,14 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     # Future wiring: spack stages (no-ops unless implemented/configured)
     hook_registry.run_hook('pre_spack', ctx)
-    # TODO: spack deployment would go here
+
+    spack_results = deploy_spack_envs(
+        ctx=ctx,
+        toolchain_pairs=toolchain_pairs,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
+
     hook_registry.run_hook('post_spack', ctx)
 
     if install_dev_software:
@@ -284,6 +294,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         software_version=software_version,
         runtime_version_cmd=runtime_version_cmd,
         toolchain_pairs=toolchain_pairs,
+        spack_results=spack_results,
         quiet=quiet,
     )
 
@@ -666,6 +677,7 @@ def _write_load_script(
     runtime_version_cmd: str | None,
     toolchain_compiler: str | None,
     toolchain_mpi: str | None,
+    spack_activation: str,
 ) -> str:
     """Write a simple "load" script that launches a pixi shell.
 
@@ -710,6 +722,7 @@ def _write_load_script(
         runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
         toolchain_compiler=toolchain_compiler or '',
         toolchain_mpi=toolchain_mpi or '',
+        spack_activation=spack_activation,
     )
 
     os.makedirs(prefix_abs, exist_ok=True)
@@ -730,13 +743,23 @@ def _write_load_scripts(
     software_version: str,
     runtime_version_cmd: str | None,
     toolchain_pairs: list[tuple[str, str]],
+    spack_results: Any,
     quiet: bool,
 ) -> list[str]:
     """Write one load script per toolchain pair, or a single default script."""
 
+    spack_snippet_by_pair: dict[tuple[str, str], str] = {}
+    if spack_results is not None:
+        for result in spack_results:
+            key = (result.compiler, result.mpi)
+            spack_snippet_by_pair[key] = result.activation
+
     paths: list[str] = []
     if toolchain_pairs:
         for compiler, mpilib in toolchain_pairs:
+            spack_activation = spack_snippet_by_pair.get(
+                (compiler, mpilib), ''
+            )
             paths.append(
                 _write_load_script(
                     prefix=prefix,
@@ -746,6 +769,7 @@ def _write_load_scripts(
                     runtime_version_cmd=runtime_version_cmd,
                     toolchain_compiler=compiler,
                     toolchain_mpi=mpilib,
+                    spack_activation=spack_activation,
                 )
             )
     else:
@@ -758,6 +782,7 @@ def _write_load_scripts(
                 runtime_version_cmd=runtime_version_cmd,
                 toolchain_compiler=None,
                 toolchain_mpi=None,
+                spack_activation='',
             )
         )
 

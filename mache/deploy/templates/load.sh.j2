@@ -76,5 +76,7 @@ fi
 eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
   "${PIXI}" shell-hook -s bash -m "${PIXI_TOML}")"
 
-# Placeholder hook point (Spack activation will go here later)
-python --version
+# Spack activation (optional)
+{% if spack_activation %}
+{{ spack_activation }}
+{% endif %}

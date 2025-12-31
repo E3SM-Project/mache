@@ -103,6 +103,36 @@ env_vars:
   # Placeholder: env vars to export in the "load" script
   set: {}
 
+spack:
+  # Whether to deploy one spack environment per toolchain pair.
+  # If false, spack is skipped entirely.
+  deploy: false
+
+  # Base path for the spack checkout used for deployment.
+  # If it does not exist, mache will clone the E3SM spack repo.
+  #
+  # In practice, most target repositories should set this dynamically in the
+  # `pre_spack()` hook (e.g., based on machine config) by writing:
+  #   ctx.runtime['spack']['spack_path'] = <path>
+  # This config value is a fallback.
+  #
+  # Required (either via hook/runtime or here) when spack.deploy is true.
+  spack_path: null
+
+  # Prefix for spack environment names.
+  # Final env name is computed as: "<env_name_prefix>_<compiler>_<mpi>".
+  env_name_prefix: "spack_env"
+
+  # Jinja2-templated YAML file in the target repo containing a YAML list of
+  # spack specs (strings). This list is inserted into the appropriate
+  # mache spack env template for the selected machine/compiler/mpi.
+  specs_template: "deploy/spack.yaml.j2"
+
+  # Optional spack build settings
+  tmpdir: null
+  mirror: null
+  custom_spack: ""
+
 jigsaw:
   # If true, build/install JIGSAW + JIGSAW-Python into the pixi env
   enabled: false

@@ -29,6 +29,7 @@ def init_or_update_repo(
       - deploy/cli_spec.json
       - deploy/pins.cfg (init only)
       - deploy/config.yaml.j2 (init only)
+      - deploy/spack.yaml.j2 (init only)
       - deploy/hooks.py (init only, example-only)
 
     Parameters
@@ -125,6 +126,15 @@ def init_or_update_repo(
         _write_text(
             deploy_dir / 'config.yaml.j2',
             config_rendered,
+            overwrite=overwrite,
+        )
+
+        # spack.yaml.j2 is a runtime (deployment-time) Jinja template owned by
+        # the target repo.
+        spack_specs_tmpl = _read_pkg_template(f'{TEMPLATE_DIR}/spack.yaml.j2')
+        _write_text(
+            deploy_dir / 'spack.yaml.j2',
+            spack_specs_tmpl,
             overwrite=overwrite,
         )
 
