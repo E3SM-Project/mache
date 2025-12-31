@@ -4,6 +4,7 @@ import os
 import shlex
 from configparser import ConfigParser
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 
 from jinja2 import Template
@@ -587,38 +588,23 @@ def _install_spack_env(
     spack_repo = 'https://github.com/E3SM-Project/spack.git'
     branch = f'spack_for_mache_{mache_version}'
 
-    mirror_cmds = ''
-    if mirror is not None:
-        mirror_cmds = (
-            'spack mirror remove spack_mirror >& /dev/null || true\n'
-            f'spack mirror add spack_mirror file://{mirror}'
-        )
-
-    script = (
-        '#!/bin/bash\n\n'
-        f'{env_lines}\n\n'
-        'set -e\n\n'
-        f'if [ -d {shlex.quote(spack_path)} ]; then\n'
-        f'  cd {shlex.quote(spack_path)}\n'
-        '  git fetch origin\n'
-        f'  git reset --hard origin/{branch}\n'
-        'else\n'
-        f'  git clone -b {shlex.quote(branch)} {shlex.quote(spack_repo)} '
-        f'{shlex.quote(spack_path)}\n'
-        f'  cd {shlex.quote(spack_path)}\n'
-        'fi\n'
-        'source share/spack/setup-env.sh\n\n'
-        f'{mirror_cmds}\n\n'
-        f'spack env remove -y {shlex.quote(env_name)} >& /dev/null && '
-        f'echo "recreating environment: {env_name}" || '
-        f'echo "creating new environment: {env_name}"\n'
-        f'spack env create {shlex.quote(env_name)} {shlex.quote(yaml_path)}\n'
-        f'spack env activate {shlex.quote(env_name)}\n'
-        'spack install\n'
+    template_text = (
+        resources.files(__package__)
+        .joinpath('templates/spack_install.bash.j2')
+        .read_text(encoding='utf-8')
     )
-
-    if custom_spack.strip():
-        script += f'\n{custom_spack.strip()}\n'
+    script = Template(template_text, keep_trailing_newline=True).render(
+        env_lines=env_lines,
+        spack_path_q=shlex.quote(spack_path),
+        branch=branch,
+        branch_q=shlex.quote(branch),
+        spack_repo_q=shlex.quote(spack_repo),
+        env_name=env_name,
+        env_name_q=shlex.quote(env_name),
+        yaml_path_q=shlex.quote(yaml_path),
+        mirror=mirror,
+        custom_spack=custom_spack.strip(),
+    )
 
     work = Path(ctx.work_dir) / 'spack'
     work.mkdir(parents=True, exist_ok=True)

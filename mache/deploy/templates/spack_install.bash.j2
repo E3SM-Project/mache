@@ -1,0 +1,30 @@
+#!/bin/bash
+
+{{ env_lines }}
+
+set -e
+
+if [ -d {{ spack_path_q }} ]; then
+  cd {{ spack_path_q }}
+  git fetch origin
+  git reset --hard origin/{{ branch }}
+else
+  git clone -b {{ branch_q }} {{ spack_repo_q }} {{ spack_path_q }}
+  cd {{ spack_path_q }}
+fi
+
+source share/spack/setup-env.sh
+
+{%- if mirror %}
+spack mirror remove spack_mirror >& /dev/null || true
+spack mirror add spack_mirror file://{{ mirror }}
+{%- endif %}
+
+spack env remove -y {{ env_name_q }} >& /dev/null && echo "recreating environment: {{ env_name }}" || echo "creating new environment: {{ env_name }}"
+spack env create {{ env_name_q }} {{ yaml_path_q }}
+spack env activate {{ env_name_q }}
+spack install
+
+{%- if custom_spack %}
+{{ custom_spack }}
+{%- endif %}
