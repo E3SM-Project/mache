@@ -82,7 +82,7 @@ def deploy_spack_software_env(
         machine_config=ctx.machine_config
     )
 
-    include_e3sm_hdf5_netcdf = _get_machine_bool(
+    e3sm_hdf5_netcdf = _get_machine_bool(
         machine_config=ctx.machine_config,
         section='deploy',
         option='use_e3sm_hdf5_netcdf',
@@ -113,7 +113,7 @@ def deploy_spack_software_env(
         compiler=compiler,
         mpi=mpi,
         section='software',
-        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
     yaml_path = _write_mache_spack_env_yaml(
@@ -123,7 +123,7 @@ def deploy_spack_software_env(
         mpi=mpi,
         env_name=env_name,
         spack_specs=specs,
-        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
     _install_spack_env(
@@ -136,7 +136,7 @@ def deploy_spack_software_env(
         tmpdir=_normalize_optional_token(spack_cfg.get('tmpdir')),
         mirror=_normalize_optional_token(spack_cfg.get('mirror')),
         custom_spack=str(spack_cfg.get('custom_spack') or ''),
-        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -210,7 +210,7 @@ def deploy_spack_envs(
 
     spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
 
-    include_e3sm_hdf5_netcdf = _get_machine_bool(
+    e3sm_hdf5_netcdf = _get_machine_bool(
         machine_config=ctx.machine_config,
         section='deploy',
         option='use_e3sm_hdf5_netcdf',
@@ -261,7 +261,7 @@ def deploy_spack_envs(
             compiler=compiler,
             mpi=mpi,
             section='library',
-            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         )
 
         yaml_path = _write_mache_spack_env_yaml(
@@ -271,7 +271,7 @@ def deploy_spack_envs(
             mpi=mpi,
             env_name=env_name,
             spack_specs=specs,
-            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         )
 
         _install_spack_env(
@@ -284,7 +284,7 @@ def deploy_spack_envs(
             tmpdir=tmpdir,
             mirror=mirror,
             custom_spack=custom_spack,
-            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -297,7 +297,7 @@ def deploy_spack_envs(
             shell='sh',
             machine=ctx.machine,
             include_e3sm_lapack=False,
-            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
             load_spack_env=True,
         )
 
@@ -420,9 +420,9 @@ def _render_spack_specs(
         machine=ctx.machine or '',
         compiler=compiler,
         mpi=mpi,
-        # Naming aliases for template convenience.
+        # Naming: prefer e3sm_hdf5_netcdf in templates; keep use_* to align
+        # with the machine-config option name.
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
-        include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         use_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
@@ -487,7 +487,7 @@ def _write_mache_spack_env_yaml(
     mpi: str,
     env_name: str,
     spack_specs: list[str],
-    include_e3sm_hdf5_netcdf: bool,
+    e3sm_hdf5_netcdf: bool,
 ) -> Path:
     """Write the full spack environment YAML using mache's templates."""
 
@@ -511,7 +511,7 @@ def _write_mache_spack_env_yaml(
         compiler,
         mpi,
         include_e3sm_lapack=False,
-        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         specs=spack_specs,
         yaml_template=yaml_template,
     )
@@ -532,7 +532,7 @@ def _install_spack_env(
     tmpdir: str | None,
     mirror: str | None,
     custom_spack: str,
-    include_e3sm_hdf5_netcdf: bool,
+    e3sm_hdf5_netcdf: bool,
     log_filename: str,
     quiet: bool,
 ) -> None:
@@ -547,7 +547,7 @@ def _install_spack_env(
         shell='sh',
         machine=ctx.machine,
         include_e3sm_lapack=False,
-        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         load_spack_env=False,
     )
 

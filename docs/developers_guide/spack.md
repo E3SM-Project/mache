@@ -111,8 +111,11 @@ Only provide a small override in `mache/spack/templates/` if you need to:
 - Apply an adjustment that’s not appropriate for the shared E3SM CIME config
   (machine-local quirk, temporary workaround, etc.).
 - Add conditional behavior toggled by
-  `include_e3sm_lapack` or `include_e3sm_hdf5_netcdf` (both exposed as Jinja
-  booleans in templates) that cannot be expressed in the CIME config.
+  `include_e3sm_lapack` or `e3sm_hdf5_netcdf` (both exposed as Jinja booleans
+  in templates) that cannot be expressed in the CIME config.
+
+  Note: `include_e3sm_hdf5_netcdf` remains supported as a deprecated alias for
+  `e3sm_hdf5_netcdf` in public `mache.spack` APIs.
 
 Templates are Jinja2 files and can use the same conditional logic as YAML
 templates.
