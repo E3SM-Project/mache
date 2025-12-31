@@ -104,9 +104,20 @@ env_vars:
   set: {}
 
 spack:
-  # Whether to deploy one spack environment per toolchain pair.
-  # If false, spack is skipped entirely.
+  # Whether to deploy Spack environments at all.
+  #
+  # Behavior:
+  #   - If true, deploy ALL supported Spack environments.
+  #   - If false, deploy none.
+  #
+  # This can be forced on at runtime with the `mache deploy run` CLI flag:
+  #   --deploy-spack
   deploy: false
+
+  # Whether this target repository supports a Spack *library* environment.
+  #
+  # If true, mache will deploy one library env per toolchain pair.
+  supported: false
 
   # Optional: deploy an additional "software" spack environment.
   #
@@ -118,7 +129,8 @@ spack:
   # Load scripts do NOT activate this environment; they add its view's `bin`
   # directory to PATH.
   software:
-    deploy: false
+    # Whether this target repository supports a Spack *software* environment.
+    supported: false
 
     # Optional override for the environment name.
     # Default: "<software>_software"
@@ -132,7 +144,9 @@ spack:
   #   ctx.runtime['spack']['spack_path'] = <path>
   # This config value is a fallback.
   #
-  # Required (either via hook/runtime or here) when spack.deploy is true.
+  # Required (either via hook/runtime or here) when spack.deploy (or
+  # --deploy-spack) is used and at least one supported spack environment is
+  # enabled.
   spack_path: null
 
   # Prefix for spack environment names.

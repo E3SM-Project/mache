@@ -70,12 +70,19 @@ def deploy_spack_software_env(
     if not isinstance(software_cfg, dict):
         raise ValueError('spack.software must be a mapping if provided')
 
-    if not bool(software_cfg.get('deploy')):
+    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
+        getattr(ctx.args, 'deploy_spack', False)
+    )
+
+    software_supported = bool(software_cfg.get('supported'))
+
+    if not deploy_spack or not software_supported:
         return None
 
     if ctx.machine is None:
         raise ValueError(
-            'spack.software.deploy is true but machine is not known.'
+            'Spack software environment deployment was requested but machine '
+            'is not known.'
         )
 
     compiler, mpi = _resolve_software_toolchain(
@@ -199,13 +206,29 @@ def deploy_spack_envs(
     """
 
     spack_cfg = ctx.config.get('spack', {})
-    if not isinstance(spack_cfg, dict) or not bool(spack_cfg.get('deploy')):
+    if not isinstance(spack_cfg, dict):
+        return []
+
+    software_cfg = spack_cfg.get('software', {})
+    if software_cfg is None:
+        software_cfg = {}
+    if not isinstance(software_cfg, dict):
+        raise ValueError('spack.software must be a mapping if provided')
+
+    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
+        getattr(ctx.args, 'deploy_spack', False)
+    )
+
+    library_supported = bool(spack_cfg.get('supported'))
+
+    if not deploy_spack or not library_supported:
         return []
 
     if not toolchain_pairs:
         raise ValueError(
-            'spack.deploy is true but no toolchain pairs were resolved. '
-            'Provide toolchain.compiler/toolchain.mpi or --compiler/--mpi.'
+            'Spack library environment deployment was requested but no '
+            'toolchain pairs were resolved. Provide toolchain.compiler/'
+            'toolchain.mpi or --compiler/--mpi.'
         )
 
     spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
@@ -364,14 +387,14 @@ def _resolve_software_toolchain(
 
     if not machine_config.has_section('deploy'):
         raise ValueError(
-            'spack.software.deploy is true but machine config has no [deploy] '
-            'section.'
+            'Spack software environment is enabled but machine config has no '
+            '[deploy] section.'
         )
 
     if not machine_config.has_option('deploy', 'software_compiler'):
         raise ValueError(
-            'spack.software.deploy is true but [deploy] software_compiler is '
-            'not set in merged machine config.'
+            'Spack software environment is enabled but [deploy] '
+            'software_compiler is not set in merged machine config.'
         )
 
     compiler = machine_config.get('deploy', 'software_compiler').strip()
@@ -381,8 +404,9 @@ def _resolve_software_toolchain(
     mpi_option = f'mpi_{compiler.replace("-", "_")}'
     if not machine_config.has_option('deploy', mpi_option):
         raise ValueError(
-            f'spack.software.deploy is true but machine config is missing '
-            f'[deploy] {mpi_option} (MPI for software_compiler={compiler}).'
+            f'Spack software environment is enabled but machine config is '
+            f'missing [deploy] {mpi_option} (MPI for '
+            f'software_compiler={compiler}).'
         )
     mpi = machine_config.get('deploy', mpi_option).strip()
     if not mpi:

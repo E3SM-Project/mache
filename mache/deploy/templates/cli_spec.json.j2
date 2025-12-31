@@ -38,6 +38,13 @@
       "route": ["deploy", "run"]
     },
     {
+      "flags": ["--deploy-spack"],
+      "dest": "deploy_spack",
+      "action": "store_true",
+      "help": "Deploy all supported Spack environments (overrides spack.deploy in deploy/config.yaml.j2).",
+      "route": ["deploy", "run"]
+    },
+    {
       "flags": ["--recreate"],
       "dest": "recreate",
       "action": "store_true",

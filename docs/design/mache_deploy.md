@@ -157,7 +157,9 @@ Allow day-to-day developers to avoid rebuilding spack, while allowing maintainer
 **Mechanisms**
 
 - `deploy/config.yaml.j2` includes a default such as:
-  - `spack.enabled: true | false`
+  - `spack.deploy: true | false` (deploy all supported spack envs, or none)
+  - `spack.supported: true | false` (whether the target supports a “library” spack env)
+  - `spack.software.supported: true | false` (whether the target supports a “software” spack env)
 - `deploy.py` exposes a CLI flag such as `--deploy-spack`
 
 **Precedence**
@@ -167,8 +169,8 @@ Allow day-to-day developers to avoid rebuilding spack, while allowing maintainer
 
 **Rationale**
 
-- *E3SM-Unified maintainer workflow*: default `spack.enabled: true`
-- *Polaris developer workflow*: default `spack.enabled: false`
+- *E3SM-Unified maintainer workflow*: default `spack.deploy: true`
+- *Polaris developer workflow*: default `spack.deploy: false`
 - *Polaris maintainer workflow*: run `./deploy.py --deploy-spack ...` when producing or updating a shared spack environment
 
 ---
