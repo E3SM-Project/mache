@@ -82,6 +82,13 @@ def deploy_spack_software_env(
         machine_config=ctx.machine_config
     )
 
+    include_e3sm_hdf5_netcdf = _get_machine_bool(
+        machine_config=ctx.machine_config,
+        section='deploy',
+        option='use_e3sm_hdf5_netcdf',
+        default=False,
+    )
+
     spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
 
     env_name = str(software_cfg.get('env_name') or '').strip()
@@ -106,6 +113,7 @@ def deploy_spack_software_env(
         compiler=compiler,
         mpi=mpi,
         section='software',
+        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
     )
 
     yaml_path = _write_mache_spack_env_yaml(
@@ -115,6 +123,7 @@ def deploy_spack_software_env(
         mpi=mpi,
         env_name=env_name,
         spack_specs=specs,
+        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
     )
 
     _install_spack_env(
@@ -127,6 +136,7 @@ def deploy_spack_software_env(
         tmpdir=_normalize_optional_token(spack_cfg.get('tmpdir')),
         mirror=_normalize_optional_token(spack_cfg.get('mirror')),
         custom_spack=str(spack_cfg.get('custom_spack') or ''),
+        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -200,6 +210,13 @@ def deploy_spack_envs(
 
     spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
 
+    include_e3sm_hdf5_netcdf = _get_machine_bool(
+        machine_config=ctx.machine_config,
+        section='deploy',
+        option='use_e3sm_hdf5_netcdf',
+        default=False,
+    )
+
     env_name_prefix = str(
         spack_cfg.get('env_name_prefix') or 'spack_env'
     ).strip()
@@ -244,6 +261,7 @@ def deploy_spack_envs(
             compiler=compiler,
             mpi=mpi,
             section='library',
+            e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         )
 
         yaml_path = _write_mache_spack_env_yaml(
@@ -253,6 +271,7 @@ def deploy_spack_envs(
             mpi=mpi,
             env_name=env_name,
             spack_specs=specs,
+            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         )
 
         _install_spack_env(
@@ -265,6 +284,7 @@ def deploy_spack_envs(
             tmpdir=tmpdir,
             mirror=mirror,
             custom_spack=custom_spack,
+            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -277,7 +297,7 @@ def deploy_spack_envs(
             shell='sh',
             machine=ctx.machine,
             include_e3sm_lapack=False,
-            include_e3sm_hdf5_netcdf=False,
+            include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
             load_spack_env=True,
         )
 
@@ -378,6 +398,7 @@ def _render_spack_specs(
     compiler: str,
     mpi: str,
     section: str,
+    e3sm_hdf5_netcdf: bool,
 ) -> list[str]:
     if not os.path.exists(template_path):
         raise FileNotFoundError(
@@ -399,6 +420,10 @@ def _render_spack_specs(
         machine=ctx.machine or '',
         compiler=compiler,
         mpi=mpi,
+        # Naming aliases for template convenience.
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        use_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
     data = safe_load(rendered)
@@ -462,6 +487,7 @@ def _write_mache_spack_env_yaml(
     mpi: str,
     env_name: str,
     spack_specs: list[str],
+    include_e3sm_hdf5_netcdf: bool,
 ) -> Path:
     """Write the full spack environment YAML using mache's templates."""
 
@@ -485,7 +511,7 @@ def _write_mache_spack_env_yaml(
         compiler,
         mpi,
         include_e3sm_lapack=False,
-        include_e3sm_hdf5_netcdf=False,
+        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         specs=spack_specs,
         yaml_template=yaml_template,
     )
@@ -506,6 +532,7 @@ def _install_spack_env(
     tmpdir: str | None,
     mirror: str | None,
     custom_spack: str,
+    include_e3sm_hdf5_netcdf: bool,
     log_filename: str,
     quiet: bool,
 ) -> None:
@@ -520,7 +547,7 @@ def _install_spack_env(
         shell='sh',
         machine=ctx.machine,
         include_e3sm_lapack=False,
-        include_e3sm_hdf5_netcdf=False,
+        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
         load_spack_env=False,
     )
 
@@ -578,3 +605,25 @@ def _install_spack_env(
     # spack doesn't get confused by conda.
     cmd = f'env -i bash -l {shlex.quote(str(script_path))}'
     check_call(cmd, log_filename=log_filename, quiet=quiet)
+
+
+def _get_machine_bool(
+    *,
+    machine_config: ConfigParser,
+    section: str,
+    option: str,
+    default: bool,
+) -> bool:
+    """Read a boolean option from merged machine config with a default."""
+
+    if not machine_config.has_section(section):
+        return default
+    if not machine_config.has_option(section, option):
+        return default
+    try:
+        return machine_config.getboolean(section, option)
+    except ValueError as exc:
+        raw = machine_config.get(section, option)
+        raise ValueError(
+            f'Invalid boolean for [{section}] {option}: {raw!r}'
+        ) from exc
