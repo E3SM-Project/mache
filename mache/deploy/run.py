@@ -21,7 +21,7 @@ from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .jigsaw import install_jigsaw
 from .machine import get_machine, get_machine_config
-from .spack import deploy_spack_envs
+from .spack import deploy_spack_envs, deploy_spack_software_env
 
 
 def run_deploy(args: argparse.Namespace) -> None:
@@ -277,6 +277,12 @@ def run_deploy(args: argparse.Namespace) -> None:
         quiet=quiet,
     )
 
+    spack_software_env = deploy_spack_software_env(
+        ctx=ctx,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
+
     hook_registry.run_hook('post_spack', ctx)
 
     if install_dev_software:
@@ -295,6 +301,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         runtime_version_cmd=runtime_version_cmd,
         toolchain_pairs=toolchain_pairs,
         spack_results=spack_results,
+        spack_software_env=spack_software_env,
         quiet=quiet,
     )
 
@@ -744,9 +751,16 @@ def _write_load_scripts(
     runtime_version_cmd: str | None,
     toolchain_pairs: list[tuple[str, str]],
     spack_results: Any,
+    spack_software_env: Any,
     quiet: bool,
 ) -> list[str]:
     """Write one load script per toolchain pair, or a single default script."""
+
+    software_setup = ''
+    if spack_software_env is not None:
+        software_setup = str(
+            getattr(spack_software_env, 'path_setup', '') or ''
+        )
 
     spack_snippet_by_pair: dict[tuple[str, str], str] = {}
     if spack_results is not None:
@@ -760,6 +774,13 @@ def _write_load_scripts(
             spack_activation = spack_snippet_by_pair.get(
                 (compiler, mpilib), ''
             )
+
+            combined_spack = ''
+            if software_setup:
+                combined_spack += software_setup.rstrip() + '\n'
+            if spack_activation:
+                combined_spack += spack_activation.rstrip() + '\n'
+
             paths.append(
                 _write_load_script(
                     prefix=prefix,
@@ -769,10 +790,13 @@ def _write_load_scripts(
                     runtime_version_cmd=runtime_version_cmd,
                     toolchain_compiler=compiler,
                     toolchain_mpi=mpilib,
-                    spack_activation=spack_activation,
+                    spack_activation=combined_spack,
                 )
             )
     else:
+        combined_spack = ''
+        if software_setup:
+            combined_spack += software_setup.rstrip() + '\n'
         paths.append(
             _write_load_script(
                 prefix=prefix,
@@ -782,7 +806,7 @@ def _write_load_scripts(
                 runtime_version_cmd=runtime_version_cmd,
                 toolchain_compiler=None,
                 toolchain_mpi=None,
-                spack_activation='',
+                spack_activation=combined_spack,
             )
         )
 

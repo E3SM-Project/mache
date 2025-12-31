@@ -1,4 +1,4 @@
-# List of Spack package specs to include in the deployed Spack environment.
+# Spack specs for deployment.
 #
 # This file is rendered with Jinja2 during `mache deploy run`.
 # Available template variables include:
@@ -6,11 +6,20 @@
 #   - pins (dict of dicts from deploy/pins.cfg)
 #   - spack / pixi / all (shortcuts for pins sections)
 #
-# Expected format: a YAML list of strings.
+# Expected format: a YAML mapping with one or both keys:
+#   - library:  specs for the per-toolchain "library" environment(s)
+#   - software: specs for the single "software" environment
+#
+# Backward compatibility: if this renders to a YAML list[str], it will be
+# interpreted as the "library" specs.
 #
 # Example:
-# - "hdf5@{{ spack.hdf5 }} +fortran +hl"
-# - "netcdf-c@{{ spack.netcdf_c }} +mpi"
-# - "netcdf-fortran@{{ spack.netcdf_fortran }}"
+# library:
+#   - "hdf5@{{ spack.hdf5 }} +fortran +hl"
+#   - "netcdf-c@{{ spack.netcdf_c }} +mpi"
+#   - "netcdf-fortran@{{ spack.netcdf_fortran }}"
+# software:
+#   - "cmake@{{ spack.cmake }}"
 #
-[]
+library: []
+software: []

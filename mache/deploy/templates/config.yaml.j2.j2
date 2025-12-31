@@ -108,6 +108,22 @@ spack:
   # If false, spack is skipped entirely.
   deploy: false
 
+  # Optional: deploy an additional "software" spack environment.
+  #
+  # This environment is built once (not per toolchain) with a single compiler
+  # and MPI from the merged machine config:
+  #   [deploy] software_compiler
+  #   [deploy] mpi_<software_compiler>
+  #
+  # Load scripts do NOT activate this environment; they add its view's `bin`
+  # directory to PATH.
+  software:
+    deploy: false
+
+    # Optional override for the environment name.
+    # Default: "<software>_software"
+    env_name: null
+
   # Base path for the spack checkout used for deployment.
   # If it does not exist, mache will clone the E3SM spack repo.
   #
@@ -124,8 +140,11 @@ spack:
   env_name_prefix: "spack_env"
 
   # Jinja2-templated YAML file in the target repo containing a YAML list of
-  # spack specs (strings). This list is inserted into the appropriate
-  # mache spack env template for the selected machine/compiler/mpi.
+  # spack specs. This is inserted into the appropriate mache spack env
+  # template for the selected machine/compiler/mpi.
+  #
+  # Expected format: a YAML mapping with keys "library" and/or "software",
+  # each containing a list of spec strings.
   specs_template: "deploy/spack.yaml.j2"
 
   # Optional spack build settings

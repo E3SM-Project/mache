@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shlex
+from configparser import ConfigParser
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,6 +26,138 @@ class SpackDeployResult:
     env_name: str
     spack_path: str
     activation: str
+
+
+@dataclass(frozen=True)
+class SpackSoftwareEnvResult:
+    """Result of deploying a Spack "software" environment.
+
+    This environment is intended to provide executables, so load scripts should
+    add its view's ``bin`` directory to ``PATH`` rather than activating it.
+    """
+
+    compiler: str
+    mpi: str
+    env_name: str
+    spack_path: str
+    view_path: str
+    path_setup: str
+
+
+def deploy_spack_software_env(
+    *,
+    ctx: DeployContext,
+    log_filename: str,
+    quiet: bool,
+) -> SpackSoftwareEnvResult | None:
+    """Deploy an optional Spack "software" environment.
+
+    This environment is built with a single (compiler, mpi) pair, typically
+    defined in the merged machine config under:
+      [deploy] software_compiler
+      [deploy] mpi_<software_compiler>
+
+    No CLI flags control this environment.
+    """
+
+    spack_cfg = ctx.config.get('spack', {})
+    if not isinstance(spack_cfg, dict):
+        return None
+
+    software_cfg = spack_cfg.get('software', {})
+    if software_cfg is None:
+        software_cfg = {}
+    if not isinstance(software_cfg, dict):
+        raise ValueError('spack.software must be a mapping if provided')
+
+    if not bool(software_cfg.get('deploy')):
+        return None
+
+    if ctx.machine is None:
+        raise ValueError(
+            'spack.software.deploy is true but machine is not known.'
+        )
+
+    compiler, mpi = _resolve_software_toolchain(
+        machine_config=ctx.machine_config
+    )
+
+    spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
+
+    env_name = str(software_cfg.get('env_name') or '').strip()
+    if not env_name:
+        env_name = f'{ctx.software}_software'
+    if any(ch.isspace() for ch in env_name):
+        raise ValueError('spack.software.env_name must be a single token')
+
+    specs_template = str(
+        spack_cfg.get('specs_template') or 'deploy/spack.yaml.j2'
+    )
+    specs_template = os.path.abspath(
+        os.path.join(
+            ctx.repo_root,
+            os.path.expanduser(os.path.expandvars(specs_template)),
+        )
+    )
+
+    specs = _render_spack_specs(
+        template_path=specs_template,
+        ctx=ctx,
+        compiler=compiler,
+        mpi=mpi,
+        section='software',
+    )
+
+    yaml_path = _write_mache_spack_env_yaml(
+        ctx=ctx,
+        machine=ctx.machine,
+        compiler=compiler,
+        mpi=mpi,
+        env_name=env_name,
+        spack_specs=specs,
+    )
+
+    _install_spack_env(
+        ctx=ctx,
+        spack_path=spack_path,
+        env_name=env_name,
+        yaml_path=str(yaml_path),
+        compiler=compiler,
+        mpi=mpi,
+        tmpdir=_normalize_optional_token(spack_cfg.get('tmpdir')),
+        mirror=_normalize_optional_token(spack_cfg.get('mirror')),
+        custom_spack=str(spack_cfg.get('custom_spack') or ''),
+        log_filename=log_filename,
+        quiet=quiet,
+    )
+
+    view_path = os.path.join(
+        spack_path,
+        'var',
+        'spack',
+        'environments',
+        env_name,
+        '.spack-env',
+        'view',
+    )
+    view_path_sh = shlex.quote(view_path)
+    path_setup = (
+        '# Spack software environment PATH (no activation)\n'
+        f'_MACHE_SPACK_SOFTWARE_VIEW={view_path_sh}\n'
+        'if [[ -d "${_MACHE_SPACK_SOFTWARE_VIEW}/bin" ]]; then\n'
+        '  export PATH="${_MACHE_SPACK_SOFTWARE_VIEW}/bin:${PATH}"\n'
+        'fi\n'
+        'unset _MACHE_SPACK_SOFTWARE_VIEW\n'
+    )
+
+    return SpackSoftwareEnvResult(
+        compiler=compiler,
+        mpi=mpi,
+        env_name=env_name,
+        spack_path=spack_path,
+        view_path=view_path,
+        path_setup=path_setup,
+    )
 
 
 def deploy_spack_envs(
@@ -65,24 +198,7 @@ def deploy_spack_envs(
             'Provide toolchain.compiler/toolchain.mpi or --compiler/--mpi.'
         )
 
-    rt_spack_cfg = ctx.runtime.get('spack', {})
-    if rt_spack_cfg is None:
-        rt_spack_cfg = {}
-    if not isinstance(rt_spack_cfg, dict):
-        raise ValueError('runtime.spacK must be a mapping if provided')
-
-    spack_path = _normalize_optional_token(rt_spack_cfg.get('spack_path'))
-    if spack_path is None:
-        spack_path = _normalize_optional_token(spack_cfg.get('spack_path'))
-    spack_path = str(spack_path or '').strip()
-    if not spack_path:
-        raise ValueError(
-            'spack.deploy is true but spack.spack_path is not set in '
-            'deploy/config.yaml.j2'
-        )
-    spack_path = os.path.abspath(
-        os.path.expanduser(os.path.expandvars(spack_path))
-    )
+    spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
 
     env_name_prefix = str(
         spack_cfg.get('env_name_prefix') or 'spack_env'
@@ -127,6 +243,7 @@ def deploy_spack_envs(
             ctx=ctx,
             compiler=compiler,
             mpi=mpi,
+            section='library',
         )
 
         yaml_path = _write_mache_spack_env_yaml(
@@ -196,12 +313,71 @@ def _normalize_optional_token(value: object) -> str | None:
     return candidate
 
 
+def _resolve_spack_path(*, ctx: DeployContext, spack_cfg: dict) -> str:
+    """Resolve spack checkout path, preferring hook/runtime overrides."""
+
+    rt_spack_cfg = ctx.runtime.get('spack', {})
+    if rt_spack_cfg is None:
+        rt_spack_cfg = {}
+    if not isinstance(rt_spack_cfg, dict):
+        raise ValueError('runtime.spack must be a mapping if provided')
+
+    spack_path = _normalize_optional_token(rt_spack_cfg.get('spack_path'))
+    if spack_path is None:
+        spack_path = _normalize_optional_token(spack_cfg.get('spack_path'))
+    spack_path = str(spack_path or '').strip()
+    if not spack_path:
+        raise ValueError(
+            'spack deploy is enabled but spack_path is not set. Set '
+            "ctx.runtime['spack']['spack_path']"
+            'in a hook (preferred) or set spack.spack_path in '
+            'deploy/config.yaml.j2'
+        )
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
+
+
+def _resolve_software_toolchain(
+    *,
+    machine_config: ConfigParser,
+) -> tuple[str, str]:
+    """Resolve the single (compiler, mpi) used for the software environment."""
+
+    if not machine_config.has_section('deploy'):
+        raise ValueError(
+            'spack.software.deploy is true but machine config has no [deploy] '
+            'section.'
+        )
+
+    if not machine_config.has_option('deploy', 'software_compiler'):
+        raise ValueError(
+            'spack.software.deploy is true but [deploy] software_compiler is '
+            'not set in merged machine config.'
+        )
+
+    compiler = machine_config.get('deploy', 'software_compiler').strip()
+    if not compiler:
+        raise ValueError('[deploy] software_compiler is empty')
+
+    mpi_option = f'mpi_{compiler.replace("-", "_")}'
+    if not machine_config.has_option('deploy', mpi_option):
+        raise ValueError(
+            f'spack.software.deploy is true but machine config is missing '
+            f'[deploy] {mpi_option} (MPI for software_compiler={compiler}).'
+        )
+    mpi = machine_config.get('deploy', mpi_option).strip()
+    if not mpi:
+        raise ValueError(f'[deploy] {mpi_option} is empty')
+
+    return compiler, mpi
+
+
 def _render_spack_specs(
     *,
     template_path: str,
     ctx: DeployContext,
     compiler: str,
     mpi: str,
+    section: str,
 ) -> list[str]:
     if not os.path.exists(template_path):
         raise FileNotFoundError(
@@ -227,27 +403,52 @@ def _render_spack_specs(
 
     data = safe_load(rendered)
 
-    if isinstance(data, dict):
-        # allow a little flexibility
-        if 'specs' in data:
-            data = data['specs']
-        elif 'spack_specs' in data:
-            data = data['spack_specs']
-
     if data is None:
-        return []
+        data = []
+
+    # Backward compatible behavior:
+    # - If `deploy/spack.yaml.j2` renders to a list, interpret it as the
+    #   library-env specs.
+    # New behavior:
+    # - If it renders to a mapping, expect per-env lists under:
+    #     library:  [...]
+    #     software: [...]
+    if isinstance(data, dict):
+        if section in data:
+            data = data[section]
+        elif section == 'library':
+            # allow a little flexibility
+            if 'specs' in data:
+                data = data['specs']
+            elif 'spack_specs' in data:
+                data = data['spack_specs']
+            else:
+                data = []
+        else:
+            data = []
+
+    if isinstance(data, list):
+        if section != 'library' and not data:
+            # keep empty as empty for now; we'll error below for required envs
+            pass
+    else:
+        raise ValueError(
+            'deploy/spack.yaml.j2 must render to either: '
+            '(1) a YAML list[str] (interpreted as library specs), or '
+            '(2) a YAML mapping with keys "library" and/or "software" each '
+            'containing a list[str].'
+        )
 
     if not isinstance(data, list) or not all(isinstance(s, str) for s in data):
         raise ValueError(
-            'deploy/spack.yaml.j2 must render to a YAML list[str] (or an '
-            'object with key "specs" containing a list[str]).'
+            f'Spack specs for section={section!r} must be a YAML list[str].'
         )
 
     specs = [s.strip() for s in data if str(s).strip()]
     if not specs:
         raise ValueError(
-            'deploy/spack.yaml.j2 rendered to an empty specs list. Provide at '
-            'least one spack spec string.'
+            f'deploy/spack.yaml.j2 rendered to an empty specs list for '
+            f'section={section!r}. Provide at least one spack spec string.'
         )
 
     return specs
