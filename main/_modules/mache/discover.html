@@ -84,55 +84,81 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.discover</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 
 <div class="viewcode-block" id="discover_machine">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.discover.discover_machine.html#mache.discover.discover_machine">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">discover_machine</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Figure out the machine from the host name</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">discover_machine</span><span class="p">(</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">package</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Figure out the machine from the host name.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    quiet : bool, optional</span>
 <span class="sd">        Whether to print warnings if the machine name is ambiguous</span>
 
+<span class="sd">    package : str, optional</span>
+<span class="sd">        An additional Python package to search for machine config files</span>
+<span class="sd">        (``*.cfg``) that include a ``[discovery] hostname_re`` entry.</span>
+
+<span class="sd">    path : str, optional</span>
+<span class="sd">        An additional directory to search for machine config files (``*.cfg``)</span>
+<span class="sd">        that include a ``[discovery] hostname_re`` entry.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    machine : str</span>
 <span class="sd">        The name of the current machine</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
     <span class="n">machine</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">machines_by_host_re</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="sa">r</span><span class="s1">&#39;^andes&#39;</span><span class="p">:</span> <span class="s1">&#39;andes&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^aurora&#39;</span><span class="p">:</span> <span class="s1">&#39;aurora&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^x\d</span><span class="si">{4}</span><span class="s1">c\d</span><span class="si">{1}</span><span class="s1">s\d</span><span class="si">{1}</span><span class="s1">b0n0&#39;</span><span class="p">:</span> <span class="s1">&#39;aurora&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^blueslogin&#39;</span><span class="p">:</span> <span class="s1">&#39;anvil&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^b\d</span><span class="si">{3}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="s1">&#39;anvil&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^ch-fe&#39;</span><span class="p">:</span> <span class="s1">&#39;chicoma-cpu&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^chrlogin&#39;</span><span class="p">:</span> <span class="s1">&#39;chrysalis&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^chr-\d</span><span class="si">{4}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="s1">&#39;chrysalis&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^compy&#39;</span><span class="p">:</span> <span class="s1">&#39;compy&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^n\d</span><span class="si">{4}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="s1">&#39;anvil&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^polaris&#39;</span><span class="p">:</span> <span class="s1">&#39;polaris&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^dane\d{1,4}&#39;</span><span class="p">:</span> <span class="s1">&#39;dane&#39;</span><span class="p">,</span>
-        <span class="sa">r</span><span class="s1">&#39;^ruby\d{1,4}&#39;</span><span class="p">:</span> <span class="s1">&#39;ruby&#39;</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">for</span> <span class="n">host_re</span><span class="p">,</span> <span class="n">mach</span> <span class="ow">in</span> <span class="n">machines_by_host_re</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">host_re</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">hostname</span><span class="p">):</span>
-            <span class="n">machine</span> <span class="o">=</span> <span class="n">mach</span>
-            <span class="k">break</span>
+
+    <span class="n">rules</span> <span class="o">=</span> <span class="n">_get_discovery_rules</span><span class="p">(</span><span class="n">package</span><span class="o">=</span><span class="n">package</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">_DiscoveryRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">hostname_re</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Warning: invalid hostname_re </span><span class="si">{</span><span class="n">rule</span><span class="o">.</span><span class="n">hostname_re</span><span class="si">!r}</span><span class="s1"> &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;for machine </span><span class="si">{</span><span class="n">rule</span><span class="o">.</span><span class="n">machine</span><span class="si">!r}</span><span class="s1"> from </span><span class="si">{</span><span class="n">rule</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">hostname</span><span class="p">):</span>
+            <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">machine</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="n">others</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">({</span><span class="n">rule</span><span class="o">.</span><span class="n">machine</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">[</span><span class="mi">1</span><span class="p">:]}))</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Warning: hostname </span><span class="si">{</span><span class="n">hostname</span><span class="si">!r}</span><span class="s1"> matches multiple machines; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;choosing </span><span class="si">{</span><span class="n">machine</span><span class="si">!r}</span><span class="s1">. Other matches: </span><span class="si">{</span><span class="n">others</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+
     <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;LMOD_SYSTEM_NAME&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
         <span class="n">hostname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LMOD_SYSTEM_NAME&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">hostname</span> <span class="o">==</span> <span class="s1">&#39;frontier&#39;</span><span class="p">:</span>
             <span class="c1"># frontier&#39;s hostname is too generic to detect, so relying on</span>
             <span class="c1"># LMOD_SYSTEM_NAME</span>
             <span class="n">machine</span> <span class="o">=</span> <span class="s1">&#39;frontier&#39;</span>
+
     <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;NERSC_HOST&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
         <span class="n">hostname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NERSC_HOST&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">hostname</span> <span class="o">==</span> <span class="s1">&#39;perlmutter&#39;</span><span class="p">:</span>
@@ -163,6 +189,122 @@
 
     <span class="k">return</span> <span class="n">machine</span></div>
 
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_DiscoveryRule</span><span class="p">:</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">hostname_re</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_hostname_re_value</span><span class="p">(</span><span class="n">hostname_re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse one or more hostname regex patterns from a config value.</span>
+
+<span class="sd">    We support comma-separated and/or newline-separated entries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">patterns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">hostname_re</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="c1"># Split only on comma+whitespace so patterns like `{1,4}` are safe.</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;,\s+&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">entry</span><span class="p">:</span>
+                <span class="n">patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">patterns</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_discovery_rules_from_cfg</span><span class="p">(</span>
+    <span class="n">cfg_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">_DiscoveryRule</span><span class="p">]:</span>
+    <span class="c1"># Do NOT enable interpolation here: regex patterns commonly contain &#39;$&#39;.</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">RawConfigParser</span><span class="p">()</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">cfg_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;discovery&#39;</span><span class="p">,</span> <span class="s1">&#39;hostname_re&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">raw_value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s1">&#39;discovery&#39;</span><span class="p">,</span> <span class="s1">&#39;hostname_re&#39;</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">_DiscoveryRule</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span> <span class="n">hostname_re</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">_parse_hostname_re_value</span><span class="p">(</span><span class="n">raw_value</span><span class="p">)</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_cfgs_in_package</span><span class="p">(</span><span class="n">package</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield (machine_name, cfg_path) from a package containing *.cfg files.&quot;&quot;&quot;</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.cfg&#39;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">yield</span> <span class="n">machine</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_cfgs_in_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield (machine_name, cfg_path) from a directory of ``*.cfg`` files.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.cfg&#39;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">machine</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">yield</span> <span class="n">machine</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_discovery_rules</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">package</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">builtin_package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mache.machines&#39;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">_DiscoveryRule</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get hostname discovery rules.</span>
+
+<span class="sd">    Precedence is:</span>
+<span class="sd">      1) rules from ``path`` (if provided)</span>
+<span class="sd">      2) rules from ``package`` (if provided)</span>
+<span class="sd">      3) rules from the built-in machines package</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">_DiscoveryRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">machine</span><span class="p">,</span> <span class="n">cfg_path</span> <span class="ow">in</span> <span class="n">_iter_cfgs_in_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">rules</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">_read_discovery_rules_from_cfg</span><span class="p">(</span>
+                    <span class="n">cfg_path</span><span class="o">=</span><span class="n">cfg_path</span><span class="p">,</span>
+                    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                    <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;path:</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">package</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">machine</span><span class="p">,</span> <span class="n">cfg_path</span> <span class="ow">in</span> <span class="n">_iter_cfgs_in_package</span><span class="p">(</span><span class="n">package</span><span class="p">):</span>
+            <span class="n">rules</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">_read_discovery_rules_from_cfg</span><span class="p">(</span>
+                    <span class="n">cfg_path</span><span class="o">=</span><span class="n">cfg_path</span><span class="p">,</span>
+                    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                    <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;package:</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">machine</span><span class="p">,</span> <span class="n">cfg_path</span> <span class="ow">in</span> <span class="n">_iter_cfgs_in_package</span><span class="p">(</span><span class="n">builtin_package</span><span class="p">):</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">_read_discovery_rules_from_cfg</span><span class="p">(</span>
+                <span class="n">cfg_path</span><span class="o">=</span><span class="n">cfg_path</span><span class="p">,</span>
+                <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;package:</span><span class="si">{</span><span class="n">builtin_package</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rules</span>
 </pre></div>
 
            </div>
@@ -172,7 +314,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Energy Exascale Earth System Model Project.</p>
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
