@@ -615,7 +615,13 @@ def _get_pixi_executable(pixi, *, log_filename, quiet):
     if which is not None:
         return which
 
-    # 3) Auto-install default
+    # 3) Default path
+    if os.path.isfile(_default_pixi_path()) and os.access(
+        _default_pixi_path(), os.X_OK
+    ):
+        return _default_pixi_path()
+
+    # 4) Auto-install default
     _install_pixi(log_filename=log_filename, quiet=quiet, pixi_bin_dir=None)
 
     if os.path.isfile(_default_pixi_path()) and os.access(
