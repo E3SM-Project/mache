@@ -194,6 +194,20 @@ def check_call(
     return result
 
 
+def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
+    """Build a shell prefix to activate a pixi env in the current shell.
+
+    Uses `pixi shell-hook` so activation applies to this shell rather than
+    running a nested shell process.
+    """
+    hook_cmd = (
+        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{shlex.quote(pixi_exe)} shell-hook -s bash -m '
+        f'{shlex.quote(pixi_toml)}'
+    )
+    return f'eval "$({hook_cmd})" &&'
+
+
 def check_location(software):
     """
     Ensure that the bootstrap script is being run from the root of the target
@@ -225,7 +239,7 @@ def check_location(software):
 
 
 def install_dev_mache(
-    pixi_run_bash_lc_prefix,
+    pixi_shell_hook_prefix,
     log_filename,
     quiet,
     *,
@@ -237,8 +251,8 @@ def install_dev_mache(
     """
     print('Clone and install local mache\n')
 
-    # NOTE: `pixi run` does not "activate" an environment for subsequent shell
-    # commands.  Therefore, the pip install must be executed *through* pixi.
+    # NOTE: We use `pixi shell-hook` to activate the environment in this
+    # shell, then run pip install within that environment.
     # Also, the caller may have `cd`'d into the bootstrap pixi project, so we
     # explicitly `cd` back to the repo root first.
     if repo_root is None:
@@ -262,7 +276,7 @@ def install_dev_mache(
         f'cd {shlex.quote(src_dir)} && '
         'python -m pip install --no-deps --no-build-isolation .'
     )
-    commands = f'{pixi_run_bash_lc_prefix} {shlex.quote(bash_cmd)}'
+    commands = f'{pixi_shell_hook_prefix} {bash_cmd}'
 
     try:
         check_call(commands, log_filename, quiet)
@@ -345,13 +359,12 @@ def _run(log_filename):
         check_call(cmd_install, log_filename, quiet)
 
         pixi_toml = str(pixi_toml_path.resolve())
-        pixi_run_bash_lc_prefix = (
-            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-            f'{shlex.quote(pixi_exe)} run -m {shlex.quote(pixi_toml)} '
-            'bash -lc'
+        pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
+            pixi_exe=pixi_exe,
+            pixi_toml=pixi_toml,
         )
         install_dev_mache(
-            pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
+            pixi_shell_hook_prefix=pixi_shell_hook_prefix,
             log_filename=log_filename,
             quiet=quiet,
         )

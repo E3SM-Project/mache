@@ -13,6 +13,7 @@ from jinja2 import Template
 from yaml import safe_load
 
 from .bootstrap import (
+    build_pixi_shell_hook_prefix,
     check_call,
     check_location,
     install_dev_mache,
@@ -222,13 +223,12 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     if using_mache_fork:
         prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
-        pixi_run_bash_lc_prefix = (
-            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-            f'{shlex.quote(pixi_exe)} run -m {shlex.quote(prefix_pixi_toml)} '
-            'bash -lc'
+        pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
+            pixi_exe=pixi_exe,
+            pixi_toml=prefix_pixi_toml,
         )
         install_dev_mache(
-            pixi_run_bash_lc_prefix=pixi_run_bash_lc_prefix,
+            pixi_shell_hook_prefix=pixi_shell_hook_prefix,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -442,7 +442,7 @@ def _resolve_runtime_version_cmd(
     """Resolve an optional runtime version probe command.
 
     If provided, this is embedded into the generated load script and executed
-    via `pixi run -m <pixi.toml> bash -lc <cmd>` before activation.
+    via a pixi shell-hook before activation.
 
     Priority:
     1. runtime['project']['runtime_version_cmd'] (set by hooks)
@@ -948,15 +948,14 @@ def _install_software_in_dev_mode(
 ) -> None:
     """Install the target software in development mode into the pixi env."""
     prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
-    pixi_run_bash_lc_prefix = (
-        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
-        f'{shlex.quote(pixi_exe)} run -m {shlex.quote(prefix_pixi_toml)} '
-        'bash -lc'
+    pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
+        pixi_exe=pixi_exe,
+        pixi_toml=prefix_pixi_toml,
     )
 
     cmd_install_software = (
-        f'{pixi_run_bash_lc_prefix} '
-        f'"pip install  --no-deps --no-build-isolation -e ."'
+        f'{pixi_shell_hook_prefix} '
+        f'pip install --no-deps --no-build-isolation -e .'
     )
 
     check_call(
