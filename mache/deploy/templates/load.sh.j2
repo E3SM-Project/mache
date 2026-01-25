@@ -39,6 +39,7 @@ fi
 # `pixi run -m <pixi.toml> ...` *before* activation, so a mismatch can abort
 # cleanly without changing the current shell.
 if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
+  echo "verifying deployed ${MACHE_DEPLOY_TARGET_SOFTWARE} version..."
   expected_version="${MACHE_DEPLOY_TARGET_VERSION:-}"
   if [[ -z "${expected_version}" ]]; then
     echo "ERROR: expected version is empty (MACHE_DEPLOY_TARGET_VERSION)." >&2
@@ -47,7 +48,7 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
 
   runtime_version="$(
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
-      "${PIXI}" run -m "${PIXI_TOML}" bash -lc "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" \
+      "${PIXI}" run -m "${PIXI_TOML}" "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" \
       2>/dev/null | head -n 1 | tr -d '\r' | xargs
   )"
   status=$?
@@ -70,13 +71,18 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
     echo "  Runtime:  ${runtime_version}" >&2
     return 1
   fi
+  echo "  Verified version ${runtime_version}."
 fi
 
+echo "loading pixi env..."
 # Use `shell-hook` (not `pixi run`) so activation applies to this shell.
 eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
   "${PIXI}" shell-hook -s bash -m "${PIXI_TOML}")"
+echo "   pixi env loaded."
 
 # Spack activation (optional)
 {% if spack_activation %}
+echo "activating spack env..."
 {{ spack_activation }}
+echo "   spack env activated."
 {% endif %}
