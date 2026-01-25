@@ -373,12 +373,19 @@ def _get_pixi_executable(pixi):
         return pixi
 
     which = shutil.which('pixi')
-    if which is None:
-        raise SystemExit(
-            'ERROR: pixi executable not found on PATH. Install pixi or pass '
-            '--pixi.'
-        )
-    return which
+    if which is not None:
+        return which
+
+    default_pixi = os.path.join(
+        os.path.expanduser('~'), '.pixi', 'bin', 'pixi'
+    )
+    if os.path.isfile(default_pixi) and os.access(default_pixi, os.X_OK):
+        return default_pixi
+
+    raise SystemExit(
+        'ERROR: pixi executable not found on PATH or default install '
+        'location (~/.pixi/bin). Install pixi or pass --pixi.'
+    )
 
 
 def _build_routed_argv(cli_spec, args, route_key):
