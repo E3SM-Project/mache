@@ -709,6 +709,7 @@ def _write_load_script(
     machine: str | None,
     toolchain_compiler: str | None,
     toolchain_mpi: str | None,
+    spack_library_view: str | None,
     spack_activation: str,
 ) -> str:
     """Write a simple "load" script that launches a pixi shell.
@@ -742,6 +743,7 @@ def _write_load_script(
 
     software_upper = safe_software.upper().replace('-', '_')
     source_path = os.path.abspath(os.getcwd())
+    target_load_snippet = os.path.join(source_path, 'deploy', 'load.sh')
 
     rendered = tmpl.render(
         software=software,
@@ -756,7 +758,9 @@ def _write_load_script(
         load_script=os.path.abspath(script_path),
         toolchain_compiler=toolchain_compiler or '',
         toolchain_mpi=toolchain_mpi or '',
+        spack_library_view=spack_library_view or '',
         spack_activation=spack_activation,
+        target_load_snippet=target_load_snippet,
     )
 
     os.makedirs(prefix_abs, exist_ok=True)
@@ -791,10 +795,12 @@ def _write_load_scripts(
         )
 
     spack_snippet_by_pair: dict[tuple[str, str], str] = {}
+    spack_view_by_pair: dict[tuple[str, str], str] = {}
     if spack_results is not None:
         for result in spack_results:
             key = (result.compiler, result.mpi)
             spack_snippet_by_pair[key] = result.activation
+            spack_view_by_pair[key] = result.view_path
 
     paths: list[str] = []
     if toolchain_pairs:
@@ -802,6 +808,7 @@ def _write_load_scripts(
             spack_activation = spack_snippet_by_pair.get(
                 (compiler, mpilib), ''
             )
+            spack_library_view = spack_view_by_pair.get((compiler, mpilib), '')
 
             combined_spack = ''
             if software_setup:
@@ -819,6 +826,7 @@ def _write_load_scripts(
                     machine=machine,
                     toolchain_compiler=compiler,
                     toolchain_mpi=mpilib,
+                    spack_library_view=spack_library_view,
                     spack_activation=combined_spack,
                 )
             )
@@ -836,6 +844,7 @@ def _write_load_scripts(
                 machine=machine,
                 toolchain_compiler=None,
                 toolchain_mpi=None,
+                spack_library_view=None,
                 spack_activation=combined_spack,
             )
         )

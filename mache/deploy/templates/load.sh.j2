@@ -7,6 +7,8 @@ export MACHE_DEPLOY_TARGET_VERSION={{ software_version | tojson }}
 export MACHE_DEPLOY_RUNTIME_VERSION_CMD={{ runtime_version_cmd_sh }}
 export MACHE_DEPLOY_TOOLCHAIN_COMPILER={{ toolchain_compiler | tojson }}
 export MACHE_DEPLOY_TOOLCHAIN_MPI={{ toolchain_mpi | tojson }}
+export MACHE_DEPLOY_SPACK_LIBRARY_VIEW={{ spack_library_view | tojson }}
+export MACHE_DEPLOY_TARGET_LOAD_SNIPPET={{ target_load_snippet | tojson }}
 export PIXI={{ pixi_exe | tojson }}
 export PIXI_PREFIX={{ prefix | tojson }}
 export PIXI_TOML={{ pixi_toml | tojson }}
@@ -88,3 +90,11 @@ echo "activating spack env..."
 {{ spack_activation }}
 echo "   spack env activated."
 {% endif %}
+
+# Target software load snippet (optional)
+if [[ -n "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET:-}" \
+      && -f "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}" ]]; then
+  echo "sourcing target load snippet..."
+  # shellcheck source=/dev/null
+  source "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}"
+fi

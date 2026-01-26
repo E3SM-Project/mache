@@ -26,6 +26,7 @@ class SpackDeployResult:
     mpi: str
     env_name: str
     spack_path: str
+    view_path: str
     activation: str
 
 
@@ -321,6 +322,16 @@ def deploy_spack_envs(
             quiet=quiet,
         )
 
+        view_path = os.path.join(
+            spack_path,
+            'var',
+            'spack',
+            'environments',
+            env_name,
+            '.spack-env',
+            'view',
+        )
+
         activation = get_spack_script(
             spack_path=spack_path,
             env_name=env_name,
@@ -339,6 +350,7 @@ def deploy_spack_envs(
                 mpi=mpi,
                 env_name=env_name,
                 spack_path=spack_path,
+                view_path=view_path,
                 activation=activation,
             )
         )
@@ -393,6 +405,16 @@ def load_existing_spack_envs(
         env_name = f'{env_name_prefix}_{compiler}_{mpi}'
         _ensure_spack_env_exists(spack_path=spack_path, env_name=env_name)
 
+        view_path = os.path.join(
+            spack_path,
+            'var',
+            'spack',
+            'environments',
+            env_name,
+            '.spack-env',
+            'view',
+        )
+
         activation = get_spack_script(
             spack_path=spack_path,
             env_name=env_name,
@@ -411,6 +433,7 @@ def load_existing_spack_envs(
                 mpi=mpi,
                 env_name=env_name,
                 spack_path=spack_path,
+                view_path=view_path,
                 activation=activation,
             )
         )
