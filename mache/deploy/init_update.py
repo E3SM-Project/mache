@@ -146,6 +146,16 @@ def init_or_update_repo(
             overwrite=overwrite,
         )
 
+        load_sh = (
+            '# bash snippet for adding Polaris-specific environment '
+            'variables\n'
+        )
+        _write_text(
+            deploy_dir / 'load.sh',
+            load_sh,
+            overwrite=overwrite,
+        )
+
 
 def _read_pkg_template(relpath: str) -> str:
     # relpath like "templates/deploy.py.j2"
