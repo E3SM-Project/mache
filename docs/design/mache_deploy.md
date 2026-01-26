@@ -2,11 +2,19 @@
 
 ## Summary
 
-`mache.deploy` is a subpackage of `mache` that provides a unified, documented, and extensible mechanism for deploying combined **pixi** (conda packages) and **spack** environments for E3SM-supported software (e.g. Polaris, Compass, E3SM-Unified) on E3SM-supported HPC systems.
+`mache.deploy` is a subpackage of `mache` that provides a unified, documented,
+and extensible mechanism for deploying combined **pixi** (conda packages) and
+**spack** environments for E3SM-supported software (e.g. Polaris, Compass,
+E3SM-Unified) on E3SM-supported HPC systems.
 
-The primary motivation is to replace the redundant, subtly divergent, and poorly documented deployment logic currently embedded independently in these packages with a single, shared implementation. This improves maintainability, ensures feature parity across target software, and provides a scalable model for future E3SM software with mixed pixi/spack dependencies.
+The primary motivation is to replace the redundant, subtly divergent, and
+poorly documented deployment logic currently embedded independently in these
+packages with a single, shared implementation. This improves maintainability,
+ensures feature parity across target software, and provides a scalable model
+for future E3SM software with mixed pixi/spack dependencies.
 
-In this document, software such as Polaris or E3SM-Unified that uses `mache.deploy` is referred to as the **target software**.
+In this document, software such as Polaris or E3SM-Unified that uses
+`mache.deploy` is referred to as the **target software**.
 
 ---
 
@@ -19,11 +27,14 @@ In this document, software such as Polaris or E3SM-Unified that uses `mache.depl
 
 ### Requirement: A mechanism to begin deployment
 
-The target software must provide a user-facing entry point to begin deployment. This mechanism cannot depend on `mache` already being installed, because deployment is precisely how `mache` is introduced.
+The target software must provide a user-facing entry point to begin deployment.
+ This mechanism cannot depend on `mache` already being installed, because
+  deployment is precisely how `mache` is introduced.
 
 **Design resolution**
 
-Each target software provides a small, stable `deploy.py` script at repository root. This script:
+Each target software provides a small, stable `deploy.py` script at repository
+root. This script:
 
 - Parses command-line arguments defined declaratively
 - Downloads a standalone `bootstrap.py` script from the `mache` repository
@@ -33,16 +44,19 @@ Each target software provides a small, stable `deploy.py` script at repository r
 
 ### Requirement: A mechanism to install pixi
 
-If pixi is not already installed, the deployment process must be able to install it automatically.
+If pixi is not already installed, the deployment process must be able to
+install it automatically.
 
 **Design resolution**
 
 The standalone `bootstrap.py` script (downloaded from `mache`) handles:
 
 - Installing pixi into a user-specified or inferred location
-- Using pixi in a non-interactive, non-login context (no reliance on shell init)
+- Using pixi in a non-interactive, non-login context (no reliance on shell
+  init)
 
-This logic is intentionally duplicated only in `bootstrap.py`, which runs before `mache` is available.
+This logic is intentionally duplicated only in `bootstrap.py`, which runs
+before `mache` is available.
 
 ---
 
@@ -57,8 +71,10 @@ The target software must support installing:
 
 - `bootstrap.py` creates a minimal *bootstrap* pixi environment
 - `mache` is installed into that environment either:
-  - via a pixi manifest that depends on `mache==<version>` (from conda-forge), or
-  - via cloning and installing from a fork/branch (installed into the pixi environment)
+  - via a pixi manifest that depends on `mache==<version>` (from conda-forge),
+    or
+  - via cloning and installing from a fork/branch (installed into the pixi
+    environment)
 
 ---
 
@@ -74,10 +90,15 @@ The target software must define:
 
 The target software provides two inputs:
 
-- `deploy/pixi.toml.j2`: a Jinja2-templated pixi manifest that declaratively defines the pixi environment dependencies
-- `deploy/config.yaml.j2`: a Jinja2-templated YAML configuration file that defines deployment options and variants (channels, prefix, MPI selection, feature toggles, etc.)
+- `deploy/pixi.toml.j2`: a Jinja2-templated pixi manifest that declaratively
+  defines the pixi environment dependencies
+- `deploy/config.yaml.j2`: a Jinja2-templated YAML configuration file that
+  defines deployment options and variants (channels, prefix, MPI selection,
+  feature toggles, etc.)
 
-`mache.deploy` renders and interprets these files to construct a pixi environment. The pixi manifest (`deploy/pixi.toml.j2`) is the authoritative specification of the pixi environment dependencies.
+`mache.deploy` renders and interprets these files to construct a pixi
+environment. The pixi manifest (`deploy/pixi.toml.j2`) is the authoritative
+specification of the pixi environment dependencies.
 
 ---
 
@@ -107,14 +128,17 @@ The target software must support multiple deployment variants, including:
 **Design resolution**
 
 - Variants are declared declaratively in `deploy/config.yaml.j2`
-- Users select variants via command-line options to `deploy.py` / `mache deploy`
-- Variant selection is propagated consistently to pixi, spack, modules, and environment variables
+- Users select variants via command-line options to `deploy.py` /
+  `mache deploy`
+- Variant selection is propagated consistently to pixi, spack, modules, and
+  environment variables
 
 ---
 
 ### Requirement: Provide environment variables
 
-Some target software requires environment variables to be set to function correctly.
+Some target software requires environment variables to be set to function
+correctly.
 
 **Design resolution**
 
@@ -150,7 +174,8 @@ Target software documentation points users to these scripts.
 
 ### Requirement: Conditional spack deployment
 
-Allow day-to-day developers to avoid rebuilding spack, while allowing maintainers to do full shared-environment deployments when needed.
+Allow day-to-day developers to avoid rebuilding spack, while allowing
+maintainers to do full shared-environment deployments when needed.
 
 **Design resolution**
 
@@ -158,20 +183,24 @@ Allow day-to-day developers to avoid rebuilding spack, while allowing maintainer
 
 - `deploy/config.yaml.j2` includes a default such as:
   - `spack.deploy: true | false` (deploy all supported spack envs, or none)
-  - `spack.supported: true | false` (whether the target supports a “library” spack env)
-  - `spack.software.supported: true | false` (whether the target supports a “software” spack env)
+  - `spack.supported: true | false` (whether the target supports a “library”
+    spack env)
+  - `spack.software.supported: true | false` (whether the target supports a
+    “software” spack env)
 - `deploy.py` exposes a CLI flag such as `--deploy-spack`
 
 **Precedence**
 
-1. If the user passes `--deploy-spack`, spack deployment is enabled regardless of the config default.
+1. If the user passes `--deploy-spack`, spack deployment is enabled regardless
+   of the config default.
 2. Otherwise, fall back to the `config.yaml.j2` default.
 
 **Rationale**
 
 - *E3SM-Unified maintainer workflow*: default `spack.deploy: true`
 - *Polaris developer workflow*: default `spack.deploy: false`
-- *Polaris maintainer workflow*: run `./deploy.py --deploy-spack ...` when producing or updating a shared spack environment
+- *Polaris maintainer workflow*: run `./deploy.py --deploy-spack ...` when
+  producing or updating a shared spack environment
 
 ---
 
@@ -232,15 +261,20 @@ This separation is intentional and strictly enforced.
 
 ## CLI Design and Sharing
 
+*Date last modified: Jan 26, 2026*
+*Contributor: Xylar Asay-Davis*
+
 ### Problem
 
-- `deploy.py`, `bootstrap.py`, and `mache deploy` all need overlapping CLI arguments
+- `deploy.py`, `bootstrap.py`, and `mache deploy` all need overlapping CLI
+  arguments
 - Duplicating argparse definitions across repositories is fragile
 - Users expect `./deploy.py --help` to be authoritative
 
 ### Design resolution: `cli_spec.json(.j2)`
 
-Each target software includes `deploy/cli_spec.json` (or template), which declaratively defines:
+Each target software includes `deploy/cli_spec.json` rendered from the
+packaged template, which declaratively defines:
 
 - Command-line flags
 - Help text
@@ -250,10 +284,11 @@ Each target software includes `deploy/cli_spec.json` (or template), which declar
 **Usage**
 
 - `deploy.py`
-  - Builds its argparse interface from this file
-  - Forwards appropriate arguments to `bootstrap.py`
-- `mache deploy`
-  - Uses the same spec to build its CLI
+  - Builds its argparse interface from `deploy/cli_spec.json`
+  - Forwards appropriate arguments to `bootstrap.py` and `mache deploy run`
+- `mache deploy run`
+  - Builds its CLI from the packaged `mache/deploy/templates/cli_spec.json.j2`
+    (the same source template used by `mache deploy init/update`)
 
 **Benefits**
 
@@ -264,6 +299,8 @@ Each target software includes `deploy/cli_spec.json` (or template), which declar
 ---
 
 ## Starter Templates and Initialization
+*Date last modified: Jan 26, 2026*
+*Contributor: Xylar Asay-Davis*
 
 ### Templates
 
@@ -272,8 +309,12 @@ Each target software includes `deploy/cli_spec.json` (or template), which declar
 - `deploy.py`
 - `cli_spec.json.j2`
 - `pins.cfg`
-- `config.yaml.j2`
-- `pixi.toml.j2`
+- `config.yaml.j2.j2` (renders to `deploy/config.yaml.j2`)
+- `pixi.toml.j2.j2` (renders to `deploy/pixi.toml.j2`)
+- `spack.yaml.j2`
+- `hooks.py.j2`
+- `load.sh.j2`
+- `spack_install.bash.j2`
 
 These templates include placeholders for:
 
@@ -290,6 +331,9 @@ A command that:
 - Copies templates into a target software repository
 - Fills in required placeholders
 - Creates a minimal, working deployment setup
+- Writes: `deploy.py`, `deploy/cli_spec.json`, `deploy/pins.cfg`,
+  `deploy/config.yaml.j2`, `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`,
+  `deploy/hooks.py`, and a placeholder `deploy/load.sh`
 
 ---
 
@@ -297,14 +341,20 @@ A command that:
 
 When a target software updates its pinned `mache` version:
 
-- `deploy.py` and `cli_spec.json` should be updated from the matching `mache` release
-- `pins.cfg`, `config.yaml.j2`, and `pixi.toml.j2` remain software-owned
+- `deploy.py` and `deploy/cli_spec.json` should be updated from the matching
+  `mache` release
+- `deploy/pins.cfg`, `deploy/config.yaml.j2`, and `deploy/pixi.toml.j2` remain
+  software-owned
 
-The `mache deploy update` command automates updating only the shared files.
+The `mache deploy update` command updates only `deploy.py` and
+`deploy/cli_spec.json`.
 
 ---
 
 ## Package Organization
+
+*Date last modified: Jan 26, 2026*
+*Contributor: Xylar Asay-Davis*
 
 All deployment-related assets live under:
 
@@ -313,13 +363,24 @@ mache/deploy/
 ├── bootstrap.py        # standalone script
 ├── cli.py              # mache deploy CLI
 ├── cli_spec.py         # cli_spec parsing helpers
+├── conda.py            # conda/pixi helpers
+├── hooks.py            # deployment hook framework
+├── init_update.py      # init/update logic for target repos
+├── jinja.py            # Jinja helpers
+├── machine.py          # machine/deploy config helpers
 ├── run.py              # deployment runner (called by `mache deploy run`)
+├── spack.py            # spack helpers
+├── jigsaw/             # pixi Jigsaw recipe templates
 └── templates/
-    ├── deploy.py.j2
-    ├── cli_spec.json.j2
-    ├── pins.cfg.j2
-    ├── config.yaml.j2.j2
-    └── pixi.toml.j2.j2
+  ├── deploy.py.j2
+  ├── cli_spec.json.j2
+  ├── pins.cfg.j2
+  ├── config.yaml.j2.j2
+  ├── pixi.toml.j2.j2
+  ├── spack.yaml.j2
+  ├── hooks.py.j2
+  ├── load.sh.j2
+  └── spack_install.bash.j2
 ```
 
 This keeps deployment concerns clearly separated from the rest of `mache`.
@@ -336,24 +397,26 @@ The current design:
 - Supports both stable users and developers
 - Provides a clear path for future growth (init, update, testing)
 
-Most importantly, it turns deployment from an ad hoc per-project liability into a shared, documented, and evolvable capability.
+Most importantly, it turns deployment from an ad hoc per-project liability
+into a shared, documented, and evolvable capability.
 
 ---
 
-## Planned Testing
+## Testing
 
-*Date last modified: Dec 26, 2025*
+*Date last modified: Jan 26, 2026*
 *Contributor: Xylar Asay-Davis*
 
-### Test deployment of Polaris
+### Polaris
 
-- Full test deployment on Chrysalis
+- Full deployment on Chrysalis
 - Intel and GNU compilers
-- MPAS-Ocean and Omega test suites
+- MPAS-Ocean `pr` suite (both compilers)
+- Omega `omega_pr` suite (both compilers)
 
-### Test deployment of E3SM-Unified
+### Planned test deployment of E3SM-Unified
 
+- Not yet started
 - Full test deployment on Chrysalis
 - GNU compilers
 - Test run of MPAS-Analysis
-
