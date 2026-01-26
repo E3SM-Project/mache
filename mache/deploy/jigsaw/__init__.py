@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shlex
@@ -85,6 +86,16 @@ def install_jigsaw(
         quiet=quiet,
     )
 
+    cache_key = _compute_jigsaw_cache_key(
+        jigsaw_python_dir=jigsaw_python_dir,
+        python_version=python_version,
+    )
+
+    if _is_cached_jigsaw_build_valid(cache_key=cache_key):
+        if not quiet:
+            print('Using cached JIGSAW build')
+        return _get_local_channel_uri()
+
     jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
 
     _build_external_jigsaw(
@@ -95,6 +106,8 @@ def install_jigsaw(
         log_filename=log_filename,
         quiet=quiet,
     )
+
+    _write_jigsaw_cache_key(cache_key=cache_key)
 
     # Return the local conda channel that contains the freshly-built package.
     # The caller should add this channel (ahead of conda-forge) and run
@@ -114,6 +127,100 @@ def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
             f'Failed to determine JIGSAW-Python version from {version_file}.'
         )
     return version
+
+
+def _get_git_head(repo_dir: Path) -> str:
+    git_dir = repo_dir / '.git'
+    if git_dir.is_dir():
+        git_root = git_dir
+    elif git_dir.is_file():
+        git_file = git_dir.read_text(encoding='utf-8').strip()
+        if not git_file.startswith('gitdir:'):
+            raise RuntimeError(
+                f'Unexpected .git file format in {repo_dir}: {git_file!r}'
+            )
+        gitdir_path = git_file.split(':', 1)[1].strip()
+        git_root = (repo_dir / gitdir_path).resolve()
+    else:
+        raise RuntimeError(
+            f'Expected git checkout at {repo_dir} but .git not found.'
+        )
+
+    head_file = git_root / 'HEAD'
+    if not head_file.is_file():
+        raise RuntimeError(
+            f'Expected git checkout at {repo_dir} but HEAD not found in '
+            f'{git_root}.'
+        )
+
+    head_ref = head_file.read_text(encoding='utf-8').strip()
+    if head_ref.startswith('ref:'):
+        ref_path = head_ref.split(' ', 1)[1].strip()
+        ref_file = git_root / ref_path
+        if not ref_file.is_file():
+            raise RuntimeError(f'Git ref {ref_path} not found in {git_root}.')
+        return ref_file.read_text(encoding='utf-8').strip()
+
+    return head_ref
+
+
+def _compute_jigsaw_cache_key(
+    *,
+    jigsaw_python_dir: Path,
+    python_version: str,
+) -> str:
+    platform, _ = get_conda_platform_and_system()
+    jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
+    git_head = _get_git_head(jigsaw_python_dir)
+    python_variant = PYTHON_VARIANTS.get(python_version, '')
+
+    payload = {
+        'git_head': git_head,
+        'jigsaw_version': jigsaw_version,
+        'python_version': python_version,
+        'python_variant': python_variant,
+        'platform': platform,
+    }
+
+    digest = hashlib.sha256()
+    for key in sorted(payload):
+        digest.update(f'{key}={payload[key]}\n'.encode('utf-8'))
+    return digest.hexdigest()
+
+
+def _cache_key_path() -> Path:
+    return _get_jigsaw_cache_dir() / '.jigsaw_cache_key'
+
+
+def _get_jigsaw_cache_dir() -> Path:
+    return Path('.mache_cache/jigsaw').resolve()
+
+
+def _read_jigsaw_cache_key() -> str | None:
+    cache_path = _cache_key_path()
+    if not cache_path.is_file():
+        return None
+    return cache_path.read_text(encoding='utf-8').strip() or None
+
+
+def _write_jigsaw_cache_key(*, cache_key: str) -> None:
+    cache_path = _cache_key_path()
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(f'{cache_key}\n', encoding='utf-8')
+
+
+def _is_cached_jigsaw_build_valid(*, cache_key: str) -> bool:
+    cached_key = _read_jigsaw_cache_key()
+    if cached_key != cache_key:
+        return False
+
+    output_dir = _get_jigsaw_cache_dir()
+    if not output_dir.is_dir():
+        return False
+
+    platform, _ = get_conda_platform_and_system()
+    repodata = output_dir / platform / 'repodata.json'
+    return repodata.is_file()
 
 
 def _parse_pyproject_version(pyproject_path: Path) -> str:
@@ -262,6 +369,9 @@ def _build_external_jigsaw(
             'Run the deploy bootstrap step first.'
         )
 
+    output_dir = _get_jigsaw_cache_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     command = (
         'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
         f'{shlex.quote(pixi_exe)} run -m {shlex.quote(str(pixi_toml))} '
@@ -270,13 +380,13 @@ def _build_external_jigsaw(
         f'{shlex.quote(os.path.abspath("deploy_tmp/jigsaw_build/recipe"))} '
         f'--variant-config {shlex.quote(os.path.abspath(variant_file))} '
         f'--output-dir '
-        f'{shlex.quote(os.path.abspath("deploy_tmp/jigsaw_build/output"))} '
+        f'{shlex.quote(str(output_dir))} '
     )
     check_call(command, log_filename=log_filename, quiet=quiet)
 
 
 def _get_local_channel_uri() -> str:
-    output_dir = Path('deploy_tmp/jigsaw_build/output').resolve()
+    output_dir = _get_jigsaw_cache_dir()
     if not output_dir.is_dir():
         raise RuntimeError(
             f'JIGSAW build output directory not found: {output_dir}'
