@@ -22,7 +22,12 @@ from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .jigsaw import install_jigsaw
 from .machine import get_machine, get_machine_config
-from .spack import deploy_spack_envs, deploy_spack_software_env
+from .spack import (
+    deploy_spack_envs,
+    deploy_spack_software_env,
+    load_existing_spack_envs,
+    load_existing_spack_software_env,
+)
 
 
 def run_deploy(args: argparse.Namespace) -> None:
@@ -270,18 +275,36 @@ def run_deploy(args: argparse.Namespace) -> None:
     # Future wiring: spack stages (no-ops unless implemented/configured)
     hook_registry.run_hook('pre_spack', ctx)
 
-    spack_results = deploy_spack_envs(
-        ctx=ctx,
-        toolchain_pairs=toolchain_pairs,
-        log_filename=log_filename,
-        quiet=quiet,
+    spack_cfg = config.get('spack', {})
+    if not isinstance(spack_cfg, dict):
+        spack_cfg = {}
+
+    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
+        getattr(args, 'deploy_spack', False)
     )
 
-    spack_software_env = deploy_spack_software_env(
-        ctx=ctx,
-        log_filename=log_filename,
-        quiet=quiet,
-    )
+    if deploy_spack:
+        spack_results = deploy_spack_envs(
+            ctx=ctx,
+            toolchain_pairs=toolchain_pairs,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+
+        spack_software_env = deploy_spack_software_env(
+            ctx=ctx,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
+    else:
+        spack_results = load_existing_spack_envs(
+            ctx=ctx,
+            toolchain_pairs=toolchain_pairs,
+        )
+
+        spack_software_env = load_existing_spack_software_env(
+            ctx=ctx,
+        )
 
     hook_registry.run_hook('post_spack', ctx)
 

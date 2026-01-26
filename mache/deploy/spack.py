@@ -97,7 +97,11 @@ def deploy_spack_software_env(
         default=False,
     )
 
-    spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
+    spack_path = _resolve_spack_path(
+        ctx=ctx,
+        spack_cfg=spack_cfg,
+        reason='deployment is enabled',
+    )
 
     env_name = str(software_cfg.get('env_name') or '').strip()
     if not env_name:
@@ -232,7 +236,11 @@ def deploy_spack_envs(
             'toolchain.mpi or --compiler/--mpi.'
         )
 
-    spack_path = _resolve_spack_path(ctx=ctx, spack_cfg=spack_cfg)
+    spack_path = _resolve_spack_path(
+        ctx=ctx,
+        spack_cfg=spack_cfg,
+        reason='deployment is enabled',
+    )
 
     e3sm_hdf5_netcdf = _get_machine_bool(
         machine_config=ctx.machine_config,
@@ -338,6 +346,150 @@ def deploy_spack_envs(
     return results
 
 
+def load_existing_spack_envs(
+    *,
+    ctx: DeployContext,
+    toolchain_pairs: list[tuple[str, str]],
+) -> list[SpackDeployResult]:
+    """Load pre-existing Spack library environments for load scripts."""
+
+    spack_cfg = ctx.config.get('spack', {})
+    if not isinstance(spack_cfg, dict):
+        return []
+
+    library_supported = bool(spack_cfg.get('supported'))
+    if not library_supported:
+        return []
+
+    if not toolchain_pairs:
+        raise ValueError(
+            'Spack library environments are supported but no toolchain pairs '
+            'were resolved. Provide toolchain.compiler/toolchain.mpi or '
+            '--compiler/--mpi.'
+        )
+
+    spack_path = _resolve_spack_path(
+        ctx=ctx,
+        spack_cfg=spack_cfg,
+        reason='support is enabled (load scripts require existing envs)',
+    )
+
+    e3sm_hdf5_netcdf = _get_machine_bool(
+        machine_config=ctx.machine_config,
+        section='deploy',
+        option='use_e3sm_hdf5_netcdf',
+        default=False,
+    )
+
+    env_name_prefix = str(
+        spack_cfg.get('env_name_prefix') or 'spack_env'
+    ).strip()
+    if not env_name_prefix or any(ch.isspace() for ch in env_name_prefix):
+        raise ValueError('spack.env_name_prefix must be a non-empty token')
+
+    results: list[SpackDeployResult] = []
+
+    for compiler, mpi in toolchain_pairs:
+        env_name = f'{env_name_prefix}_{compiler}_{mpi}'
+        _ensure_spack_env_exists(spack_path=spack_path, env_name=env_name)
+
+        activation = get_spack_script(
+            spack_path=spack_path,
+            env_name=env_name,
+            compiler=compiler,
+            mpi=mpi,
+            shell='sh',
+            machine=ctx.machine,
+            include_e3sm_lapack=False,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+            load_spack_env=True,
+        )
+
+        results.append(
+            SpackDeployResult(
+                compiler=compiler,
+                mpi=mpi,
+                env_name=env_name,
+                spack_path=spack_path,
+                activation=activation,
+            )
+        )
+
+    return results
+
+
+def load_existing_spack_software_env(
+    *,
+    ctx: DeployContext,
+) -> SpackSoftwareEnvResult | None:
+    """Load a pre-existing Spack software environment for load scripts."""
+
+    spack_cfg = ctx.config.get('spack', {})
+    if not isinstance(spack_cfg, dict):
+        return None
+
+    software_cfg = spack_cfg.get('software', {})
+    if software_cfg is None:
+        software_cfg = {}
+    if not isinstance(software_cfg, dict):
+        raise ValueError('spack.software must be a mapping if provided')
+
+    software_supported = bool(software_cfg.get('supported'))
+    if not software_supported:
+        return None
+
+    if ctx.machine is None:
+        raise ValueError(
+            'Spack software environment is supported but machine is not known.'
+        )
+
+    spack_path = _resolve_spack_path(
+        ctx=ctx,
+        spack_cfg=spack_cfg,
+        reason='support is enabled (load scripts require existing envs)',
+    )
+
+    compiler, mpi = _resolve_software_toolchain(
+        machine_config=ctx.machine_config
+    )
+
+    env_name = str(software_cfg.get('env_name') or '').strip()
+    if not env_name:
+        env_name = f'{ctx.software}_software'
+    if any(ch.isspace() for ch in env_name):
+        raise ValueError('spack.software.env_name must be a single token')
+
+    _ensure_spack_env_exists(spack_path=spack_path, env_name=env_name)
+
+    view_path = os.path.join(
+        spack_path,
+        'var',
+        'spack',
+        'environments',
+        env_name,
+        '.spack-env',
+        'view',
+    )
+    view_path_sh = shlex.quote(view_path)
+    path_setup = (
+        '# Spack software environment PATH (no activation)\n'
+        f'_MACHE_SPACK_SOFTWARE_VIEW={view_path_sh}\n'
+        'if [[ -d "${_MACHE_SPACK_SOFTWARE_VIEW}/bin" ]]; then\n'
+        '  export PATH="${_MACHE_SPACK_SOFTWARE_VIEW}/bin:${PATH}"\n'
+        'fi\n'
+        'unset _MACHE_SPACK_SOFTWARE_VIEW\n'
+    )
+
+    return SpackSoftwareEnvResult(
+        compiler=compiler,
+        mpi=mpi,
+        env_name=env_name,
+        spack_path=spack_path,
+        view_path=view_path,
+        path_setup=path_setup,
+    )
+
+
 def _normalize_optional_token(value: object) -> str | None:
     """Normalize optional config/runtime values.
 
@@ -357,7 +509,12 @@ def _normalize_optional_token(value: object) -> str | None:
     return candidate
 
 
-def _resolve_spack_path(*, ctx: DeployContext, spack_cfg: dict) -> str:
+def _resolve_spack_path(
+    *,
+    ctx: DeployContext,
+    spack_cfg: dict,
+    reason: str,
+) -> str:
     """Resolve spack checkout path, preferring hook/runtime overrides."""
 
     rt_spack_cfg = ctx.runtime.get('spack', {})
@@ -372,12 +529,29 @@ def _resolve_spack_path(*, ctx: DeployContext, spack_cfg: dict) -> str:
     spack_path = str(spack_path or '').strip()
     if not spack_path:
         raise ValueError(
-            'spack deploy is enabled but spack_path is not set. Set '
+            f'Spack {reason} but spack_path is not set. Set '
             "ctx.runtime['spack']['spack_path']"
-            'in a hook (preferred) or set spack.spack_path in '
+            ' in a hook (preferred) or set spack.spack_path in '
             'deploy/config.yaml.j2'
         )
     return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
+
+
+def _ensure_spack_env_exists(*, spack_path: str, env_name: str) -> str:
+    env_dir = os.path.join(
+        spack_path,
+        'var',
+        'spack',
+        'environments',
+        env_name,
+    )
+    if not os.path.isdir(env_dir):
+        raise ValueError(
+            'Spack environment not found at '
+            f'{env_dir}. Please contact the site administrator or '
+            'deployment maintainer.'
+        )
+    return env_dir
 
 
 def _resolve_software_toolchain(
