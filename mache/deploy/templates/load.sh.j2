@@ -10,6 +10,7 @@ export MACHE_DEPLOY_TOOLCHAIN_MPI={{ toolchain_mpi | tojson }}
 export PIXI={{ pixi_exe | tojson }}
 export PIXI_PREFIX={{ prefix | tojson }}
 export PIXI_TOML={{ pixi_toml | tojson }}
+export {{ software_upper }}_MACHINE={{ machine | tojson }}
 export {{ software_upper }}_BRANCH={{ source_path | tojson }}
 export {{ software_upper }}_VERSION={{ software_version | tojson }}
 export {{ software_upper }}_COMPILER={{ toolchain_compiler | tojson }}
