@@ -15,6 +15,7 @@ export {{ software_upper }}_BRANCH={{ source_path | tojson }}
 export {{ software_upper }}_VERSION={{ software_version | tojson }}
 export {{ software_upper }}_COMPILER={{ toolchain_compiler | tojson }}
 export {{ software_upper }}_MPI={{ toolchain_mpi | tojson }}
+export {{ software_upper }}_LOAD_SCRIPT={{ load_script | tojson }}
 
 # Activate the pixi environment in the *current* shell.
 #

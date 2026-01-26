@@ -753,6 +753,7 @@ def _write_load_script(
         software_version=software_version,
         runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
         machine=machine or '',
+        load_script=os.path.abspath(script_path),
         toolchain_compiler=toolchain_compiler or '',
         toolchain_mpi=toolchain_mpi or '',
         spack_activation=spack_activation,
