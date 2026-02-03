@@ -32,7 +32,7 @@ def sync_diags(  # noqa: C901
     machine_info = MachineInfo(machine=machine)
     machine = machine_info.machine
 
-    lcrc_machines = ['anvil', 'chrysalis']
+    lcrc_machines = ['chrysalis']
     if direction == 'to' and machine not in lcrc_machines:
         raise ValueError(
             f'You can only sync diagnostics to another machine '
