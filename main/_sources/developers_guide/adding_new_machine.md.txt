@@ -35,7 +35,7 @@ machines from hostnames with the following regular expressions:
 ```python
 '^chr-\d{4}'  # Chrysalis compute nodes with hostnames chr-0000 to chr-9999
 '^compy'      # Compy nodes with hostname compy
-'^n\d{4}'     # Anvil nodes with hostnames n0000 to n9999
+'^dane\d{1,4}' # Dane nodes with hostnames dane0 to dane9999
 ```
 
 In some cases, the hostname assigned to a machine is too generic to 
@@ -57,5 +57,4 @@ if machine is None and 'LMOD_SYSTEM_NAME' in os.environ:
 Identifying the machine by environment variables is **not recommended** unless
 absolutely necessary.
 :::
-
 

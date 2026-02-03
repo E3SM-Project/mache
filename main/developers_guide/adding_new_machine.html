@@ -118,7 +118,7 @@ hostname follows a standardized format. For example, we can identify known
 machines from hostnames with the following regular expressions:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;^chr-\d</span><span class="si">{4}</span><span class="s1">&#39;</span>  <span class="c1"># Chrysalis compute nodes with hostnames chr-0000 to chr-9999</span>
 <span class="s1">&#39;^compy&#39;</span>      <span class="c1"># Compy nodes with hostname compy</span>
-<span class="s1">&#39;^n\d</span><span class="si">{4}</span><span class="s1">&#39;</span>     <span class="c1"># Anvil nodes with hostnames n0000 to n9999</span>
+<span class="s1">&#39;^dane\d{1,4}&#39;</span> <span class="c1"># Dane nodes with hostnames dane0 to dane9999</span>
 </pre></div>
 </div>
 <p>In some cases, the hostname assigned to a machine is too generic to
