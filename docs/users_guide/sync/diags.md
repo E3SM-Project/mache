@@ -14,7 +14,7 @@ The command supports two directions:
 
 Important constraints:
 
-- LCRC machines are `anvil` and `chrysalis`
+- LCRC machine is `chrysalis`
 - You may only:
   - run `to` when you are currently on an LCRC machine; and
   - run `from` when the other machine is an LCRC machine.
@@ -157,7 +157,7 @@ mache sync diags from <other> [-u <username>] [-m <this_machine>] [-f <config_fi
 
 Constraints enforced by the command:
 
-- Only `anvil`/`chrysalis` are considered LCRC machines
+- Only `chrysalis` is considered an LCRC machine
 - `to` is only allowed when you are on an LCRC machine
 - `from` is only allowed when the other machine is an LCRC machine
 - Do not attempt to sync between two different LCRC machines (there is no need

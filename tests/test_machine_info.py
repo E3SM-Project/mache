@@ -6,12 +6,12 @@ def test_discover_machine():
 
 
 def test_machine_info():
-    machine = 'anvil'
+    machine = 'chrysalis'
     machinfo = MachineInfo(machine=machine)
     assert machinfo.machine == machine
     assert machinfo.e3sm_supported
     config = machinfo.config
-    assert config.get('sync', 'hostname') == 'blues.lcrc.anl.gov'
+    assert config.get('sync', 'hostname') == 'chrysalis.lcrc.anl.gov'
     print(machinfo)
 
     machine = 'unknown'

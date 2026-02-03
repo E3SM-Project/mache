@@ -31,7 +31,7 @@ function can also be used to detect which machine you are on.
 As an example, the result of `print(machine_info)` is:
 
 ```
-Machine: anvil
+Machine: chrysalis
   E3SM Supported Machine: True
   Compilers: intel, gnu
   MPI libraries: impi, openmpi, mvapich
@@ -72,9 +72,8 @@ you don't need to provide the machine name. It can be discovered automatically:
 
 - andes
 - aurora
-- anvil
-- chicoma-cpu
 - chrysalis
+- chicoma-cpu
 - compy
 - dane
 - frontier
