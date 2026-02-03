@@ -74,7 +74,6 @@ you don't need to provide the machine name. It can be discovered automatically:
 - aurora
 - chrysalis
 - chicoma-cpu
-- chrysalis
 - compy
 - dane
 - frontier
