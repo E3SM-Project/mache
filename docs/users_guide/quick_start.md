@@ -79,7 +79,6 @@ you don't need to provide the machine name. It can be discovered automatically:
 - frontier
 - pm-cpu
 - polaris
-- ruby
 
 If you are on a compute node or want info about a machine you're not currently on, give the `machine` name in all lowercase.
 
