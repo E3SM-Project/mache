@@ -227,17 +227,20 @@ class MachineInfo:
         )
 
         machine = self.machine
+
+        # first, read the default configs for all machines, then override with
+        # machine-specific configs
+        default_cfg_path = (
+            importlib_resources.files('mache.machines') / 'default.cfg'
+        )
+        config.read(str(default_cfg_path))
         try:
             cfg_path = (
                 importlib_resources.files('mache.machines') / f'{machine}.cfg'
             )
             config.read(str(cfg_path))
         except FileNotFoundError:
-            # this isn't a known machine so use the default
-            cfg_path = (
-                importlib_resources.files('mache.machines') / 'default.cfg'
-            )
-            config.read(str(cfg_path))
+            pass
 
         return config
 
