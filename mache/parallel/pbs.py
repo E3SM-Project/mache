@@ -1,75 +1,98 @@
 import os
 import re
 import subprocess
-import warnings
+from configparser import ConfigParser
+from typing import List
 
-from mache.parallel.system import (
-    ParallelSystem,
-)
+from mache.parallel.system import ParallelSystem, _ceil_division
 
 
 class PbsSystem(ParallelSystem):
     """PBS resource manager for parallel jobs."""
 
-    def get_available_resources(self):
-        config = self.config
+    def __init__(self, config: ConfigParser):
+        super().__init__(config)
         if 'PBS_JOBID' not in os.environ:
             raise RuntimeError(
                 'PBS_JOBID environment variable not found but system is set '
                 'to "pbs".'
             )
 
+        cores_per_node = self.get_config_int('cores_per_node')
+        if cores_per_node is None:
+            raise ValueError(
+                'cores_per_node must be set in the config for the pbs system.'
+            )
+
         # First, try to get nodes and cores_per_node from qstat
-        nodes, cores_per_node = self._get_resources_from_qstat()
+        nodes = self._get_node_count_from_qstat()
 
-        if nodes is None or cores_per_node is None:
-            # Final fallback: use config values
-            nodes = config.getint('parallel', 'nodes', fallback=1)
-            cores_per_node = config.getint(
-                'parallel', 'cores_per_node', fallback=1
-            )
-        cores = nodes * cores_per_node
-        available = dict(
-            cores=cores,
-            nodes=nodes,
-            cores_per_node=cores_per_node,
-            mpi_allowed=True,
-        )
-        if config.has_option('parallel', 'gpus_per_node'):
-            available['gpus_per_node'] = config.getint(
-                'parallel', 'gpus_per_node'
-            )
-        return available
+        self.cores = nodes * cores_per_node
+        self.cores_per_node = cores_per_node
+        self.nodes = nodes
+        self.mpi_allowed = True
 
-    def set_cores_per_node(self, cores_per_node):
-        config = self.config
-        old_cores_per_node = config.getint('parallel', 'cores_per_node')
-        config.set('parallel', 'cores_per_node', f'{cores_per_node}')
-        if old_cores_per_node != cores_per_node:
-            warnings.warn(
-                f'PBS found {cores_per_node} cpus per node but '
-                f'config from mache was {old_cores_per_node}',
-                stacklevel=2,
-            )
+        gpus_per_node = self.get_config_int('gpus_per_node')
+        if (
+            gpus_per_node is not None
+            and gpus_per_node != ''
+            and gpus_per_node != '0'
+        ):
+            self.gpus_per_node = gpus_per_node
+            self.gpus = gpus_per_node * nodes
 
-    def get_parallel_command(self, args, cpus_per_task, ntasks):
-        config = self.config
-        section = config['parallel']
-        command = section.get('parallel_executable').split(' ')
+    def _get_parallel_args(
+        self,
+        cpus_per_task: int,
+        gpus_per_task: int,
+        ntasks: int,
+    ) -> List[str]:
+        """Get the parallel command-line arguments related to resources."""
         # PBS mpiexec/mpirun options are launcher's responsibility, so the
         # flag used for CPUs per task is configurable per machine
-        if section.has_option('cpus_per_task_flag'):
-            cpus_per_task_flag = section.get('cpus_per_task_flag')
-        else:
+        cpus_per_task_flag = self.get_config('cpus_per_task_flag')
+        if cpus_per_task_flag is None:
             cpus_per_task_flag = '-c'
-        command.extend(
-            ['-n', f'{ntasks}', cpus_per_task_flag, f'{cpus_per_task}']
-        )
-        command.extend(args)
-        return command
 
-    def _get_resources_from_qstat(self):
-        """Try to determine nodes and cores_per_node from qstat output."""
+        nodes = self.nodes
+        if nodes is None:
+            raise ValueError('Node count is not set for the pbs system.')
+
+        tasks_per_node = _ceil_division(ntasks, nodes)
+        max_mpi_tasks_per_node = self.get_config_int('max_mpi_tasks_per_node')
+        if max_mpi_tasks_per_node is None:
+            raise ValueError(
+                'max_mpi_tasks_per_node must be set in the config for the pbs '
+                'system.'
+            )
+        if tasks_per_node > max_mpi_tasks_per_node:
+            raise ValueError(
+                f'Calculated tasks_per_node ({tasks_per_node}) exceeds the '
+                f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
+                f'likely need to allocate more nodes.'
+            )
+
+        parallel_args = [
+            '-n',
+            f'{ntasks}',
+            '--ppn',
+            f'{tasks_per_node}',
+            cpus_per_task_flag,
+            f'{cpus_per_task}',
+        ]
+        flags = {
+            'cpu_bind': '--cpu-bind',
+            'gpu_bind': '--gpu-bind',
+            'mem_bind': '--mem-bind',
+        }
+        for option, flag in flags.items():
+            value = self.get_config(option)
+            if value is not None and value != '':
+                parallel_args.extend([flag, value])
+        return parallel_args
+
+    def _get_node_count_from_qstat(self):
+        """Try to determine node count from qstat output."""
 
         jobid = os.environ.get('PBS_JOBID')
         if not jobid:
@@ -78,12 +101,7 @@ class PbsSystem(ParallelSystem):
                 'to "pbs".'
             )
 
-        try:
-            output = subprocess.check_output(['qstat', '-f', jobid], text=True)
-        except FileNotFoundError:  # qstat executable not found
-            return None, None
-        except subprocess.CalledProcessError:  # qstat returned non-zero
-            return None, None
+        output = subprocess.check_output(['qstat', '-f', jobid], text=True)
 
         # Try to infer nodes and cores_per_node from various Resource_List
         # fields. Different PBS installations format these differently.
@@ -93,31 +111,21 @@ class PbsSystem(ParallelSystem):
         #   Resource_List.ncpus = total_cores_for_job
         #   Resource_List.nodect = number_of_nodes
         #   Resource_List.select = number_of_nodes (or chunks)
-        ncpus_match = re.search(r'Resource_List\.ncpus\s*=\s*(\d+)', output)
         nodect_match = re.search(r'Resource_List\.nodect\s*=\s*(\d+)', output)
         simple_select_match = re.search(
             r'Resource_List\.select\s*=\s*(\d+)', output
         )
 
-        total_cores = int(ncpus_match.group(1)) if ncpus_match else None
         nodect = int(nodect_match.group(1)) if nodect_match else None
         simple_select = (
             int(simple_select_match.group(1)) if simple_select_match else None
         )
 
-        if total_cores is not None and nodect is not None and nodect != 0:
-            nodes = nodect
-            cores_per_node = total_cores // nodect
-            return nodes, cores_per_node
+        if nodect is not None and nodect != 0:
+            return nodect
 
-        if (
-            total_cores is not None
-            and simple_select is not None
-            and simple_select != 0
-        ):
-            nodes = simple_select
-            cores_per_node = total_cores // simple_select
-            return nodes, cores_per_node
+        if simple_select is not None and simple_select != 0:
+            return simple_select
 
         # Case 2: PBS Pro style "select=N:ncpus=M" on a single line
         select_match = re.search(
@@ -125,9 +133,7 @@ class PbsSystem(ParallelSystem):
             output,
         )
         if select_match:
-            nodes = int(select_match.group(1))
-            cores_per_node = int(select_match.group(2))
-            return nodes, cores_per_node
+            return int(select_match.group(1))
 
         # Case 3: older PBS/Torque style: "nodes=N:ppn=M"
         nodes_match = re.search(
@@ -135,7 +141,8 @@ class PbsSystem(ParallelSystem):
             output,
         )
         if nodes_match:
-            nodes = int(nodes_match.group(1))
-            cores_per_node = int(nodes_match.group(2))
-            return nodes, cores_per_node
-        return None, None
+            return int(nodes_match.group(1))
+
+        raise RuntimeError(
+            f'Unable to determine node count from qstat output: {output}'
+        )

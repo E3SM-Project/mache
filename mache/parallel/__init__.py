@@ -1,11 +1,11 @@
 import os
-
-from mpas_tools.logging import check_call
+from configparser import ConfigParser
 
 from mache.parallel.login import LoginSystem
 from mache.parallel.pbs import PbsSystem
 from mache.parallel.single_node import SingleNodeSystem
 from mache.parallel.slurm import SlurmSystem
+from mache.parallel.system import ParallelSystem
 
 JOB_ENV_VARS = {
     'slurm': 'SLURM_JOB_ID',
@@ -13,7 +13,7 @@ JOB_ENV_VARS = {
 }
 
 
-def _get_system(config):
+def get_parallel_system(config: ConfigParser) -> ParallelSystem:
     system = config.get('parallel', 'system')
     for system_name, env_var in JOB_ENV_VARS.items():
         if system == system_name and env_var not in os.environ:
@@ -30,28 +30,3 @@ def _get_system(config):
         return LoginSystem(config)
     else:
         raise ValueError(f'Unexpected parallel system: {system}')
-
-
-def get_available_parallel_resources(config):
-    return _get_system(config).get_available_resources()
-
-
-def set_cores_per_node(config, cores_per_node):
-    _get_system(config).set_cores_per_node(cores_per_node)
-
-
-def run_command(args, cpus_per_task, ntasks, openmp_threads, config, logger):
-    env = dict(os.environ)
-    env['OMP_NUM_THREADS'] = f'{openmp_threads}'
-    if openmp_threads > 1:
-        logger.info(f'Running with {openmp_threads} OpenMP threads')
-    command_line_args = get_parallel_command(
-        args, cpus_per_task, ntasks, config
-    )
-    check_call(command_line_args, logger, env=env)
-
-
-def get_parallel_command(args, cpus_per_task, ntasks, config):
-    return _get_system(config).get_parallel_command(
-        args, cpus_per_task, ntasks
-    )
