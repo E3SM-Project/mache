@@ -1,0 +1,129 @@
+{%- set compiler = "oneapi@2023.2.1" %}
+{%- set mpi = "mvapich2@2.3.7" %}
+
+spack:
+  specs:
+  - {{ mpi }}
+{%- for spec in specs %}
+  - "{{ spec }} %{{ compiler }}"
+{%- endfor %}
+  concretizer:
+    unify: true
+  packages:
+    all:
+      compiler: [{{ compiler }}]
+      providers:
+        mpi: [{{ mpi }}]
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
+    flex:
+      externals:
+      - spec: flex@2.6.1+lex
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.26.3+cpanm+opcode+open+shared+threads
+        prefix: /usr
+      buildable: false
+    automake:
+      externals:
+      - spec: automake@1.16.1
+        prefix: /usr
+      buildable: false
+    autoconf:
+      externals:
+      - spec: autoconf@2.69
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.18
+        prefix: /usr
+      buildable: false
+    libtool:
+      externals:
+      - spec: libtool@2.4.6
+        prefix: /usr
+      buildable: false
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    pkgconf:
+      externals:
+      - spec: pkgconf@1.4.2
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.1.1k
+        prefix: /usr
+      buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.23.1
+        prefix: /usr/tce
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.61.1+gssapi+ldap+nghttp2
+        prefix: /usr
+      buildable: false
+    mvapich2:
+      externals:
+      - spec: {{ mpi }}~cuda~debug+regcache+wrapperrpath ch3_rank_bits=32 file_systems=lustre,nfs,ufs
+          process_managers=hydra threads=multiple
+        prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.7-intel-2023.2.1-magic
+        modules:
+        - mvapich2/2.3.7
+        - mvapich2-tce/2.3.7
+      buildable: false
+    oneapi:
+      externals:
+      - spec: {{ compiler }}
+        prefix: /usr/tce/packages/intel/intel-2023.2.1-magic
+        extra_attributes:
+          compilers:
+            c: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/icx
+            cxx: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/icpx
+            fortran: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/ifx
+        modules:
+        - StdEnv
+        - intel/2023.2.1-magic
+      buildable: false
+    gcc:
+      externals:
+      - spec: gcc@12.1.1 languages='c,c++,fortran'
+        prefix: /usr/tce/packages/gcc/gcc-12.1.1-magic
+        extra_attributes:
+          compilers:
+            c: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gcc
+            cxx: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/g++
+            fortran: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
+      buildable: false
+  compilers:
+  - compiler:
+      spec: oneapi@2023.2.1
+      paths:
+        cc: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/icx
+        cxx: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/icpx
+        f77: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/ifx
+        fc: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/ifx
+      flags: {}
+      operating_system: rhel8
+      target: x86_64
+      modules:
+      - StdEnv
+      - intel/2023.2.1-magic
+      environment: {}
+      extra_rpaths: []
