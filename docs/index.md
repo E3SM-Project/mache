@@ -10,6 +10,7 @@
 :maxdepth: 2
 
 users_guide/quick_start
+users_guide/parallel
 users_guide/spack/build
 users_guide/sync/diags
 ```
