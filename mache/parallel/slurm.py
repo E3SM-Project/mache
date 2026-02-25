@@ -71,6 +71,12 @@ class SlurmSystem(ParallelSystem):
             '-n',
             f'{ntasks}',
         ]
+        if gpus_per_task > 0:
+            gpus_per_task_flag = self.get_config('gpus_per_task_flag')
+            if gpus_per_task_flag is None:
+                gpus_per_task_flag = '--gpus-per-task'
+            parallel_args.extend([gpus_per_task_flag, f'{gpus_per_task}'])
+
         flags = {
             'cpu_bind': '--cpu-bind',
             'gpu_bind': '--gpu-bind',

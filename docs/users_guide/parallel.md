@@ -40,6 +40,15 @@ machine's configured launcher and resource flags. On login nodes for `slurm`
 or `pbs` systems, `get_parallel_system()` falls back to `login`, where MPI is
 intentionally disabled.
 
+## GPU-per-task flags
+
+When `gpus_per_task > 0` is passed to `get_parallel_command()`:
+
+- `slurm` systems add `--gpus-per-task <N>` by default. This can be overridden
+    with `gpus_per_task_flag` in the machine's `[parallel]` config.
+- `pbs` systems require a machine-specific `gpus_per_task_flag` to be set in
+    config before a GPU-per-task argument is added.
+
 ## Using this in generated job scripts
 
 A common pattern is to generate scheduler directives separately, then use

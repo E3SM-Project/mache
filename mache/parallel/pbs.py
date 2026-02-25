@@ -54,6 +54,8 @@ class PbsSystem(ParallelSystem):
         if cpus_per_task_flag is None:
             cpus_per_task_flag = '-c'
 
+        gpus_per_task_flag = self.get_config('gpus_per_task_flag')
+
         nodes = self.nodes
         if nodes is None:
             raise ValueError('Node count is not set for the pbs system.')
@@ -80,6 +82,13 @@ class PbsSystem(ParallelSystem):
             cpus_per_task_flag,
             f'{cpus_per_task}',
         ]
+        if (
+            gpus_per_task > 0
+            and gpus_per_task_flag is not None
+            and gpus_per_task_flag != ''
+        ):
+            parallel_args.extend([gpus_per_task_flag, f'{gpus_per_task}'])
+
         flags = {
             'cpu_bind': '--cpu-bind',
             'gpu_bind': '--gpu-bind',
