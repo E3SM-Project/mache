@@ -23,6 +23,7 @@ developers_guide/quick_start
 developers_guide/contributing
 developers_guide/adding_new_machine
 developers_guide/spack
+developers_guide/jigsaw
 developers_guide/building_docs
 developers_guide/releasing
 developers_guide/api

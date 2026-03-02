@@ -12,6 +12,8 @@ from typing import Any
 from jinja2 import Template
 from yaml import safe_load
 
+from mache.jigsaw import deploy_jigsawpy
+
 from .bootstrap import (
     build_pixi_shell_hook_prefix,
     check_call,
@@ -20,7 +22,6 @@ from .bootstrap import (
 )
 from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
-from .jigsaw import install_jigsaw
 from .machine import get_machine, get_machine_config
 from .spack import (
     deploy_spack_envs,
@@ -158,28 +159,8 @@ def run_deploy(args: argparse.Namespace) -> None:
         runtime=ctx.runtime,
     )
 
-    python_version = args.python
-    if python_version is None:
-        python_version = pins.get('pixi', 'python')
-
-        if python_version is None:
-            raise ValueError(
-                'Python version is required to deploy the pixi environment. '
-                'Set it in deploy/pins.cfg ([pixi] python = ...) or pass '
-                '--python.'
-            )
-
-    if 'channels' not in pixi_cfg:
-        raise ValueError(
-            "'channels' not found in [pixi] section of deploy/config.yaml.j2"
-        )
-    channels = pixi_cfg.get('channels')
-    if (
-        not isinstance(channels, list)
-        or not channels
-        or not all(isinstance(c, str) and c.strip() for c in channels)
-    ):
-        raise ValueError('pixi.channels must be a non-empty list of strings')
+    python_version = _resolve_pixi_python_version(args=args, pins=pins)
+    channels = _resolve_pixi_channels(pixi_cfg=pixi_cfg)
 
     jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
 
@@ -199,8 +180,7 @@ def run_deploy(args: argparse.Namespace) -> None:
             'pass --mache-version.'
         )
 
-    # First, install a base environment without jigsawpy. If jigsaw is enabled,
-    # we will build jigsawpy from source and then add it from a local channel.
+    # First, install a base environment without jigsawpy.
     replacements.update(
         {
             'python': python_version,
@@ -238,37 +218,15 @@ def run_deploy(args: argparse.Namespace) -> None:
             quiet=quiet,
         )
 
-    if jigsaw_enabled:
-        local_channel = install_jigsaw(
-            config=config,
-            pixi_exe=pixi_exe,
-            python_version=python_version,
-            repo_root='.',
-            log_filename=log_filename,
-            quiet=quiet,
-        )
-
-        channels_with_local = [local_channel] + [
-            c for c in channels if c != local_channel
-        ]
-        replacements.update(
-            {
-                'pixi_channels': channels_with_local,
-                'include_jigsaw': True,
-            }
-        )
-        _write_pixi_toml(
-            template_path='deploy/pixi.toml.j2',
-            replacements=replacements,
-            output_dir=prefix,
-        )
-        _pixi_install(
-            pixi_exe=pixi_exe,
-            project_dir=prefix,
-            recreate=False,
-            log_filename=log_filename,
-            quiet=quiet,
-        )
+    _maybe_deploy_jigsaw(
+        enabled=jigsaw_enabled,
+        config=config,
+        pixi_exe=pixi_exe,
+        python_version=python_version,
+        prefix=prefix,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
 
     hook_registry.run_hook('post_pixi', ctx)
 
@@ -361,6 +319,81 @@ def _get_deploy_logger(*, log_filename: str, quiet: bool) -> logging.Logger:
             logger.addHandler(stream_handler)
 
     return logger
+
+
+def _resolve_pixi_python_version(
+    *,
+    args: argparse.Namespace,
+    pins: ConfigParser,
+) -> str:
+    python_version = args.python
+    if python_version is not None:
+        return python_version
+
+    python_version = pins.get('pixi', 'python')
+    if python_version is None:
+        raise ValueError(
+            'Python version is required to deploy the pixi environment. '
+            'Set it in deploy/pins.cfg ([pixi] python = ...) or pass '
+            '--python.'
+        )
+    return python_version
+
+
+def _resolve_pixi_channels(*, pixi_cfg: dict[str, Any]) -> list[str]:
+    if 'channels' not in pixi_cfg:
+        raise ValueError(
+            "'channels' not found in [pixi] section of deploy/config.yaml.j2"
+        )
+
+    channels = pixi_cfg.get('channels')
+    if (
+        not isinstance(channels, list)
+        or not channels
+        or not all(isinstance(c, str) and c.strip() for c in channels)
+    ):
+        raise ValueError('pixi.channels must be a non-empty list of strings')
+
+    return channels
+
+
+def _maybe_deploy_jigsaw(
+    *,
+    enabled: bool,
+    config: dict[str, Any],
+    pixi_exe: str,
+    python_version: str,
+    prefix: str,
+    log_filename: str,
+    quiet: bool,
+) -> None:
+    if not enabled:
+        return
+
+    jigsaw_cfg = config.get('jigsaw')
+    if not isinstance(jigsaw_cfg, dict):
+        raise ValueError(
+            "'jigsaw' section missing or invalid in deploy/config.yaml.j2"
+        )
+    jigsaw_python_path = jigsaw_cfg.get('jigsaw_python_path')
+    if not isinstance(jigsaw_python_path, str) or not jigsaw_python_path:
+        raise ValueError(
+            'jigsaw.jigsaw_python_path must be a non-empty string'
+        )
+
+    deploy_jigsawpy(
+        pixi_exe=pixi_exe,
+        python_version=python_version,
+        jigsaw_python_path=jigsaw_python_path,
+        repo_root='.',
+        log_filename=log_filename,
+        quiet=quiet,
+        backend='pixi',
+        pixi_manifest=os.path.join(
+            os.path.abspath(prefix),
+            'pixi.toml',
+        ),
+    )
 
 
 def _get_machine_and_config(

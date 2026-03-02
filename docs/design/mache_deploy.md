@@ -370,7 +370,6 @@ mache/deploy/
 ├── machine.py          # machine/deploy config helpers
 ├── run.py              # deployment runner (called by `mache deploy run`)
 ├── spack.py            # spack helpers
-├── jigsaw/             # pixi Jigsaw recipe templates
 └── templates/
   ├── deploy.py.j2
   ├── cli_spec.json.j2
@@ -381,6 +380,17 @@ mache/deploy/
   ├── hooks.py.j2
   ├── load.sh.j2
   └── spack_install.bash.j2
+```
+
+Reusable JIGSAW build/install logic now lives outside `mache.deploy` in:
+
+```
+mache/jigsaw/
+├── __init__.py         # backend selection + build/install orchestration
+├── recipe.yaml.j2      # rattler-build recipe template
+├── linux-64.yaml.j2    # linux variant template
+├── osx-64.yaml.j2      # macOS variant template
+└── build.sh            # build script used by the recipe
 ```
 
 This keeps deployment concerns clearly separated from the rest of `mache`.

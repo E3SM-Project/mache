@@ -116,3 +116,37 @@ The following public functions are available in the top-level `mache` package:
   path.
 
 For more details on these and other features, see the full user's guide.
+
+## Building and installing jigsawpy
+
+`mache` includes a JIGSAW helper command:
+
+```bash
+mache jigsaw install
+```
+
+This command builds a local conda package for `jigsawpy` and installs it into
+the active pixi or conda environment.
+
+### Common options
+
+- `--jigsaw-python-path`: Path to the `jigsaw-python` source directory
+  relative to `--repo-root` (default: `jigsaw-python`)
+- `--repo-root`: Repository root containing the `jigsaw-python` source
+  (default: `.`)
+- `--quiet`: Suppress command output to stdout
+
+### Backend behavior
+
+- If running inside a pixi environment, the pixi backend is selected.
+- If running inside a conda environment, the conda backend is selected.
+
+### Pixi behavior
+
+When used from the command line in a pixi environment, `mache jigsaw install`
+uses an isolated manifest in `.mache_cache/jigsaw/pixi_install/...` so your
+current workspace `pixi.toml` is not modified.
+
+If a matching pixi feature for the resolved Python version exists
+(for example, `py314` for Python 3.14), installation is scoped to that feature
+to avoid dependency solve conflicts with other environments in the manifest.

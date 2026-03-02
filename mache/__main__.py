@@ -3,6 +3,7 @@ import sys
 
 import mache.version
 from mache.deploy.cli import add_deploy_subparser
+from mache.jigsaw.cli import add_jigsaw_subparser
 from mache.sync.cli import add_sync_subparser
 
 
@@ -37,4 +38,5 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest='command', required=True)
     add_sync_subparser(subparsers)
     add_deploy_subparser(subparsers)
+    add_jigsaw_subparser(subparsers)
     return parser

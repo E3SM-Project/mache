@@ -118,6 +118,20 @@ documentation.
     sync_diags
 ```
 
+## jigsaw
+
+```{eval-rst}
+.. currentmodule:: mache.jigsaw
+
+.. autosummary::
+    :toctree: generated/
+
+    deploy_jigsawpy
+    build_jigsawpy_package
+    install_jigsawpy_package
+    detect_install_backend
+```
+
 ## MachineInfo
 
 ```{eval-rst}
