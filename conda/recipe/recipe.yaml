@@ -1,0 +1,58 @@
+schema_version: 1
+
+context:
+  name: mache
+  version: 2.1.0
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  path: ../..
+
+build:
+  number: 1
+  noarch: python
+
+requirements:
+  host:
+    - python ${{ python_min }}.*
+    - pip
+    - setuptools >=60
+  run:
+    - python >=${{ python_min }}
+    - importlib_resources
+    - jinja2
+    - lxml
+    - packaging
+    - pyyaml
+    - requests
+    - rsync
+    - termcolor
+    - tqdm
+
+tests:
+  - python:
+      imports:
+        - mache
+      pip_check: true
+      python_version: ${{ python_min }}.*
+  - requirements:
+      run:
+        - python ${{ python_min }}.*
+    script:
+      - mache sync diags --help
+
+about:
+  license: BSD-3-Clause
+  license_file: LICENSE
+  summary: A package for providing configuration data relate to E3SM supported machines
+  homepage: https://github.com/E3SM-Project/mache
+  repository: https://github.com/E3SM-Project/mache
+  documentation: https://docs.e3sm.org/mache/
+
+extra:
+  recipe-maintainers:
+    - andrewdnolan
+    - xylar

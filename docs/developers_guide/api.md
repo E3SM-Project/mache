@@ -28,6 +28,63 @@ documentation.
     update_permissions
 ```
 
+## parallel
+
+```{eval-rst}
+.. currentmodule:: mache.parallel
+
+.. autosummary::
+    :toctree: generated/
+
+    get_parallel_system
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.system
+
+.. autosummary::
+    :toctree: generated/
+
+    ParallelSystem
+    ParallelSystem.get_parallel_command
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.login
+
+.. autosummary::
+    :toctree: generated/
+
+    LoginSystem
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.single_node
+
+.. autosummary::
+    :toctree: generated/
+
+    SingleNodeSystem
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.slurm
+
+.. autosummary::
+    :toctree: generated/
+
+    SlurmSystem
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.pbs
+
+.. autosummary::
+    :toctree: generated/
+
+    PbsSystem
+```
+
 ## spack
 
 ```{eval-rst}
