@@ -45,6 +45,12 @@
       "route": ["deploy", "run"]
     },
     {
+      "flags": ["--spack-path"],
+      "dest": "spack_path",
+      "help": "Path to the Spack checkout to use (overrides spack.spack_path in deploy/config.yaml.j2).",
+      "route": ["deploy", "run"]
+    },
+    {
       "flags": ["--recreate"],
       "dest": "recreate",
       "action": "store_true",

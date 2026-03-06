@@ -183,11 +183,14 @@ maintainers to do full shared-environment deployments when needed.
 
 - `deploy/config.yaml.j2` includes a default such as:
   - `spack.deploy: true | false` (deploy all supported spack envs, or none)
+  - `spack.spack_path: <path>` (default checkout path for spack)
   - `spack.supported: true | false` (whether the target supports a “library”
     spack env)
   - `spack.software.supported: true | false` (whether the target supports a
     “software” spack env)
-- `deploy.py` exposes a CLI flag such as `--deploy-spack`
+- `deploy.py` exposes CLI flags such as:
+  - `--deploy-spack` (force-enable spack deployment)
+  - `--spack-path <path>` (temporary override for `spack.spack_path`)
 
 **Precedence**
 
@@ -195,12 +198,21 @@ maintainers to do full shared-environment deployments when needed.
    of the config default.
 2. Otherwise, fall back to the `config.yaml.j2` default.
 
+For spack checkout path resolution:
+
+1. If the user passes `--spack-path`, it takes highest priority.
+2. Otherwise, a deployment hook may set `ctx.runtime['spack']['spack_path']`.
+3. Otherwise, fall back to `spack.spack_path` in `config.yaml.j2`.
+
 **Rationale**
 
 - *E3SM-Unified maintainer workflow*: default `spack.deploy: true`
 - *Polaris developer workflow*: default `spack.deploy: false`
 - *Polaris maintainer workflow*: run `./deploy.py --deploy-spack ...` when
   producing or updating a shared spack environment
+- *Temporary testing workflow*: run
+  `./deploy.py --spack-path /tmp/<my-spack> ...` to avoid editing and
+  accidentally committing `deploy/config.yaml.j2`
 
 ---
 
