@@ -671,7 +671,8 @@ def _resolve_toolchain_pairs(
         # Derive an MPI per compiler when possible.
         derived: list[str] = []
         for compiler in compilers:
-            mpi_key = f'mpi_{compiler}'
+            compiler_underscore = compiler.replace('-', '_')
+            mpi_key = f'mpi_{compiler_underscore}'
             mpi_val = None
             if machine_config.has_option('deploy', mpi_key):
                 mpi_val = _normalize_optional_token(
