@@ -3,6 +3,7 @@
 
 spack:
   specs:
+  # don't include {{ compiler }} since there isn't a "oneapi" package
   - {{ mpi }}%{{ compiler }}
 {%- if e3sm_hdf5_netcdf %}
   - "hdf5%{{ compiler }}"
