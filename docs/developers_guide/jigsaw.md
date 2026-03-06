@@ -3,6 +3,10 @@
 This page describes developer-facing behavior for the JIGSAW/JIGSAW-Python
 integration in `mache`.
 
+Use this guide when developing `mache.jigsaw` itself.
+For operational usage in downstream software (including `./deploy.py` flows,
+pixi setup, and local-manifest workflows), see the user's guide JIGSAW page.
+
 ## CLI entry point
 
 The command-line interface is:
@@ -11,8 +15,7 @@ The command-line interface is:
 mache jigsaw install
 ```
 
-For user-facing examples and options, see the user's guide quick-start section
-on building and installing jigsawpy.
+For user-facing examples and options, see the user's guide JIGSAW page.
 
 ## Module overview
 
@@ -29,13 +32,12 @@ The `mache.jigsaw` module provides programmatic build and install helpers:
 - In pixi contexts, install behavior uses pixi commands.
 - In conda contexts, install behavior uses conda commands.
 
-## Pixi isolation behavior
+## Internal notes
 
-When using the CLI in pixi mode without an explicit manifest path,
-`mache.jigsaw` uses an isolated pixi manifest in
-`.mache_cache/jigsaw/pixi_install/...` so the active workspace manifest is not
-modified.
+- Build/install orchestration entry point: `deploy_jigsawpy()`.
+- Build metadata and cache behavior are represented by `JigsawBuildResult`.
+- Platform-aware pixi package additions are implemented in `_install_into_pixi()`.
+- CLI wiring lives in `mache/jigsaw/cli.py` and should stay thin.
 
-When a matching pixi feature exists for the selected Python version (for
-example, `py314`), jigsaw installation is scoped to that feature to avoid
-conflicts with other environments in the same manifest.
+When changing behavior, keep user-facing workflow details in one place in the
+user guide to reduce maintenance duplication.

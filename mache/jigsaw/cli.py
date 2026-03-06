@@ -33,6 +33,24 @@ def add_jigsaw_subparser(subparsers: argparse._SubParsersAction) -> None:
         action='store_true',
         help='Suppress command output to stdout and only write logs.',
     )
+    p_install.add_argument(
+        '--pixi-feature',
+        default=None,
+        help=(
+            'Optional pixi feature to target for installation. '
+            'Useful when active environment is default but CI '
+            'environments are also defined in the same manifest.'
+        ),
+    )
+    p_install.add_argument(
+        '--pixi-manifest',
+        default=None,
+        help=(
+            'Optional path to a pixi manifest file or workspace '
+            'directory to update when using the pixi backend. Useful '
+            'for local, untracked developer manifests.'
+        ),
+    )
 
     jigsaw.set_defaults(func=_dispatch_jigsaw)
 
@@ -44,6 +62,8 @@ def _dispatch_jigsaw(args: argparse.Namespace) -> None:
             repo_root=args.repo_root,
             log_filename=None,
             quiet=args.quiet,
+            pixi_feature=args.pixi_feature,
+            pixi_manifest=args.pixi_manifest,
         )
         return
 

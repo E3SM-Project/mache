@@ -5,7 +5,6 @@ import os
 import platform
 import re
 import shlex
-import shutil
 import sys
 from dataclasses import dataclass
 from importlib import resources
@@ -53,6 +52,7 @@ def deploy_jigsawpy(
     backend: str = 'auto',
     pixi_exe: str | None = None,
     pixi_manifest: str | None = None,
+    pixi_feature: str | None = None,
     conda_exe: str | None = None,
     conda_prefix: str | None = None,
 ) -> JigsawBuildResult:
@@ -90,6 +90,10 @@ def deploy_jigsawpy(
     pixi_manifest : str, optional
         Pixi manifest path used when installing with backend ``"pixi"``.
         If omitted, ``PIXI_PROJECT_MANIFEST`` is used.
+    pixi_feature : str, optional
+        Explicit pixi feature to target when installing with backend
+        ``"pixi"``. If omitted, a matching active pixi environment name is
+        used when possible.
     conda_exe : str, optional
         Conda executable used when installing with backend ``"conda"``.
     conda_prefix : str, optional
@@ -135,9 +139,11 @@ def deploy_jigsawpy(
         log_filename=resolved_log_filename,
         quiet=quiet,
         python_version=resolved_python_version,
+        jigsaw_version=result.jigsaw_version,
         backend=selected_backend,
         pixi_exe=resolved_pixi_exe,
         pixi_manifest=pixi_manifest,
+        pixi_feature=pixi_feature,
         conda_exe=resolved_conda_exe,
         conda_prefix=conda_prefix,
     )
@@ -202,9 +208,11 @@ def install_jigsawpy_package(
     log_filename: str,
     quiet: bool,
     python_version: str | None = None,
+    jigsaw_version: str | None = None,
     backend: str = 'auto',
     pixi_exe: str | None = None,
     pixi_manifest: str | None = None,
+    pixi_feature: str | None = None,
     conda_exe: str | None = None,
     conda_prefix: str | None = None,
 ) -> str:
@@ -221,14 +229,18 @@ def install_jigsawpy_package(
     quiet : bool
         If ``True``, suppress command echo to stdout and log only.
     python_version : str, optional
-        Python major/minor version used to infer a pixi feature name
-        (for example ``"py314"``) when installing with backend ``"pixi"``.
+        Python major/minor version retained for API compatibility.
+    jigsaw_version : str, optional
+        Version of ``jigsawpy`` to install. When provided, installation
+        is pinned to this built version.
     backend : {"auto", "pixi", "conda"}, optional
         Installation backend. ``"auto"`` infers backend from environment.
     pixi_exe : str, optional
         Pixi executable used when backend resolves to ``"pixi"``.
     pixi_manifest : str, optional
         Pixi manifest path used with backend ``"pixi"``.
+    pixi_feature : str, optional
+        Explicit pixi feature to target when using backend ``"pixi"``.
     conda_exe : str, optional
         Conda executable used when backend resolves to ``"conda"``.
     conda_prefix : str, optional
@@ -255,8 +267,9 @@ def install_jigsawpy_package(
         _install_into_pixi(
             pixi_exe=pixi_exe,
             pixi_manifest=pixi_manifest,
+            pixi_feature=pixi_feature,
             channel_uri=channel_uri,
-            python_version=python_version,
+            jigsaw_version=jigsaw_version,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -265,6 +278,7 @@ def install_jigsawpy_package(
             conda_exe=conda_exe,
             conda_prefix=conda_prefix,
             channel_uri=channel_uri,
+            jigsaw_version=jigsaw_version,
             log_filename=log_filename,
             quiet=quiet,
         )
@@ -740,6 +754,18 @@ def _resolve_pixi_manifest(pixi_manifest: str | None) -> str:
             )
         resolved = os.path.abspath(os.path.expanduser(env_manifest))
 
+    if os.path.isdir(resolved):
+        pixi_toml = os.path.join(resolved, 'pixi.toml')
+        pyproject_toml = os.path.join(resolved, 'pyproject.toml')
+        if os.path.isfile(pixi_toml):
+            return pixi_toml
+        if os.path.isfile(pyproject_toml):
+            return pyproject_toml
+        raise ValueError(
+            'pixi manifest directory must contain pixi.toml or '
+            f'pyproject.toml: {resolved}'
+        )
+
     if not os.path.isfile(resolved):
         raise ValueError(f'pixi manifest not found: {resolved}')
 
@@ -764,23 +790,22 @@ def _install_into_pixi(
     *,
     pixi_exe: str,
     pixi_manifest: str | None,
+    pixi_feature: str | None,
     channel_uri: str,
-    python_version: str | None,
+    jigsaw_version: str | None,
     log_filename: str,
     quiet: bool,
 ) -> None:
     manifest = _resolve_pixi_manifest(pixi_manifest)
-    if pixi_manifest is None:
-        manifest = _prepare_isolated_pixi_manifest(manifest=manifest)
-
-    feature = _infer_pixi_feature_for_python_version(
-        manifest=manifest,
-        python_version=python_version,
+    feature = pixi_feature or _infer_pixi_feature_for_active_environment(
+        manifest=manifest
     )
     feature_arg = f'--feature {shlex.quote(feature)} ' if feature else ''
+    platform_name, _ = _get_conda_platform_and_system()
+    platform_arg = f'--platform {shlex.quote(platform_name)} '
+    package_spec = _format_pixi_jigsaw_spec(jigsaw_version)
 
     add_channel_command = (
-        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
         f'{shlex.quote(pixi_exe)} workspace channel add '
         f'--manifest-path {shlex.quote(manifest)} '
         f'{feature_arg}'
@@ -790,41 +815,27 @@ def _install_into_pixi(
     check_call(add_channel_command, log_filename=log_filename, quiet=quiet)
 
     add_package_command = (
-        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
         f'{shlex.quote(pixi_exe)} add '
         f'--manifest-path {shlex.quote(manifest)} '
+        f'{platform_arg}'
         f'{feature_arg}'
-        'jigsawpy'
+        f'{shlex.quote(package_spec)}'
     )
     check_call(add_package_command, log_filename=log_filename, quiet=quiet)
 
 
-def _prepare_isolated_pixi_manifest(*, manifest: str) -> str:
-    source_manifest = Path(manifest).resolve()
-    digest = hashlib.sha256(str(source_manifest).encode('utf-8')).hexdigest()[
-        :12
-    ]
-    isolated_dir = _get_jigsaw_cache_dir() / 'pixi_install' / digest
-    isolated_dir.mkdir(parents=True, exist_ok=True)
-
-    isolated_manifest = isolated_dir / source_manifest.name
-    shutil.copyfile(source_manifest, isolated_manifest)
-    return str(isolated_manifest)
-
-
-def _infer_pixi_feature_for_python_version(
+def _infer_pixi_feature_for_active_environment(
     *,
     manifest: str,
-    python_version: str | None,
 ) -> str | None:
-    if python_version is None:
+    environment_name = os.environ.get('PIXI_ENVIRONMENT_NAME')
+    if not environment_name or environment_name == 'default':
         return None
 
-    feature = f'py{python_version.replace(".", "")}'
     section_markers = [
-        f'[feature.{feature}]',
-        f'[feature.{feature}.dependencies]',
-        f'[feature.{feature}.pypi-dependencies]',
+        f'[feature.{environment_name}]',
+        f'[feature.{environment_name}.dependencies]',
+        f'[feature.{environment_name}.pypi-dependencies]',
     ]
 
     try:
@@ -834,7 +845,7 @@ def _infer_pixi_feature_for_python_version(
 
     for marker in section_markers:
         if marker in text:
-            return feature
+            return environment_name
 
     return None
 
@@ -844,19 +855,36 @@ def _install_into_conda(
     conda_exe: str | None,
     conda_prefix: str | None,
     channel_uri: str,
+    jigsaw_version: str | None,
     log_filename: str,
     quiet: bool,
 ) -> None:
     executable = _resolve_conda_executable(conda_exe)
     prefix = _resolve_conda_prefix(conda_prefix)
+    package_spec = _format_conda_jigsaw_spec(jigsaw_version)
     command = (
         f'{shlex.quote(executable)} install --yes '
         f'--prefix {shlex.quote(prefix)} '
         f'--channel {shlex.quote(channel_uri)} '
         '--channel conda-forge '
-        'jigsawpy'
+        f'{shlex.quote(package_spec)}'
     )
     check_call(command, log_filename=log_filename, quiet=quiet)
+
+
+def _format_pixi_jigsaw_spec(jigsaw_version: str | None) -> str:
+    if not jigsaw_version:
+        return 'jigsawpy'
+
+    # Pin to the built version series, e.g. 1.1.0 -> jigsawpy=1.1.0.*
+    return f'jigsawpy={jigsaw_version}.*'
+
+
+def _format_conda_jigsaw_spec(jigsaw_version: str | None) -> str:
+    if not jigsaw_version:
+        return 'jigsawpy'
+
+    return f'jigsawpy={jigsaw_version}'
 
 
 def _get_local_channel_uri(*, output_dir: Path) -> str:
