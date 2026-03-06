@@ -2,7 +2,7 @@
 {%- set mpi = "openmpi@4.1.8" %}
 spack:
   specs:
-  - {{ compiler }}
+  # don't include {{ compiler }} since there isn't a "oneapi" package
   - {{ mpi }}%{{ compiler }}
 {%- if e3sm_lapack %}
   - intel-oneapi-mkl
@@ -103,6 +103,16 @@ spack:
             c: icx
             cxx: icpx
             fortran: ifx
+      buildable: false
+    gcc:
+      externals:
+      - spec: gcc@11.3.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq
+      buildable: false
+    gcc-runtime:
+      externals:
+      - spec: gcc-runtime@11.3.0%gcc@11.3.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq
       buildable: false
     openmpi:
       externals:
