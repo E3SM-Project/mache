@@ -5,6 +5,7 @@ import os
 import platform
 import re
 import shlex
+import shutil
 import sys
 from dataclasses import dataclass
 from importlib import resources
@@ -53,6 +54,7 @@ def deploy_jigsawpy(
     pixi_exe: str | None = None,
     pixi_manifest: str | None = None,
     pixi_feature: str | None = None,
+    pixi_local: bool = False,
     conda_exe: str | None = None,
     conda_prefix: str | None = None,
 ) -> JigsawBuildResult:
@@ -94,6 +96,10 @@ def deploy_jigsawpy(
         Explicit pixi feature to target when installing with backend
         ``"pixi"``. If omitted, a matching active pixi environment name is
         used when possible.
+    pixi_local : bool, optional
+        If ``True`` and backend resolves to ``"pixi"``, install into a
+        local copied manifest under ``.mache_cache/jigsaw/pixi-local``
+        instead of mutating the source manifest directly.
     conda_exe : str, optional
         Conda executable used when installing with backend ``"conda"``.
     conda_prefix : str, optional
@@ -138,12 +144,12 @@ def deploy_jigsawpy(
         channel_uri=result.channel_uri,
         log_filename=resolved_log_filename,
         quiet=quiet,
-        python_version=resolved_python_version,
         jigsaw_version=result.jigsaw_version,
         backend=selected_backend,
         pixi_exe=resolved_pixi_exe,
         pixi_manifest=pixi_manifest,
         pixi_feature=pixi_feature,
+        pixi_local=pixi_local,
         conda_exe=resolved_conda_exe,
         conda_prefix=conda_prefix,
     )
@@ -207,12 +213,12 @@ def install_jigsawpy_package(
     channel_uri: str,
     log_filename: str,
     quiet: bool,
-    python_version: str | None = None,
     jigsaw_version: str | None = None,
     backend: str = 'auto',
     pixi_exe: str | None = None,
     pixi_manifest: str | None = None,
     pixi_feature: str | None = None,
+    pixi_local: bool = False,
     conda_exe: str | None = None,
     conda_prefix: str | None = None,
 ) -> str:
@@ -228,8 +234,6 @@ def install_jigsawpy_package(
         Log file path passed through to shell command execution.
     quiet : bool
         If ``True``, suppress command echo to stdout and log only.
-    python_version : str, optional
-        Python major/minor version retained for API compatibility.
     jigsaw_version : str, optional
         Version of ``jigsawpy`` to install. When provided, installation
         is pinned to this built version.
@@ -241,6 +245,10 @@ def install_jigsawpy_package(
         Pixi manifest path used with backend ``"pixi"``.
     pixi_feature : str, optional
         Explicit pixi feature to target when using backend ``"pixi"``.
+    pixi_local : bool, optional
+        If ``True`` and backend resolves to ``"pixi"``, install into a
+        local copied manifest under ``.mache_cache/jigsaw/pixi-local``
+        instead of mutating the source manifest directly.
     conda_exe : str, optional
         Conda executable used when backend resolves to ``"conda"``.
     conda_prefix : str, optional
@@ -264,10 +272,23 @@ def install_jigsawpy_package(
     if selected_backend == 'pixi':
         if not pixi_exe:
             raise ValueError('pixi_exe is required when backend="pixi".')
+        resolved_manifest = pixi_manifest
+        resolved_feature = pixi_feature
+        if pixi_local:
+            (
+                resolved_manifest,
+                inferred_local_feature,
+            ) = _prepare_local_pixi_manifest_copy(
+                pixi_manifest=pixi_manifest,
+            )
+            if resolved_feature is None:
+                resolved_feature = inferred_local_feature
+            if not quiet:
+                print(f'Using local pixi manifest copy: {resolved_manifest}')
         _install_into_pixi(
             pixi_exe=pixi_exe,
-            pixi_manifest=pixi_manifest,
-            pixi_feature=pixi_feature,
+            pixi_manifest=resolved_manifest,
+            pixi_feature=resolved_feature,
             channel_uri=channel_uri,
             jigsaw_version=jigsaw_version,
             log_filename=log_filename,
@@ -770,6 +791,110 @@ def _resolve_pixi_manifest(pixi_manifest: str | None) -> str:
         raise ValueError(f'pixi manifest not found: {resolved}')
 
     return resolved
+
+
+def _prepare_local_pixi_manifest_copy(
+    *, pixi_manifest: str | None
+) -> tuple[str, str | None]:
+    source_manifest = _resolve_pixi_manifest(pixi_manifest)
+    source_path = Path(source_manifest)
+
+    local_dir = _get_jigsaw_cache_dir() / 'pixi-local'
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    # pixi recognizes these manifest basenames.
+    target_name = source_path.name
+    if target_name not in ('pixi.toml', 'pyproject.toml'):
+        target_name = 'pixi.toml'
+    target_manifest = local_dir / target_name
+
+    if source_path.resolve() != target_manifest.resolve():
+        shutil.copyfile(source_path, target_manifest)
+
+    local_feature = _ensure_local_pixi_jigsaw_feature(
+        manifest_path=target_manifest
+    )
+
+    return str(target_manifest), local_feature
+
+
+def _ensure_local_pixi_jigsaw_feature(*, manifest_path: Path) -> str | None:
+    """Ensure local pixi copy has an isolated jigsaw feature/environment.
+
+    For multi-environment pixi manifests, adding jigsawpy to the default
+    feature can force all environments to solve against a single python_abi.
+    In local mode we avoid that by targeting feature/environment ``jigsaw``.
+    """
+    if manifest_path.name != 'pixi.toml':
+        return None
+
+    try:
+        text = manifest_path.read_text(encoding='utf-8')
+    except OSError:
+        return None
+
+    if _toml_table_range(text, 'environments') is None:
+        return None
+
+    changed = False
+    feature_tables = (
+        'feature.jigsaw',
+        'feature.jigsaw.dependencies',
+        'feature.jigsaw.pypi-dependencies',
+    )
+    if not any(
+        _toml_table_range(text, table) is not None for table in feature_tables
+    ):
+        if text and not text.endswith('\n'):
+            text += '\n'
+        text += '\n[feature.jigsaw.dependencies]\n'
+        changed = True
+
+    text, added_env = _append_toml_assignment_to_table(
+        text=text,
+        table='environments',
+        key='jigsaw',
+        assignment='jigsaw = ["jigsaw"]',
+    )
+    changed = changed or added_env
+
+    if changed:
+        manifest_path.write_text(text, encoding='utf-8')
+
+    return 'jigsaw'
+
+
+def _toml_table_range(text: str, table: str) -> tuple[int, int] | None:
+    header = re.compile(rf'(?m)^\[{re.escape(table)}\]\s*$')
+    match = header.search(text)
+    if match is None:
+        return None
+
+    start = match.end()
+    next_header = re.compile(r'(?m)^\[[^\]]+\]\s*$')
+    next_match = next_header.search(text, start)
+    end = next_match.start() if next_match else len(text)
+    return start, end
+
+
+def _append_toml_assignment_to_table(
+    *, text: str, table: str, key: str, assignment: str
+) -> tuple[str, bool]:
+    table_range = _toml_table_range(text, table)
+    if table_range is None:
+        return text, False
+
+    start, end = table_range
+    section_text = text[start:end]
+    if re.search(rf'(?m)^\s*{re.escape(key)}\s*=', section_text):
+        return text, False
+
+    if end == len(text):
+        if text and not text.endswith('\n'):
+            text += '\n'
+        return text + f'{assignment}\n', True
+
+    return text[:end] + f'{assignment}\n' + text[end:], True
 
 
 def _resolve_conda_prefix(conda_prefix: str | None) -> str:

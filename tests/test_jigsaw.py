@@ -286,6 +286,101 @@ def test_deploy_jigsawpy_pixi_feature_override(monkeypatch, tmp_path: Path):
     assert '--feature custom' in commands[1]
 
 
+def test_deploy_jigsawpy_pixi_local_manifest_copy(monkeypatch, tmp_path: Path):
+    source_manifest = tmp_path / 'pixi.toml'
+    source_manifest.write_text(
+        '[workspace]\nname = "demo"\n',
+        encoding='utf-8',
+    )
+
+    channel_uri = 'file:///tmp/jigsaw-channel'
+    monkeypatch.setattr(
+        jigsaw,
+        'build_jigsawpy_package',
+        lambda **kwargs: _fake_build_result(channel_uri, tmp_path),
+    )
+    monkeypatch.setenv('PIXI_ENVIRONMENT_NAME', 'default')
+
+    commands: list[str] = []
+    monkeypatch.setattr(
+        jigsaw,
+        'check_call',
+        partial(_record_check_call, commands),
+    )
+
+    result = jigsaw.deploy_jigsawpy(
+        pixi_exe='pixi',
+        python_version='3.14',
+        quiet=True,
+        backend='pixi',
+        pixi_manifest=str(source_manifest),
+        pixi_local=True,
+    )
+
+    local_manifest = (
+        jigsaw._get_jigsaw_cache_dir() / 'pixi-local' / 'pixi.toml'
+    ).resolve()
+    assert local_manifest.is_file()
+    assert local_manifest.read_text(
+        encoding='utf-8'
+    ) == source_manifest.read_text(encoding='utf-8')
+
+    assert result.channel_uri == channel_uri
+    assert len(commands) == 2
+    assert str(local_manifest) in commands[0]
+    assert str(local_manifest) in commands[1]
+
+
+def test_deploy_jigsawpy_pixi_local_adds_isolated_jigsaw_environment(
+    monkeypatch, tmp_path: Path
+):
+    source_manifest = tmp_path / 'pixi.toml'
+    source_manifest.write_text(
+        '[workspace]\n'
+        'name = "demo"\n'
+        '\n'
+        '[feature.py310.dependencies]\n'
+        'python = "3.10.*"\n'
+        '\n'
+        '[environments]\n'
+        'py310 = ["py310"]\n',
+        encoding='utf-8',
+    )
+
+    channel_uri = 'file:///tmp/jigsaw-channel'
+    monkeypatch.setattr(
+        jigsaw,
+        'build_jigsawpy_package',
+        lambda **kwargs: _fake_build_result(channel_uri, tmp_path),
+    )
+    monkeypatch.setenv('PIXI_ENVIRONMENT_NAME', 'default')
+
+    commands: list[str] = []
+    monkeypatch.setattr(
+        jigsaw,
+        'check_call',
+        partial(_record_check_call, commands),
+    )
+
+    jigsaw.deploy_jigsawpy(
+        pixi_exe='pixi',
+        python_version='3.14',
+        quiet=True,
+        backend='pixi',
+        pixi_manifest=str(source_manifest),
+        pixi_local=True,
+    )
+
+    local_manifest = (
+        jigsaw._get_jigsaw_cache_dir() / 'pixi-local' / 'pixi.toml'
+    ).resolve()
+    local_text = local_manifest.read_text(encoding='utf-8')
+    assert '[feature.jigsaw.dependencies]' in local_text
+    assert 'jigsaw = ["jigsaw"]' in local_text
+    assert '--feature jigsaw' in commands[0]
+    assert '--feature jigsaw' in commands[1]
+
+
 def test_resolve_pixi_manifest_from_directory(tmp_path: Path):
     workspace = tmp_path / 'pixi-local'
     workspace.mkdir(parents=True)

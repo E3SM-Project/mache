@@ -22,72 +22,74 @@ when the downstream software enables JIGSAW in its deploy configuration.
 
 You only need `mache jigsaw install` directly for advanced/manual workflows.
 
-## Common options
+## Backend selection
 
-- `--jigsaw-python-path`: Path to the `jigsaw-python` source directory
-  relative to `--repo-root` (default: `jigsaw-python`)
-- `--repo-root`: Repository root containing the `jigsaw-python` source
-  (default: `.`)
-- `--pixi-feature`: Optional pixi feature to target explicitly when
-  installing with pixi
-- `--pixi-manifest`: Optional pixi manifest path to update when
-  installing with pixi. This can be a `pixi.toml`/`pyproject.toml` file
-  or a workspace directory containing one of those files.
-- `--quiet`: Suppress command output to stdout
+- In a pixi shell, `mache jigsaw install` uses the pixi backend.
+- In a conda shell, `mache jigsaw install` uses the conda backend.
 
-## Backend behavior
+## Pixi users (recommended)
 
-- If running inside a pixi environment, the pixi backend is selected.
-- If running inside a conda environment, the conda backend is selected.
+For pixi development workflows, strongly prefer:
 
-## Pixi behavior
+`mache jigsaw install --pixi-local`
 
-In pixi development environments, this command mutates a pixi manifest.
-Use it intentionally, and prefer a local untracked manifest for experiments.
+This keeps your source-controlled `pixi.toml` unchanged.
 
-When used from the command line in a pixi environment, `mache jigsaw install`
-updates the selected pixi project manifest.
+What `--pixi-local` does:
 
-Installation does not infer or require any specific pixi feature or
-environment name pattern (for example, `py314`).
+- Creates or refreshes a local manifest copy at
+  `.mache_cache/jigsaw/pixi-local/pixi.toml` (or `pyproject.toml` when that is
+  the source manifest name).
+- Adds the local JIGSAW build channel and installs `jigsawpy` there.
+- For `pixi.toml` manifests that already define `[environments]`, ensures an
+  isolated local `jigsaw` feature/environment and installs with
+  `--feature jigsaw`.
 
-The `jigsawpy` dependency added to pixi is pinned to the built version
-series (for example, `jigsawpy=1.1.0.*`) and scoped to the current platform.
+This avoids cross-environment solve conflicts (for example, `py310`, `py311`,
+etc. getting constrained by a single `python_abi`).
 
-If `PIXI_ENVIRONMENT_NAME` is set and a feature with the same name exists in
-the manifest, installation is scoped to that feature.
+Pixi options you may still use with this workflow:
 
-## Pixi setup guidance
+- `--pixi-local`
+- `--jigsaw-python-path`
+- `--repo-root`
+- `--quiet`
 
-If your downstream project has multiple environments (for example CI matrices),
-you may need an explicit JIGSAW feature/environment for clean solves.
+## Pixi users (manual alternatives)
 
-Recommended shared `pixi.toml` pattern:
+Use this section only if you intentionally want to edit a chosen pixi
+manifest.
 
-```toml
-[feature.jigsaw.dependencies]
-# optional: leave empty; `mache jigsaw install` adds jigsawpy as needed
+Relevant options:
 
-[environments]
-jigsaw = ["jigsaw"]
-```
+- `--pixi-manifest`: Path to a pixi manifest file or workspace directory to
+  update (`pixi.toml` or `pyproject.toml`).
+- `--pixi-feature`: Explicit feature to target for install.
 
-If your project already has CI environments such as `py310`, `py311`, etc.,
-avoid adding JIGSAW directly to a shared `default` feature used by all of
-those environments.
+Example manual local-copy workflow:
 
-### Local/untracked manifest workflow
-
-To avoid mutating a shared repo manifest while experimenting:
-
-1. Create a local copy with a supported manifest filename:
+1. Create a local copy:
 `mkdir -p .pixi-local && cp pixi.toml .pixi-local/pixi.toml`
-2. Activate a local environment from that copy:
+2. Activate that local copy:
 `pixi shell -m .pixi-local -e jigsaw`
-3. Run JIGSAW install against the local manifest copy:
+3. Install with explicit targeting:
 `mache jigsaw install --pixi-manifest .pixi-local --pixi-feature jigsaw`
 
 Because pixi only recognizes `pixi.toml` or `pyproject.toml` manifest
 filenames, prefer a local directory containing one of those names (for
 example `.pixi-local/pixi.toml`) rather than a custom filename like
 `pixi.local.toml`.
+
+## Conda users
+
+Conda users do not need any pixi options.
+
+Run from an active conda environment:
+
+`mache jigsaw install`
+
+Conda-relevant options:
+
+- `--jigsaw-python-path`
+- `--repo-root`
+- `--quiet`

@@ -30,6 +30,8 @@ The `mache.jigsaw` module provides programmatic build and install helpers:
 
 - Backend selection supports `pixi`, `conda`, or `auto` detection.
 - In pixi contexts, install behavior uses pixi commands.
+- Pixi install supports `pixi_local=True` to install through an
+  auto-managed local manifest copy under `.mache_cache/jigsaw/pixi-local`.
 - In conda contexts, install behavior uses conda commands.
 
 ## Internal notes

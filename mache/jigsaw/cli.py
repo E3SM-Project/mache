@@ -51,6 +51,15 @@ def add_jigsaw_subparser(subparsers: argparse._SubParsersAction) -> None:
             'for local, untracked developer manifests.'
         ),
     )
+    p_install.add_argument(
+        '--pixi-local',
+        action='store_true',
+        help=(
+            'Install into an auto-managed local pixi manifest copy under '
+            '.mache_cache/jigsaw/pixi-local instead of mutating the '
+            'source manifest directly.'
+        ),
+    )
 
     jigsaw.set_defaults(func=_dispatch_jigsaw)
 
@@ -64,6 +73,7 @@ def _dispatch_jigsaw(args: argparse.Namespace) -> None:
             quiet=args.quiet,
             pixi_feature=args.pixi_feature,
             pixi_manifest=args.pixi_manifest,
+            pixi_local=args.pixi_local,
         )
         return
 

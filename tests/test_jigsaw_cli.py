@@ -20,6 +20,9 @@ def test_dispatch_jigsaw_install_calls_deploy(monkeypatch):
         jigsaw_python_path='jigsaw-python',
         repo_root='.',
         quiet=True,
+        pixi_feature=None,
+        pixi_manifest=None,
+        pixi_local=False,
     )
 
     _dispatch_jigsaw(args)
@@ -28,6 +31,7 @@ def test_dispatch_jigsaw_install_calls_deploy(monkeypatch):
     assert called['repo_root'] == '.'
     assert called['log_filename'] is None
     assert called['quiet'] is True
+    assert called['pixi_local'] is False
 
 
 def test_add_jigsaw_subparser_parses_install_args():
@@ -46,6 +50,7 @@ def test_add_jigsaw_subparser_parses_install_args():
     assert args.command == 'jigsaw'
     assert args.jigsaw_cmd == 'install'
     assert args.jigsaw_python_path == 'jigsaw-python'
+    assert args.pixi_local is False
 
 
 def test_add_jigsaw_subparser_allows_conda_without_pixi():
@@ -64,3 +69,4 @@ def test_add_jigsaw_subparser_allows_conda_without_pixi():
     assert args.command == 'jigsaw'
     assert args.jigsaw_cmd == 'install'
     assert args.jigsaw_python_path == 'jigsaw-python'
+    assert args.pixi_local is False
