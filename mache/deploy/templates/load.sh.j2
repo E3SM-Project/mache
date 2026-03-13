@@ -94,7 +94,9 @@ echo "   spack env activated."
 # Target software load snippet (optional)
 if [[ -n "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET:-}" \
       && -f "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}" ]]; then
-  echo "sourcing target load snippet..."
+  echo "loading ${MACHE_DEPLOY_TARGET_SOFTWARE} environment variables..."
+  echo "   ${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}"
   # shellcheck source=/dev/null
   source "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}"
+  echo "   ${MACHE_DEPLOY_TARGET_SOFTWARE} environment variables loaded."
 fi

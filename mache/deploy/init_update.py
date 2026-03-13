@@ -147,8 +147,8 @@ def init_or_update_repo(
         )
 
         load_sh = (
-            '# bash snippet for adding Polaris-specific environment '
-            'variables\n'
+            f'# bash snippet for adding {software}-specific environment '
+            f'variables\n'
         )
         _write_text(
             deploy_dir / 'load.sh',
