@@ -71,10 +71,18 @@ machine metadata:
 
 - `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
     one of `queue`, `partition`, or `qos`.
-- `SlurmSystem.get_slurm_options(config, nodes)` returns
-    `(partition, qos, constraint, gpus_per_node, wall_time)`.
-- `PbsSystem.get_pbs_options(config, nodes)` returns
-    `(queue, constraint, gpus_per_node, wall_time, filesystems)`.
+- `ParallelSystem.resolve_submission(config, nodes, target_type,
+    min_nodes_allowed=None)` returns selected target, effective nodes, and
+    adjustment (`exact`, `decrease`, or `increase`).
+- `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
+    returns `(partition, qos, constraint, gpus_per_node, wall_time,
+    effective_nodes)`.
+- `PbsSystem.get_pbs_options(config, nodes, min_nodes_allowed=None)` returns
+    `(queue, constraint, gpus_per_node, wall_time, filesystems,
+    effective_nodes)`.
 
-If scheduler-target metadata defines node ranges and no entry matches the
-requested node count, these functions raise `ValueError`.
+For invalid gaps between scheduler ranges, node count is adjusted to the
+nearest valid value, preferring lower adjustments when feasible. If
+`min_nodes_allowed` disallows lower adjustments, resolution moves to the next
+valid higher range. If no feasible target exists, these functions raise
+`ValueError`.

@@ -48,6 +48,7 @@ documentation.
     ParallelSystem
     ParallelSystem.get_parallel_command
     ParallelSystem.get_scheduler_target
+    ParallelSystem.resolve_submission
 ```
 
 ```{eval-rst}
