@@ -114,7 +114,8 @@ def _get_parallel_configs(config: ConfigParser) -> Dict[str, str]:
     section = dict(config['parallel'])
     compiler = config.get('build', 'compiler')
     if compiler is not None:
-        compiler_section = f'parallel.{compiler}'
+        compiler_underscore = compiler.replace('-', '_')
+        compiler_section = f'parallel.{compiler_underscore}'
         if config.has_section(compiler_section):
             for key, value in config.items(compiler_section):
                 section[key] = value
