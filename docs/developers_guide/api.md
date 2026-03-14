@@ -47,6 +47,7 @@ documentation.
 
     ParallelSystem
     ParallelSystem.get_parallel_command
+    ParallelSystem.get_scheduler_target
 ```
 
 ```{eval-rst}
@@ -74,6 +75,7 @@ documentation.
     :toctree: generated/
 
     SlurmSystem
+    SlurmSystem.get_slurm_options
 ```
 
 ```{eval-rst}
@@ -83,6 +85,7 @@ documentation.
     :toctree: generated/
 
     PbsSystem
+    PbsSystem.get_pbs_options
 ```
 
 ## spack

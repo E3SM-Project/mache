@@ -37,6 +37,25 @@ class SlurmSystem(ParallelSystem):
         if self.gpus_per_node is not None:
             self.gpus = self.gpus_per_node * nodes
 
+    @classmethod
+    def get_slurm_options(
+        cls, config: ConfigParser, nodes: int
+    ) -> tuple[str, str, str, str, str]:
+        """Get Slurm submission options for a requested node count."""
+        partition = cls.get_scheduler_target(config, 'partition', nodes)
+        qos = cls.get_scheduler_target(config, 'qos', nodes)
+
+        constraint, gpus_per_node, _ = cls._get_common_submission_options(
+            config
+        )
+
+        wall_time = cls._select_wall_time(
+            cls._get_wall_time(config, 'partition', partition),
+            cls._get_wall_time(config, 'qos', qos),
+        )
+
+        return partition, qos, constraint, gpus_per_node, wall_time
+
     def _get_parallel_args(
         self,
         cpus_per_task: int,

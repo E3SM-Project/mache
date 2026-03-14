@@ -44,6 +44,27 @@ Depending on the parallel system, the following options are typically required:
 Compiler-specific overrides can be provided in optional
 `[parallel.<compiler>]` sections, e.g. `[parallel.gnu]`.
 
+For machines with scheduler-target policy limits, you can also define optional
+sections for queue- or partition-based schedulers:
+
+- `[queue.<name>]` sections corresponding to entries in `parallel.queues`
+- `[partition.<name>]` sections corresponding to entries in
+    `parallel.partitions`
+- `[qos.<name>]` sections corresponding to entries in `parallel.qos`
+
+Supported keys are:
+
+- `min_nodes`: minimum node count for this scheduler target
+- `max_nodes`: maximum node count for this scheduler target (leave unset for
+    no upper bound)
+- `max_wallclock`: maximum allowed wall-clock time (for example,
+    `01:00:00`)
+
+Downstream software can query these values with
+`MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()`,
+`MachineInfo.get_qos_specs()` or
+`MachineInfo.get_scheduler_specs()`.
+
 These options are used to:
 
 - detect available resources on the current allocation,
