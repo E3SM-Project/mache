@@ -44,7 +44,7 @@ def test_get_pbs_options_aurora_capacity():
     assert constraint == ''
     assert gpus_per_node == ''
     assert wall_time == '168:00:00'
-    assert filesystems == ''
+    assert filesystems == 'home:flare'
     assert effective_nodes == 8
 
 
@@ -63,7 +63,7 @@ def test_get_pbs_options_aurora_prod():
     assert constraint == ''
     assert gpus_per_node == ''
     assert wall_time == '12:00:00'
-    assert filesystems == ''
+    assert filesystems == 'home:flare'
     assert effective_nodes == 256
 
 
