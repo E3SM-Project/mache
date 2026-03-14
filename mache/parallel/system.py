@@ -1,6 +1,17 @@
 import subprocess
 from configparser import ConfigParser
-from typing import Any, Dict, List
+from dataclasses import dataclass
+from typing import Any, Dict, List, Literal
+
+
+@dataclass(frozen=True)
+class SubmissionResolution:
+    """Resolved scheduler target and effective node count."""
+
+    target: str
+    requested_nodes: int
+    effective_nodes: int
+    adjustment: Literal['exact', 'decrease', 'increase']
 
 
 class ParallelSystem:
@@ -112,12 +123,56 @@ class ParallelSystem:
         """
         Choose queue/partition/qos metadata target for a node count.
 
-        If multiple targets match, the first configured target is selected.
-        If no target matches and at least one target has explicit limits,
-        a ValueError is raised.
+        This is a convenience wrapper around ``resolve_submission()`` that
+        returns only the selected target.
+        """
+        resolution = cls.resolve_submission(config, nodes, target_type)
+        return resolution.target
+
+    @classmethod
+    def resolve_submission(
+        cls,
+        config: ConfigParser,
+        nodes: int,
+        target_type: str,
+        min_nodes_allowed: int | None = None,
+    ) -> SubmissionResolution:
+        """
+        Resolve a scheduler target and effective node count.
+
+        Policy:
+
+        - Prefer exact match when available.
+        - Otherwise choose the nearest valid node count.
+        - Tie-break toward lower (decrease) adjustments.
+        - If a lower adjustment violates ``min_nodes_allowed``, choose the
+          nearest feasible higher adjustment.
+
+        Parameters
+        ----------
+        config : ConfigParser
+            Machine configuration parser.
+
+        nodes : int
+            Requested node count.
+
+        target_type : {'queue', 'partition', 'qos'}
+            Scheduler target type to resolve.
+
+        min_nodes_allowed : int, optional
+            Optional lower bound for adjusted node counts.
+
+        Returns
+        -------
+        SubmissionResolution
+            The selected target and adjusted node count.
         """
         if nodes <= 0:
             raise ValueError(f'nodes must be positive, got {nodes}.')
+        if min_nodes_allowed is not None and min_nodes_allowed <= 0:
+            raise ValueError(
+                f'min_nodes_allowed must be positive, got {min_nodes_allowed}.'
+            )
 
         target_map = {
             'queue': 'queues',
@@ -135,27 +190,88 @@ class ParallelSystem:
         targets_value = parallel_configs.get(target_map[target_type])
         targets = _parse_list(targets_value)
         if len(targets) == 0:
-            return ''
+            return SubmissionResolution(
+                target='',
+                requested_nodes=nodes,
+                effective_nodes=nodes,
+                adjustment='exact',
+            )
 
-        any_limits = False
-        for target in targets:
+        candidates: list[tuple[str, int, int]] = []
+        # tuple: (target, effective_nodes, order)
+        for index, target in enumerate(targets):
             section = f'{target_type}.{target}'
             min_nodes = _get_int_option(config, section, 'min_nodes')
             max_nodes = _get_int_option(config, section, 'max_nodes')
 
-            if min_nodes is not None or max_nodes is not None:
-                any_limits = True
+            if (
+                min_nodes is not None
+                and max_nodes is not None
+                and min_nodes > max_nodes
+            ):
+                raise ValueError(
+                    f'Invalid {target_type} config [{section}]: min_nodes '
+                    f'({min_nodes}) is greater than max_nodes ({max_nodes}).'
+                )
 
-            if _nodes_match(nodes, min_nodes, max_nodes):
-                return target
+            effective_nodes = _clamp_nodes(nodes, min_nodes, max_nodes)
 
-        if any_limits:
+            if (
+                min_nodes_allowed is not None
+                and effective_nodes < min_nodes_allowed
+            ):
+                continue
+
+            candidates.append((target, effective_nodes, index))
+
+        if len(candidates) == 0:
+            min_nodes_suffix = ''
+            if min_nodes_allowed is not None:
+                min_nodes_suffix = (
+                    f' and min_nodes_allowed={min_nodes_allowed}'
+                )
             raise ValueError(
-                f'No {target_type} matches nodes={nodes}. Checked '
-                f'{target_type}s: {", ".join(targets)}.'
+                f'No {target_type} matches nodes={nodes}{min_nodes_suffix}. '
+                f'Checked {target_type}s: {", ".join(targets)}.'
             )
 
-        return targets[0]
+        exact_candidates = [item for item in candidates if item[1] == nodes]
+        if len(exact_candidates) > 0:
+            best_target, best_nodes, _ = min(
+                exact_candidates,
+                key=lambda item: item[2],
+            )
+        else:
+            lower_candidates = [item for item in candidates if item[1] < nodes]
+            if len(lower_candidates) > 0:
+                # Prefer the closest feasible lower adjustment.
+                best_target, best_nodes, _ = max(
+                    lower_candidates,
+                    key=lambda item: (item[1], -item[2]),
+                )
+            else:
+                # No feasible lower adjustment; move to nearest higher.
+                higher_candidates = [
+                    item for item in candidates if item[1] > nodes
+                ]
+                best_target, best_nodes, _ = min(
+                    higher_candidates,
+                    key=lambda item: (item[1], item[2]),
+                )
+
+        if best_nodes == nodes:
+            adjustment: Literal['exact', 'decrease', 'increase'] = 'exact'
+        elif best_nodes < nodes:
+            adjustment = 'decrease'
+        else:
+            adjustment = 'increase'
+
+        return SubmissionResolution(
+            target=best_target,
+            requested_nodes=nodes,
+            effective_nodes=best_nodes,
+            adjustment=adjustment,
+        )
 
     @classmethod
     def _get_common_submission_options(
@@ -271,6 +387,18 @@ def _nodes_match(
     if max_nodes is not None and nodes > max_nodes:
         return False
     return True
+
+
+def _clamp_nodes(
+    nodes: int, min_nodes: int | None, max_nodes: int | None
+) -> int:
+    """Clamp a node count to optional min/max bounds."""
+    effective_nodes = nodes
+    if min_nodes is not None and effective_nodes < min_nodes:
+        effective_nodes = min_nodes
+    if max_nodes is not None and effective_nodes > max_nodes:
+        effective_nodes = max_nodes
+    return effective_nodes
 
 
 def _wall_time_to_seconds(wall_time: str) -> int | None:

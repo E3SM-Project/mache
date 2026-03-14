@@ -39,11 +39,28 @@ class SlurmSystem(ParallelSystem):
 
     @classmethod
     def get_slurm_options(
-        cls, config: ConfigParser, nodes: int
-    ) -> tuple[str, str, str, str, str]:
+        cls,
+        config: ConfigParser,
+        nodes: int,
+        min_nodes_allowed: int | None = None,
+    ) -> tuple[str, str, str, str, str, int]:
         """Get Slurm submission options for a requested node count."""
-        partition = cls.get_scheduler_target(config, 'partition', nodes)
-        qos = cls.get_scheduler_target(config, 'qos', nodes)
+        partition_resolution = cls.resolve_submission(
+            config=config,
+            nodes=nodes,
+            target_type='partition',
+            min_nodes_allowed=min_nodes_allowed,
+        )
+        partition = partition_resolution.target
+        effective_nodes = partition_resolution.effective_nodes
+
+        qos_resolution = cls.resolve_submission(
+            config=config,
+            nodes=effective_nodes,
+            target_type='qos',
+            min_nodes_allowed=min_nodes_allowed,
+        )
+        qos = qos_resolution.target
 
         constraint, gpus_per_node, _ = cls._get_common_submission_options(
             config
@@ -54,7 +71,14 @@ class SlurmSystem(ParallelSystem):
             cls._get_wall_time(config, 'qos', qos),
         )
 
-        return partition, qos, constraint, gpus_per_node, wall_time
+        return (
+            partition,
+            qos,
+            constraint,
+            gpus_per_node,
+            wall_time,
+            effective_nodes,
+        )
 
     def _get_parallel_args(
         self,
