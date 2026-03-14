@@ -41,6 +41,20 @@ class PbsSystem(ParallelSystem):
             self.gpus_per_node = gpus_per_node
             self.gpus = gpus_per_node * nodes
 
+    @classmethod
+    def get_pbs_options(
+        cls, config: ConfigParser, nodes: int
+    ) -> tuple[str, str, str, str, str]:
+        """Get PBS submission options for a requested node count."""
+        queue = cls.get_scheduler_target(config, 'queue', nodes)
+
+        constraint, gpus_per_node, filesystems = (
+            cls._get_common_submission_options(config)
+        )
+        wall_time = cls._get_wall_time(config, 'queue', queue)
+
+        return queue, constraint, gpus_per_node, wall_time, filesystems
+
     def _get_parallel_args(
         self,
         cpus_per_task: int,

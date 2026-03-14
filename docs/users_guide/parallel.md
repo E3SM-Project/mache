@@ -55,8 +55,26 @@ A common pattern is to generate scheduler directives separately, then use
 `mache.parallel` only for launch lines. For example:
 
 - Use `MachineInfo.get_account_defaults()` to populate account/partition/QOS.
+- Use `MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()` or
+    `MachineInfo.get_qos_specs()` for optional scheduler-target policy
+    metadata (`min_nodes`, `max_nodes`, `max_wallclock`) when available.
 - Render scheduler headers (`#SBATCH` or `#PBS`) in your template logic.
 - Use `get_parallel_command()` to build the executable line.
 
 This keeps scheduler policy in your tool while reusing machine-specific launch
 behavior from `mache`.
+
+## Selecting scheduler options by node count
+
+`mache.parallel` also provides helpers for selecting queue/partition/QOS from
+machine metadata:
+
+- `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
+    one of `queue`, `partition`, or `qos`.
+- `SlurmSystem.get_slurm_options(config, nodes)` returns
+    `(partition, qos, constraint, gpus_per_node, wall_time)`.
+- `PbsSystem.get_pbs_options(config, nodes)` returns
+    `(queue, constraint, gpus_per_node, wall_time, filesystems)`.
+
+If scheduler-target metadata defines node ranges and no entry matches the
+requested node count, these functions raise `ValueError`.
