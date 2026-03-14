@@ -76,11 +76,7 @@ def check_call(
 
     # Determine whether stdout is text or bytes (match subprocess defaults,
     # but keep this wrapper text-friendly by default).
-    text = popen_kwargs.get('text')
-    if text is None:
-        text = popen_kwargs.get('universal_newlines')
-    if text is None:
-        text = True
+    text, popen_kwargs = _normalize_popen_text_kwargs(popen_kwargs)
     bufsize = popen_kwargs.get('bufsize', 1 if text else 0)
 
     # Echo the commands being run (like a lightweight trace) so the log is
@@ -113,7 +109,7 @@ def check_call(
     base_popen_kwargs = {
         'executable': '/bin/bash',
         'shell': True,
-        'text': text,
+        'universal_newlines': text,
         'bufsize': bufsize,
     }
     # Allow callers to override defaults.
@@ -467,6 +463,27 @@ def _parse_args():
         )
 
     return args
+
+
+def _normalize_popen_text_kwargs(popen_kwargs):
+    """Translate subprocess text-mode kwargs for Python 3.6 compatibility."""
+    normalized = dict(popen_kwargs)
+    text = normalized.pop('text', None)
+    universal_newlines = normalized.get('universal_newlines')
+
+    if text is not None and universal_newlines is not None:
+        if bool(text) != bool(universal_newlines):
+            raise ValueError(
+                'text and universal_newlines must match when both are set.'
+            )
+
+    if text is None:
+        text = universal_newlines
+    if text is None:
+        text = True
+
+    normalized['universal_newlines'] = text
+    return text, normalized
 
 
 def _split_shell_on_andand(commands):
