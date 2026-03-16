@@ -35,7 +35,7 @@ def test_get_pbs_options_aurora_capacity():
         queue,
         constraint,
         gpus_per_node,
-        wall_time,
+        max_wallclock,
         filesystems,
         effective_nodes,
     ) = PbsSystem.get_pbs_options(config=config, nodes=8)
@@ -43,7 +43,7 @@ def test_get_pbs_options_aurora_capacity():
     assert queue == 'capacity'
     assert constraint == ''
     assert gpus_per_node == ''
-    assert wall_time == '168:00:00'
+    assert max_wallclock == '168:00:00'
     assert filesystems == 'home:flare'
     assert effective_nodes == 8
 
@@ -54,7 +54,7 @@ def test_get_pbs_options_aurora_prod():
         queue,
         constraint,
         gpus_per_node,
-        wall_time,
+        max_wallclock,
         filesystems,
         effective_nodes,
     ) = PbsSystem.get_pbs_options(config=config, nodes=256)
@@ -62,7 +62,7 @@ def test_get_pbs_options_aurora_prod():
     assert queue == 'prod'
     assert constraint == ''
     assert gpus_per_node == ''
-    assert wall_time == '12:00:00'
+    assert max_wallclock == '12:00:00'
     assert filesystems == 'home:flare'
     assert effective_nodes == 256
 
@@ -73,14 +73,14 @@ def test_get_pbs_options_aurora_adjusted_nodes():
         queue,
         _,
         _,
-        wall_time,
+        max_wallclock,
         _,
         effective_nodes,
     ) = PbsSystem.get_pbs_options(config=config, nodes=200)
 
     assert queue == 'capacity'
     assert effective_nodes == 16
-    assert wall_time == '168:00:00'
+    assert max_wallclock == '168:00:00'
 
 
 def test_get_slurm_options_compy():
@@ -90,7 +90,7 @@ def test_get_slurm_options_compy():
         qos,
         constraint,
         gpus_per_node,
-        wall_time,
+        max_wallclock,
         effective_nodes,
     ) = SlurmSystem.get_slurm_options(config=config, nodes=20)
 
@@ -98,7 +98,7 @@ def test_get_slurm_options_compy():
     assert qos == 'regular'
     assert constraint == ''
     assert gpus_per_node == ''
-    assert wall_time == '36:00:00'
+    assert max_wallclock == '36:00:00'
     assert effective_nodes == 20
 
 
@@ -109,7 +109,7 @@ def test_get_slurm_options_pm_gpu_uses_more_restrictive_qos_walltime():
         qos,
         constraint,
         gpus_per_node,
-        wall_time,
+        max_wallclock,
         effective_nodes,
     ) = SlurmSystem.get_slurm_options(config=config, nodes=8)
 
@@ -117,5 +117,5 @@ def test_get_slurm_options_pm_gpu_uses_more_restrictive_qos_walltime():
     assert qos == 'regular'
     assert constraint == 'gpu'
     assert gpus_per_node == '4'
-    assert wall_time == '48:00:00'
+    assert max_wallclock == '48:00:00'
     assert effective_nodes == 8

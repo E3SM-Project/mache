@@ -75,10 +75,10 @@ machine metadata:
     min_nodes_allowed=None)` returns selected target, effective nodes, and
     adjustment (`exact`, `decrease`, or `increase`).
 - `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
-    returns `(partition, qos, constraint, gpus_per_node, wall_time,
+    returns `(partition, qos, constraint, gpus_per_node, max_wallclock,
     effective_nodes)`.
 - `PbsSystem.get_pbs_options(config, nodes, min_nodes_allowed=None)` returns
-    `(queue, constraint, gpus_per_node, wall_time, filesystems,
+    `(queue, constraint, gpus_per_node, max_wallclock, filesystems,
     effective_nodes)`.
 
 For invalid gaps between scheduler ranges, node count is adjusted to the

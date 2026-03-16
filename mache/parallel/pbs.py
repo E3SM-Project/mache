@@ -61,13 +61,13 @@ class PbsSystem(ParallelSystem):
         constraint, gpus_per_node, filesystems = (
             cls._get_common_submission_options(config)
         )
-        wall_time = cls._get_wall_time(config, 'queue', queue)
+        max_wallclock = cls._get_max_wallclock(config, 'queue', queue)
 
         return (
             queue,
             constraint,
             gpus_per_node,
-            wall_time,
+            max_wallclock,
             filesystems,
             effective_nodes,
         )

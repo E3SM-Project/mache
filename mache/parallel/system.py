@@ -291,7 +291,7 @@ class ParallelSystem:
         return constraint, gpus_per_node_str, filesystems
 
     @classmethod
-    def _get_wall_time(
+    def _get_max_wallclock(
         cls, config: ConfigParser, target_type: str, target: str
     ) -> str:
         """Get max wall-clock metadata for a selected scheduler target."""
@@ -299,27 +299,29 @@ class ParallelSystem:
             return ''
 
         section = f'{target_type}.{target}'
-        wall_time = _get_string_option(config, section, 'max_wallclock')
-        if wall_time is None:
+        max_wallclock = _get_string_option(config, section, 'max_wallclock')
+        if max_wallclock is None:
             return ''
-        return wall_time
+        return max_wallclock
 
     @classmethod
-    def _select_wall_time(cls, wall_time_a: str, wall_time_b: str) -> str:
+    def _select_max_wallclock(
+        cls, max_wallclock_a: str, max_wallclock_b: str
+    ) -> str:
         """Choose the more restrictive wall-clock string when possible."""
-        if wall_time_a == '':
-            return wall_time_b
-        if wall_time_b == '':
-            return wall_time_a
+        if max_wallclock_a == '':
+            return max_wallclock_b
+        if max_wallclock_b == '':
+            return max_wallclock_a
 
-        seconds_a = _wall_time_to_seconds(wall_time_a)
-        seconds_b = _wall_time_to_seconds(wall_time_b)
+        seconds_a = _max_wallclock_to_seconds(max_wallclock_a)
+        seconds_b = _max_wallclock_to_seconds(max_wallclock_b)
         if seconds_a is None or seconds_b is None:
-            return wall_time_a
+            return max_wallclock_a
 
         if seconds_a <= seconds_b:
-            return wall_time_a
-        return wall_time_b
+            return max_wallclock_a
+        return max_wallclock_b
 
 
 def _get_parallel_configs(config: ConfigParser) -> Dict[str, str]:
@@ -401,9 +403,9 @@ def _clamp_nodes(
     return effective_nodes
 
 
-def _wall_time_to_seconds(wall_time: str) -> int | None:
+def _max_wallclock_to_seconds(max_wallclock: str) -> int | None:
     """Convert HH:MM:SS wall time to total seconds."""
-    parts = wall_time.split(':')
+    parts = max_wallclock.split(':')
     if len(parts) != 3:
         return None
 

@@ -66,9 +66,9 @@ class SlurmSystem(ParallelSystem):
             config
         )
 
-        wall_time = cls._select_wall_time(
-            cls._get_wall_time(config, 'partition', partition),
-            cls._get_wall_time(config, 'qos', qos),
+        max_wallclock = cls._select_max_wallclock(
+            cls._get_max_wallclock(config, 'partition', partition),
+            cls._get_max_wallclock(config, 'qos', qos),
         )
 
         return (
@@ -76,7 +76,7 @@ class SlurmSystem(ParallelSystem):
             qos,
             constraint,
             gpus_per_node,
-            wall_time,
+            max_wallclock,
             effective_nodes,
         )
 
