@@ -1,95 +1,112 @@
-# JIGSAW (Advanced)
+# JIGSAW
 
-This page describes advanced/manual `jigsawpy` installation behavior.
+`mache` can install JIGSAW and `jigsawpy` in two ways:
 
-## CLI entry point
+1. Automatically as part of a downstream `./deploy.py` workflow.
+2. Directly with `mache jigsaw install` for an existing pixi or conda
+   environment.
 
-`mache` includes a JIGSAW helper command:
+## When `./deploy.py` installs JIGSAW automatically
+
+Downstream target software can enable JIGSAW in `deploy/config.yaml.j2`:
+
+```yaml
+jigsaw:
+  enabled: true
+  jigsaw_python_path: jigsaw-python
+```
+
+When this is enabled, `mache deploy run` will:
+
+1. Create the base pixi environment from `deploy/pixi.toml.j2`.
+2. Build a local conda package for `jigsawpy` if needed.
+3. Install `jigsawpy` into the deployed pixi environment.
+
+This is the usual path for downstream packages such as Polaris.
+
+## Installing JIGSAW into an existing environment
+
+The direct command is:
 
 ```bash
 mache jigsaw install
 ```
 
 This command builds a local conda package for `jigsawpy` and installs it into
-the target pixi or conda environment.
+the current pixi or conda environment.
 
-## Downstream deployment context
+Backend selection is automatic by default:
 
-Most downstream users trigger JIGSAW installation indirectly from the
-downstream repository's `./deploy.py` workflow.
-That workflow may invoke `mache` deployment logic that installs `jigsawpy`
-when the downstream software enables JIGSAW in its deploy configuration.
+- If pixi environment variables are present, pixi is used.
+- Otherwise, if `CONDA_PREFIX` is set, conda is used.
 
-You only need `mache jigsaw install` directly for advanced/manual workflows.
+If neither backend can be inferred, the command fails and you should run it
+from an active pixi or conda environment.
 
-## Backend selection
+## Pixi workflow
 
-- In a pixi shell, `mache jigsaw install` uses the pixi backend.
-- In a conda shell, `mache jigsaw install` uses the conda backend.
+For pixi development workflows, the recommended form is:
 
-## Pixi users (recommended)
+```bash
+mache jigsaw install --pixi-local
+```
 
-For pixi development workflows, strongly prefer:
+This keeps your source-controlled manifest unchanged.
 
-`mache jigsaw install --pixi-local`
+`--pixi-local` creates or refreshes a local manifest copy under
+`.mache_cache/jigsaw/pixi-local` and installs `jigsawpy` there. When the
+source manifest already defines pixi environments, `mache` also creates or
+reuses an isolated local `jigsaw` feature/environment to reduce solver
+conflicts.
 
-This keeps your source-controlled `pixi.toml` unchanged.
-
-What `--pixi-local` does:
-
-- Creates or refreshes a local manifest copy at
-  `.mache_cache/jigsaw/pixi-local/pixi.toml` (or `pyproject.toml` when that is
-  the source manifest name).
-- Adds the local JIGSAW build channel and installs `jigsawpy` there.
-- For `pixi.toml` manifests that already define `[environments]`, ensures an
-  isolated local `jigsaw` feature/environment and installs with
-  `--feature jigsaw`.
-
-This avoids cross-environment solve conflicts (for example, `py310`, `py311`,
-etc. getting constrained by a single `python_abi`).
-
-Pixi options you may still use with this workflow:
+Useful pixi options are:
 
 - `--pixi-local`
+- `--pixi-manifest`
+- `--pixi-feature`
 - `--jigsaw-python-path`
 - `--repo-root`
 - `--quiet`
 
-## Pixi users (manual alternatives)
+Use `--pixi-manifest` and `--pixi-feature` when you intentionally want to
+target a specific existing manifest instead of the auto-managed local copy.
 
-Use this section only if you intentionally want to edit a chosen pixi
-manifest.
+## Conda workflow
 
-Relevant options:
+From an active conda environment, run:
 
-- `--pixi-manifest`: Path to a pixi manifest file or workspace directory to
-  update (`pixi.toml` or `pyproject.toml`).
-- `--pixi-feature`: Explicit feature to target for install.
+```bash
+mache jigsaw install
+```
 
-Example manual local-copy workflow:
+The conda backend installs `jigsawpy` into `CONDA_PREFIX` unless you provide a
+different prefix programmatically.
 
-1. Create a local copy:
-`mkdir -p .pixi-local && cp pixi.toml .pixi-local/pixi.toml`
-2. Activate that local copy:
-`pixi shell -m .pixi-local -e jigsaw`
-3. Install with explicit targeting:
-`mache jigsaw install --pixi-manifest .pixi-local --pixi-feature jigsaw`
-
-Because pixi only recognizes `pixi.toml` or `pyproject.toml` manifest
-filenames, prefer a local directory containing one of those names (for
-example `.pixi-local/pixi.toml`) rather than a custom filename like
-`pixi.local.toml`.
-
-## Conda users
-
-Conda users do not need any pixi options.
-
-Run from an active conda environment:
-
-`mache jigsaw install`
-
-Conda-relevant options:
+For most users, no additional options are required beyond:
 
 - `--jigsaw-python-path`
 - `--repo-root`
 - `--quiet`
+
+## Source requirements
+
+By default, `mache` looks for `jigsaw-python` under `./jigsaw-python` relative
+to `--repo-root`.
+
+If the source tree is missing:
+
+- In downstream deploy workflows, `mache deploy run` can clone or initialize
+  the source automatically when JIGSAW is enabled.
+- In direct `mache jigsaw install` workflows, `mache` will also try to make
+  the source available before building.
+
+## Troubleshooting
+
+If installation fails:
+
+1. Confirm you are in an active pixi or conda environment.
+2. Check that `jigsaw-python` is present at the expected path.
+3. Re-run with terminal output enabled and inspect the build logs under
+   `.mache_cache/jigsaw` or the deploy logs under `deploy_tmp/logs`.
+4. For pixi, prefer `--pixi-local` if modifying the main manifest causes
+   solver conflicts.

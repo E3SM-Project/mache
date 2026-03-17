@@ -10,6 +10,7 @@
 :maxdepth: 2
 
 users_guide/quick_start
+users_guide/deploy
 users_guide/jigsaw
 users_guide/parallel
 users_guide/spack/build
@@ -22,6 +23,7 @@ users_guide/sync/diags
 
 developers_guide/quick_start
 developers_guide/contributing
+developers_guide/deploy
 developers_guide/adding_new_machine
 developers_guide/spack
 developers_guide/jigsaw
