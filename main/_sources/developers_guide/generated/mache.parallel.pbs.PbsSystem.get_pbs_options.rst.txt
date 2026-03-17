@@ -1,0 +1,6 @@
+﻿mache.parallel.pbs.PbsSystem.get\_pbs\_options
+==============================================
+
+.. currentmodule:: mache.parallel.pbs
+
+.. automethod:: PbsSystem.get_pbs_options

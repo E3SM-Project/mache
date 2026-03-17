@@ -47,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
 </ul>
@@ -55,7 +56,10 @@
 <li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine to Mache</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#adding-a-new-config-file">Adding a new config file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-a-new-config-file">Adding a new config file</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-execution-settings">Parallel execution settings</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#adding-the-new-machine-to-discover-py">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
 </ul>
 </li>
@@ -108,6 +112,54 @@ machine.</p>
 <span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Link to this heading"></a></h2>
 <p>Adding a new config file is usually straightforward if you follow the format of
 an existing config file.</p>
+<section id="parallel-execution-settings">
+<h3>Parallel execution settings<a class="headerlink" href="#parallel-execution-settings" title="Link to this heading"></a></h3>
+<p>Machine config files now include parallel-resource settings that are consumed
+by <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code>. At minimum, each machine should define a <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code>
+section with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">system</span></code>: one of <code class="docutils literal notranslate"><span class="pre">slurm</span></code>, <code class="docutils literal notranslate"><span class="pre">pbs</span></code>, <code class="docutils literal notranslate"><span class="pre">single_node</span></code>, or <code class="docutils literal notranslate"><span class="pre">login</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parallel_executable</span></code>: launcher command (for example, <code class="docutils literal notranslate"><span class="pre">srun</span> <span class="pre">--label</span></code> or
+<code class="docutils literal notranslate"><span class="pre">mpiexec</span> <span class="pre">--label</span></code>)</p></li>
+</ul>
+<p>Depending on the parallel system, the following options are typically required:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code> (if GPUs are available)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task_flag</span></code> (primarily for PBS launchers)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">placement</span></code> (optional launcher tuning)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">login_cores</span></code>, <code class="docutils literal notranslate"><span class="pre">login_gpus</span></code> (for the <code class="docutils literal notranslate"><span class="pre">login</span></code> system)</p></li>
+</ul>
+<p>Compiler-specific overrides can be provided in optional
+<code class="docutils literal notranslate"><span class="pre">[parallel.&lt;compiler&gt;]</span></code> sections, e.g. <code class="docutils literal notranslate"><span class="pre">[parallel.gnu]</span></code>.</p>
+<p>For machines with scheduler-target policy limits, you can also define optional
+sections for queue- or partition-based schedulers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[queue.&lt;name&gt;]</span></code> sections corresponding to entries in <code class="docutils literal notranslate"><span class="pre">parallel.queues</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[partition.&lt;name&gt;]</span></code> sections corresponding to entries in
+<code class="docutils literal notranslate"><span class="pre">parallel.partitions</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[qos.&lt;name&gt;]</span></code> sections corresponding to entries in <code class="docutils literal notranslate"><span class="pre">parallel.qos</span></code></p></li>
+</ul>
+<p>Supported keys are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>: minimum node count for this scheduler target</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_nodes</span></code>: maximum node count for this scheduler target (leave unset for
+no upper bound)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>: maximum allowed wall-clock time (for example,
+<code class="docutils literal notranslate"><span class="pre">01:00:00</span></code>)</p></li>
+</ul>
+<p>Downstream software can query these values with
+<code class="docutils literal notranslate"><span class="pre">MachineInfo.get_queue_specs()</span></code>, <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_partition_specs()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">MachineInfo.get_qos_specs()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MachineInfo.get_scheduler_specs()</span></code>.</p>
+<p>These options are used to:</p>
+<ul class="simple">
+<li><p>detect available resources on the current allocation,</p></li>
+<li><p>construct launcher commands via <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code>, and</p></li>
+<li><p>enforce machine-specific limits like max MPI tasks per node.</p></li>
+</ul>
+</section>
 </section>
 <section id="adding-the-new-machine-to-discover-py">
 <span id="dev-discover-new-machine"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#adding-the-new-machine-to-discover-py" title="Link to this heading"></a></h2>

@@ -47,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
 </ul>
@@ -68,6 +69,21 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.update_permissions.html">mache.permissions.update_permissions</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel">parallel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.get_parallel_system.html">mache.parallel.get_parallel_system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html">mache.parallel.system.SubmissionResolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.make_spack_env.html">mache.spack.make_spack_env</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_spack_script.html">mache.spack.get_spack_script</a></li>
@@ -85,6 +101,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#machineinfo">MachineInfo</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.html">mache.MachineInfo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html">mache.MachineInfo.get_account_defaults</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_queue_specs.html">mache.MachineInfo.get_queue_specs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_partition_specs.html">mache.MachineInfo.get_partition_specs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_qos_specs.html">mache.MachineInfo.get_qos_specs</a></li>
 </ul>
 </li>
 </ul>
@@ -140,6 +159,69 @@ documentation.</p>
 </tbody>
 </table>
 </section>
+<section id="parallel">
+<h2>parallel<a class="headerlink" href="#parallel" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.get_parallel_system.html#mache.parallel.get_parallel_system" title="mache.parallel.get_parallel_system"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_system</span></code></a>(config)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution" title="mache.parallel.system.SubmissionResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubmissionResolution</span></code></a>(target, ...)</p></td>
+<td><p>Resolved scheduler target and effective node count.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem" title="mache.parallel.system.ParallelSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem</span></code></a>(config)</p></td>
+<td><p>Base class for parallel system resource management.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command" title="mache.parallel.system.ParallelSystem.get_parallel_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command</span></code></a>(args, ntasks)</p></td>
+<td><p>Get the parallel execution command for the current system.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target" title="mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target</span></code></a>(config, ...)</p></td>
+<td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission</span></code></a>(config, ...)</p></td>
+<td><p>Resolve a scheduler target and effective node count.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem" title="mache.parallel.login.LoginSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LoginSystem</span></code></a>(config)</p></td>
+<td><p>Resource manager for login nodes (no parallel execution).</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html#mache.parallel.single_node.SingleNodeSystem" title="mache.parallel.single_node.SingleNodeSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SingleNodeSystem</span></code></a>(config)</p></td>
+<td><p>Resource manager for single-node parallel execution.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem" title="mache.parallel.slurm.SlurmSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem</span></code></a>(config)</p></td>
+<td><p>SLURM resource manager for parallel jobs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options</span></code></a>(config, nodes)</p></td>
+<td><p>Get Slurm submission options for a requested node count.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem" title="mache.parallel.pbs.PbsSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem</span></code></a>(config)</p></td>
+<td><p>PBS resource manager for parallel jobs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options" title="mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
+<td><p>Get PBS submission options for a requested node count.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="spack">
 <h2>spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
@@ -187,6 +269,15 @@ documentation.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults" title="mache.MachineInfo.get_account_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_account_defaults</span></code></a>()</p></td>
 <td><p>Get default account, partition and quality of service (QOS) for this machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_queue_specs.html#mache.MachineInfo.get_queue_specs" title="mache.MachineInfo.get_queue_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_queue_specs</span></code></a>()</p></td>
+<td><p>Get queue policy metadata for the machine.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_partition_specs.html#mache.MachineInfo.get_partition_specs" title="mache.MachineInfo.get_partition_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_partition_specs</span></code></a>()</p></td>
+<td><p>Get partition policy metadata for the machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_qos_specs.html#mache.MachineInfo.get_qos_specs" title="mache.MachineInfo.get_qos_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_qos_specs</span></code></a>()</p></td>
+<td><p>Get quality-of-service (QOS) policy metadata for the machine.</p></td>
 </tr>
 </tbody>
 </table>

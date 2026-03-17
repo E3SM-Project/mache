@@ -3,13 +3,28 @@
 This document describes the steps for maintainers to tag and release a new
 version of `mache`, and to update the conda-forge feedstock.
 
+## Building the Conda Package Locally with Rattler Build
+
+Before publishing or updating the feedstock, you can build the local conda
+package from this repository with `rattler-build`:
+
+```bash
+rattler-build build -m conda/variant/linux_64_.yaml -r conda/recipe/ --output-dir output
+```
+
+This uses:
+
+- `conda/variant/linux_64_.yaml` for build variants
+- `conda/recipe/` for the package recipe
+- `output` as the local output directory for generated artifacts
+
 ## Version Bump and Dependency Updates
 
 1. **Update the Version Number**
 
    - Manually update the version number in the following files:
      - `mache/version.py`
-     - `conda/meta.yaml`
+     - `conda/recipe/recipe.yaml`
 
    - Make sure the version follows [semantic versioning](https://semver.org/).
      For release candidates, use versions like `1.31.0rc1`.
@@ -18,7 +33,7 @@ version of `mache`, and to update the conda-forge feedstock.
 
    - Ensure that dependencies and their constraints are up-to-date and
      consistent in:
-     - `conda/meta.yaml` (for the conda-forge release)
+     - `conda/recipe/recipe.yaml` (for the local recipe used by `rattler-build`)
      - `pyproject.toml` (for PyPI; used for sanity checks)
      - `dev-spec.txt` (development dependencies; should be a superset)
 
@@ -80,8 +95,8 @@ version of `mache`, and to update the conda-forge feedstock.
      shasum -a 256 <version>.tar.gz
      ```
 
-   - In the `meta.yaml` of the feedstock recipe:
-     - Set `{% set version = "<version>" %}`
+   - In the `recipe.yaml` of the feedstock recipe:
+     - Set `context.version: <version>`
      - Set the new `sha256` value
      - Update dependencies if needed
 

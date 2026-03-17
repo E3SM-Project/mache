@@ -47,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
 </ul>
@@ -59,6 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Releasing a New Version</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-conda-package-locally-with-rattler-build">Building the Conda Package Locally with Rattler Build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-bump-and-dependency-updates">Version Bump and Dependency Updates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tagging-and-publishing-a-release-candidate">Tagging and Publishing a Release Candidate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#updating-the-conda-forge-feedstock-for-a-release-candidate">Updating the conda-forge Feedstock for a Release Candidate</a></li>
@@ -98,6 +100,20 @@
 <h1>Releasing a New Version<a class="headerlink" href="#releasing-a-new-version" title="Link to this heading"></a></h1>
 <p>This document describes the steps for maintainers to tag and release a new
 version of <code class="docutils literal notranslate"><span class="pre">mache</span></code>, and to update the conda-forge feedstock.</p>
+<section id="building-the-conda-package-locally-with-rattler-build">
+<h2>Building the Conda Package Locally with Rattler Build<a class="headerlink" href="#building-the-conda-package-locally-with-rattler-build" title="Link to this heading"></a></h2>
+<p>Before publishing or updating the feedstock, you can build the local conda
+package from this repository with <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rattler-build<span class="w"> </span>build<span class="w"> </span>-m<span class="w"> </span>conda/variant/linux_64_.yaml<span class="w"> </span>-r<span class="w"> </span>conda/recipe/<span class="w"> </span>--output-dir<span class="w"> </span>output
+</pre></div>
+</div>
+<p>This uses:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">conda/variant/linux_64_.yaml</span></code> for build variants</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conda/recipe/</span></code> for the package recipe</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output</span></code> as the local output directory for generated artifacts</p></li>
+</ul>
+</section>
 <section id="version-bump-and-dependency-updates">
 <h2>Version Bump and Dependency Updates<a class="headerlink" href="#version-bump-and-dependency-updates" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
@@ -106,7 +122,7 @@ version of <code class="docutils literal notranslate"><span class="pre">mache</s
 <li><p>Manually update the version number in the following files:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">mache/version.py</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">conda/meta.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conda/recipe/recipe.yaml</span></code></p></li>
 </ul>
 </li>
 <li><p>Make sure the version follows <a class="reference external" href="https://semver.org/">semantic versioning</a>.
@@ -118,7 +134,7 @@ For release candidates, use versions like <code class="docutils literal notransl
 <li><p>Ensure that dependencies and their constraints are up-to-date and
 consistent in:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">conda/meta.yaml</span></code> (for the conda-forge release)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conda/recipe/recipe.yaml</span></code> (for the local recipe used by <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> (for PyPI; used for sanity checks)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dev-spec.txt</span></code> (development dependencies; should be a superset)</p></li>
 </ul>
@@ -187,9 +203,9 @@ branch of the feedstock.</p></li>
 </pre></div>
 </div>
 </li>
-<li><p>In the <code class="docutils literal notranslate"><span class="pre">meta.yaml</span></code> of the feedstock recipe:</p>
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">recipe.yaml</span></code> of the feedstock recipe:</p>
 <ul class="simple">
-<li><p>Set <code class="docutils literal notranslate"><span class="pre">{%</span> <span class="pre">set</span> <span class="pre">version</span> <span class="pre">=</span> <span class="pre">&quot;&lt;version&gt;&quot;</span> <span class="pre">%}</span></code></p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">context.version:</span> <span class="pre">&lt;version&gt;</span></code></p></li>
 <li><p>Set the new <code class="docutils literal notranslate"><span class="pre">sha256</span></code> value</p></li>
 <li><p>Update dependencies if needed</p></li>
 </ul>

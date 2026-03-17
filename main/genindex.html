@@ -44,6 +44,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
 </ul>
@@ -93,6 +94,8 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#U"><strong>U</strong></a>
  
@@ -101,7 +104,21 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo.__init__">__init__() (mache.MachineInfo method)</a>
+
+      <ul>
+        <li><a href="developers_guide/generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem.__init__">(mache.parallel.login.LoginSystem method)</a>
 </li>
+        <li><a href="developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem.__init__">(mache.parallel.pbs.PbsSystem method)</a>
+</li>
+        <li><a href="developers_guide/generated/mache.parallel.single_node.SingleNodeSystem.html#mache.parallel.single_node.SingleNodeSystem.__init__">(mache.parallel.single_node.SingleNodeSystem method)</a>
+</li>
+        <li><a href="developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem.__init__">(mache.parallel.slurm.SlurmSystem method)</a>
+</li>
+        <li><a href="developers_guide/generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem.__init__">(mache.parallel.system.ParallelSystem method)</a>
+</li>
+        <li><a href="developers_guide/generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution.__init__">(mache.parallel.system.SubmissionResolution method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -138,9 +155,25 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="developers_guide/generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults">get_account_defaults() (mache.MachineInfo method)</a>
 </li>
+      <li><a href="developers_guide/generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers">get_modules_env_vars_and_mpi_compilers() (in module mache.spack)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command">get_parallel_command() (mache.parallel.system.ParallelSystem method)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.parallel.get_parallel_system.html#mache.parallel.get_parallel_system">get_parallel_system() (in module mache.parallel)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.MachineInfo.get_partition_specs.html#mache.MachineInfo.get_partition_specs">get_partition_specs() (mache.MachineInfo method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="developers_guide/generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers">get_modules_env_vars_and_mpi_compilers() (in module mache.spack)</a>
+      <li><a href="developers_guide/generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options">get_pbs_options() (mache.parallel.pbs.PbsSystem class method)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.MachineInfo.get_qos_specs.html#mache.MachineInfo.get_qos_specs">get_qos_specs() (mache.MachineInfo method)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.MachineInfo.get_queue_specs.html#mache.MachineInfo.get_queue_specs">get_queue_specs() (mache.MachineInfo method)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target">get_scheduler_target() (mache.parallel.system.ParallelSystem class method)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options">get_slurm_options() (mache.parallel.slurm.SlurmSystem class method)</a>
 </li>
       <li><a href="developers_guide/generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script">get_spack_script() (in module mache.spack)</a>
 </li>
@@ -151,6 +184,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="developers_guide/generated/mache.spack.list_machine_compiler_mpilib.html#mache.spack.list_machine_compiler_mpilib">list_machine_compiler_mpilib() (in module mache.spack)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem">LoginSystem (class in mache.parallel.login)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -167,9 +204,37 @@
   </ul></td>
 </tr></table>
 
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem">ParallelSystem (class in mache.parallel.system)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem">PbsSystem (class in mache.parallel.pbs)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission">resolve_submission() (mache.parallel.system.ParallelSystem class method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.single_node.SingleNodeSystem.html#mache.parallel.single_node.SingleNodeSystem">SingleNodeSystem (class in mache.parallel.single_node)</a>
+</li>
+      <li><a href="developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem">SlurmSystem (class in mache.parallel.slurm)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="developers_guide/generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution">SubmissionResolution (class in mache.parallel.system)</a>
+</li>
       <li><a href="developers_guide/generated/mache.sync.diags.sync_diags.html#mache.sync.diags.sync_diags">sync_diags() (in module mache.sync.diags)</a>
 </li>
   </ul></td>
