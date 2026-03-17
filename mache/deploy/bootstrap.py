@@ -21,7 +21,7 @@ def check_call(
     """
     Wrapper for making a shell call with logging and error management.
 
-    This function is intentionally similar to :pyfunc:`subprocess.run`, while
+    This function is intentionally similar to :py:func:`subprocess.run`, while
     still providing the project-specific logging and "tee" behavior.
 
     Parameters

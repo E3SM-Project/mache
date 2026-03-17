@@ -111,7 +111,7 @@ def get_machine(
     ``ValueError`` is raised.
 
     If ``requested_machine`` is not provided, we attempt to detect the machine
-    using :pyfunc:`mache.discover.discover_machine`. If detection fails or
+    using :py:func:`mache.discover.discover_machine`. If detection fails or
     yields an unknown machine, the returned machine is ``None``.
 
     Parameters

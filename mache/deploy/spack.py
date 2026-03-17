@@ -54,10 +54,10 @@ def deploy_spack_software_env(
 ) -> SpackSoftwareEnvResult | None:
     """Deploy an optional Spack "software" environment.
 
-    This environment is built with a single (compiler, mpi) pair, typically
-    defined in the merged machine config under:
-      [deploy] software_compiler
-      [deploy] mpi_<software_compiler>
+        This environment is built with a single ``(compiler, mpi)`` pair,
+        typically defined in the merged machine config under
+        ``[deploy] software_compiler`` and
+        ``[deploy] mpi_<software_compiler>``.
 
     No CLI flags control this environment.
     """
@@ -192,13 +192,12 @@ def deploy_spack_envs(
 ) -> list[SpackDeployResult]:
     """Deploy one Spack environment per (compiler, mpi) toolchain pair.
 
-    This function is a thin orchestration layer:
-      - Reads deploy config (ctx.config['spack'])
-      - Renders `deploy/spack.yaml.j2` to get a list of spec strings
-      - Uses mache's Spack env templates (mache/spack/templates/*.yaml)
-        to construct a full spack environment YAML
-      - Runs spack to concretize/install the environment
-      - Produces a shell snippet for load scripts
+    This function is a thin orchestration layer. It reads deploy config from
+    ``ctx.config['spack']``, renders ``deploy/spack.yaml.j2`` to obtain the
+    spec list, uses mache's Spack environment templates
+    (``mache/spack/templates/*.yaml``) to construct a full environment YAML,
+    runs Spack to concretize and install the environment, and produces a shell
+    snippet for the generated load scripts.
 
     Notes
     -----
