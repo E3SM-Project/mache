@@ -45,6 +45,7 @@ documentation.
 .. autosummary::
     :toctree: generated/
 
+    SubmissionResolution
     ParallelSystem
     ParallelSystem.get_parallel_command
     ParallelSystem.get_scheduler_target
@@ -127,4 +128,7 @@ documentation.
 
     MachineInfo
     MachineInfo.get_account_defaults
+    MachineInfo.get_queue_specs
+    MachineInfo.get_partition_specs
+    MachineInfo.get_qos_specs
 ```

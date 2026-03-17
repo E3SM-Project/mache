@@ -72,8 +72,9 @@ machine metadata:
 - `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
     one of `queue`, `partition`, or `qos`.
 - `ParallelSystem.resolve_submission(config, nodes, target_type,
-    min_nodes_allowed=None)` returns selected target, effective nodes, and
-    adjustment (`exact`, `decrease`, or `increase`).
+    min_nodes_allowed=None)` returns a `SubmissionResolution` with fields
+    `target`, `requested_nodes`, `effective_nodes`, and `adjustment`
+    (`exact`, `decrease`, or `increase`).
 - `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
     returns `(partition, qos, constraint, gpus_per_node, max_wallclock,
     effective_nodes)`.
