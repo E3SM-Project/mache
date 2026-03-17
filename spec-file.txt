@@ -1,0 +1,27 @@
+python >=3.10,<3.15
+importlib_resources
+jinja2
+lxml
+packaging
+pyyaml
+requests
+rsync
+termcolor
+tqdm
+
+# Building
+setuptools >=60
+wheel
+
+# Linting and testing
+pip
+pytest
+flynt
+mypy
+pre-commit
+ruff
+
+# Documentation
+sphinx >=7.0.0
+sphinx_rtd_theme
+myst-parser

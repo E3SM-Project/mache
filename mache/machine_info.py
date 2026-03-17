@@ -2,10 +2,17 @@ import configparser
 import os
 import pwd
 from importlib import resources as importlib_resources
+from typing import Dict
 
 from lxml import etree
 
 from mache.discover import discover_machine
+
+SCHEDULER_TARGET_MAP = {
+    'queue': 'queues',
+    'partition': 'partitions',
+    'qos': 'qos',
+}
 
 
 class MachineInfo:
@@ -219,6 +226,125 @@ class MachineInfo:
 
         return account, partition, constraint, qos
 
+    def get_queue_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+        """
+        Get queue policy metadata for the machine.
+
+        Queue names are taken from ``parallel.queues``. For each queue, this
+        method reads optional values from ``[queue.<queue_name>]``:
+
+        - ``min_nodes`` (int)
+        - ``max_nodes`` (int)
+        - ``max_wallclock`` (str, e.g. ``01:00:00``)
+
+        Returns
+        -------
+        queue_specs : dict
+            Mapping from queue name to queue metadata. If a queue section is
+            missing, all metadata values are ``None``.
+        """
+        return self.get_scheduler_specs(target_type='queue')
+
+    def get_partition_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+        """
+        Get partition policy metadata for the machine.
+
+        Partition names are taken from ``parallel.partitions``. For each
+        partition, this method reads optional values from
+        ``[partition.<partition_name>]``:
+
+        - ``min_nodes`` (int)
+        - ``max_nodes`` (int)
+        - ``max_wallclock`` (str, e.g. ``01:00:00``)
+
+        Returns
+        -------
+        partition_specs : dict
+            Mapping from partition name to partition metadata. If a partition
+            section is missing, all metadata values are ``None``.
+        """
+        return self.get_scheduler_specs(target_type='partition')
+
+    def get_qos_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+        """
+        Get quality-of-service (QOS) policy metadata for the machine.
+
+        QOS names are taken from ``parallel.qos``. For each QOS, this method
+        reads optional values from ``[qos.<qos_name>]``:
+
+        - ``min_nodes`` (int)
+        - ``max_nodes`` (int)
+        - ``max_wallclock`` (str, e.g. ``01:00:00``)
+
+        Returns
+        -------
+        qos_specs : dict
+            Mapping from QOS name to QOS metadata. If a QOS section is
+            missing, all metadata values are ``None``.
+        """
+        return self.get_scheduler_specs(target_type='qos')
+
+    def get_scheduler_specs(
+        self, target_type: str
+    ) -> Dict[str, Dict[str, int | str | None]]:
+        """
+        Get scheduler target metadata for queues or partitions.
+
+        Parameters
+        ----------
+        target_type : {'queue', 'partition', 'qos'}
+            The target type to parse.
+
+        Returns
+        -------
+        target_specs : dict
+            Mapping from target name to metadata with keys ``min_nodes``,
+            ``max_nodes`` and ``max_wallclock``. If a target section is
+            missing, all metadata values are ``None``.
+        """
+        if target_type not in SCHEDULER_TARGET_MAP:
+            expected = ', '.join(SCHEDULER_TARGET_MAP.keys())
+            raise ValueError(
+                f'Unexpected target_type: {target_type}. Expected one of: '
+                f'{expected}.'
+            )
+
+        config = self.config
+        parallel_option = SCHEDULER_TARGET_MAP[target_type]
+        if not config.has_option('parallel', parallel_option):
+            return {}
+
+        targets = [
+            target.strip()
+            for target in config.get('parallel', parallel_option).split(',')
+            if target.strip() != ''
+        ]
+
+        target_specs: Dict[str, Dict[str, int | str | None]] = {}
+        for target in targets:
+            section = f'{target_type}.{target}'
+            min_nodes = self._get_scheduler_int(section, 'min_nodes')
+            max_nodes = self._get_scheduler_int(section, 'max_nodes')
+            max_wallclock = self._get_scheduler_value(section, 'max_wallclock')
+
+            if (
+                min_nodes is not None
+                and max_nodes is not None
+                and min_nodes > max_nodes
+            ):
+                raise ValueError(
+                    f'Invalid {target_type} config [{section}]: min_nodes '
+                    f'({min_nodes}) is greater than max_nodes ({max_nodes}).'
+                )
+
+            target_specs[target] = {
+                'min_nodes': min_nodes,
+                'max_nodes': max_nodes,
+                'max_wallclock': max_wallclock,
+            }
+
+        return target_specs
+
     def _get_config(self):
         """get a parser for config options"""
 
@@ -227,17 +353,20 @@ class MachineInfo:
         )
 
         machine = self.machine
+
+        # first, read the default configs for all machines, then override with
+        # machine-specific configs
+        default_cfg_path = (
+            importlib_resources.files('mache.machines') / 'default.cfg'
+        )
+        config.read(str(default_cfg_path))
         try:
             cfg_path = (
                 importlib_resources.files('mache.machines') / f'{machine}.cfg'
             )
             config.read(str(cfg_path))
         except FileNotFoundError:
-            # this isn't a known machine so use the default
-            cfg_path = (
-                importlib_resources.files('mache.machines') / 'default.cfg'
-            )
-            config.read(str(cfg_path))
+            pass
 
         return config
 
@@ -317,3 +446,21 @@ class MachineInfo:
             'diagnostics', 'base_path'
         ):
             self.diagnostics_base = config.get('diagnostics', 'base_path')
+
+    def _get_scheduler_value(self, section: str, option: str) -> str | None:
+        """Get a scheduler-target config value, treating empty as unset."""
+        config = self.config
+        if not config.has_option(section, option):
+            return None
+
+        value = config.get(section, option).strip()
+        if value == '':
+            return None
+        return value
+
+    def _get_scheduler_int(self, section: str, option: str) -> int | None:
+        """Get an integer scheduler-target config value if set."""
+        value = self._get_scheduler_value(section, option)
+        if value is None:
+            return None
+        return int(value)
