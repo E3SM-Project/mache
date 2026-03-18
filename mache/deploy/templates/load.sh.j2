@@ -50,10 +50,11 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
     return 1
   fi
 
+  # Use a non-login shell so pixi-provided PATH/env are not reset by site profiles.
   probe_output="$(
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
       "${PIXI}" run -m "${PIXI_TOML}" -- \
-      bash -lc "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
+      bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
   )"
   status=$?
 
