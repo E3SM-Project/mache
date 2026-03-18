@@ -1,5 +1,6 @@
 import os
 import subprocess
+import warnings
 from importlib import resources as importlib_resources
 
 from jinja2 import Template
@@ -25,10 +26,12 @@ def make_spack_env(
     spack_specs,
     compiler,
     mpi,
+    *,
     machine=None,
     config_file=None,
     include_e3sm_lapack=False,
-    include_e3sm_hdf5_netcdf=False,
+    include_e3sm_hdf5_netcdf=None,
+    e3sm_hdf5_netcdf=None,
     yaml_template=None,
     tmpdir=None,
     spack_mirror=None,
@@ -67,9 +70,12 @@ def make_spack_env(
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
-    include_e3sm_hdf5_netcdf : bool, optional
+    e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
+
+    include_e3sm_hdf5_netcdf : bool, optional
+        Deprecated alias for ``e3sm_hdf5_netcdf``.
 
     yaml_template : str, optional
         A jinja template for a yaml file to be used for the environment instead
@@ -88,6 +94,25 @@ def make_spack_env(
         has been installed.
     """
 
+    if include_e3sm_hdf5_netcdf is not None:
+        warnings.warn(
+            'include_e3sm_hdf5_netcdf is deprecated; use e3sm_hdf5_netcdf',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if e3sm_hdf5_netcdf is not None:
+        if include_e3sm_hdf5_netcdf is not None and bool(
+            include_e3sm_hdf5_netcdf
+        ) != bool(e3sm_hdf5_netcdf):
+            raise ValueError(
+                'Got conflicting values for e3sm_hdf5_netcdf and '
+                'include_e3sm_hdf5_netcdf.'
+            )
+        e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
+    else:
+        e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
+
     if machine is None:
         machine = discover_machine()
         if machine is None:
@@ -104,7 +129,7 @@ def make_spack_env(
         compiler,
         mpi,
         include_e3sm_lapack,
-        include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf,
         spack_specs,
         yaml_template,
     )
@@ -123,8 +148,8 @@ def make_spack_env(
         'sh',
         machine,
         include_e3sm_lapack,
-        include_e3sm_hdf5_netcdf,
         load_spack_env=False,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
     modules = f'{modules}\n{bash_script}'
 
@@ -172,7 +197,9 @@ def get_modules_env_vars_and_mpi_compilers(
     mpi,
     shell,
     include_e3sm_lapack=False,
-    include_e3sm_hdf5_netcdf=False,
+    include_e3sm_hdf5_netcdf=None,
+    *,
+    e3sm_hdf5_netcdf=None,
 ):
     """
     Get the non-spack modules, environment variables and compiler names for a
@@ -197,9 +224,12 @@ def get_modules_env_vars_and_mpi_compilers(
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
-    include_e3sm_hdf5_netcdf : bool, optional
+    e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
+
+    include_e3sm_hdf5_netcdf : bool, optional
+        Deprecated alias for ``e3sm_hdf5_netcdf``.
 
     Returns
     -------
@@ -216,6 +246,25 @@ def get_modules_env_vars_and_mpi_compilers(
         Modules and environment variables needed to set up the compilers, MPI
         libraries and other dependencies like NetCDF and PNetCDF
     """
+
+    if include_e3sm_hdf5_netcdf is not None:
+        warnings.warn(
+            'include_e3sm_hdf5_netcdf is deprecated; use e3sm_hdf5_netcdf',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if e3sm_hdf5_netcdf is not None:
+        if include_e3sm_hdf5_netcdf is not None and bool(
+            include_e3sm_hdf5_netcdf
+        ) != bool(e3sm_hdf5_netcdf):
+            raise ValueError(
+                'Got conflicting values for e3sm_hdf5_netcdf and '
+                'include_e3sm_hdf5_netcdf.'
+            )
+        e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
+    else:
+        e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
 
     if machine is None:
         machine = discover_machine()
@@ -241,7 +290,7 @@ def get_modules_env_vars_and_mpi_compilers(
         machine=machine,
         load_spack_env=False,
         include_e3sm_lapack=include_e3sm_lapack,
-        include_e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
     mpicc, mpicxx, mpifc = _get_mpi_compilers(

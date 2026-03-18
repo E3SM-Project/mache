@@ -149,6 +149,10 @@ cython_debug/
 # pixi caches and environment files
 .pixi/
 pixi.lock
+.pixi-local/
 
 # output directory for conda-package builds
 output
+
+# mache cache
+.mache_cache

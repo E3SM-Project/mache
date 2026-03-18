@@ -1,5 +1,5 @@
 [workspace]
-name = "mache"
+name = "mache-dev"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64"]
 channel-priority = "strict"
@@ -10,7 +10,7 @@ pip = "*"
 
 # Runtime
 importlib_resources = "*"
-jinja2 = "*"
+jinja2 = ">=2.9"
 lxml = "*"
 packaging = "*"
 pyyaml = "*"
@@ -22,6 +22,7 @@ tqdm = "*"
 # Building
 setuptools = ">=60"
 wheel = "*"
+rattler-build = "*"
 
 # Linting and testing
 pytest = "*"

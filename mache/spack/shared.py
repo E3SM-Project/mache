@@ -8,7 +8,7 @@ def _get_yaml_data(
     compiler,
     mpi,
     include_e3sm_lapack,
-    include_e3sm_hdf5_netcdf,
+    e3sm_hdf5_netcdf,
     specs,
     yaml_template,
 ):
@@ -34,6 +34,6 @@ def _get_yaml_data(
     yaml_data = template.render(
         specs=specs,
         e3sm_lapack=include_e3sm_lapack,
-        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
     return yaml_data

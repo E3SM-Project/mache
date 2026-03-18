@@ -1,3 +1,4 @@
+import warnings
 from importlib import resources as importlib_resources
 
 from jinja2 import Template
@@ -14,8 +15,10 @@ def get_spack_script(
     shell,
     machine=None,
     include_e3sm_lapack=False,
-    include_e3sm_hdf5_netcdf=False,
+    include_e3sm_hdf5_netcdf=None,
     load_spack_env=True,
+    *,
+    e3sm_hdf5_netcdf=None,
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -45,9 +48,12 @@ def get_spack_script(
     include_e3sm_lapack : bool, optional
         Whether to include the same lapack (typically from MKL) as used in E3SM
 
-    include_e3sm_hdf5_netcdf : bool, optional
+    e3sm_hdf5_netcdf : bool, optional
         Whether to include the same hdf5, netcdf-c, netcdf-fortran and pnetcdf
         as used in E3SM
+
+    include_e3sm_hdf5_netcdf : bool, optional
+        Deprecated alias for ``e3sm_hdf5_netcdf``.
 
     load_spack_env : bool, optional
         Whether to load the spack environment at the start of script.
@@ -61,6 +67,26 @@ def get_spack_script(
         environment such as setting environment variables or loading modules
         not handled by the spack environment directly
     """
+
+    if include_e3sm_hdf5_netcdf is not None:
+        warnings.warn(
+            'include_e3sm_hdf5_netcdf is deprecated; use e3sm_hdf5_netcdf',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if e3sm_hdf5_netcdf is not None:
+        # If the new name is supplied, it takes precedence.
+        if include_e3sm_hdf5_netcdf is not None and bool(
+            include_e3sm_hdf5_netcdf
+        ) != bool(e3sm_hdf5_netcdf):
+            raise ValueError(
+                'Got conflicting values for e3sm_hdf5_netcdf and '
+                'include_e3sm_hdf5_netcdf.'
+            )
+        e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
+    else:
+        e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
 
     if machine is None:
         machine = discover_machine()
@@ -109,7 +135,7 @@ def get_spack_script(
     # render the jinja template
     load_script = Template(load_script_template).render(
         e3sm_lapack=include_e3sm_lapack,
-        e3sm_hdf5_netcdf=include_e3sm_hdf5_netcdf,
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
 
     return load_script

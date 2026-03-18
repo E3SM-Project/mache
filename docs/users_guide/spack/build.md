@@ -54,7 +54,7 @@ make_spack_env(
     machine=machine,
     config_file=machine_config,
     include_e3sm_lapack=include_e3sm_lapack,
-    include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     yaml_template=yaml_template,
     tmpdir=tmpdir,
     spack_mirror=spack_mirror,
@@ -71,8 +71,8 @@ make_spack_env(
 - `compiler`, `mpi`: Compiler and MPI library names.
 - `machine`: Machine name (optional, auto-detected if not provided).
 - `config_file`: Path to a machine config file (optional).
-- `include_e3sm_lapack`, `include_e3sm_hdf5_netcdf`: Whether to include
-  E3SM-specific LAPACK or HDF5/NetCDF packages.
+- `include_e3sm_lapack`, `e3sm_hdf5_netcdf`: Whether to include E3SM-specific
+  LAPACK or HDF5/NetCDF packages.
 - `yaml_template`: Path to a custom Jinja2 YAML template (optional).
 - `tmpdir`: Temporary directory for builds (optional).
 - `spack_mirror`: Path to a local Spack mirror (optional).
@@ -115,7 +115,7 @@ spack_script = get_spack_script(
     shell='sh',  # or 'csh'
     machine=machine,
     include_e3sm_lapack=include_e3sm_lapack,
-    include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
 )
 ```
 
@@ -166,7 +166,7 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
     mpi=mpi,
     shell='sh',  # or 'csh'
     include_e3sm_lapack=include_e3sm_lapack,
-    include_e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
 )
 ```
 

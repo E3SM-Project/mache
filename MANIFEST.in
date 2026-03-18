@@ -1,4 +1,7 @@
 include mache/cime_machine_config/*.xml
+include mache/deploy/templates/*.j2
+include mache/jigsaw/*.j2
+include mache/jigsaw/*.sh
 include mache/machines/*.cfg
 include mache/machines/pre_conda/*.sh
 include mache/machines/pre_conda/*.csh
