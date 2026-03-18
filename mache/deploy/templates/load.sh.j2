@@ -28,7 +28,7 @@ export {{ software_upper }}_LOAD_SCRIPT={{ load_script | tojson }}
 # If you want a new shell, you can run `bash` after sourcing.
 if [[ -z "${BASH_VERSION:-}" ]]; then
   echo "ERROR: run this script under bash (do not source it from another shell)." >&2
-  exit 1
+  return 1
 fi
 
 # Verify this script is sourced.

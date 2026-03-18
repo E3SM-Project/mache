@@ -33,7 +33,28 @@ from .spack import (
 
 def run_deploy(args: argparse.Namespace) -> None:
     """
-    Docstring for run_deploy
+    Execute the full deployment workflow for the current project.
+
+    This command is the main entry point used by the ``mache deploy`` CLI.
+    It reads deployment configuration templates from the ``deploy/``
+    directory, resolves platform- and system-specific values, validates
+    that the target software location is appropriate for deployment, and
+    then orchestrates any configured package manager environments,
+    machine-specific configuration, and deployment hooks.
+
+    Parameters
+    ----------
+    args :
+        An :class:`argparse.Namespace` containing command-line options
+        for the deploy operation. At a minimum, this namespace is
+        expected to provide:
+
+        * ``quiet`` (bool): If true, reduce log output and run with a
+          quieter logging configuration.
+
+        Additional attributes may be inspected by helper functions such
+        as :func:`_get_machine_and_config` to determine the target
+        machine, dry-run behavior, and other deployment options.
     """
     # The target software name is stored in deploy/config.yaml.j2.
     # We parse it early so check_location can provide a helpful error.
