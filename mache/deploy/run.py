@@ -758,12 +758,13 @@ def _write_load_script(
     spack_library_view: str | None,
     spack_activation: str,
 ) -> str:
-    """Write a simple "load" script that launches a pixi shell.
+    """Write a simple "load" script for activating the pixi environment.
 
-    Unlike conda, pixi doesn't currently have a universally-supported way to
+    Unlike conda, pixi doesn't currently have a universally supported way to
     "activate" into the *current* shell without eval/shell-hook support.
-    This script therefore launches a new interactive shell within the pixi
-    environment.
+    The generated script is intended to be *sourced* (not executed) so that
+    it can use ``pixi shell-hook`` + ``eval`` to activate the environment in
+    the calling shell.
     """
 
     prefix_abs = os.path.abspath(
