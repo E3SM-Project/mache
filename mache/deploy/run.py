@@ -47,8 +47,8 @@ def run_deploy(args: argparse.Namespace) -> None:
         include ``quiet`` and may include deploy overrides such as machine,
         prefix, pixi executable, toolchain values, and Spack options.
     """
-    # The target software name is stored in deploy/config.yaml.j2.
-    # We parse it early so check_location can provide a helpful error.
+    check_location()
+
     pins = _read_pins('deploy/pins.cfg')
     platform, system = get_conda_platform_and_system()
     replacements: dict[str, Any] = {
@@ -67,7 +67,6 @@ def run_deploy(args: argparse.Namespace) -> None:
             "'software' not found or empty in [project] section of "
             'deploy/config.yaml.j2'
         )
-    check_location(software=software)
 
     install_dev_software = config.get('pixi', {}).get(
         'install_dev_software', False
@@ -758,7 +757,8 @@ def _write_load_script(
     spack_library_view: str | None,
     spack_activation: str,
 ) -> str:
-    """Write a simple "load" script for activating the pixi environment.
+    """
+    Write a simple "load" script for activating the pixi environment.
 
     Unlike conda, pixi doesn't currently have a universally supported way to
     "activate" into the *current* shell without eval/shell-hook support.

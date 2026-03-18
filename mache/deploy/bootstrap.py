@@ -204,15 +204,16 @@ def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
     return f'eval "$({hook_cmd})" &&'
 
 
-def check_location(software):
+def check_location(software=None):
     """
-    Ensure that the bootstrap script is being run from the root of the target
-    software
+    Ensure that the script is being run from the root of the target software
+    repository.
 
     Parameters
     ----------
-    software : str
-        The target software name
+    software : str, optional
+        The target software name, used for a more specific error message.
+        If not provided, a generic message is used.
     """
     expected_files = [
         'deploy.py',
@@ -227,9 +228,12 @@ def check_location(software):
 
     if missing_files:
         missing_str = '\n  - '.join(missing_files)
+        if software:
+            location_desc = f'the root of the local {software} branch'
+        else:
+            location_desc = 'the root of the target software repository'
         raise RuntimeError(
-            f'The bootstrap script must be run from the '
-            f'root of the local {software} branch. '
+            f'The deploy script must be run from {location_desc}. '
             f'Expected files that were not found:\n  - {missing_str}'
         )
 
