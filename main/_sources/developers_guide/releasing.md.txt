@@ -9,14 +9,29 @@ Before publishing or updating the feedstock, you can build the local conda
 package from this repository with `rattler-build`:
 
 ```bash
-rattler-build build -m conda/variant/linux_64_.yaml -r conda/recipe/ --output-dir output
+rattler-build build -m conda/variants/linux_64_.yaml -r conda/recipe/ --output-dir output
 ```
 
 This uses:
 
-- `conda/variant/linux_64_.yaml` for build variants
+- `conda/variants/linux_64_.yaml` for build variants
 - `conda/recipe/` for the package recipe
 - `output` as the local output directory for generated artifacts
+
+If you are already using the repository's pixi environment, you can also run:
+
+```bash
+pixi run rattler-build build -m conda/variants/linux_64_.yaml -r conda/recipe/ --output-dir output
+```
+
+The resulting package is typically written under `output/noarch/` because the
+recipe is currently `noarch: python`.
+
+This local build is useful when:
+
+- testing release changes before tagging,
+- validating recipe edits while working on `mache.deploy` or `mache.jigsaw`,
+- debugging downstream deployment issues against an unpublished package.
 
 ## Version Bump and Dependency Updates
 

@@ -47,6 +47,8 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jigsaw.html">JIGSAW</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
@@ -63,12 +65,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/releasing.html">Releasing a New Version</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
 </ul>
 
         </div>
@@ -145,7 +153,7 @@ packages and configuration for the target HPC system.</p></li>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
     <span class="n">config_file</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-    <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
     <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">,</span>
     <span class="n">tmpdir</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span>
     <span class="n">spack_mirror</span><span class="o">=</span><span class="n">spack_mirror</span><span class="p">,</span>
@@ -162,8 +170,8 @@ packages and configuration for the target HPC system.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code>: Compiler and MPI library names.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">machine</span></code>: Machine name (optional, auto-detected if not provided).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">config_file</span></code>: Path to a machine config file (optional).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code>, <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code>: Whether to include
-E3SM-specific LAPACK or HDF5/NetCDF packages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code>, <code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code>: Whether to include E3SM-specific
+LAPACK or HDF5/NetCDF packages.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">yaml_template</span></code>: Path to a custom Jinja2 YAML template (optional).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tmpdir</span></code>: Temporary directory for builds (optional).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack_mirror</span></code>: Path to a local Spack mirror (optional).</p></li>
@@ -202,7 +210,7 @@ activated in the user’s shell.</p></li>
     <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-    <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -245,7 +253,7 @@ environment variables for a given machine, compiler, and MPI library.</p>
     <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
     <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
-    <span class="n">include_e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>

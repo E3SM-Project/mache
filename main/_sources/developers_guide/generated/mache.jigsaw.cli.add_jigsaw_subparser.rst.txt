@@ -1,0 +1,6 @@
+﻿mache.jigsaw.cli.add\_jigsaw\_subparser
+=======================================
+
+.. currentmodule:: mache.jigsaw.cli
+
+.. autofunction:: add_jigsaw_subparser

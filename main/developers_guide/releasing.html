@@ -47,6 +47,8 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
@@ -55,8 +57,10 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Releasing a New Version</a><ul>
@@ -70,6 +74,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
 </ul>
 
         </div>
@@ -104,14 +112,26 @@ version of <code class="docutils literal notranslate"><span class="pre">mache</s
 <h2>Building the Conda Package Locally with Rattler Build<a class="headerlink" href="#building-the-conda-package-locally-with-rattler-build" title="Link to this heading"></a></h2>
 <p>Before publishing or updating the feedstock, you can build the local conda
 package from this repository with <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rattler-build<span class="w"> </span>build<span class="w"> </span>-m<span class="w"> </span>conda/variant/linux_64_.yaml<span class="w"> </span>-r<span class="w"> </span>conda/recipe/<span class="w"> </span>--output-dir<span class="w"> </span>output
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rattler-build<span class="w"> </span>build<span class="w"> </span>-m<span class="w"> </span>conda/variants/linux_64_.yaml<span class="w"> </span>-r<span class="w"> </span>conda/recipe/<span class="w"> </span>--output-dir<span class="w"> </span>output
 </pre></div>
 </div>
 <p>This uses:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">conda/variant/linux_64_.yaml</span></code> for build variants</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conda/variants/linux_64_.yaml</span></code> for build variants</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">conda/recipe/</span></code> for the package recipe</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">output</span></code> as the local output directory for generated artifacts</p></li>
+</ul>
+<p>If you are already using the repository’s pixi environment, you can also run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>run<span class="w"> </span>rattler-build<span class="w"> </span>build<span class="w"> </span>-m<span class="w"> </span>conda/variants/linux_64_.yaml<span class="w"> </span>-r<span class="w"> </span>conda/recipe/<span class="w"> </span>--output-dir<span class="w"> </span>output
+</pre></div>
+</div>
+<p>The resulting package is typically written under <code class="docutils literal notranslate"><span class="pre">output/noarch/</span></code> because the
+recipe is currently <code class="docutils literal notranslate"><span class="pre">noarch:</span> <span class="pre">python</span></code>.</p>
+<p>This local build is useful when:</p>
+<ul class="simple">
+<li><p>testing release changes before tagging,</p></li>
+<li><p>validating recipe edits while working on <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> or <code class="docutils literal notranslate"><span class="pre">mache.jigsaw</span></code>,</p></li>
+<li><p>debugging downstream deployment issues against an unpublished package.</p></li>
 </ul>
 </section>
 <section id="version-bump-and-dependency-updates">

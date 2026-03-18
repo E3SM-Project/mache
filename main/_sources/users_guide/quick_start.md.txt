@@ -116,3 +116,13 @@ The following public functions are available in the top-level `mache` package:
   path.
 
 For more details on these and other features, see the full user's guide.
+
+## JIGSAW note
+
+Most users will not run `mache jigsaw install` directly.
+In downstream software repositories, `mache` deployment is typically invoked
+from a top-level `./deploy.py` script, and that workflow may install
+`jigsawpy` as part of deployment when configured by that software.
+
+For advanced/manual JIGSAW usage details, see the dedicated user guide page:
+{doc}`jigsaw`.

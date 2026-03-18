@@ -46,6 +46,8 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/jigsaw.html">JIGSAW</a></li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
@@ -54,12 +56,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/quick_start.html">Quick Start for Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/jigsaw.html">JIGSAW integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html">Building the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/releasing.html">Releasing a New Version</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design/mache_deploy.html">Design Document: mache.deploy</a></li>
 </ul>
 
         </div>
@@ -97,6 +105,26 @@
 <li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#installing-mache">Installing mache</a></li>
 <li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#example-usage">Example usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#public-functions">Public Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/quick_start.html#jigsaw-note">JIGSAW note</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/deploy.html">Deploying target software</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#what-mache-deploy-gives-you">What <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code> gives you</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#add-deploy-support-to-a-downstream-package">Add deploy support to a downstream package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#what-belongs-in-deploy">What belongs in <code class="docutils literal notranslate"><span class="pre">deploy/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#the-three-deployment-phases">The three deployment phases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#the-command-line-contract">The command-line contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#updating-a-target-repository-to-a-new-mache-version">Updating a target repository to a new <code class="docutils literal notranslate"><span class="pre">mache</span></code> version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/deploy.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="users_guide/jigsaw.html">JIGSAW</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#when-deploy-py-installs-jigsaw-automatically">When <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> installs JIGSAW automatically</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#installing-jigsaw-into-an-existing-environment">Installing JIGSAW into an existing environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#pixi-workflow">Pixi workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#conda-workflow">Conda workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#source-requirements">Source requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users_guide/jigsaw.html#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a><ul>
@@ -144,6 +172,19 @@
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#goals-and-boundaries">Goals and boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#module-layout">Module layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#template-lifecycle">Template lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#why-the-double-template-files-exist">Why the double-template files exist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#which-files-are-target-owned-versus-generated">Which files are target-owned versus generated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#the-command-line-contract-from-the-maintainer-side">The command-line contract from the maintainer side</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#changing-starter-kit-generation">Changing starter-kit generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#changing-runtime-deployment-behavior">Changing runtime deployment behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#public-api-surface-to-keep-documented">Public API surface to keep documented</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/deploy.html#recommended-checklist-for-mache-deploy-changes">Recommended checklist for <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> changes</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/adding_new_machine.html#adding-a-new-config-file">Adding a new config file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/adding_new_machine.html#adding-the-new-machine-to-discover-py">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
@@ -155,6 +196,15 @@
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#automatic-shell-script-generation-preferred">Automatic shell script generation (preferred)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#testing">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/spack.html#further-reading">Further Reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developers_guide/jigsaw.html">JIGSAW integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#responsibilities">Responsibilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#relationship-to-mache-deploy">Relationship to <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#module-layout">Module layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#build-and-install-pipeline">Build and install pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#backend-specific-notes">Backend-specific notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/jigsaw.html#changing-behavior-safely">Changing behavior safely</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="developers_guide/building_docs.html">Building the Documentation</a></li>
@@ -175,7 +225,25 @@
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#parallel">parallel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#spack">spack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#sync">sync</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#jigsaw">jigsaw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#deploy">deploy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developers_guide/api.html#machineinfo">MachineInfo</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design/mache_deploy.html">Design Document: mache.deploy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#conceptual-design">Conceptual Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#cli-design-and-sharing">CLI Design and Sharing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#starter-templates-and-initialization">Starter Templates and Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#package-organization">Package Organization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#closing-notes">Closing Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mache_deploy.html#testing">Testing</a></li>
 </ul>
 </li>
 </ul>
