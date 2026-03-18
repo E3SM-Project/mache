@@ -33,28 +33,19 @@ from .spack import (
 
 def run_deploy(args: argparse.Namespace) -> None:
     """
-    Execute the full deployment workflow for the current project.
+    Run the full deployment workflow for the current project.
 
-    This command is the main entry point used by the ``mache deploy`` CLI.
-    It reads deployment configuration templates from the ``deploy/``
-    directory, resolves platform- and system-specific values, validates
-    that the target software location is appropriate for deployment, and
-    then orchestrates any configured package manager environments,
-    machine-specific configuration, and deployment hooks.
+    This is the main entry point for ``mache deploy run``. It renders the
+    deployment configuration, validates the target software location,
+    provisions pixi and optional Spack environments, and writes load scripts.
+    Optional deploy hooks are executed at the documented lifecycle stages.
 
     Parameters
     ----------
-    args :
-        An :class:`argparse.Namespace` containing command-line options
-        for the deploy operation. At a minimum, this namespace is
-        expected to provide:
-
-        * ``quiet`` (bool): If true, reduce log output and run with a
-          quieter logging configuration.
-
-        Additional attributes may be inspected by helper functions such
-        as :func:`_get_machine_and_config` to determine the target
-        machine, dry-run behavior, and other deployment options.
+    args : argparse.Namespace
+        Parsed command-line options for the deploy run. Expected attributes
+        include ``quiet`` and may include deploy overrides such as machine,
+        prefix, pixi executable, toolchain values, and Spack options.
     """
     # The target software name is stored in deploy/config.yaml.j2.
     # We parse it early so check_location can provide a helpful error.
@@ -351,13 +342,13 @@ def _resolve_pixi_python_version(
     if python_version is not None:
         return python_version
 
-    python_version = pins.get('pixi', 'python')
-    if python_version is None:
+    if not pins.has_section('pixi') or not pins.has_option('pixi', 'python'):
         raise ValueError(
             'Python version is required to deploy the pixi environment. '
             'Set it in deploy/pins.cfg ([pixi] python = ...) or pass '
             '--python.'
         )
+    python_version = pins.get('pixi', 'python')
     return python_version
 
 
