@@ -206,7 +206,9 @@ That file is target-owned and is not generated from a package template.</p>
 <dt><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code></dt><dd><p>Rendered from the target repository into the list of Spack specs to install.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">load.sh.j2</span></code></dt><dd><p>Package-owned template used by <code class="docutils literal notranslate"><span class="pre">run.py</span></code> to create final
-<code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;*.sh</span></code> scripts in the target repo.</p>
+<code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;*.sh</span></code> scripts in the target repo
+(toolchain-specific form:
+<code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code>).</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code></dt><dd><p>Package-owned template used by <code class="docutils literal notranslate"><span class="pre">spack.py</span></code> to create a temporary Spack build
 script under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/spack/</span></code>.</p>

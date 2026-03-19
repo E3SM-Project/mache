@@ -456,6 +456,9 @@ requested.</p></li>
 <li><p>Optionally installs the target software in editable mode.</p></li>
 <li><p>Writes one or more <code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;*.sh</span></code> scripts.</p></li>
 </ol>
+<p>When a toolchain pair is selected, script names include machine, compiler,
+and MPI tags, for example:</p>
+<p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code></p>
 <p>Those load scripts are the main artifact a downstream user consumes after the
 deployment completes.</p>
 </section>

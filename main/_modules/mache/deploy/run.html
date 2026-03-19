@@ -870,14 +870,20 @@
     <span class="p">)</span>
     <span class="n">pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">,</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
 
-    <span class="c1"># Keep the script name stable and discoverable.</span>
-    <span class="n">safe_software</span> <span class="o">=</span> <span class="n">software</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="s1">&#39;software&#39;</span>
     <span class="k">if</span> <span class="n">toolchain_compiler</span> <span class="ow">and</span> <span class="n">toolchain_mpi</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Cannot include toolchain in load script name without machine.&#39;</span>
+                <span class="s1">&#39; Set a machine in deploy/config.yaml.j2 or pass --machine.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">machine_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
         <span class="n">compiler_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">toolchain_compiler</span><span class="p">)</span>
         <span class="n">mpi_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">toolchain_mpi</span><span class="p">)</span>
-        <span class="n">script_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">safe_software</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">compiler_tag</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">mpi_tag</span><span class="si">}</span><span class="s1">.sh&#39;</span>
+        <span class="n">script_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">machine_tag</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">compiler_tag</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">mpi_tag</span><span class="si">}</span><span class="s1">.sh&#39;</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">script_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">safe_software</span><span class="si">}</span><span class="s1">.sh&#39;</span>
+        <span class="n">script_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">.sh&#39;</span>
 
     <span class="n">template_text</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="n">__package__</span><span class="p">)</span>
@@ -886,7 +892,7 @@
     <span class="p">)</span>
     <span class="n">tmpl</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">template_text</span><span class="p">,</span> <span class="n">keep_trailing_newline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">software_upper</span> <span class="o">=</span> <span class="n">safe_software</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="n">software_upper</span> <span class="o">=</span> <span class="n">software</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
     <span class="n">source_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
     <span class="n">target_load_snippet</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;load.sh&#39;</span><span class="p">)</span>
 

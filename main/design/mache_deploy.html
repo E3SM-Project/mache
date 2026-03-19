@@ -284,7 +284,13 @@ correctly.</p>
 <p>After deployment, users need a simple way to load the environment.</p>
 <p><strong>Design resolution</strong></p>
 <p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> generates load scripts, for example:</p>
-<p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;.sh</span></code></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;.sh</span></code> (no toolchain-specific Spack environment)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code> (toolchain-specific)</p></li>
+</ul>
+<p>Including <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;</span></code> avoids filename collisions on shared filesystems where
+multiple machines (or machine partitions exposed as distinct machine names)
+share compiler and MPI naming.</p>
 <p>These scripts encapsulate:</p>
 <ul class="simple">
 <li><p>Pixi activation</p></li>
