@@ -343,6 +343,11 @@ created.
 10. Optionally installs the target software in editable mode.
 11. Writes one or more `load_<software>*.sh` scripts.
 
+When a toolchain pair is selected, script names include machine, compiler,
+and MPI tags, for example:
+
+`load_<software>_<machine>_<compiler>_<mpi>.sh`
+
 Those load scripts are the main artifact a downstream user consumes after the
 deployment completes.
 

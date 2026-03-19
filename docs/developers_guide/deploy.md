@@ -111,7 +111,9 @@ That file is target-owned and is not generated from a package template.
 
 `load.sh.j2`
 : Package-owned template used by `run.py` to create final
-  `load_<software>*.sh` scripts in the target repo.
+  `load_<software>*.sh` scripts in the target repo
+  (toolchain-specific form:
+  `load_<software>_<machine>_<compiler>_<mpi>.sh`).
 
 `spack_install.bash.j2`
 : Package-owned template used by `spack.py` to create a temporary Spack build
