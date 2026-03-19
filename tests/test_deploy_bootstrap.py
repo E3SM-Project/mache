@@ -61,3 +61,48 @@ def test_check_call_binary_mode_still_uses_popen_compatible_kwargs(
     assert recorded['commands'] == 'printf hello'
     assert 'text' not in recorded['kwargs']
     assert recorded['kwargs']['universal_newlines'] is False
+
+
+def test_write_bootstrap_pixi_toml_with_mache_includes_platform(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.setattr(bootstrap, '_get_pixi_platform', lambda: 'linux-64')
+
+    pixi_toml = tmp_path / 'pixi.toml'
+    bootstrap._write_bootstrap_pixi_toml_with_mache(
+        pixi_toml_path=pixi_toml,
+        software='polaris',
+        mache_version='3.0.0',
+        python_version='3.12',
+    )
+
+    text = pixi_toml.read_text(encoding='utf-8')
+    assert 'platforms = ["linux-64"]' in text
+    assert 'mache = "==3.0.0"' in text
+
+
+def test_clone_mache_repo_uses_local_source_override(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.chdir(tmp_path)
+
+    source_repo = tmp_path / 'local-mache'
+    source_repo.mkdir()
+    (source_repo / 'pixi.toml').write_text(
+        '[workspace]\nname = "mache-dev"\n',
+        encoding='utf-8',
+    )
+
+    monkeypatch.setenv(bootstrap.LOCAL_MACHE_SOURCE_ENV, str(source_repo))
+
+    bootstrap._clone_mache_repo(
+        mache_fork='ignored',
+        mache_branch='ignored',
+        log_filename=str(tmp_path / 'bootstrap.log'),
+        quiet=True,
+        recreate=False,
+    )
+
+    cloned_repo = tmp_path / 'deploy_tmp' / 'build_mache' / 'mache'
+    assert cloned_repo.exists()
+    assert (cloned_repo / 'pixi.toml').is_file()

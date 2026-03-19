@@ -1,0 +1,21 @@
+project:
+  software: "toyflow"
+  version: "0.1.0"
+  machine: null
+  runtime_version_cmd: >-
+    python -c 'from toyflow.version import __version__; print(__version__)'
+
+pixi:
+  deploy: true
+  prefix: "pixi-env"
+  channels:
+    - conda-forge
+  mpi: "nompi"
+  install_dev_software: true
+
+spack:
+  deploy: false
+  supported: false
+
+jigsaw:
+  enabled: false

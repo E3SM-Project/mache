@@ -40,3 +40,7 @@ def _build_parser() -> argparse.ArgumentParser:
     add_deploy_subparser(subparsers)
     add_jigsaw_subparser(subparsers)
     return parser
+
+
+if __name__ == '__main__':
+    main()

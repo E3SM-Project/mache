@@ -15,6 +15,7 @@ from yaml import safe_load
 from mache.jigsaw import deploy_jigsawpy
 
 from .bootstrap import (
+    build_pixi_env_unset_prefix,
     build_pixi_shell_hook_prefix,
     check_call,
     check_location,
@@ -986,7 +987,7 @@ def _pixi_install(
     # - Otherwise pixi uses its own defaults (typically under $HOME).
     cmd = (
         f'cd {shlex.quote(project_dir)} && '
-        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{build_pixi_env_unset_prefix()} '
         f'{shlex.quote(pixi_exe)} install'
     )
     check_call(cmd, log_filename=log_filename, quiet=quiet)
