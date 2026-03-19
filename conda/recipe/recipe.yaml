@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   name: mache
-  version: 3.0.0
+  version: 3.0.1
 
 package:
   name: ${{ name|lower }}
@@ -42,6 +42,10 @@ tests:
       run:
         - python ${{ python_min }}.*
     script:
+      - mache deploy init --help
+      - mache deploy update --help
+      - mache deploy run --help
+      - mache jigsaw install --help
       - mache sync diags --help
 
 about:
