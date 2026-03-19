@@ -159,7 +159,12 @@ After deployment, users need a simple way to load the environment.
 
 `mache.deploy` generates load scripts, for example:
 
-`load_<software>.sh`
+- `load_<software>.sh` (no toolchain-specific Spack environment)
+- `load_<software>_<machine>_<compiler>_<mpi>.sh` (toolchain-specific)
+
+Including `<machine>` avoids filename collisions on shared filesystems where
+multiple machines (or machine partitions exposed as distinct machine names)
+share compiler and MPI naming.
 
 These scripts encapsulate:
 

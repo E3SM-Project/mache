@@ -772,14 +772,20 @@ def _write_load_script(
     )
     pixi_toml = os.path.join(prefix_abs, 'pixi.toml')
 
-    # Keep the script name stable and discoverable.
-    safe_software = software.strip() or 'software'
     if toolchain_compiler and toolchain_mpi:
+        if machine is None:
+            raise ValueError(
+                'Cannot include toolchain in load script name without machine.'
+                ' Set a machine in deploy/config.yaml.j2 or pass --machine.'
+            )
+        machine_tag = _sanitize_script_tag(machine)
         compiler_tag = _sanitize_script_tag(toolchain_compiler)
         mpi_tag = _sanitize_script_tag(toolchain_mpi)
-        script_path = f'load_{safe_software}_{compiler_tag}_{mpi_tag}.sh'
+        script_path = (
+            f'load_{software}_{machine_tag}_{compiler_tag}_{mpi_tag}.sh'
+        )
     else:
-        script_path = f'load_{safe_software}.sh'
+        script_path = f'load_{software}.sh'
 
     template_text = (
         resources.files(__package__)
@@ -788,7 +794,7 @@ def _write_load_script(
     )
     tmpl = Template(template_text, keep_trailing_newline=True)
 
-    software_upper = safe_software.upper().replace('-', '_')
+    software_upper = software.upper().replace('-', '_')
     source_path = os.path.abspath(os.getcwd())
     target_load_snippet = os.path.join(source_path, 'deploy', 'load.sh')
 
