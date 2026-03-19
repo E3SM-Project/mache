@@ -1,6 +1,0 @@
-﻿mache.spack.get\_spack\_script
-==============================
-
-.. currentmodule:: mache.spack
-
-.. autofunction:: get_spack_script

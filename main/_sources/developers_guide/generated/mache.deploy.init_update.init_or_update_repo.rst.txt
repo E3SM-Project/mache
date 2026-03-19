@@ -1,6 +1,0 @@
-﻿mache.deploy.init\_update.init\_or\_update\_repo
-================================================
-
-.. currentmodule:: mache.deploy.init_update
-
-.. autofunction:: init_or_update_repo

@@ -1,6 +1,0 @@
-﻿mache.parallel.system.ParallelSystem.get\_scheduler\_target
-===========================================================
-
-.. currentmodule:: mache.parallel.system
-
-.. automethod:: ParallelSystem.get_scheduler_target

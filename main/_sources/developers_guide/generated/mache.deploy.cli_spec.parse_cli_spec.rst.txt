@@ -1,6 +1,0 @@
-﻿mache.deploy.cli\_spec.parse\_cli\_spec
-=======================================
-
-.. currentmodule:: mache.deploy.cli_spec
-
-.. autofunction:: parse_cli_spec

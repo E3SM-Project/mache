@@ -1,6 +1,0 @@
-﻿mache.deploy.hooks.configparser\_to\_nested\_dict
-=================================================
-
-.. currentmodule:: mache.deploy.hooks
-
-.. autofunction:: configparser_to_nested_dict

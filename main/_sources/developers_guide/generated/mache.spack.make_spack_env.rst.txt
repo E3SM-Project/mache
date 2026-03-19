@@ -1,6 +1,0 @@
-﻿mache.spack.make\_spack\_env
-============================
-
-.. currentmodule:: mache.spack
-
-.. autofunction:: make_spack_env

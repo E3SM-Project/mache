@@ -1,6 +1,0 @@
-﻿mache.discover.discover\_machine
-================================
-
-.. currentmodule:: mache.discover
-
-.. autofunction:: discover_machine

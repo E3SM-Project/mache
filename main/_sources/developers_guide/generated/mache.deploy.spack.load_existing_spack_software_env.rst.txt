@@ -1,6 +1,0 @@
-﻿mache.deploy.spack.load\_existing\_spack\_software\_env
-=======================================================
-
-.. currentmodule:: mache.deploy.spack
-
-.. autofunction:: load_existing_spack_software_env

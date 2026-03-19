@@ -1,6 +1,0 @@
-﻿mache.deploy.cli\_spec.load\_cli\_spec\_file
-============================================
-
-.. currentmodule:: mache.deploy.cli_spec
-
-.. autofunction:: load_cli_spec_file

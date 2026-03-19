@@ -1,6 +1,0 @@
-﻿mache.deploy.cli\_spec.add\_args\_to\_parser
-============================================
-
-.. currentmodule:: mache.deploy.cli_spec
-
-.. autofunction:: add_args_to_parser

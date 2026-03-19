@@ -1,6 +1,0 @@
-﻿mache.parallel.system.ParallelSystem.get\_parallel\_command
-===========================================================
-
-.. currentmodule:: mache.parallel.system
-
-.. automethod:: ParallelSystem.get_parallel_command

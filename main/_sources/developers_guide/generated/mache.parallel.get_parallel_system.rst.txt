@@ -1,6 +1,0 @@
-﻿mache.parallel.get\_parallel\_system
-====================================
-
-.. currentmodule:: mache.parallel
-
-.. autofunction:: get_parallel_system

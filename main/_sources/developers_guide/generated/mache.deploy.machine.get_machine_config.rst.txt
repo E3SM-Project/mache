@@ -1,6 +1,0 @@
-﻿mache.deploy.machine.get\_machine\_config
-=========================================
-
-.. currentmodule:: mache.deploy.machine
-
-.. autofunction:: get_machine_config
