@@ -53,6 +53,7 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
   # Use a non-login shell so pixi-provided PATH/env are not reset by site profiles.
   probe_output="$(
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
+      -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
       "${PIXI}" run -m "${PIXI_TOML}" -- \
       bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
   )"
@@ -90,6 +91,7 @@ fi
 echo "loading pixi env..."
 # Use `shell-hook` (not `pixi run`) so activation applies to this shell.
 eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
+  -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
   "${PIXI}" shell-hook -s bash -m "${PIXI_TOML}")"
 echo "   pixi env loaded."
 

@@ -2,11 +2,28 @@
 
 import argparse
 import os
+import platform
 import shlex
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+CONDA_PLATFORM_MAP = {
+    ('linux', 'x86_64'): 'linux-64',
+    ('linux', 'aarch64'): 'linux-aarch64',
+    ('linux', 'ppc64le'): 'linux-ppc64le',
+    ('osx', 'x86_64'): 'osx-64',
+    ('osx', 'arm64'): 'osx-arm64',
+}
+
+LOCAL_MACHE_SOURCE_ENV = 'MACHE_LOCAL_SOURCE_PATH'
+PIXI_ENV_VARS_TO_UNSET = (
+    'PIXI_PROJECT_MANIFEST',
+    'PIXI_PROJECT_ROOT',
+    'PIXI_ENVIRONMENT_NAME',
+    'PIXI_IN_SHELL',
+)
 
 
 def check_call(
@@ -197,7 +214,7 @@ def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
     running a nested shell process.
     """
     hook_cmd = (
-        'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+        f'{build_pixi_env_unset_prefix()} '
         f'{shlex.quote(pixi_exe)} shell-hook -s bash -m '
         f'{shlex.quote(pixi_toml)}'
     )
@@ -353,7 +370,7 @@ def _run(log_filename):
 
         cmd_install = (
             f'cd "{bootstrap_dir}" && '
-            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'{build_pixi_env_unset_prefix()} '
             f'"{pixi_exe}" install'
         )
         check_call(cmd_install, log_filename, quiet)
@@ -380,7 +397,7 @@ def _run(log_filename):
 
         cmd_install = (
             f'cd "{bootstrap_dir}" && '
-            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'{build_pixi_env_unset_prefix()} '
             f'"{pixi_exe}" install'
         )
         check_call(cmd_install, log_filename, quiet)
@@ -569,6 +586,23 @@ def _default_pixi_path():
     return os.path.join(home, '.pixi', 'bin', 'pixi')
 
 
+def build_pixi_env_unset_prefix():
+    return 'env ' + ' '.join(f'-u {name}' for name in PIXI_ENV_VARS_TO_UNSET)
+
+
+def _get_pixi_platform():
+    system = platform.system().lower()
+    if system == 'darwin':
+        system = 'osx'
+    machine = platform.machine().lower()
+    try:
+        return CONDA_PLATFORM_MAP[(system, machine)]
+    except KeyError as exc:
+        raise ValueError(
+            f'Unsupported platform for pixi bootstrap: {system} {machine}'
+        ) from exc
+
+
 def _install_pixi(*, log_filename, quiet, pixi_bin_dir=None):
     env_prefix_parts = [
         # Avoid modifying shell rc files during bootstrap.
@@ -672,6 +706,7 @@ def _write_bootstrap_pixi_toml_with_mache(
         '[workspace]',
         f'name = "{name}"',
         'channels = ["conda-forge"]',
+        f'platforms = ["{_get_pixi_platform()}"]',
         'channel-priority = "strict"',
         '',
         '[dependencies]',
@@ -711,6 +746,32 @@ def _clone_mache_repo(
         return
 
     build_root.mkdir(parents=True, exist_ok=True)
+
+    local_source = os.environ.get(LOCAL_MACHE_SOURCE_ENV)
+    if local_source:
+        source_repo = Path(
+            os.path.abspath(os.path.expanduser(local_source))
+        ).resolve()
+        if not source_repo.is_dir():
+            raise RuntimeError(
+                f'Local mache source override does not exist: {source_repo}'
+            )
+
+        try:
+            os.symlink(source_repo, repo_dir, target_is_directory=True)
+        except OSError:
+            shutil.copytree(
+                source_repo,
+                repo_dir,
+                ignore=shutil.ignore_patterns(
+                    '.git',
+                    '.pixi',
+                    'deploy_tmp',
+                    '__pycache__',
+                    '*.pyc',
+                ),
+            )
+        return
 
     commands = (
         f'cd "{build_root!s}" && '
