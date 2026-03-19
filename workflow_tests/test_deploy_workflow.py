@@ -174,7 +174,7 @@ def test_downstream_deploy_workflow(tmp_path: Path):
             'python -c "from toyflow.version import __version__; '
             'print(__version__)" && '
             'toyflow --version && '
-            'pytest tests/test_smoke.py -q',
+            'pytest tests/smoke_check.py -q',
         ],
         cwd=downstream,
         env=env,
