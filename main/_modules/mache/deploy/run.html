@@ -1,0 +1,1205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.deploy.run</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.deploy.run</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.deploy.run</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Template</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_load</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.jigsaw</span><span class="w"> </span><span class="kn">import</span> <span class="n">deploy_jigsawpy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_pixi_shell_hook_prefix</span><span class="p">,</span>
+    <span class="n">check_call</span><span class="p">,</span>
+    <span class="n">check_location</span><span class="p">,</span>
+    <span class="n">install_dev_mache</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.conda</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_conda_platform_and_system</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeployContext</span><span class="p">,</span> <span class="n">configparser_to_nested_dict</span><span class="p">,</span> <span class="n">load_hooks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.machine</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_machine</span><span class="p">,</span> <span class="n">get_machine_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.spack</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">deploy_spack_envs</span><span class="p">,</span>
+    <span class="n">deploy_spack_software_env</span><span class="p">,</span>
+    <span class="n">load_existing_spack_envs</span><span class="p">,</span>
+    <span class="n">load_existing_spack_software_env</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="run_deploy">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.run.run_deploy.html#mache.deploy.run.run_deploy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_deploy</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the full deployment workflow for the current project.</span>
+
+<span class="sd">    This is the main entry point for ``mache deploy run``. It renders the</span>
+<span class="sd">    deployment configuration, validates the target software location,</span>
+<span class="sd">    provisions pixi and optional Spack environments, and writes load scripts.</span>
+<span class="sd">    Optional deploy hooks are executed at the documented lifecycle stages.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    args : argparse.Namespace</span>
+<span class="sd">        Parsed command-line options for the deploy run. Expected attributes</span>
+<span class="sd">        include ``quiet`` and may include deploy overrides such as machine,</span>
+<span class="sd">        prefix, pixi executable, toolchain values, and Spack options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">check_location</span><span class="p">()</span>
+
+    <span class="n">pins</span> <span class="o">=</span> <span class="n">_read_pins</span><span class="p">(</span><span class="s1">&#39;deploy/pins.cfg&#39;</span><span class="p">)</span>
+    <span class="n">platform</span><span class="p">,</span> <span class="n">system</span> <span class="o">=</span> <span class="n">get_conda_platform_and_system</span><span class="p">()</span>
+    <span class="n">replacements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;platform&#39;</span><span class="p">:</span> <span class="n">platform</span><span class="p">,</span>
+        <span class="s1">&#39;system&#39;</span><span class="p">:</span> <span class="n">system</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">_add_pins_to_replacements</span><span class="p">(</span>
+        <span class="n">replacements</span><span class="p">,</span> <span class="n">pins</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_render_config_yaml</span><span class="p">(</span><span class="s1">&#39;deploy/config.yaml.j2&#39;</span><span class="p">,</span> <span class="n">replacements</span><span class="p">)</span>
+
+    <span class="n">software</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;software&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">software</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;software&#39; not found or empty in [project] section of &quot;</span>
+            <span class="s1">&#39;deploy/config.yaml.j2&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">install_dev_software</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s1">&#39;install_dev_software&#39;</span><span class="p">,</span> <span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="n">quiet</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span>
+
+    <span class="n">machine</span><span class="p">,</span> <span class="n">machine_config</span> <span class="o">=</span> <span class="n">_get_machine_and_config</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">platform</span><span class="o">=</span><span class="n">platform</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;deploy_tmp/logs&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">log_filename</span> <span class="o">=</span> <span class="s1">&#39;deploy_tmp/logs/mache_deploy_run.log&#39;</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">_get_deploy_logger</span><span class="p">(</span><span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">quiet</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_deploy_enabled</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="n">deploy_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s1">&#39;deploy&#39;</span><span class="p">)</span>
+    <span class="n">work_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Hooks are optional and only run during `mache deploy run`.</span>
+    <span class="c1"># Behavior: `post_deploy` is invoked only on success.</span>
+    <span class="n">hook_registry</span> <span class="o">=</span> <span class="n">load_hooks</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">pixi_exe</span> <span class="o">=</span> <span class="n">_get_pixi_executable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="n">using_mache_fork</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;mache_fork&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;mache_branch&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;prefix&#39; not found in [pixi] section of deploy/config.yaml.j2 &quot;</span>
+            <span class="s1">&#39;and --prefix not provided&#39;</span>
+        <span class="p">)</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">)))</span>
+    <span class="p">)</span>
+
+    <span class="n">pixi_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;pixi&#39; section missing or invalid in deploy/config.yaml.j2&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">DeployContext</span><span class="p">(</span>
+        <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+        <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
+        <span class="n">deploy_dir</span><span class="o">=</span><span class="n">deploy_dir</span><span class="p">,</span>
+        <span class="n">work_dir</span><span class="o">=</span><span class="n">work_dir</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">pins</span><span class="o">=</span><span class="n">configparser_to_nested_dict</span><span class="p">(</span><span class="n">pins</span><span class="p">),</span>
+        <span class="n">machine_config</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;pre_pixi&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="n">toolchain_pairs</span> <span class="o">=</span> <span class="n">_resolve_toolchain_pairs</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+        <span class="n">machine_config</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Make toolchain selection available to hooks and future Spack stages.</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;toolchain&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;toolchain&#39;</span><span class="p">][</span><span class="s1">&#39;pairs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s1">&#39;compiler&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">m</span><span class="p">}</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">toolchain_pairs</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Runtime overrides (v1): hooks can override specific values via</span>
+    <span class="c1"># ctx.runtime, falling back to rendered config.</span>
+    <span class="n">software_version</span> <span class="o">=</span> <span class="n">_resolve_software_version</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">runtime_version_cmd</span> <span class="o">=</span> <span class="n">_resolve_runtime_version_cmd</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mpi</span><span class="p">,</span> <span class="n">mpi_prefix</span> <span class="o">=</span> <span class="n">_resolve_pixi_mpi</span><span class="p">(</span>
+        <span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">python_version</span> <span class="o">=</span> <span class="n">_resolve_pixi_python_version</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">pins</span><span class="o">=</span><span class="n">pins</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">_resolve_pixi_channels</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">)</span>
+
+    <span class="n">jigsaw_enabled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;jigsaw&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enabled&#39;</span><span class="p">))</span>
+
+    <span class="c1"># Determine which mache to put in the deployed environment.</span>
+    <span class="c1"># - If using a fork/branch, do NOT install conda-forge mache; we&#39;ll install</span>
+    <span class="c1">#   mache from source into the environment after creation.</span>
+    <span class="c1"># - Otherwise, include a pinned conda-forge mache.</span>
+    <span class="n">mache_version_arg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;mache_version&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mache_version_arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">mache_version_arg</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="n">replacements</span><span class="p">[</span><span class="s1">&#39;mache&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">mache_version_arg</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">include_mache</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">using_mache_fork</span>
+    <span class="k">if</span> <span class="n">include_mache</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">replacements</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mache&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;mache version is required to include mache in the deployed pixi &#39;</span>
+            <span class="s1">&#39;environment. Set it in deploy/pins.cfg ([pixi] mache = ...) or &#39;</span>
+            <span class="s1">&#39;pass --mache-version.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># First, install a base environment without jigsawpy.</span>
+    <span class="n">replacements</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;python&#39;</span><span class="p">:</span> <span class="n">python_version</span><span class="p">,</span>
+            <span class="s1">&#39;pixi_channels&#39;</span><span class="p">:</span> <span class="n">channels</span><span class="p">,</span>
+            <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">mpi</span><span class="p">,</span>
+            <span class="s1">&#39;mpi_prefix&#39;</span><span class="p">:</span> <span class="n">mpi_prefix</span><span class="p">,</span>
+            <span class="s1">&#39;include_mache&#39;</span><span class="p">:</span> <span class="n">include_mache</span><span class="p">,</span>
+            <span class="s1">&#39;include_jigsaw&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">_write_pixi_toml</span><span class="p">(</span>
+        <span class="n">template_path</span><span class="o">=</span><span class="s1">&#39;deploy/pixi.toml.j2&#39;</span><span class="p">,</span>
+        <span class="n">replacements</span><span class="o">=</span><span class="n">replacements</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_pixi_install</span><span class="p">(</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">project_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">recreate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">recreate</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">using_mache_fork</span><span class="p">:</span>
+        <span class="n">prefix_pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+        <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
+            <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+            <span class="n">pixi_toml</span><span class="o">=</span><span class="n">prefix_pixi_toml</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">install_dev_mache</span><span class="p">(</span>
+            <span class="n">pixi_shell_hook_prefix</span><span class="o">=</span><span class="n">pixi_shell_hook_prefix</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">_maybe_deploy_jigsaw</span><span class="p">(</span>
+        <span class="n">enabled</span><span class="o">=</span><span class="n">jigsaw_enabled</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_pixi&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="c1"># Future wiring: spack stages (no-ops unless implemented/configured)</span>
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;pre_spack&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">spack_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">deploy_spack</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;deploy_spack&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">deploy_spack</span><span class="p">:</span>
+        <span class="n">spack_results</span> <span class="o">=</span> <span class="n">deploy_spack_envs</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+            <span class="n">toolchain_pairs</span><span class="o">=</span><span class="n">toolchain_pairs</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">spack_software_env</span> <span class="o">=</span> <span class="n">deploy_spack_software_env</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spack_results</span> <span class="o">=</span> <span class="n">load_existing_spack_envs</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+            <span class="n">toolchain_pairs</span><span class="o">=</span><span class="n">toolchain_pairs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">spack_software_env</span> <span class="o">=</span> <span class="n">load_existing_spack_software_env</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_spack&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">install_dev_software</span><span class="p">:</span>
+        <span class="n">_install_software_in_dev_mode</span><span class="p">(</span>
+            <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">_write_load_scripts</span><span class="p">(</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+        <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
+        <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
+        <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+        <span class="n">toolchain_pairs</span><span class="o">=</span><span class="n">toolchain_pairs</span><span class="p">,</span>
+        <span class="n">spack_results</span><span class="o">=</span><span class="n">spack_results</span><span class="p">,</span>
+        <span class="n">spack_software_env</span><span class="o">=</span><span class="n">spack_software_env</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_deploy_logger</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a logger for deploy-run messages.</span>
+
+<span class="sd">    We keep this lightweight: hooks get a standard ``logging.Logger`` while</span>
+<span class="sd">    the rest of the deploy flow continues to use the existing `check_call`</span>
+<span class="sd">    logging-to-file behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;mache.deploy.run&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)</span>
+        <span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+        <span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="n">stream_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+            <span class="n">stream_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+            <span class="n">stream_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">stream_handler</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">logger</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_python_version</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+    <span class="n">pins</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">python_version</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">python</span>
+    <span class="k">if</span> <span class="n">python_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">python_version</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pins</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pins</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;Python version is required to deploy the pixi environment. &#39;</span>
+            <span class="s1">&#39;Set it in deploy/pins.cfg ([pixi] python = ...) or pass &#39;</span>
+            <span class="s1">&#39;--python.&#39;</span>
+        <span class="p">)</span>
+    <span class="n">python_version</span> <span class="o">=</span> <span class="n">pins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">python_version</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_channels</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="s1">&#39;channels&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pixi_cfg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;channels&#39; not found in [pixi] section of deploy/config.yaml.j2&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="n">channels</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;pixi.channels must be a non-empty list of strings&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">channels</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_maybe_deploy_jigsaw</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">python_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">enabled</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">jigsaw_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;jigsaw&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jigsaw_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;jigsaw&#39; section missing or invalid in deploy/config.yaml.j2&quot;</span>
+        <span class="p">)</span>
+    <span class="n">jigsaw_python_path</span> <span class="o">=</span> <span class="n">jigsaw_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;jigsaw_python_path&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jigsaw_python_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">jigsaw_python_path</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;jigsaw.jigsaw_python_path must be a non-empty string&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">deploy_jigsawpy</span><span class="p">(</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
+        <span class="n">jigsaw_python_path</span><span class="o">=</span><span class="n">jigsaw_python_path</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span>
+        <span class="n">pixi_manifest</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span>
+            <span class="s1">&#39;pixi.toml&#39;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_machine_and_config</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+    <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ConfigParser</span><span class="p">]:</span>
+    <span class="n">machines_path</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">machines_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;machines&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">machines_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">machines_path</span> <span class="o">=</span> <span class="n">machines_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">machines_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">machines_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">machines_path</span><span class="p">)))</span>
+        <span class="p">)</span>
+
+    <span class="n">requested_machine</span> <span class="o">=</span> <span class="n">_resolve_requested_machine</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="n">machine</span> <span class="o">=</span> <span class="n">get_machine</span><span class="p">(</span>
+        <span class="n">requested_machine</span><span class="o">=</span><span class="n">requested_machine</span><span class="p">,</span>
+        <span class="n">machines_path</span><span class="o">=</span><span class="n">machines_path</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">machine_config</span> <span class="o">=</span> <span class="n">get_machine_config</span><span class="p">(</span>
+        <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+        <span class="n">machines_path</span><span class="o">=</span><span class="n">machines_path</span><span class="p">,</span>
+        <span class="n">platform</span><span class="o">=</span><span class="n">platform</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">machine</span><span class="p">,</span> <span class="n">machine_config</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_machine_request</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">candidate</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span> <span class="s1">&#39;dynamic&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">candidate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_requested_machine</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve machine selection input.</span>
+
+<span class="sd">    Priority:</span>
+<span class="sd">    1. CLI `--machine` (if provided)</span>
+<span class="sd">    2. config[&#39;project&#39;][&#39;machine&#39;]</span>
+<span class="sd">    3. None (auto-detect)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cli_raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;machine&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cli_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_normalize_machine_request</span><span class="p">(</span><span class="n">cli_raw</span><span class="p">)</span>
+
+    <span class="n">project_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">)</span>
+    <span class="n">project_machine</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">project_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">project_machine</span> <span class="o">=</span> <span class="n">project_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;machine&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_normalize_machine_request</span><span class="p">(</span><span class="n">project_machine</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_software_version</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">runtime_project</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_project</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">override</span> <span class="o">=</span> <span class="n">runtime_project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">override</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;Software version is required. Set project.version in &#39;</span>
+            <span class="s2">&quot;deploy/config.yaml.j2 or provide runtime[&#39;project&#39;][&#39;version&#39;] &quot;</span>
+            <span class="s1">&#39;from a pre_pixi hook.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_runtime_version_cmd</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve an optional runtime version probe command.</span>
+
+<span class="sd">    If provided, this is embedded into the generated load script and executed</span>
+<span class="sd">    via a pixi shell-hook before activation.</span>
+
+<span class="sd">    Priority:</span>
+<span class="sd">    1. runtime[&#39;project&#39;][&#39;runtime_version_cmd&#39;] (set by hooks)</span>
+<span class="sd">    2. config[&#39;project&#39;][&#39;runtime_version_cmd&#39;]</span>
+<span class="sd">    3. None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">override</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">runtime_project</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_project</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">override</span> <span class="o">=</span> <span class="n">runtime_project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;runtime_version_cmd&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">override</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;runtime_version_cmd&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_mpi</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="n">mpi_override</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">runtime_pixi</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_pixi</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">mpi_override</span> <span class="o">=</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mpi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mpi_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mpi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">mpi_override</span><span class="p">)}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mpi_cfg</span> <span class="o">=</span> <span class="n">pixi_cfg</span>
+    <span class="k">return</span> <span class="n">_get_mpi_settings</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="o">=</span><span class="n">mpi_cfg</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_optional_token</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize optional string-ish config/CLI values.</span>
+
+<span class="sd">    Treats common sentinels as None: &#39;&#39;, &#39;none&#39;, &#39;null&#39;, &#39;dynamic&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">candidate</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;null&#39;</span><span class="p">,</span> <span class="s1">&#39;dynamic&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">candidate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_optional_tokens</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a CLI/config value into a list of strings.</span>
+
+<span class="sd">    Accepts:</span>
+<span class="sd">      - None</span>
+<span class="sd">      - a single string</span>
+<span class="sd">      - a list/tuple of strings</span>
+
+<span class="sd">    Treats &#39;&#39;, &#39;none&#39;, &#39;null&#39;, &#39;dynamic&#39; as empty/None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tokens</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sanitize_script_tag</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a filesystem-safe token for use in script filenames.&quot;&quot;&quot;</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;unknown&#39;</span>
+
+    <span class="n">out_chars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">):</span>
+            <span class="n">out_chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_chars</span><span class="p">)</span>
+    <span class="k">while</span> <span class="s1">&#39;__&#39;</span> <span class="ow">in</span> <span class="n">tag</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;unknown&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_toolchain_pairs</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">machine_config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve toolchain compiler/MPI pairs.</span>
+
+<span class="sd">    Priority order for each dimension:</span>
+<span class="sd">        1. CLI flags (--compiler/--mpi)</span>
+<span class="sd">        2. runtime overrides from hooks (runtime[&#39;toolchain&#39;])</span>
+<span class="sd">        3. rendered deploy/config.yaml.j2 (config[&#39;toolchain&#39;])</span>
+<span class="sd">        4. merged machine config [deploy]</span>
+
+<span class="sd">    Pairing rules:</span>
+<span class="sd">        - If both lists have the same length, they are zipped.</span>
+<span class="sd">        - If one list has length 1, it is broadcast across the other.</span>
+<span class="sd">        - If MPI is omitted, default MPI is resolved per-compiler via:</span>
+<span class="sd">                mpi_&lt;compiler&gt; (preferred), else mpi.</span>
+
+<span class="sd">    If no compiler is resolved, returns an empty list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># 1) CLI</span>
+    <span class="n">cli_compilers</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;compiler&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">cli_mpis</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">compiler_from_cli</span> <span class="o">=</span> <span class="n">cli_compilers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="c1"># 2) runtime overrides (set by hooks)</span>
+    <span class="n">rt_toolchain</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;toolchain&#39;</span><span class="p">)</span>
+    <span class="n">rt_compilers</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rt_mpis</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rt_toolchain</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">rt_compilers</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span><span class="n">rt_toolchain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;compiler&#39;</span><span class="p">))</span>
+        <span class="n">rt_mpis</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span><span class="n">rt_toolchain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mpi&#39;</span><span class="p">))</span>
+
+    <span class="c1"># 3) rendered config</span>
+    <span class="n">cfg_toolchain</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;toolchain&#39;</span><span class="p">)</span>
+    <span class="n">cfg_compilers</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cfg_mpis</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg_toolchain</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">cfg_compilers</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span>
+            <span class="n">cfg_toolchain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;compiler&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">cfg_mpis</span> <span class="o">=</span> <span class="n">_normalize_optional_tokens</span><span class="p">(</span><span class="n">cfg_toolchain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mpi&#39;</span><span class="p">))</span>
+
+    <span class="n">compilers</span> <span class="o">=</span> <span class="n">cli_compilers</span> <span class="ow">or</span> <span class="n">rt_compilers</span> <span class="ow">or</span> <span class="n">cfg_compilers</span>
+    <span class="n">mpis</span> <span class="o">=</span> <span class="n">cli_mpis</span> <span class="ow">or</span> <span class="n">rt_mpis</span> <span class="ow">or</span> <span class="n">cfg_mpis</span>
+
+    <span class="c1"># 4) machine-config defaults</span>
+    <span class="k">if</span> <span class="n">compilers</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;compiler&#39;</span><span class="p">):</span>
+        <span class="n">default_comp</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
+            <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;compiler&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">compilers</span> <span class="o">=</span> <span class="p">[</span><span class="n">default_comp</span><span class="p">]</span> <span class="k">if</span> <span class="n">default_comp</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">compilers</span><span class="p">:</span>
+        <span class="c1"># pixi-only deployments can legitimately skip toolchain</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">mpis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Derive an MPI per compiler when possible.</span>
+        <span class="n">derived</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">compiler</span> <span class="ow">in</span> <span class="n">compilers</span><span class="p">:</span>
+            <span class="n">compiler_underscore</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+            <span class="n">mpi_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">compiler_underscore</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">mpi_val</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span><span class="p">):</span>
+                <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
+                    <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">):</span>
+                <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
+                    <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">mpi_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">derived</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">break</span>
+            <span class="n">derived</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpi_val</span><span class="p">)</span>
+        <span class="n">mpis</span> <span class="o">=</span> <span class="n">derived</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">mpis</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;Toolchain MPI library is not set. Provide --mpi (or set &#39;</span>
+            <span class="s1">&#39;toolchain.mpi), or set [deploy] mpi_&lt;compiler&gt; (or mpi) in &#39;</span>
+            <span class="s1">&#39;machine config.&#39;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">compiler_from_cli</span> <span class="ow">and</span> <span class="n">cli_mpis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Warning: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># Pairing</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">compilers</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">mpis</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">compilers</span><span class="p">,</span> <span class="n">mpis</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">compilers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">mpis</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">compilers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mpi</span><span class="p">)</span> <span class="k">for</span> <span class="n">mpi</span> <span class="ow">in</span> <span class="n">mpis</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mpis</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">compilers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">mpis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">compiler</span> <span class="ow">in</span> <span class="n">compilers</span><span class="p">]</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s1">&#39;Cannot pair compilers and MPI libraries: got &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">compilers</span><span class="p">)</span><span class="si">}</span><span class="s1"> compiler(s) and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mpis</span><span class="p">)</span><span class="si">}</span><span class="s1"> mpi value(s). &#39;</span>
+        <span class="s1">&#39;Provide equal-length lists, or a single value for one side to &#39;</span>
+        <span class="s1">&#39;broadcast across the other.&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_pixi_executable</span><span class="p">(</span><span class="n">pixi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pixi</span><span class="p">:</span>
+        <span class="n">pixi</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">pixi</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pixi</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;pixi executable not found: </span><span class="si">{</span><span class="n">pixi</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pixi</span>
+
+    <span class="n">which</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">which</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="s1">&#39;pixi executable not found on PATH. Install pixi or pass --pixi.&#39;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">which</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_load_script</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">software</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">software_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">runtime_version_cmd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">toolchain_compiler</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">toolchain_mpi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">spack_library_view</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">spack_activation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write a simple &quot;load&quot; script for activating the pixi environment.</span>
+
+<span class="sd">    Unlike conda, pixi doesn&#39;t currently have a universally supported way to</span>
+<span class="sd">    &quot;activate&quot; into the *current* shell without eval/shell-hook support.</span>
+<span class="sd">    The generated script is intended to be *sourced* (not executed) so that</span>
+<span class="sd">    it can use ``pixi shell-hook`` + ``eval`` to activate the environment in</span>
+<span class="sd">    the calling shell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">prefix_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">prefix</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">,</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">toolchain_compiler</span> <span class="ow">and</span> <span class="n">toolchain_mpi</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Cannot include toolchain in load script name without machine.&#39;</span>
+                <span class="s1">&#39; Set a machine in deploy/config.yaml.j2 or pass --machine.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">machine_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
+        <span class="n">compiler_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">toolchain_compiler</span><span class="p">)</span>
+        <span class="n">mpi_tag</span> <span class="o">=</span> <span class="n">_sanitize_script_tag</span><span class="p">(</span><span class="n">toolchain_mpi</span><span class="p">)</span>
+        <span class="n">script_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">machine_tag</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">compiler_tag</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">mpi_tag</span><span class="si">}</span><span class="s1">.sh&#39;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">script_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;load_</span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">.sh&#39;</span>
+
+    <span class="n">template_text</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="n">__package__</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s1">&#39;templates/load.sh.j2&#39;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">tmpl</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">template_text</span><span class="p">,</span> <span class="n">keep_trailing_newline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">software_upper</span> <span class="o">=</span> <span class="n">software</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="n">source_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="n">target_load_snippet</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;load.sh&#39;</span><span class="p">)</span>
+
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">tmpl</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+        <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+        <span class="n">software_upper</span><span class="o">=</span><span class="n">software_upper</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix_abs</span><span class="p">,</span>
+        <span class="n">pixi_toml</span><span class="o">=</span><span class="n">pixi_toml</span><span class="p">,</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">source_path</span><span class="o">=</span><span class="n">source_path</span><span class="p">,</span>
+        <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
+        <span class="n">runtime_version_cmd_sh</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">runtime_version_cmd</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+        <span class="n">machine</span><span class="o">=</span><span class="n">machine</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">load_script</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">script_path</span><span class="p">),</span>
+        <span class="n">toolchain_compiler</span><span class="o">=</span><span class="n">toolchain_compiler</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">toolchain_mpi</span><span class="o">=</span><span class="n">toolchain_mpi</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">spack_library_view</span><span class="o">=</span><span class="n">spack_library_view</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">spack_activation</span><span class="o">=</span><span class="n">spack_activation</span><span class="p">,</span>
+        <span class="n">target_load_snippet</span><span class="o">=</span><span class="n">target_load_snippet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">file_handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+
+    <span class="c1"># Intentionally *not* executable: developers should `source` this script.</span>
+    <span class="c1"># Also clear any existing exec bits from previous generations.</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">script_path</span><span class="p">,</span> <span class="mo">0o644</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">script_path</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_load_scripts</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">software</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">software_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">runtime_version_cmd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">toolchain_pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">spack_results</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">spack_software_env</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write one load script per toolchain pair, or a single default script.&quot;&quot;&quot;</span>
+
+    <span class="n">software_setup</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">spack_software_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">software_setup</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">spack_software_env</span><span class="p">,</span> <span class="s1">&#39;path_setup&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">spack_snippet_by_pair</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">spack_view_by_pair</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">spack_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">spack_results</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">compiler</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">mpi</span><span class="p">)</span>
+            <span class="n">spack_snippet_by_pair</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">activation</span>
+            <span class="n">spack_view_by_pair</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">view_path</span>
+
+    <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">toolchain_pairs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span> <span class="ow">in</span> <span class="n">toolchain_pairs</span><span class="p">:</span>
+            <span class="n">spack_activation</span> <span class="o">=</span> <span class="n">spack_snippet_by_pair</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span><span class="p">),</span> <span class="s1">&#39;&#39;</span>
+            <span class="p">)</span>
+            <span class="n">spack_library_view</span> <span class="o">=</span> <span class="n">spack_view_by_pair</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">compiler</span><span class="p">,</span> <span class="n">mpilib</span><span class="p">),</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="n">combined_spack</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">software_setup</span><span class="p">:</span>
+                <span class="n">combined_spack</span> <span class="o">+=</span> <span class="n">software_setup</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">if</span> <span class="n">spack_activation</span><span class="p">:</span>
+                <span class="n">combined_spack</span> <span class="o">+=</span> <span class="n">spack_activation</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+            <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_write_load_script</span><span class="p">(</span>
+                    <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                    <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                    <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+                    <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
+                    <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
+                    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                    <span class="n">toolchain_compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+                    <span class="n">toolchain_mpi</span><span class="o">=</span><span class="n">mpilib</span><span class="p">,</span>
+                    <span class="n">spack_library_view</span><span class="o">=</span><span class="n">spack_library_view</span><span class="p">,</span>
+                    <span class="n">spack_activation</span><span class="o">=</span><span class="n">combined_spack</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">combined_spack</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">software_setup</span><span class="p">:</span>
+            <span class="n">combined_spack</span> <span class="o">+=</span> <span class="n">software_setup</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_write_load_script</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+                <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
+                <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
+                <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                <span class="n">toolchain_compiler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">toolchain_mpi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">spack_library_view</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">spack_activation</span><span class="o">=</span><span class="n">combined_spack</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Wrote load script: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">paths</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_pins</span><span class="p">(</span><span class="n">pins_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read pins configuration from a file.&quot;&quot;&quot;</span>
+    <span class="n">pins</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+    <span class="n">pins</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pins_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pins</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_pins_to_replacements</span><span class="p">(</span>
+    <span class="n">replacements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">pins</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+    <span class="n">sections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a ConfigParser section into a Jinja2 replacements mapping.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pins</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">section_obj</span> <span class="o">=</span> <span class="n">pins</span><span class="p">[</span><span class="n">section</span><span class="p">]</span>
+        <span class="n">replacements</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">section_obj</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">section_obj</span><span class="p">}</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_config_yaml</span><span class="p">(</span>
+    <span class="n">template_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">replacements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a YAML Jinja2 template and parse the resulting YAML.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">template_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">config_tmpl</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">config_tmpl</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">replacements</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">safe_load</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_deploy_enabled</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if deploy is enabled in the rendered config.&quot;&quot;&quot;</span>
+    <span class="n">pixi_config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="s1">&#39;deploy&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pixi_config</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;deploy&#39; not found in [pixi] section of deploy/config.yaml.j2&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pixi_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_pixi_toml</span><span class="p">(</span>
+    <span class="n">template_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">replacements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">template_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">pixi_tmpl</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">pixi_tmpl</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">replacements</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">file_handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pixi_install</span><span class="p">(</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">project_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">recreate</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">project_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_dir</span><span class="p">)</span>
+
+    <span class="n">pixi_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">project_dir</span><span class="p">,</span> <span class="s1">&#39;.pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">recreate</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pixi_dir</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">pixi_dir</span><span class="p">)</span>
+
+    <span class="c1"># Do not force cache/home locations here.</span>
+    <span class="c1"># - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /</span>
+    <span class="c1">#   PIXI_CACHE_DIR in shell startup or modulefiles.</span>
+    <span class="c1"># - Otherwise pixi uses its own defaults (typically under $HOME).</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;cd </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">project_dir</span><span class="p">)</span><span class="si">}</span><span class="s1"> &amp;&amp; &#39;</span>
+        <span class="s1">&#39;env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> install&#39;</span>
+    <span class="p">)</span>
+    <span class="n">check_call</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_mpi_settings</span><span class="p">(</span>
+    <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine MPI-related template replacements.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mpi : str</span>
+<span class="sd">        The conda package name for MPI (e.g. &quot;mpich&quot;, &quot;openmpi&quot;, or &quot;nompi&quot;).</span>
+<span class="sd">    mpi_prefix : str</span>
+<span class="sd">        The conda-forge variant prefix used in build-string selectors</span>
+<span class="sd">        (e.g. &quot;nompi&quot;, &quot;mpi_mpich&quot;, &quot;mpi_openmpi&quot;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="s1">&#39;mpi&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pixi_cfg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;mpi&#39; not found in [pixi] section of deploy/config.yaml.j2&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">mpi_raw</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mpi&#39;</span><span class="p">)</span>
+    <span class="n">mpi</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">mpi_raw</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">mpi_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">mpi</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;mpi&#39; in [pixi] section of deploy/config.yaml.j2 is empty&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">mpi</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;&#39;mpi&#39; in [pixi] section of deploy/config.yaml.j2 must not &quot;</span>
+            <span class="s1">&#39;contain whitespace&#39;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Legacy Polaris deploy behavior:</span>
+    <span class="c1">#   - nompi -&gt; &quot;nompi&quot;</span>
+    <span class="c1">#   - otherwise -&gt; &quot;mpi_&lt;mpi&gt;&quot; (e.g. mpi_mpich, mpi_openmpi)</span>
+    <span class="n">mpi_prefix</span> <span class="o">=</span> <span class="s1">&#39;nompi&#39;</span> <span class="k">if</span> <span class="n">mpi</span> <span class="o">==</span> <span class="s1">&#39;nompi&#39;</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">mpi</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">return</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">mpi_prefix</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_install_software_in_dev_mode</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Install the target software in development mode into the pixi env.&quot;&quot;&quot;</span>
+    <span class="n">prefix_pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+    <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">pixi_toml</span><span class="o">=</span><span class="n">prefix_pixi_toml</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">cmd_install_software</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pixi_shell_hook_prefix</span><span class="si">}</span><span class="s1"> &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;pip install --no-deps --no-build-isolation -e .&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">check_call</span><span class="p">(</span>
+        <span class="n">cmd_install_software</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
