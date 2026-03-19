@@ -1,6 +1,0 @@
-﻿mache.jigsaw.install\_jigsawpy\_package
-=======================================
-
-.. currentmodule:: mache.jigsaw
-
-.. autofunction:: install_jigsawpy_package

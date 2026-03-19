@@ -1,6 +1,0 @@
-﻿mache.deploy.spack.deploy\_spack\_envs
-======================================
-
-.. currentmodule:: mache.deploy.spack
-
-.. autofunction:: deploy_spack_envs

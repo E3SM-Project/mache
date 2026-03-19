@@ -1,6 +1,0 @@
-﻿mache.deploy.hooks.HookRegistry.run\_hook
-=========================================
-
-.. currentmodule:: mache.deploy.hooks
-
-.. automethod:: HookRegistry.run_hook

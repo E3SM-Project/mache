@@ -1,6 +1,0 @@
-﻿mache.MachineInfo.get\_partition\_specs
-=======================================
-
-.. currentmodule:: mache
-
-.. automethod:: MachineInfo.get_partition_specs

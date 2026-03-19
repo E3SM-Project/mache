@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API reference</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=acc74ff5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="mache.discover.discover_machine" href="generated/mache.discover.discover_machine.html" />
+    <link rel="prev" title="Releasing a New Version" href="releasing.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#discover">discover</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.discover.discover_machine.html">mache.discover.discover_machine</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#permissions">permissions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.update_permissions.html">mache.permissions.update_permissions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel">parallel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.get_parallel_system.html">mache.parallel.get_parallel_system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html">mache.parallel.system.SubmissionResolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.make_spack_env.html">mache.spack.make_spack_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_spack_script.html">mache.spack.get_spack_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html">mache.spack.get_modules_env_vars_and_mpi_compilers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_machine_config.html">mache.spack.extract_machine_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sync">sync</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html">mache.sync.diags.sync_diags</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#jigsaw">jigsaw</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.JigsawBuildResult.html">mache.jigsaw.JigsawBuildResult</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.deploy_jigsawpy.html">mache.jigsaw.deploy_jigsawpy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.build_jigsawpy_package.html">mache.jigsaw.build_jigsawpy_package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.install_jigsawpy_package.html">mache.jigsaw.install_jigsawpy_package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.detect_install_backend.html">mache.jigsaw.detect_install_backend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.jigsaw.cli.add_jigsaw_subparser.html">mache.jigsaw.cli.add_jigsaw_subparser</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deploy">deploy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.bootstrap.check_call.html">mache.deploy.bootstrap.check_call</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.bootstrap.build_pixi_shell_hook_prefix.html">mache.deploy.bootstrap.build_pixi_shell_hook_prefix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.bootstrap.check_location.html">mache.deploy.bootstrap.check_location</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.bootstrap.install_dev_mache.html">mache.deploy.bootstrap.install_dev_mache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.bootstrap.main.html">mache.deploy.bootstrap.main</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli.add_deploy_subparser.html">mache.deploy.cli.add_deploy_subparser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.CliArgSpec.html">mache.deploy.cli_spec.CliArgSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.CliSpec.html">mache.deploy.cli_spec.CliSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.parse_cli_spec.html">mache.deploy.cli_spec.parse_cli_spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.routes_include.html">mache.deploy.cli_spec.routes_include</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.filter_args_by_route.html">mache.deploy.cli_spec.filter_args_by_route</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.load_cli_spec_file.html">mache.deploy.cli_spec.load_cli_spec_file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.cli_spec.add_args_to_parser.html">mache.deploy.cli_spec.add_args_to_parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.conda.get_conda_platform_and_system.html">mache.deploy.conda.get_conda_platform_and_system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.hooks.DeployContext.html">mache.deploy.hooks.DeployContext</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.hooks.HookRegistry.html">mache.deploy.hooks.HookRegistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.hooks.HookRegistry.run_hook.html">mache.deploy.hooks.HookRegistry.run_hook</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.hooks.load_hooks.html">mache.deploy.hooks.load_hooks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.hooks.configparser_to_nested_dict.html">mache.deploy.hooks.configparser_to_nested_dict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.init_update.init_or_update_repo.html">mache.deploy.init_update.init_or_update_repo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.jinja.define_square_bracket_environment.html">mache.deploy.jinja.define_square_bracket_environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.machine.get_known_mache_machines.html">mache.deploy.machine.get_known_mache_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.machine.get_known_target_machines.html">mache.deploy.machine.get_known_target_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.machine.get_known_machines.html">mache.deploy.machine.get_known_machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.machine.get_machine.html">mache.deploy.machine.get_machine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.machine.get_machine_config.html">mache.deploy.machine.get_machine_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.run.run_deploy.html">mache.deploy.run.run_deploy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.SpackDeployResult.html">mache.deploy.spack.SpackDeployResult</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.SpackSoftwareEnvResult.html">mache.deploy.spack.SpackSoftwareEnvResult</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.deploy_spack_envs.html">mache.deploy.spack.deploy_spack_envs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.deploy_spack_software_env.html">mache.deploy.spack.deploy_spack_software_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_envs.html">mache.deploy.spack.load_existing_spack_envs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_software_env.html">mache.deploy.spack.load_existing_spack_software_env</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#machineinfo">MachineInfo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.html">mache.MachineInfo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html">mache.MachineInfo.get_account_defaults</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_queue_specs.html">mache.MachineInfo.get_queue_specs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_partition_specs.html">mache.MachineInfo.get_partition_specs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.MachineInfo.get_qos_specs.html">mache.MachineInfo.get_qos_specs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="api-reference">
+<span id="dev-api"></span><h1>API reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>This page provides an auto-generated summary of the mache API. For more
+details and examples, refer to the relevant sections in the main part of the
+documentation.</p>
+<section id="discover">
+<h2>discover<a class="headerlink" href="#discover" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.discover.discover_machine.html#mache.discover.discover_machine" title="mache.discover.discover_machine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_machine</span></code></a>([quiet, package, path])</p></td>
+<td><p>Figure out the machine from the host name.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="permissions">
+<h2>permissions<a class="headerlink" href="#permissions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions" title="mache.permissions.update_permissions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_permissions</span></code></a>(base_paths, group[, ...])</p></td>
+<td><p>Update the group that a directory belongs to along with the &quot;group&quot; and &quot;other&quot; permissions for the directory</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="parallel">
+<h2>parallel<a class="headerlink" href="#parallel" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.get_parallel_system.html#mache.parallel.get_parallel_system" title="mache.parallel.get_parallel_system"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_system</span></code></a>(config)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution" title="mache.parallel.system.SubmissionResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubmissionResolution</span></code></a>(target, ...)</p></td>
+<td><p>Resolved scheduler target and effective node count.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem" title="mache.parallel.system.ParallelSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem</span></code></a>(config)</p></td>
+<td><p>Base class for parallel system resource management.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command" title="mache.parallel.system.ParallelSystem.get_parallel_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command</span></code></a>(args, ntasks)</p></td>
+<td><p>Get the parallel execution command for the current system.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target" title="mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target</span></code></a>(config, ...)</p></td>
+<td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission</span></code></a>(config, ...)</p></td>
+<td><p>Resolve a scheduler target and effective node count.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem" title="mache.parallel.login.LoginSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LoginSystem</span></code></a>(config)</p></td>
+<td><p>Resource manager for login nodes (no parallel execution).</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html#mache.parallel.single_node.SingleNodeSystem" title="mache.parallel.single_node.SingleNodeSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SingleNodeSystem</span></code></a>(config)</p></td>
+<td><p>Resource manager for single-node parallel execution.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem" title="mache.parallel.slurm.SlurmSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem</span></code></a>(config)</p></td>
+<td><p>SLURM resource manager for parallel jobs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options</span></code></a>(config, nodes)</p></td>
+<td><p>Get Slurm submission options for a requested node count.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem" title="mache.parallel.pbs.PbsSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem</span></code></a>(config)</p></td>
+<td><p>PBS resource manager for parallel jobs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options" title="mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
+<td><p>Get PBS submission options for a requested node count.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="spack">
+<h2>spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
+<td><p>Clone the <code class="docutils literal notranslate"><span class="pre">spack_for_mache_{{version}}</span></code> branch from <a class="reference external" href="https://github.com/E3SM-Project/spack">E3SM's spack clone</a> and build a spack environment for the given machine, compiler and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>(spack_path, env_name, ...)</p></td>
+<td><p>Build a snippet of a load script for the given spack environment</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.get_modules_env_vars_and_mpi_compilers.html#mache.spack.get_modules_env_vars_and_mpi_compilers" title="mache.spack.get_modules_env_vars_and_mpi_compilers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a>(...)</p></td>
+<td><p>Get the non-spack modules, environment variables and compiler names for a given machine, compiler and MPI library.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_machine_config.html#mache.spack.extract_machine_config" title="mache.spack.extract_machine_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_machine_config</span></code></a>(xml_file, machine, ...)</p></td>
+<td><p>Extract the machine configuration from the XML file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html#mache.spack.config_to_shell_script" title="mache.spack.config_to_shell_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_to_shell_script</span></code></a>(config, shell_type)</p></td>
+<td><p>Convert the machine configuration to a shell script.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html#mache.spack.extract_spack_from_config_machines" title="mache.spack.extract_spack_from_config_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_spack_from_config_machines</span></code></a>(machine, ...)</p></td>
+<td><p>Extract machine configuration from XML and write it to a shell script.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html#mache.spack.list_machine_compiler_mpilib" title="mache.spack.list_machine_compiler_mpilib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_machine_compiler_mpilib</span></code></a>()</p></td>
+<td><p>List tuples of machine, compiler, and MPI library parsed from the name of YAML files in the <cite>mache.spack.templates</cite> directory.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sync">
+<h2>sync<a class="headerlink" href="#sync" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.sync.diags.sync_diags.html#mache.sync.diags.sync_diags" title="mache.sync.diags.sync_diags"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync_diags</span></code></a>(other[, direction, machine, ...])</p></td>
+<td><p>Synchronize diagnostics files between supported machines</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="jigsaw">
+<h2>jigsaw<a class="headerlink" href="#jigsaw" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.jigsaw.JigsawBuildResult.html#mache.jigsaw.JigsawBuildResult" title="mache.jigsaw.JigsawBuildResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JigsawBuildResult</span></code></a>(channel_uri, channel_dir, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.jigsaw.deploy_jigsawpy.html#mache.jigsaw.deploy_jigsawpy" title="mache.jigsaw.deploy_jigsawpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deploy_jigsawpy</span></code></a>(*[, jigsaw_python_path, ...])</p></td>
+<td><p>Build and install <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> in one call.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.jigsaw.build_jigsawpy_package.html#mache.jigsaw.build_jigsawpy_package" title="mache.jigsaw.build_jigsawpy_package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_jigsawpy_package</span></code></a>(*, python_version, ...)</p></td>
+<td><p>Build a local conda package for <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.jigsaw.install_jigsawpy_package.html#mache.jigsaw.install_jigsawpy_package" title="mache.jigsaw.install_jigsawpy_package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">install_jigsawpy_package</span></code></a>(*, channel_uri, ...)</p></td>
+<td><p>Install <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> from a local conda channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.jigsaw.detect_install_backend.html#mache.jigsaw.detect_install_backend" title="mache.jigsaw.detect_install_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_install_backend</span></code></a>(*[, backend])</p></td>
+<td><p>Resolve the jigsaw installation backend.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.jigsaw.cli.add_jigsaw_subparser.html#mache.jigsaw.cli.add_jigsaw_subparser" title="mache.jigsaw.cli.add_jigsaw_subparser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_jigsaw_subparser</span></code></a>(subparsers)</p></td>
+<td><p>Add the <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">jigsaw</span></code> command group to the top-level CLI.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="deploy">
+<h2>deploy<a class="headerlink" href="#deploy" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.bootstrap.check_call.html#mache.deploy.bootstrap.check_call" title="mache.deploy.bootstrap.check_call"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_call</span></code></a>(commands, log_filename, quiet, *)</p></td>
+<td><p>Wrapper for making a shell call with logging and error management.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.bootstrap.build_pixi_shell_hook_prefix.html#mache.deploy.bootstrap.build_pixi_shell_hook_prefix" title="mache.deploy.bootstrap.build_pixi_shell_hook_prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_pixi_shell_hook_prefix</span></code></a>(*, pixi_exe, ...)</p></td>
+<td><p>Build a shell prefix to activate a pixi env in the current shell.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.bootstrap.check_location.html#mache.deploy.bootstrap.check_location" title="mache.deploy.bootstrap.check_location"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_location</span></code></a>([software])</p></td>
+<td><p>Ensure that the script is being run from the root of the target software repository.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.bootstrap.install_dev_mache.html#mache.deploy.bootstrap.install_dev_mache" title="mache.deploy.bootstrap.install_dev_mache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">install_dev_mache</span></code></a>(pixi_shell_hook_prefix, ...)</p></td>
+<td><p>Install mache from a fork and branch for development and testing</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.bootstrap.main.html#mache.deploy.bootstrap.main" title="mache.deploy.bootstrap.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>()</p></td>
+<td><p>Entry point for the configure script</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.cli.add_deploy_subparser.html#mache.deploy.cli.add_deploy_subparser" title="mache.deploy.cli.add_deploy_subparser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_deploy_subparser</span></code></a>(subparsers)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.CliArgSpec.html#mache.deploy.cli_spec.CliArgSpec" title="mache.deploy.cli_spec.CliArgSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CliArgSpec</span></code></a>(flags, dest, route, kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.CliSpec.html#mache.deploy.cli_spec.CliSpec" title="mache.deploy.cli_spec.CliSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CliSpec</span></code></a>(meta, args)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.parse_cli_spec.html#mache.deploy.cli_spec.parse_cli_spec" title="mache.deploy.cli_spec.parse_cli_spec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_cli_spec</span></code></a>(rendered_json)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.routes_include.html#mache.deploy.cli_spec.routes_include" title="mache.deploy.cli_spec.routes_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">routes_include</span></code></a>(arg, route)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.filter_args_by_route.html#mache.deploy.cli_spec.filter_args_by_route" title="mache.deploy.cli_spec.filter_args_by_route"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_args_by_route</span></code></a>(spec, route)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.load_cli_spec_file.html#mache.deploy.cli_spec.load_cli_spec_file" title="mache.deploy.cli_spec.load_cli_spec_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_cli_spec_file</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.cli_spec.add_args_to_parser.html#mache.deploy.cli_spec.add_args_to_parser" title="mache.deploy.cli_spec.add_args_to_parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_args_to_parser</span></code></a>(parser, args)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.conda.get_conda_platform_and_system.html#mache.deploy.conda.get_conda_platform_and_system" title="mache.deploy.conda.get_conda_platform_and_system"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_conda_platform_and_system</span></code></a>()</p></td>
+<td><p>Get the conda system name ('linux' or 'osx') and platform (e.g. 'linux-64').</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.hooks.DeployContext.html#mache.deploy.hooks.DeployContext" title="mache.deploy.hooks.DeployContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployContext</span></code></a>(software, machine, repo_root, ...)</p></td>
+<td><p>A small bundle of state passed to hook functions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.hooks.HookRegistry.html#mache.deploy.hooks.HookRegistry" title="mache.deploy.hooks.HookRegistry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HookRegistry</span></code></a>(file_path, entrypoints)</p></td>
+<td><p>Resolved hooks for a single deploy run.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.hooks.HookRegistry.run_hook.html#mache.deploy.hooks.HookRegistry.run_hook" title="mache.deploy.hooks.HookRegistry.run_hook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HookRegistry.run_hook</span></code></a>(stage, context)</p></td>
+<td><p>Run a hook stage if it is defined.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.hooks.load_hooks.html#mache.deploy.hooks.load_hooks" title="mache.deploy.hooks.load_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_hooks</span></code></a>(config, repo_root, logger)</p></td>
+<td><p>Load deployment hooks from a target-software repository.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.hooks.configparser_to_nested_dict.html#mache.deploy.hooks.configparser_to_nested_dict" title="mache.deploy.hooks.configparser_to_nested_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configparser_to_nested_dict</span></code></a>(cfg)</p></td>
+<td><p>Convert a <code class="docutils literal notranslate"><span class="pre">ConfigParser</span></code> to a JSON/YAML-friendly nested mapping.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.init_update.init_or_update_repo.html#mache.deploy.init_update.init_or_update_repo" title="mache.deploy.init_update.init_or_update_repo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_or_update_repo</span></code></a>(repo_root, software, ...)</p></td>
+<td><p>Init: Create/refresh the deploy starter kit in a target-software repo.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.jinja.define_square_bracket_environment.html#mache.deploy.jinja.define_square_bracket_environment" title="mache.deploy.jinja.define_square_bracket_environment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">define_square_bracket_environment</span></code></a>()</p></td>
+<td><p>Define a Jinja2 environment that uses square brackets for delimiters.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.machine.get_known_mache_machines.html#mache.deploy.machine.get_known_mache_machines" title="mache.deploy.machine.get_known_mache_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_known_mache_machines</span></code></a>(*[, package])</p></td>
+<td><p>Return the set of machine names known to mache.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.machine.get_known_target_machines.html#mache.deploy.machine.get_known_target_machines" title="mache.deploy.machine.get_known_target_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_known_target_machines</span></code></a>(*, machines_path)</p></td>
+<td><p>Return the set of machine names provided by the target software.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.machine.get_known_machines.html#mache.deploy.machine.get_known_machines" title="mache.deploy.machine.get_known_machines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_known_machines</span></code></a>(*[, machines_path])</p></td>
+<td><p>Return the set of machines known to mache or the target software.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.machine.get_machine.html#mache.deploy.machine.get_machine" title="mache.deploy.machine.get_machine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_machine</span></code></a>(*, requested_machine[, ...])</p></td>
+<td><p>Get the selected machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.machine.get_machine_config.html#mache.deploy.machine.get_machine_config" title="mache.deploy.machine.get_machine_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_machine_config</span></code></a>(*, machine, ...[, quiet])</p></td>
+<td><p>Load merged machine config from mache + (optional) target software.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.run.run_deploy.html#mache.deploy.run.run_deploy" title="mache.deploy.run.run_deploy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_deploy</span></code></a>(args)</p></td>
+<td><p>Run the full deployment workflow for the current project.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.spack.SpackDeployResult.html#mache.deploy.spack.SpackDeployResult" title="mache.deploy.spack.SpackDeployResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpackDeployResult</span></code></a>(compiler, mpi, env_name, ...)</p></td>
+<td><p>Result of deploying a Spack environment for one toolchain pair.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.spack.SpackSoftwareEnvResult.html#mache.deploy.spack.SpackSoftwareEnvResult" title="mache.deploy.spack.SpackSoftwareEnvResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpackSoftwareEnvResult</span></code></a>(compiler, mpi, ...)</p></td>
+<td><p>Result of deploying a Spack &quot;software&quot; environment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.spack.deploy_spack_envs.html#mache.deploy.spack.deploy_spack_envs" title="mache.deploy.spack.deploy_spack_envs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deploy_spack_envs</span></code></a>(*, ctx, toolchain_pairs, ...)</p></td>
+<td><p>Deploy one Spack environment per (compiler, mpi) toolchain pair.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.spack.deploy_spack_software_env.html#mache.deploy.spack.deploy_spack_software_env" title="mache.deploy.spack.deploy_spack_software_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deploy_spack_software_env</span></code></a>(*, ctx, ...)</p></td>
+<td><p>Deploy an optional Spack &quot;software&quot; environment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_envs.html#mache.deploy.spack.load_existing_spack_envs" title="mache.deploy.spack.load_existing_spack_envs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_existing_spack_envs</span></code></a>(*, ctx, toolchain_pairs)</p></td>
+<td><p>Load pre-existing Spack library environments for load scripts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_software_env.html#mache.deploy.spack.load_existing_spack_software_env" title="mache.deploy.spack.load_existing_spack_software_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_existing_spack_software_env</span></code></a>(*, ctx)</p></td>
+<td><p>Load a pre-existing Spack software environment for load scripts.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="machineinfo">
+<h2>MachineInfo<a class="headerlink" href="#machineinfo" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.html#mache.MachineInfo" title="mache.MachineInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo</span></code></a>([machine, quiet])</p></td>
+<td><p>An object containing information about an E3SM supported machine</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults" title="mache.MachineInfo.get_account_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_account_defaults</span></code></a>()</p></td>
+<td><p>Get default account, partition and quality of service (QOS) for this machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_queue_specs.html#mache.MachineInfo.get_queue_specs" title="mache.MachineInfo.get_queue_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_queue_specs</span></code></a>()</p></td>
+<td><p>Get queue policy metadata for the machine.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_partition_specs.html#mache.MachineInfo.get_partition_specs" title="mache.MachineInfo.get_partition_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_partition_specs</span></code></a>()</p></td>
+<td><p>Get partition policy metadata for the machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.MachineInfo.get_qos_specs.html#mache.MachineInfo.get_qos_specs" title="mache.MachineInfo.get_qos_specs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MachineInfo.get_qos_specs</span></code></a>()</p></td>
+<td><p>Get quality-of-service (QOS) policy metadata for the machine.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="releasing.html" class="btn btn-neutral float-left" title="Releasing a New Version" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/mache.discover.discover_machine.html" class="btn btn-neutral float-right" title="mache.discover.discover_machine" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.0.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

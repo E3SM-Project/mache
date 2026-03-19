@@ -1,6 +1,0 @@
-﻿mache.MachineInfo.get\_queue\_specs
-===================================
-
-.. currentmodule:: mache
-
-.. automethod:: MachineInfo.get_queue_specs

@@ -1,6 +1,0 @@
-﻿mache.deploy.bootstrap.check\_location
-======================================
-
-.. currentmodule:: mache.deploy.bootstrap
-
-.. autofunction:: check_location
