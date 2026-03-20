@@ -713,9 +713,23 @@ def _write_bootstrap_pixi_toml_with_mache(
         f'python = "{python_version}.*"',
         'pip = "*"',
         'rattler-build = "*"',
-        f'mache = "=={mache_version}"',
+        f'mache = "{_format_pixi_version_specifier(mache_version)}"',
     ]
     pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
+def _format_pixi_version_specifier(version: str) -> str:
+    """Return a pixi version specifier from a mache version pin.
+
+    Pixi dependency values expect a version specifier, not a full conda
+    matchspec. Exact pins use ``==`` while wildcard pins already use the
+    correct ``3.0.2.*``-style form.
+    """
+
+    normalized = str(version).strip()
+    if normalized.endswith('.*'):
+        return normalized
+    return f'=={normalized}'
 
 
 def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir):

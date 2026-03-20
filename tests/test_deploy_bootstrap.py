@@ -81,6 +81,24 @@ def test_write_bootstrap_pixi_toml_with_mache_includes_platform(
     assert 'mache = "==3.0.0"' in text
 
 
+def test_write_bootstrap_pixi_toml_with_mache_preserves_wildcard_version(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.setattr(bootstrap, '_get_pixi_platform', lambda: 'linux-64')
+
+    pixi_toml = tmp_path / 'pixi.toml'
+    bootstrap._write_bootstrap_pixi_toml_with_mache(
+        pixi_toml_path=pixi_toml,
+        software='polaris',
+        mache_version='3.0.2.*',
+        python_version='3.12',
+    )
+
+    text = pixi_toml.read_text(encoding='utf-8')
+    assert 'mache = "3.0.2.*"' in text
+    assert 'mache = "==3.0.2.*"' not in text
+
+
 def test_clone_mache_repo_uses_local_source_override(
     monkeypatch, tmp_path: Path
 ):

@@ -67,3 +67,11 @@ def test_get_pixi_executable_expands_and_validates_path(
     monkeypatch.setenv('HOME', str(home))
 
     assert deploy_run._get_pixi_executable('~/bin/pixi') == str(pixi)
+
+
+def test_run_uses_valid_pixi_version_specifier_for_wildcard_mache_pin():
+    assert deploy_run._format_pixi_version_specifier('3.0.2.*') == '3.0.2.*'
+
+
+def test_run_uses_exact_pixi_version_specifier_for_exact_mache_pin():
+    assert deploy_run._format_pixi_version_specifier('3.0.2') == '==3.0.2'

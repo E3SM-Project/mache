@@ -13,7 +13,7 @@ python = "{{ python }}"
 pip = "*"
 
 {%- if include_mache %}
-mache = "=={{ mache }}"
+mache = "{{ mache }}"
 {%- endif %}
 
 {%- if include_jigsaw %}

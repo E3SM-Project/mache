@@ -15,6 +15,7 @@ from yaml import safe_load
 from mache.jigsaw import deploy_jigsawpy
 
 from .bootstrap import (
+    _format_pixi_version_specifier,
     build_pixi_env_unset_prefix,
     build_pixi_shell_hook_prefix,
     check_call,
@@ -182,7 +183,9 @@ def run_deploy(args: argparse.Namespace) -> None:
     # - Otherwise, include a pinned conda-forge mache.
     mache_version_arg = getattr(args, 'mache_version', None)
     if mache_version_arg is not None and str(mache_version_arg).strip():
-        replacements['mache'] = str(mache_version_arg).strip()
+        replacements['mache'] = _format_pixi_version_specifier(
+            str(mache_version_arg).strip()
+        )
 
     include_mache = not using_mache_fork
     if include_mache and not str(replacements.get('mache', '')).strip():
