@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -85,7 +86,7 @@ def test_meshflow_deploy_workflow_installs_jigsaw_into_deployed_manifest(
             'source load_meshflow.sh && '
             'test "${MESHFLOW_DEPLOY_SENTINEL}" = "workflow-ok" && '
             'python -c "import lxml.etree, mache.jigsaw, jigsawpy; '
-            'print(jigsawpy.__version__)"',
+            'print(jigsawpy.__file__)"',
         ],
         cwd=downstream,
         env=env,
@@ -146,19 +147,19 @@ def test_meshflow_cli_jigsaw_install_uses_local_pixi_manifest(
     )
     assert local_manifest.is_file()
     local_text = local_manifest.read_text(encoding='utf-8')
-    assert '[feature.jigsaw.dependencies]' in local_text
-    assert 'jigsaw = ["jigsaw"]' in local_text
-    assert 'jigsawpy' not in (downstream / 'pixi-env' / 'pixi.toml').read_text(
+    source_text = (downstream / 'pixi-env' / 'pixi.toml').read_text(
         encoding='utf-8'
     )
+    assert re.search(r'(?m)^jigsawpy\s*=', local_text) is not None
+    assert re.search(r'(?m)^jigsawpy\s*=', source_text) is None
 
     smoke = run(
         [
             'bash',
             '-lc',
             'set -euo pipefail && '
-            f'pixi run -m {local_manifest} -e jigsaw '
-            'python -c "import jigsawpy; print(jigsawpy.__version__)"',
+            f'pixi run -m {local_manifest} -- '
+            'python -c "import jigsawpy; print(jigsawpy.__file__)"',
         ],
         cwd=downstream,
         env=env,
