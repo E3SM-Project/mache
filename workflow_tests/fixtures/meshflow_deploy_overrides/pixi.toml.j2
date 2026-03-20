@@ -1,5 +1,5 @@
 [workspace]
-name = "[[ software ]]-dev"
+name = "meshflow-dev"
 channels = [
 {%- for channel in pixi_channels %}
   "{{ channel }}"{%- if not loop.last %},{% endif %}
@@ -9,13 +9,10 @@ platforms = ["{{ platform }}"]
 channel-priority = "strict"
 
 [dependencies]
-python = "{{ python }}"
+python = "{{ python }}.*"
 pip = "*"
-
+setuptools = "*"
+wheel = "*"
 {%- if include_mache %}
 mache = "{{ mache }}"
-{%- endif %}
-
-{%- if include_jigsaw %}
-jigsawpy = "*"
 {%- endif %}

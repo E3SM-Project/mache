@@ -15,11 +15,13 @@ from yaml import safe_load
 from mache.jigsaw import deploy_jigsawpy
 
 from .bootstrap import (
+    _format_pixi_version_specifier,
     build_pixi_env_unset_prefix,
     build_pixi_shell_hook_prefix,
     check_call,
     check_location,
     install_dev_mache,
+    merge_pixi_toml_dependencies,
 )
 from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
@@ -27,8 +29,11 @@ from .machine import get_machine, get_machine_config
 from .spack import (
     deploy_spack_envs,
     deploy_spack_software_env,
+    get_effective_spack_config,
     load_existing_spack_envs,
     load_existing_spack_software_env,
+    spack_disabled_for_run,
+    spack_should_deploy_for_run,
 )
 
 
@@ -146,6 +151,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     toolchain_pairs = _resolve_toolchain_pairs(
         config=config,
         runtime=ctx.runtime,
+        machine=machine,
         machine_config=machine_config,
         args=args,
         quiet=quiet,
@@ -182,7 +188,9 @@ def run_deploy(args: argparse.Namespace) -> None:
     # - Otherwise, include a pinned conda-forge mache.
     mache_version_arg = getattr(args, 'mache_version', None)
     if mache_version_arg is not None and str(mache_version_arg).strip():
-        replacements['mache'] = str(mache_version_arg).strip()
+        replacements['mache'] = _format_pixi_version_specifier(
+            str(mache_version_arg).strip()
+        )
 
     include_mache = not using_mache_fork
     if include_mache and not str(replacements.get('mache', '')).strip():
@@ -209,6 +217,20 @@ def run_deploy(args: argparse.Namespace) -> None:
         replacements=replacements,
         output_dir=prefix,
     )
+
+    if using_mache_fork:
+        merge_pixi_toml_dependencies(
+            target_pixi_toml=os.path.join(
+                os.path.abspath(prefix),
+                'pixi.toml',
+            ),
+            source_repo_dir=os.path.join(
+                os.path.abspath('deploy_tmp'),
+                'build_mache',
+                'mache',
+            ),
+            python_version=python_version,
+        )
 
     _pixi_install(
         pixi_exe=pixi_exe,
@@ -245,15 +267,20 @@ def run_deploy(args: argparse.Namespace) -> None:
     # Future wiring: spack stages (no-ops unless implemented/configured)
     hook_registry.run_hook('pre_spack', ctx)
 
-    spack_cfg = config.get('spack', {})
-    if not isinstance(spack_cfg, dict):
-        spack_cfg = {}
+    if getattr(args, 'deploy_spack', False) and getattr(
+        args, 'no_spack', False
+    ):
+        raise ValueError(
+            'Cannot combine --deploy-spack and --no-spack in the same run.'
+        )
 
-    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
-        getattr(args, 'deploy_spack', False)
-    )
+    spack_cfg = get_effective_spack_config(ctx=ctx)
+    deploy_spack = spack_should_deploy_for_run(ctx=ctx, spack_cfg=spack_cfg)
 
-    if deploy_spack:
+    if spack_disabled_for_run(ctx=ctx):
+        spack_results = []
+        spack_software_env = None
+    elif deploy_spack:
         spack_results = deploy_spack_envs(
             ctx=ctx,
             toolchain_pairs=toolchain_pairs,
@@ -621,6 +648,7 @@ def _resolve_toolchain_pairs(
     *,
     config: dict[str, Any],
     runtime: dict[str, Any],
+    machine: str | None,
     machine_config: ConfigParser,
     args: argparse.Namespace,
     quiet: bool,
@@ -631,7 +659,7 @@ def _resolve_toolchain_pairs(
         1. CLI flags (--compiler/--mpi)
         2. runtime overrides from hooks (runtime['toolchain'])
         3. rendered deploy/config.yaml.j2 (config['toolchain'])
-        4. merged machine config [deploy]
+        4. merged machine config [deploy] when a machine is selected
 
     Pairing rules:
         - If both lists have the same length, they are zipped.
@@ -668,8 +696,12 @@ def _resolve_toolchain_pairs(
     compilers = cli_compilers or rt_compilers or cfg_compilers
     mpis = cli_mpis or rt_mpis or cfg_mpis
 
-    # 4) machine-config defaults
-    if compilers is None and machine_config.has_option('deploy', 'compiler'):
+    # 4) machine-config defaults (only meaningful when a machine is selected)
+    if (
+        machine is not None
+        and compilers is None
+        and machine_config.has_option('deploy', 'compiler')
+    ):
         default_comp = _normalize_optional_token(
             machine_config.get('deploy', 'compiler')
         )
@@ -686,11 +718,15 @@ def _resolve_toolchain_pairs(
             compiler_underscore = compiler.replace('-', '_')
             mpi_key = f'mpi_{compiler_underscore}'
             mpi_val = None
-            if machine_config.has_option('deploy', mpi_key):
+            if machine is not None and machine_config.has_option(
+                'deploy', mpi_key
+            ):
                 mpi_val = _normalize_optional_token(
                     machine_config.get('deploy', mpi_key)
                 )
-            elif machine_config.has_option('deploy', 'mpi'):
+            elif machine is not None and machine_config.has_option(
+                'deploy', 'mpi'
+            ):
                 mpi_val = _normalize_optional_token(
                     machine_config.get('deploy', 'mpi')
                 )

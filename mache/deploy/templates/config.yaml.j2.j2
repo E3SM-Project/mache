@@ -112,6 +112,9 @@ spack:
   #
   # This can be forced on at runtime with the `mache deploy run` CLI flag:
   #   --deploy-spack
+  #
+  # Passing --no-spack disables all Spack use for a single run, including
+  # reuse of pre-existing environments for load scripts.
   deploy: false
 
   # Whether this target repository supports a Spack *library* environment.
@@ -142,12 +145,17 @@ spack:
   # In practice, most target repositories should set this dynamically in the
   # `pre_spack()` hook (e.g., based on machine config) by writing:
   #   ctx.runtime['spack']['spack_path'] = <path>
+  # Hooks may also disable Spack for a single run by returning:
+  #   ctx.runtime['spack']['supported'] = False
+  #   ctx.runtime['spack']['software']['supported'] = False
   # This config value is a fallback.
   #
   # Required (either via hook/runtime or here) when spack.deploy (or
   # --deploy-spack) is used and at least one supported spack environment is
-  # enabled.
+  # enabled, or when an existing Spack environment will be reused for load
+  # scripts.
   # Can also be overridden temporarily via: --spack-path <path>
+  # To bypass Spack entirely for one run, pass: --no-spack
   spack_path: null
 
   # Prefix for spack environment names.

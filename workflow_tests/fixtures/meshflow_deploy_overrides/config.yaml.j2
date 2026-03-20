@@ -1,0 +1,22 @@
+project:
+  software: "meshflow"
+  version: "0.1.0"
+  machine: null
+  runtime_version_cmd: >-
+    python -c 'from meshflow.version import __version__; print(__version__)'
+
+pixi:
+  deploy: true
+  prefix: "pixi-env"
+  channels:
+    - conda-forge
+  mpi: "nompi"
+  install_dev_software: true
+
+spack:
+  deploy: false
+  supported: false
+
+jigsaw:
+  enabled: true
+  jigsaw_python_path: "jigsaw-python"
