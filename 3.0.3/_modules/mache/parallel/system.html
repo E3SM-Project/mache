@@ -1,0 +1,601 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.parallel.system</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9b3fc59f"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../parallel.html">mache.parallel</a></li>
+      <li class="breadcrumb-item active">mache.parallel.system</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.parallel.system</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span>
+
+
+<div class="viewcode-block" id="SubmissionResolution">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved scheduler target and effective node count.&quot;&quot;&quot;</span>
+
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">requested_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">effective_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">adjustment</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;exact&#39;</span><span class="p">,</span> <span class="s1">&#39;decrease&#39;</span><span class="p">,</span> <span class="s1">&#39;increase&#39;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ParallelSystem">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParallelSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for parallel system resource management.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parallel_configs : Dict[str, str]</span>
+<span class="sd">        A dictionary containing combined config options for the parallel</span>
+<span class="sd">        section and the parallel.{compiler} section, if any.</span>
+
+<span class="sd">    cores : int</span>
+<span class="sd">        The total number of CPU cores available on the system.</span>
+
+<span class="sd">    cores_per_node : int</span>
+<span class="sd">        The number of CPU cores available per node.</span>
+
+<span class="sd">    gpus : int</span>
+<span class="sd">        The total number of GPUs available on the system.</span>
+
+<span class="sd">    gpus_per_node : int</span>
+<span class="sd">        The number of GPUs available per node.</span>
+
+<span class="sd">    nodes : int</span>
+<span class="sd">        The total number of nodes available on the system.</span>
+
+<span class="sd">    mpi_allowed : bool</span>
+<span class="sd">        Whether MPI execution is allowed on the system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ParallelSystem.__init__">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set available resources for the parallel system based on the config.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            The configuration parser containing the parallel system options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parallel_configs</span> <span class="o">=</span> <span class="n">_get_parallel_configs</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ParallelSystem.get_parallel_command">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parallel_command</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the parallel execution command for the current system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        args : list of str</span>
+<span class="sd">            The command-line arguments for the parallel execution.</span>
+
+<span class="sd">        ntasks : int</span>
+<span class="sd">            The total number of tasks to run in parallel.</span>
+
+<span class="sd">        cpus_per_task : int, optional</span>
+<span class="sd">            The number of CPUs to allocate per task.</span>
+
+<span class="sd">        gpus_per_task : int, optional</span>
+<span class="sd">            The number of GPUs to allocate per task.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        command : list of str</span>
+<span class="sd">            The complete command to execute the parallel job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parallel_executable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;parallel_executable&#39;</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">parallel_executable</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">parallel_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_parallel_args</span><span class="p">(</span>
+            <span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">gpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span>
+        <span class="p">)</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parallel_args</span><span class="p">)</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">command</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the parallel command-line arguments related to resources.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a config value from the parallel configs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an integer config value from the parallel configs.&quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ParallelSystem.get_scheduler_target">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_scheduler_target</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Choose queue/partition/qos metadata target for a node count.</span>
+
+<span class="sd">        This is a convenience wrapper around ``resolve_submission()`` that</span>
+<span class="sd">        returns only the selected target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolution</span><span class="o">.</span><span class="n">target</span></div>
+
+
+<div class="viewcode-block" id="ParallelSystem.resolve_submission">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_submission</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubmissionResolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve a scheduler target and effective node count.</span>
+
+<span class="sd">        Policy:</span>
+
+<span class="sd">        - Prefer exact match when available.</span>
+<span class="sd">        - Otherwise choose the nearest valid node count.</span>
+<span class="sd">        - Tie-break toward lower (decrease) adjustments.</span>
+<span class="sd">        - If a lower adjustment violates ``min_nodes_allowed``, choose the</span>
+<span class="sd">          nearest feasible higher adjustment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            Machine configuration parser.</span>
+
+<span class="sd">        nodes : int</span>
+<span class="sd">            Requested node count.</span>
+
+<span class="sd">        target_type : {&#39;queue&#39;, &#39;partition&#39;, &#39;qos&#39;}</span>
+<span class="sd">            Scheduler target type to resolve.</span>
+
+<span class="sd">        min_nodes_allowed : int, optional</span>
+<span class="sd">            Optional lower bound for adjusted node counts.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SubmissionResolution</span>
+<span class="sd">            The selected target and adjusted node count.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">nodes</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;nodes must be positive, got </span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">min_nodes_allowed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">min_nodes_allowed</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;min_nodes_allowed must be positive, got </span><span class="si">{</span><span class="n">min_nodes_allowed</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">target_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;queue&#39;</span><span class="p">:</span> <span class="s1">&#39;queues&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;partition&#39;</span><span class="p">:</span> <span class="s1">&#39;partitions&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;qos&#39;</span><span class="p">:</span> <span class="s1">&#39;qos&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">target_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_map</span><span class="p">:</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Unexpected target_type: </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">. Expected one of: &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">parallel_configs</span> <span class="o">=</span> <span class="n">_get_parallel_configs</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">targets_value</span> <span class="o">=</span> <span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target_map</span><span class="p">[</span><span class="n">target_type</span><span class="p">])</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">_parse_list</span><span class="p">(</span><span class="n">targets_value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SubmissionResolution</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="n">requested_nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+                <span class="n">effective_nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+                <span class="n">adjustment</span><span class="o">=</span><span class="s1">&#39;exact&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># tuple: (target, effective_nodes, order)</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">targets</span><span class="p">):</span>
+            <span class="n">section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">min_nodes</span> <span class="o">=</span> <span class="n">_get_int_option</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="s1">&#39;min_nodes&#39;</span><span class="p">)</span>
+            <span class="n">max_nodes</span> <span class="o">=</span> <span class="n">_get_int_option</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_nodes&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">min_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">max_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">min_nodes</span> <span class="o">&gt;</span> <span class="n">max_nodes</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Invalid </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1"> config [</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s1">]: min_nodes &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">min_nodes</span><span class="si">}</span><span class="s1">) is greater than max_nodes (</span><span class="si">{</span><span class="n">max_nodes</span><span class="si">}</span><span class="s1">).&#39;</span>
+                <span class="p">)</span>
+
+            <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">_clamp_nodes</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">min_nodes</span><span class="p">,</span> <span class="n">max_nodes</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">min_nodes_allowed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">effective_nodes</span> <span class="o">&lt;</span> <span class="n">min_nodes_allowed</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">target</span><span class="p">,</span> <span class="n">effective_nodes</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">min_nodes_suffix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">min_nodes_allowed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">min_nodes_suffix</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39; and min_nodes_allowed=</span><span class="si">{</span><span class="n">min_nodes_allowed</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;No </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1"> matches nodes=</span><span class="si">{</span><span class="n">nodes</span><span class="si">}{</span><span class="n">min_nodes_suffix</span><span class="si">}</span><span class="s1">. &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Checked </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">s: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">exact_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">nodes</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">exact_candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">best_target</span><span class="p">,</span> <span class="n">best_nodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="n">exact_candidates</span><span class="p">,</span>
+                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lower_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">nodes</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lower_candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Prefer the closest feasible lower adjustment.</span>
+                <span class="n">best_target</span><span class="p">,</span> <span class="n">best_nodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="n">lower_candidates</span><span class="p">,</span>
+                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># No feasible lower adjustment; move to nearest higher.</span>
+                <span class="n">higher_candidates</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">nodes</span>
+                <span class="p">]</span>
+                <span class="n">best_target</span><span class="p">,</span> <span class="n">best_nodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="n">higher_candidates</span><span class="p">,</span>
+                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">best_nodes</span> <span class="o">==</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">adjustment</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;exact&#39;</span><span class="p">,</span> <span class="s1">&#39;decrease&#39;</span><span class="p">,</span> <span class="s1">&#39;increase&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;exact&#39;</span>
+        <span class="k">elif</span> <span class="n">best_nodes</span> <span class="o">&lt;</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">adjustment</span> <span class="o">=</span> <span class="s1">&#39;decrease&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adjustment</span> <span class="o">=</span> <span class="s1">&#39;increase&#39;</span>
+
+        <span class="k">return</span> <span class="n">SubmissionResolution</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">best_target</span><span class="p">,</span>
+            <span class="n">requested_nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="o">=</span><span class="n">best_nodes</span><span class="p">,</span>
+            <span class="n">adjustment</span><span class="o">=</span><span class="n">adjustment</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_common_submission_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get first constraint, gpus_per_node and filesystems settings.&quot;&quot;&quot;</span>
+        <span class="n">parallel_configs</span> <span class="o">=</span> <span class="n">_get_parallel_configs</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">constraint</span> <span class="o">=</span> <span class="n">_first_from_list</span><span class="p">(</span><span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;constraints&#39;</span><span class="p">))</span>
+
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gpus_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gpus_per_node_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gpus_per_node_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gpus_per_node</span><span class="p">)</span>
+
+        <span class="n">filesystems</span> <span class="o">=</span> <span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filesystems&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">gpus_per_node_str</span><span class="p">,</span> <span class="n">filesystems</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_max_wallclock</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get max wall-clock metadata for a selected scheduler target.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="n">section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="n">_get_string_option</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_wallclock&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_wallclock</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">max_wallclock</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_select_max_wallclock</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">max_wallclock_a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_wallclock_b</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Choose the more restrictive wall-clock string when possible.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">max_wallclock_a</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">max_wallclock_b</span>
+        <span class="k">if</span> <span class="n">max_wallclock_b</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">max_wallclock_a</span>
+
+        <span class="n">seconds_a</span> <span class="o">=</span> <span class="n">_max_wallclock_to_seconds</span><span class="p">(</span><span class="n">max_wallclock_a</span><span class="p">)</span>
+        <span class="n">seconds_b</span> <span class="o">=</span> <span class="n">_max_wallclock_to_seconds</span><span class="p">(</span><span class="n">max_wallclock_b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">seconds_a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">seconds_b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">max_wallclock_a</span>
+
+        <span class="k">if</span> <span class="n">seconds_a</span> <span class="o">&lt;=</span> <span class="n">seconds_b</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">max_wallclock_a</span>
+        <span class="k">return</span> <span class="n">max_wallclock_b</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_configs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get combined config options for the parallel section and the</span>
+<span class="sd">    parallel.{compiler} section, if any.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel&#39;</span><span class="p">])</span>
+    <span class="n">compiler</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;build&#39;</span><span class="p">,</span> <span class="s1">&#39;compiler&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">compiler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">compiler_underscore</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">compiler_section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;parallel.</span><span class="si">{</span><span class="n">compiler_underscore</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="n">compiler_section</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="n">compiler_section</span><span class="p">):</span>
+                <span class="n">section</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">section</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_list</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated list into stripped items.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">items</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_first_from_list</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the first item from a comma-separated list.&quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">_parse_list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_string_option</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a config value, treating missing/empty values as unset.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_int_option</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get an integer config value if set.&quot;&quot;&quot;</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">_get_string_option</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nodes_match</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether a node count satisfies optional min/max bounds.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">min_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nodes</span> <span class="o">&lt;</span> <span class="n">min_nodes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">max_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nodes</span> <span class="o">&gt;</span> <span class="n">max_nodes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clamp_nodes</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Clamp a node count to optional min/max bounds.&quot;&quot;&quot;</span>
+    <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+    <span class="k">if</span> <span class="n">min_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">effective_nodes</span> <span class="o">&lt;</span> <span class="n">min_nodes</span><span class="p">:</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">min_nodes</span>
+    <span class="k">if</span> <span class="n">max_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">effective_nodes</span> <span class="o">&gt;</span> <span class="n">max_nodes</span><span class="p">:</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">max_nodes</span>
+    <span class="k">return</span> <span class="n">effective_nodes</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_max_wallclock_to_seconds</span><span class="p">(</span><span class="n">max_wallclock</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert HH:MM:SS wall time to total seconds.&quot;&quot;&quot;</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">max_wallclock</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">hours</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">+</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="n">seconds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ceil_division</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ceiling of a divided by b.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">b</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_subprocess_str</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a subprocess and return its output as a string.&quot;&quot;&quot;</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">value_str</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value_str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_subprocess_int</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a subprocess and return its output as an integer.&quot;&quot;&quot;</span>
+    <span class="n">value_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_get_subprocess_str</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">value_int</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.0.3">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

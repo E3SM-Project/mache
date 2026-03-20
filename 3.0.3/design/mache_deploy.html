@@ -1,0 +1,643 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Document: mache.deploy</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9b3fc59f"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="mache.MachineInfo.get_qos_specs" href="../developers_guide/generated/mache.MachineInfo.get_qos_specs.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Design Document: mache.deploy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-mechanism-to-begin-deployment">Requirement: A mechanism to begin deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-mechanism-to-install-pixi">Requirement: A mechanism to install pixi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-mechanism-to-install-mache">Requirement: A mechanism to install mache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-way-for-target-software-to-specify-pixi-packages">Requirement: A way for target software to specify pixi packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-way-for-target-software-to-specify-spack-packages">Requirement: A way for target software to specify spack packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-support-for-environment-variants">Requirement: Support for environment variants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-provide-environment-variables">Requirement: Provide environment variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-provide-a-mechanism-to-load-environments">Requirement: Provide a mechanism to load environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-conditional-spack-deployment">Requirement: Conditional spack deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-skip-pixi-deployment-future">Desired: Skip pixi deployment (future)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desired-testing-target-software-future">Desired: Testing target software (future)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#conceptual-design">Conceptual Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#three-stage-deployment-model">Three-stage deployment model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cli-design-and-sharing">CLI Design and Sharing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem">Problem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#design-resolution-cli-spec-json-j2">Design resolution: <code class="docutils literal notranslate"><span class="pre">cli_spec.json(.j2)</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#starter-templates-and-initialization">Starter Templates and Initialization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#templates">Templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mache-deploy-init"><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updating-mache-versions">Updating mache versions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#package-organization">Package Organization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#closing-notes">Closing Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#polaris">Polaris</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#planned-test-deployment-of-e3sm-unified">Planned test deployment of E3SM-Unified</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Design Document: mache.deploy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/mache_deploy.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="design-document-mache-deploy">
+<h1>Design Document: mache.deploy<a class="headerlink" href="#design-document-mache-deploy" title="Link to this heading"></a></h1>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> is a subpackage of <code class="docutils literal notranslate"><span class="pre">mache</span></code> that provides a unified, documented,
+and extensible mechanism for deploying combined <strong>pixi</strong> (conda packages) and
+<strong>spack</strong> environments for E3SM-supported software (e.g. Polaris, Compass,
+E3SM-Unified) on E3SM-supported HPC systems.</p>
+<p>The primary motivation is to replace the redundant, subtly divergent, and
+poorly documented deployment logic currently embedded independently in these
+packages with a single, shared implementation. This improves maintainability,
+ensures feature parity across target software, and provides a scalable model
+for future E3SM software with mixed pixi/spack dependencies.</p>
+<p>In this document, software such as Polaris or E3SM-Unified that uses
+<code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> is referred to as the <strong>target software</strong>.</p>
+</section>
+<hr class="docutils" />
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Dec 29, 2025</em>
+<em>Contributors: Xylar Asay-Davis, Althea Denlinger</em></p>
+<hr class="docutils" />
+<section id="requirement-a-mechanism-to-begin-deployment">
+<h3>Requirement: A mechanism to begin deployment<a class="headerlink" href="#requirement-a-mechanism-to-begin-deployment" title="Link to this heading"></a></h3>
+<p>The target software must provide a user-facing entry point to begin deployment.
+This mechanism cannot depend on <code class="docutils literal notranslate"><span class="pre">mache</span></code> already being installed, because
+deployment is precisely how <code class="docutils literal notranslate"><span class="pre">mache</span></code> is introduced.</p>
+<p><strong>Design resolution</strong></p>
+<p>Each target software provides a small, stable <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> script at repository
+root. This script:</p>
+<ul class="simple">
+<li><p>Parses command-line arguments defined declaratively</p></li>
+<li><p>Downloads a standalone <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> script from the <code class="docutils literal notranslate"><span class="pre">mache</span></code> repository</p></li>
+<li><p>Executes <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> to install pixi (if needed) and <code class="docutils literal notranslate"><span class="pre">mache</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-mechanism-to-install-pixi">
+<h3>Requirement: A mechanism to install pixi<a class="headerlink" href="#requirement-a-mechanism-to-install-pixi" title="Link to this heading"></a></h3>
+<p>If pixi is not already installed, the deployment process must be able to
+install it automatically.</p>
+<p><strong>Design resolution</strong></p>
+<p>The standalone <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> script (downloaded from <code class="docutils literal notranslate"><span class="pre">mache</span></code>) handles:</p>
+<ul class="simple">
+<li><p>Installing pixi into a user-specified or inferred location</p></li>
+<li><p>Using pixi in a non-interactive, non-login context (no reliance on shell
+init)</p></li>
+</ul>
+<p>This logic is intentionally duplicated only in <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code>, which runs
+before <code class="docutils literal notranslate"><span class="pre">mache</span></code> is available.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-mechanism-to-install-mache">
+<h3>Requirement: A mechanism to install mache<a class="headerlink" href="#requirement-a-mechanism-to-install-mache" title="Link to this heading"></a></h3>
+<p>The target software must support installing:</p>
+<ul class="simple">
+<li><p>A released version of <code class="docutils literal notranslate"><span class="pre">mache</span></code> from conda-forge (via pixi), or</p></li>
+<li><p>A developer-specified fork and branch (for testing and development)</p></li>
+</ul>
+<p><strong>Design resolution</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> creates a minimal <em>bootstrap</em> pixi environment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache</span></code> is installed into that environment either:</p>
+<ul>
+<li><p>via a pixi manifest that depends on <code class="docutils literal notranslate"><span class="pre">mache==&lt;version&gt;</span></code> (from conda-forge),
+or</p></li>
+<li><p>via cloning and installing from a fork/branch (installed into the pixi
+environment)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-way-for-target-software-to-specify-pixi-packages">
+<h3>Requirement: A way for target software to specify pixi packages<a class="headerlink" href="#requirement-a-way-for-target-software-to-specify-pixi-packages" title="Link to this heading"></a></h3>
+<p>The target software must define:</p>
+<ul class="simple">
+<li><p>Which conda packages are installed (via pixi)</p></li>
+<li><p>Version constraints</p></li>
+<li><p>Variants across machines, compilers, MPI, etc.</p></li>
+</ul>
+<p><strong>Design resolution</strong></p>
+<p>The target software provides two inputs:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>: a Jinja2-templated pixi manifest that declaratively
+defines the pixi environment dependencies</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>: a Jinja2-templated YAML configuration file that
+defines deployment options and variants (channels, prefix, MPI selection,
+feature toggles, etc.)</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> renders and interprets these files to construct a pixi
+environment. The pixi manifest (<code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>) is the authoritative
+specification of the pixi environment dependencies.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-way-for-target-software-to-specify-spack-packages">
+<h3>Requirement: A way for target software to specify spack packages<a class="headerlink" href="#requirement-a-way-for-target-software-to-specify-spack-packages" title="Link to this heading"></a></h3>
+<p>The target software must define:</p>
+<ul class="simple">
+<li><p>Spack packages</p></li>
+<li><p>Versions, variants, and compiler/MPI combinations</p></li>
+</ul>
+<p><strong>Design resolution</strong></p>
+<ul class="simple">
+<li><p>Spack specifications are included in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> interprets and realizes these specs using spack</p></li>
+<li><p>Spack logic lives entirely inside <code class="docutils literal notranslate"><span class="pre">mache</span></code>, not in the target software</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="requirement-support-for-environment-variants">
+<h3>Requirement: Support for environment variants<a class="headerlink" href="#requirement-support-for-environment-variants" title="Link to this heading"></a></h3>
+<p>The target software must support multiple deployment variants, including:</p>
+<ul class="simple">
+<li><p>Different machines</p></li>
+<li><p>Different compilers and MPI stacks</p></li>
+<li><p>Optional components (e.g., Trilinos, Albany, PETSc)</p></li>
+</ul>
+<p><strong>Design resolution</strong></p>
+<ul class="simple">
+<li><p>Variants are declared declaratively in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+<li><p>Users select variants via command-line options to <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> /
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code></p></li>
+<li><p>Variant selection is propagated consistently to pixi, spack, modules, and
+environment variables</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="requirement-provide-environment-variables">
+<h3>Requirement: Provide environment variables<a class="headerlink" href="#requirement-provide-environment-variables" title="Link to this heading"></a></h3>
+<p>Some target software requires environment variables to be set to function
+correctly.</p>
+<p><strong>Design resolution</strong></p>
+<ul class="simple">
+<li><p>Environment variables are specified declaratively in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> generates shell <em>load</em> scripts that:</p>
+<ul>
+<li><p>activate pixi environments</p></li>
+<li><p>load spack environments</p></li>
+<li><p>load system modules</p></li>
+<li><p>export required environment variables</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="requirement-provide-a-mechanism-to-load-environments">
+<h3>Requirement: Provide a mechanism to load environments<a class="headerlink" href="#requirement-provide-a-mechanism-to-load-environments" title="Link to this heading"></a></h3>
+<p>After deployment, users need a simple way to load the environment.</p>
+<p><strong>Design resolution</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> generates load scripts, for example:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;.sh</span></code> (no toolchain-specific Spack environment)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code> (toolchain-specific)</p></li>
+</ul>
+<p>Including <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;</span></code> avoids filename collisions on shared filesystems where
+multiple machines (or machine partitions exposed as distinct machine names)
+share compiler and MPI naming.</p>
+<p>These scripts encapsulate:</p>
+<ul class="simple">
+<li><p>Pixi activation</p></li>
+<li><p>Spack environment activation</p></li>
+<li><p>Module loads</p></li>
+<li><p>Environment variables</p></li>
+</ul>
+<p>Target software documentation points users to these scripts.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-conditional-spack-deployment">
+<h3>Requirement: Conditional spack deployment<a class="headerlink" href="#requirement-conditional-spack-deployment" title="Link to this heading"></a></h3>
+<p>Allow day-to-day developers to avoid rebuilding spack, while allowing
+maintainers to do full shared-environment deployments when needed.</p>
+<p><strong>Design resolution</strong></p>
+<p><strong>Mechanisms</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code> includes a default such as:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.deploy:</span> <span class="pre">true</span> <span class="pre">|</span> <span class="pre">false</span></code> (deploy all supported spack envs, or none)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path:</span> <span class="pre">&lt;path&gt;</span></code> (default checkout path for spack)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.supported:</span> <span class="pre">true</span> <span class="pre">|</span> <span class="pre">false</span></code> (whether the target supports a “library”
+spack env)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.software.supported:</span> <span class="pre">true</span> <span class="pre">|</span> <span class="pre">false</span></code> (whether the target supports a
+“software” spack env)</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> exposes CLI flags such as:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">--deploy-spack</span></code> (force-enable spack deployment)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--no-spack</span></code> (disable all spack use for a single run)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--spack-path</span> <span class="pre">&lt;path&gt;</span></code> (temporary override for <code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>)</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Precedence</strong></p>
+<ol class="arabic simple">
+<li><p>If the user passes <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>, all spack use is disabled for that run.</p></li>
+<li><p>Otherwise, if the user passes <code class="docutils literal notranslate"><span class="pre">--deploy-spack</span></code>, spack deployment is enabled
+regardless of the config default.</p></li>
+<li><p>Otherwise, fall back to the <code class="docutils literal notranslate"><span class="pre">config.yaml.j2</span></code> default for deployment and
+reuse any supported pre-existing spack environments in load scripts.</p></li>
+</ol>
+<p>For spack checkout path resolution:</p>
+<ol class="arabic simple">
+<li><p>If the user passes <code class="docutils literal notranslate"><span class="pre">--spack-path</span></code>, it takes highest priority.</p></li>
+<li><p>Otherwise, a deployment hook may set <code class="docutils literal notranslate"><span class="pre">ctx.runtime['spack']['spack_path']</span></code>.</p></li>
+<li><p>Otherwise, fall back to <code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code> in <code class="docutils literal notranslate"><span class="pre">config.yaml.j2</span></code>.</p></li>
+</ol>
+<p><strong>Rationale</strong></p>
+<ul class="simple">
+<li><p><em>E3SM-Unified maintainer workflow</em>: default <code class="docutils literal notranslate"><span class="pre">spack.deploy:</span> <span class="pre">true</span></code></p></li>
+<li><p><em>Polaris developer workflow</em>: default <code class="docutils literal notranslate"><span class="pre">spack.deploy:</span> <span class="pre">false</span></code></p></li>
+<li><p><em>Polaris maintainer workflow</em>: run <code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--deploy-spack</span> <span class="pre">...</span></code> when
+producing or updating a shared spack environment</p></li>
+<li><p><em>Temporary testing workflow</em>: run
+<code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--spack-path</span> <span class="pre">/tmp/&lt;my-spack&gt;</span> <span class="pre">...</span></code> to avoid editing and
+accidentally committing <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="desired-skip-pixi-deployment-future">
+<h3>Desired: Skip pixi deployment (future)<a class="headerlink" href="#desired-skip-pixi-deployment-future" title="Link to this heading"></a></h3>
+<p>Some deployments may want to reuse a shared pixi environment.</p>
+<p><strong>Design resolution (future)</strong></p>
+<ul class="simple">
+<li><p>Supported declaratively</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> would still provide load scripts and environment management</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="desired-testing-target-software-future">
+<h3>Desired: Testing target software (future)<a class="headerlink" href="#desired-testing-target-software-future" title="Link to this heading"></a></h3>
+<p>It should be possible to validate that deployment succeeded.</p>
+<p><strong>Design resolution (future)</strong></p>
+<ul class="simple">
+<li><p>Target software may optionally provide post-deployment tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> can expose hooks for running these tests</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="conceptual-design">
+<h2>Conceptual Design<a class="headerlink" href="#conceptual-design" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Dec 29, 2025</em>
+<em>Contributors: Xylar Asay-Davis, Althea Denlinger</em></p>
+<hr class="docutils" />
+<section id="three-stage-deployment-model">
+<h3>Three-stage deployment model<a class="headerlink" href="#three-stage-deployment-model" title="Link to this heading"></a></h3>
+<p>Deployment proceeds in three clearly separated stages:</p>
+<ol class="arabic simple">
+<li><p><strong>Target software entrypoint (<code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>)</strong></p>
+<ul class="simple">
+<li><p>Runs with system Python (minimal assumptions)</p></li>
+<li><p>Parses CLI from a declarative spec</p></li>
+<li><p>Downloads <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code></p></li>
+<li><p>Invokes <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code></p></li>
+</ul>
+</li>
+<li><p><strong>Bootstrap stage (<code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code>)</strong></p>
+<ul class="simple">
+<li><p>Standalone script, not part of the <code class="docutils literal notranslate"><span class="pre">mache</span></code> package</p></li>
+<li><p>Installs pixi if needed</p></li>
+<li><p>Creates a bootstrap pixi environment</p></li>
+<li><p>Installs <code class="docutils literal notranslate"><span class="pre">mache</span></code></p></li>
+</ul>
+</li>
+<li><p><strong>Deployment stage (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code>)</strong></p>
+<ul class="simple">
+<li><p>Runs with full <code class="docutils literal notranslate"><span class="pre">mache</span></code> installed</p></li>
+<li><p>Interprets <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+<li><p>Creates pixi and spack environments</p></li>
+<li><p>Generates load scripts</p></li>
+</ul>
+</li>
+</ol>
+<p>This separation is intentional and strictly enforced.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="cli-design-and-sharing">
+<h2>CLI Design and Sharing<a class="headerlink" href="#cli-design-and-sharing" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Jan 26, 2026</em>
+<em>Contributor: Xylar Asay-Davis</em></p>
+<section id="problem">
+<h3>Problem<a class="headerlink" href="#problem" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>, <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code> all need overlapping CLI
+arguments</p></li>
+<li><p>Duplicating argparse definitions across repositories is fragile</p></li>
+<li><p>Users expect <code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--help</span></code> to be authoritative</p></li>
+</ul>
+</section>
+<section id="design-resolution-cli-spec-json-j2">
+<h3>Design resolution: <code class="docutils literal notranslate"><span class="pre">cli_spec.json(.j2)</span></code><a class="headerlink" href="#design-resolution-cli-spec-json-j2" title="Link to this heading"></a></h3>
+<p>Each target software includes <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> rendered from the
+packaged template, which declaratively defines:</p>
+<ul class="simple">
+<li><p>Command-line flags</p></li>
+<li><p>Help text</p></li>
+<li><p>Destinations</p></li>
+<li><p>Routing (<code class="docutils literal notranslate"><span class="pre">deploy</span></code>, <code class="docutils literal notranslate"><span class="pre">bootstrap</span></code>, <code class="docutils literal notranslate"><span class="pre">run</span></code>)</p></li>
+</ul>
+<p><strong>Usage</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></p>
+<ul>
+<li><p>Builds its argparse interface from <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code></p></li>
+<li><p>Forwards appropriate arguments to <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></p>
+<ul>
+<li><p>Builds its CLI from the packaged <code class="docutils literal notranslate"><span class="pre">mache/deploy/templates/cli_spec.json.j2</span></code>
+(the same source template used by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init/update</span></code>)</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Benefits</strong></p>
+<ul class="simple">
+<li><p>Single source of truth for user-facing CLI</p></li>
+<li><p>No duplication across repositories</p></li>
+<li><p>Consistent <code class="docutils literal notranslate"><span class="pre">--help</span></code> output</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="starter-templates-and-initialization">
+<h2>Starter Templates and Initialization<a class="headerlink" href="#starter-templates-and-initialization" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Jan 26, 2026</em>
+<em>Contributor: Xylar Asay-Davis</em></p>
+<section id="templates">
+<h3>Templates<a class="headerlink" href="#templates" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> provides templates for:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cli_spec.json.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pins.cfg</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.yaml.j2.j2</span></code> (renders to <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pixi.toml.j2.j2</span></code> (renders to <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.yaml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hooks.py.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load.sh.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code></p></li>
+</ul>
+<p>These templates include placeholders for:</p>
+<ul class="simple">
+<li><p>Software name</p></li>
+<li><p>Pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version</p></li>
+<li><p>Minimal configuration scaffolding</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="mache-deploy-init">
+<h3><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code><a class="headerlink" href="#mache-deploy-init" title="Link to this heading"></a></h3>
+<p>A command that:</p>
+<ul class="simple">
+<li><p>Copies templates into a target software repository</p></li>
+<li><p>Fills in required placeholders</p></li>
+<li><p>Creates a minimal, working deployment setup</p></li>
+<li><p>Writes: <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>,
+<code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>,
+<code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>, and a placeholder <code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="updating-mache-versions">
+<h3>Updating mache versions<a class="headerlink" href="#updating-mache-versions" title="Link to this heading"></a></h3>
+<p>When a target software updates its pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> should be updated from the matching
+<code class="docutils literal notranslate"><span class="pre">mache</span></code> release</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, and <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code> remain
+software-owned</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> command updates only <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="package-organization">
+<h2>Package Organization<a class="headerlink" href="#package-organization" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Jan 26, 2026</em>
+<em>Contributor: Xylar Asay-Davis</em></p>
+<p>All deployment-related assets live under:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mache/deploy/
+├── bootstrap.py        # standalone script
+├── cli.py              # mache deploy CLI
+├── cli_spec.py         # cli_spec parsing helpers
+├── conda.py            # conda/pixi helpers
+├── hooks.py            # deployment hook framework
+├── init_update.py      # init/update logic for target repos
+├── jinja.py            # Jinja helpers
+├── machine.py          # machine/deploy config helpers
+├── run.py              # deployment runner (called by `mache deploy run`)
+├── spack.py            # spack helpers
+└── templates/
+  ├── deploy.py.j2
+  ├── cli_spec.json.j2
+  ├── pins.cfg.j2
+  ├── config.yaml.j2.j2
+  ├── pixi.toml.j2.j2
+  ├── spack.yaml.j2
+  ├── hooks.py.j2
+  ├── load.sh.j2
+  └── spack_install.bash.j2
+</pre></div>
+</div>
+<p>Reusable JIGSAW build/install logic now lives outside <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> in:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mache/jigsaw/
+├── __init__.py         # backend selection + build/install orchestration
+├── recipe.yaml.j2      # rattler-build recipe template
+├── linux-64.yaml.j2    # linux variant template
+├── osx-64.yaml.j2      # macOS variant template
+└── build.sh            # build script used by the recipe
+</pre></div>
+</div>
+<p>This keeps deployment concerns clearly separated from the rest of <code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="closing-notes">
+<h2>Closing Notes<a class="headerlink" href="#closing-notes" title="Link to this heading"></a></h2>
+<p>The current design:</p>
+<ul class="simple">
+<li><p>Satisfies all original requirements</p></li>
+<li><p>Clarifies responsibilities across stages</p></li>
+<li><p>Minimizes redundancy</p></li>
+<li><p>Supports both stable users and developers</p></li>
+<li><p>Provides a clear path for future growth (init, update, testing)</p></li>
+</ul>
+<p>Most importantly, it turns deployment from an ad hoc per-project liability
+into a shared, documented, and evolvable capability.</p>
+</section>
+<hr class="docutils" />
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Jan 26, 2026</em>
+<em>Contributor: Xylar Asay-Davis</em></p>
+<section id="polaris">
+<h3>Polaris<a class="headerlink" href="#polaris" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Full deployment on Chrysalis</p></li>
+<li><p>Intel and GNU compilers</p></li>
+<li><p>MPAS-Ocean <code class="docutils literal notranslate"><span class="pre">pr</span></code> suite (both compilers)</p></li>
+<li><p>Omega <code class="docutils literal notranslate"><span class="pre">omega_pr</span></code> suite (both compilers)</p></li>
+</ul>
+</section>
+<section id="planned-test-deployment-of-e3sm-unified">
+<h3>Planned test deployment of E3SM-Unified<a class="headerlink" href="#planned-test-deployment-of-e3sm-unified" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Not yet started</p></li>
+<li><p>Full test deployment on Chrysalis</p></li>
+<li><p>GNU compilers</p></li>
+<li><p>Test run of MPAS-Analysis</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../developers_guide/generated/mache.MachineInfo.get_qos_specs.html" class="btn btn-neutral float-left" title="mache.MachineInfo.get_qos_specs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.0.3">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
