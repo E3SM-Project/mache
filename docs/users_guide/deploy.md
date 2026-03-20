@@ -174,7 +174,8 @@ Important settings:
 - `pixi.prefix`: required in practice.
 - `pixi.channels`: required and must be non-empty.
 - `spack.spack_path`: required when Spack support is enabled and no hook or
-  CLI override provides it.
+  CLI override provides it, unless the user disables Spack for that run with
+  `--no-spack`.
 - `jigsaw.enabled`: optional.
 - `hooks`: optional and disabled unless explicitly configured.
 
@@ -492,13 +493,16 @@ Fix:
 
 Cause:
 
-- Spack support was enabled but no path was provided in config, hooks, or the
-  CLI.
+- Spack support was enabled for this run, but no path was provided in config,
+  hooks, or the CLI.
 
 Fix:
 
 - Set `spack.spack_path`, write it in a hook through
   `ctx.runtime["spack"]["spack_path"]`, or pass `--spack-path`.
+- If this should be a Pixi-only run, pass `--no-spack`.
+- A `pre_spack` hook may also disable Spack for one run by returning
+  `{"spack": {"supported": false, "software": {"supported": false}}}`.
 
 ### `project.version` is still `dynamic`
 

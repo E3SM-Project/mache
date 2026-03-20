@@ -29,8 +29,11 @@ from .machine import get_machine, get_machine_config
 from .spack import (
     deploy_spack_envs,
     deploy_spack_software_env,
+    get_effective_spack_config,
     load_existing_spack_envs,
     load_existing_spack_software_env,
+    spack_disabled_for_run,
+    spack_should_deploy_for_run,
 )
 
 
@@ -263,15 +266,20 @@ def run_deploy(args: argparse.Namespace) -> None:
     # Future wiring: spack stages (no-ops unless implemented/configured)
     hook_registry.run_hook('pre_spack', ctx)
 
-    spack_cfg = config.get('spack', {})
-    if not isinstance(spack_cfg, dict):
-        spack_cfg = {}
+    if getattr(args, 'deploy_spack', False) and getattr(
+        args, 'no_spack', False
+    ):
+        raise ValueError(
+            'Cannot combine --deploy-spack and --no-spack in the same run.'
+        )
 
-    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
-        getattr(args, 'deploy_spack', False)
-    )
+    spack_cfg = get_effective_spack_config(ctx=ctx)
+    deploy_spack = spack_should_deploy_for_run(ctx=ctx, spack_cfg=spack_cfg)
 
-    if deploy_spack:
+    if spack_disabled_for_run(ctx=ctx):
+        spack_results = []
+        spack_software_env = None
+    elif deploy_spack:
         spack_results = deploy_spack_envs(
             ctx=ctx,
             toolchain_pairs=toolchain_pairs,

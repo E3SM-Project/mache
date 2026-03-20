@@ -46,6 +46,57 @@ class SpackSoftwareEnvResult:
     path_setup: str
 
 
+def get_effective_spack_config(*, ctx: DeployContext) -> dict:
+    """Return deploy config merged with runtime Spack overrides."""
+
+    spack_cfg = ctx.config.get('spack', {})
+    if not isinstance(spack_cfg, dict):
+        spack_cfg = {}
+
+    merged = dict(spack_cfg)
+
+    software_cfg = merged.get('software', {})
+    if software_cfg is None:
+        software_cfg = {}
+    if isinstance(software_cfg, dict):
+        merged['software'] = dict(software_cfg)
+
+    runtime_spack = ctx.runtime.get('spack', {})
+    if not isinstance(runtime_spack, dict):
+        return merged
+
+    for key, value in runtime_spack.items():
+        if key == 'software' and isinstance(value, dict):
+            base = merged.get('software', {})
+            if not isinstance(base, dict):
+                base = {}
+            merged['software'] = {**base, **value}
+        else:
+            merged[key] = value
+
+    return merged
+
+
+def spack_disabled_for_run(*, ctx: DeployContext) -> bool:
+    """Return True when the CLI explicitly disables all Spack use."""
+
+    return bool(getattr(ctx.args, 'no_spack', False))
+
+
+def spack_should_deploy_for_run(
+    *, ctx: DeployContext, spack_cfg: dict
+) -> bool:
+    """Return True when Spack environments should be deployed for this run."""
+
+    if spack_disabled_for_run(ctx=ctx):
+        return False
+
+    if bool(getattr(ctx.args, 'deploy_spack', False)):
+        return True
+
+    return bool(spack_cfg.get('deploy'))
+
+
 def deploy_spack_software_env(
     *,
     ctx: DeployContext,
@@ -62,7 +113,7 @@ def deploy_spack_software_env(
     No CLI flags control this environment.
     """
 
-    spack_cfg = ctx.config.get('spack', {})
+    spack_cfg = get_effective_spack_config(ctx=ctx)
     if not isinstance(spack_cfg, dict):
         return None
 
@@ -72,9 +123,7 @@ def deploy_spack_software_env(
     if not isinstance(software_cfg, dict):
         raise ValueError('spack.software must be a mapping if provided')
 
-    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
-        getattr(ctx.args, 'deploy_spack', False)
-    )
+    deploy_spack = spack_should_deploy_for_run(ctx=ctx, spack_cfg=spack_cfg)
 
     software_supported = bool(software_cfg.get('supported'))
 
@@ -210,7 +259,7 @@ def deploy_spack_envs(
         A list of SpackDeployResult, one per (compiler, mpi)
     """
 
-    spack_cfg = ctx.config.get('spack', {})
+    spack_cfg = get_effective_spack_config(ctx=ctx)
     if not isinstance(spack_cfg, dict):
         return []
 
@@ -220,9 +269,7 @@ def deploy_spack_envs(
     if not isinstance(software_cfg, dict):
         raise ValueError('spack.software must be a mapping if provided')
 
-    deploy_spack = bool(spack_cfg.get('deploy')) or bool(
-        getattr(ctx.args, 'deploy_spack', False)
-    )
+    deploy_spack = spack_should_deploy_for_run(ctx=ctx, spack_cfg=spack_cfg)
 
     library_supported = bool(spack_cfg.get('supported'))
 
@@ -364,7 +411,7 @@ def load_existing_spack_envs(
 ) -> list[SpackDeployResult]:
     """Load pre-existing Spack library environments for load scripts."""
 
-    spack_cfg = ctx.config.get('spack', {})
+    spack_cfg = get_effective_spack_config(ctx=ctx)
     if not isinstance(spack_cfg, dict):
         return []
 
@@ -374,15 +421,17 @@ def load_existing_spack_envs(
 
     if not toolchain_pairs:
         raise ValueError(
-            'Spack library environments are supported but no toolchain pairs '
-            'were resolved. Provide toolchain.compiler/toolchain.mpi or '
-            '--compiler/--mpi.'
+            'Spack library environments are enabled for this run but no '
+            'toolchain pairs were resolved. Provide toolchain.compiler/'
+            'toolchain.mpi or --compiler/--mpi, or disable Spack for this '
+            'run with --no-spack or a pre_spack hook.'
         )
 
     spack_path = _resolve_spack_path(
         ctx=ctx,
         spack_cfg=spack_cfg,
-        reason='support is enabled (load scripts require existing envs)',
+        reason='support is enabled for this run (load scripts will reuse '
+        'existing envs)',
     )
 
     e3sm_hdf5_netcdf = _get_machine_bool(
@@ -446,7 +495,7 @@ def load_existing_spack_software_env(
 ) -> SpackSoftwareEnvResult | None:
     """Load a pre-existing Spack software environment for load scripts."""
 
-    spack_cfg = ctx.config.get('spack', {})
+    spack_cfg = get_effective_spack_config(ctx=ctx)
     if not isinstance(spack_cfg, dict):
         return None
 
@@ -462,13 +511,17 @@ def load_existing_spack_software_env(
 
     if ctx.machine is None:
         raise ValueError(
-            'Spack software environment is supported but machine is not known.'
+            'Spack software environment is enabled for this run but machine '
+            'is not known. Pass --no-spack or disable '
+            'spack.software.supported '
+            'in a pre_spack hook for Pixi-only runs.'
         )
 
     spack_path = _resolve_spack_path(
         ctx=ctx,
         spack_cfg=spack_cfg,
-        reason='support is enabled (load scripts require existing envs)',
+        reason='support is enabled for this run (load scripts will reuse '
+        'existing envs)',
     )
 
     compiler, mpi = _resolve_software_toolchain(
@@ -568,7 +621,8 @@ def _resolve_spack_path(
             '--spack-path, '
             "ctx.runtime['spack']['spack_path']"
             ' in a hook (preferred) or set spack.spack_path in '
-            'deploy/config.yaml.j2'
+            'deploy/config.yaml.j2. To bypass Spack entirely for this run, '
+            'pass --no-spack.'
         )
     return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
 
