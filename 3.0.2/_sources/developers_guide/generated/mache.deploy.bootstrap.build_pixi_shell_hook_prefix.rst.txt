@@ -1,0 +1,6 @@
+﻿mache.deploy.bootstrap.build\_pixi\_shell\_hook\_prefix
+=======================================================
+
+.. currentmodule:: mache.deploy.bootstrap
+
+.. autofunction:: build_pixi_shell_hook_prefix
