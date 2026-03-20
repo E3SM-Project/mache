@@ -1,0 +1,946 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.deploy.bootstrap</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.deploy.bootstrap</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.deploy.bootstrap</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">CONDA_PLATFORM_MAP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="s1">&#39;x86_64&#39;</span><span class="p">):</span> <span class="s1">&#39;linux-64&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="s1">&#39;aarch64&#39;</span><span class="p">):</span> <span class="s1">&#39;linux-aarch64&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="s1">&#39;ppc64le&#39;</span><span class="p">):</span> <span class="s1">&#39;linux-ppc64le&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s1">&#39;osx&#39;</span><span class="p">,</span> <span class="s1">&#39;x86_64&#39;</span><span class="p">):</span> <span class="s1">&#39;osx-64&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s1">&#39;osx&#39;</span><span class="p">,</span> <span class="s1">&#39;arm64&#39;</span><span class="p">):</span> <span class="s1">&#39;osx-arm64&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">LOCAL_MACHE_SOURCE_ENV</span> <span class="o">=</span> <span class="s1">&#39;MACHE_LOCAL_SOURCE_PATH&#39;</span>
+<span class="n">PIXI_ENV_VARS_TO_UNSET</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;PIXI_PROJECT_MANIFEST&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PIXI_PROJECT_ROOT&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PIXI_ENVIRONMENT_NAME&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PIXI_IN_SHELL&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="check_call">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.check_call.html#mache.deploy.bootstrap.check_call">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_call</span><span class="p">(</span>
+    <span class="n">commands</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">capture_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for making a shell call with logging and error management.</span>
+
+<span class="sd">    This function is intentionally similar to :py:func:`subprocess.run`, while</span>
+<span class="sd">    still providing the project-specific logging and &quot;tee&quot; behavior.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    commands : str</span>
+<span class="sd">        A single shell command string (possibly chaining commands with &quot;&amp;&amp;&quot; or</span>
+<span class="sd">        &quot;;&quot;)</span>
+
+<span class="sd">    log_filename : str</span>
+<span class="sd">        The path to the log file to append to</span>
+
+<span class="sd">    quiet : bool</span>
+<span class="sd">        If True, only log to the log file, not to the terminal</span>
+
+<span class="sd">    capture_output : bool, optional</span>
+<span class="sd">        If True, capture stdout (and merged stderr) and return it in the</span>
+<span class="sd">        returned :class:`subprocess.CompletedProcess`.</span>
+
+<span class="sd">    check : bool, optional</span>
+<span class="sd">        If True (default), raise :class:`subprocess.CalledProcessError` when</span>
+<span class="sd">        the command returns a nonzero status.</span>
+
+<span class="sd">    **popen_kwargs</span>
+<span class="sd">        Additional keyword arguments passed through to</span>
+<span class="sd">        :class:`subprocess.Popen`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : subprocess.CompletedProcess</span>
+<span class="sd">        The result of the command. When ``capture_output`` is True, the</span>
+<span class="sd">        combined output is available as ``result.stdout``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">capture_output</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="s1">&#39;stdout&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
+        <span class="ow">or</span> <span class="s1">&#39;stderr&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
+        <span class="ow">or</span> <span class="s1">&#39;capture_output&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;capture_output=True cannot be used with stdout/stderr/&#39;</span>
+            <span class="s1">&#39;capture_output in popen_kwargs.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">capture_output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="s1">&#39;stdout&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span> <span class="ow">or</span> <span class="s1">&#39;stderr&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;stdout/stderr cannot be set when capture_output=True or &#39;</span>
+            <span class="s1">&#39;quiet=False because this wrapper needs to stream output for &#39;</span>
+            <span class="s1">&#39;logging/tee behavior.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Determine whether stdout is text or bytes (match subprocess defaults,</span>
+    <span class="c1"># but keep this wrapper text-friendly by default).</span>
+    <span class="n">text</span><span class="p">,</span> <span class="n">popen_kwargs</span> <span class="o">=</span> <span class="n">_normalize_popen_text_kwargs</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
+    <span class="n">bufsize</span> <span class="o">=</span> <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bufsize&#39;</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Echo the commands being run (like a lightweight trace) so the log is</span>
+    <span class="c1"># self-contained and debuggable.</span>
+    <span class="c1"># Keep nested quoted commands intact (e.g. bash -lc &#39;... &amp;&amp; ...&#39;).</span>
+    <span class="n">command_list</span> <span class="o">=</span> <span class="n">_split_shell_on_andand</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">command_list</span><span class="p">:</span>
+        <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command_list</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">print_command</span> <span class="o">=</span> <span class="n">commands</span>
+    <span class="n">print_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> Running:</span><span class="se">\n</span><span class="s1">   </span><span class="si">{</span><span class="n">print_command</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">log_mode</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="s1">&#39;ab&#39;</span>
+    <span class="n">log_encoding</span> <span class="o">=</span> <span class="s1">&#39;utf-8&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="c1"># append to log file</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">print_command</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">print_command</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">print_command</span><span class="p">)</span>
+
+    <span class="n">stdout_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">base_popen_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;executable&#39;</span><span class="p">:</span> <span class="s1">&#39;/bin/bash&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;shell&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s1">&#39;universal_newlines&#39;</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
+        <span class="s1">&#39;bufsize&#39;</span><span class="p">:</span> <span class="n">bufsize</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1"># Allow callers to override defaults.</span>
+    <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">capture_output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="c1"># We&#39;ll stream stdout ourselves so we can tee to the log and terminal</span>
+        <span class="c1"># and optionally capture output.</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+            <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">base_popen_kwargs</span><span class="p">)</span>
+
+            <span class="k">assert</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">captured_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
+                <span class="c1"># chunk is str (text=True) or bytes (text=False)</span>
+                <span class="k">if</span> <span class="n">capture_output</span><span class="p">:</span>
+                    <span class="n">captured_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                    <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                    <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="n">chunk_bytes</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">chunk_bytes</span> <span class="o">=</span> <span class="n">chunk</span>
+
+                    <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
+                    <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+            <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">capture_output</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                <span class="n">stdout_data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">chunk</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">chunk</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stdout_bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">chunk</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">chunk</span>
+                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span>
+                <span class="p">)</span>
+                <span class="c1"># Keep this wrapper text-friendly: even when text=False, decode</span>
+                <span class="c1"># captured output so stdout_data remains str.</span>
+                <span class="n">stdout_data</span> <span class="o">=</span> <span class="n">stdout_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Fast path: let the subprocess write directly to the log.</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+            <span class="n">base_popen_kwargs</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_file</span>
+            <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">base_popen_kwargs</span><span class="p">)</span>
+            <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
+        <span class="n">returncode</span><span class="o">=</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span>
+        <span class="n">stdout</span><span class="o">=</span><span class="n">stdout_data</span><span class="p">,</span>
+        <span class="n">stderr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">(</span>
+            <span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">stdout_data</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="build_pixi_shell_hook_prefix">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.build_pixi_shell_hook_prefix.html#mache.deploy.bootstrap.build_pixi_shell_hook_prefix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_pixi_shell_hook_prefix</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pixi_toml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a shell prefix to activate a pixi env in the current shell.</span>
+
+<span class="sd">    Uses `pixi shell-hook` so activation applies to this shell rather than</span>
+<span class="sd">    running a nested shell process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hook_cmd</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> shell-hook -s bash -m &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_toml</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;eval &quot;$(</span><span class="si">{</span><span class="n">hook_cmd</span><span class="si">}</span><span class="s1">)&quot; &amp;&amp;&#39;</span></div>
+
+
+
+<div class="viewcode-block" id="check_location">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.check_location.html#mache.deploy.bootstrap.check_location">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_location</span><span class="p">(</span><span class="n">software</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensure that the script is being run from the root of the target software</span>
+<span class="sd">    repository.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    software : str, optional</span>
+<span class="sd">        The target software name, used for a more specific error message.</span>
+<span class="sd">        If not provided, a generic message is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">expected_files</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;deploy.py&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;deploy/cli_spec.json&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;deploy/config.yaml.j2&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;deploy/pins.cfg&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">missing_files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">expected_files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="n">missing_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">missing_files</span><span class="p">:</span>
+        <span class="n">missing_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  - &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_files</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">software</span><span class="p">:</span>
+            <span class="n">location_desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;the root of the local </span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1"> branch&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">location_desc</span> <span class="o">=</span> <span class="s1">&#39;the root of the target software repository&#39;</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;The deploy script must be run from </span><span class="si">{</span><span class="n">location_desc</span><span class="si">}</span><span class="s1">. &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;Expected files that were not found:</span><span class="se">\n</span><span class="s1">  - </span><span class="si">{</span><span class="n">missing_str</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="install_dev_mache">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.install_dev_mache.html#mache.deploy.bootstrap.install_dev_mache">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">install_dev_mache</span><span class="p">(</span>
+    <span class="n">pixi_shell_hook_prefix</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">repo_root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">src_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Install mache from a fork and branch for development and testing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Clone and install local mache</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1"># NOTE: We use `pixi shell-hook` to activate the environment in this</span>
+    <span class="c1"># shell, then run pip install within that environment.</span>
+    <span class="c1"># Also, the caller may have `cd`&#39;d into the bootstrap pixi project, so we</span>
+    <span class="c1"># explicitly `cd` back to the repo root first.</span>
+    <span class="k">if</span> <span class="n">repo_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">repo_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">repo_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">src_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">src_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span> <span class="s1">&#39;build_mache&#39;</span><span class="p">,</span> <span class="s1">&#39;mache&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">src_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src_dir</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">src_dir</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="s1">&#39;Expected mache source clone not found at &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">src_dir</span><span class="si">}</span><span class="s1">. This should have been created during bootstrap when &#39;</span>
+            <span class="s1">&#39;using --mache-fork/--mache-branch.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">bash_cmd</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;cd </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">src_dir</span><span class="p">)</span><span class="si">}</span><span class="s1"> &amp;&amp; &#39;</span>
+        <span class="s1">&#39;python -m pip install --no-deps --no-build-isolation .&#39;</span>
+    <span class="p">)</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pixi_shell_hook_prefix</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">bash_cmd</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Failed to clone and install local mache.  See &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">log_filename</span><span class="si">}</span><span class="s1"> for details.</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="k">raise</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.main.html#mache.deploy.bootstrap.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Entry point for the configure script</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;deploy_tmp/logs&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">log_filename</span> <span class="o">=</span> <span class="s1">&#39;deploy_tmp/logs/bootstrap.log&#39;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">log_filename</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_run</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_print_failure_summary</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># unexpected python-level failures: missing perms, bad paths, etc.</span>
+        <span class="n">_print_failure_summary</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">)</span>
+        <span class="k">raise</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="n">log_filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the bootstrap process with the given log file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">()</span>
+    <span class="n">software</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">software</span>
+    <span class="n">quiet</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span>
+    <span class="n">mache_version</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">mache_version</span>
+
+    <span class="n">check_location</span><span class="p">(</span><span class="n">software</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">pixi_exe</span> <span class="o">=</span> <span class="n">_get_pixi_executable</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">pixi</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span>
+    <span class="p">)</span>
+
+    <span class="n">bootstrap_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;deploy_tmp/bootstrap_pixi&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">bootstrap_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">recreate</span> <span class="ow">and</span> <span class="p">(</span><span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">&#39;.pixi&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">&#39;.pixi&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Create/update the bootstrap env</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mache_fork</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">mache_branch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_clone_mache_repo</span><span class="p">(</span>
+            <span class="n">mache_fork</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mache_fork</span><span class="p">,</span>
+            <span class="n">mache_branch</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mache_branch</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="n">recreate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">recreate</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Developer-style install path: use mache&#39;s own pixi.toml to create</span>
+        <span class="c1"># the environment, then install mache from source without PyPI deps.</span>
+        <span class="n">pixi_toml_path</span> <span class="o">=</span> <span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml&#39;</span>
+        <span class="n">_copy_mache_pixi_toml</span><span class="p">(</span>
+            <span class="n">dest_pixi_toml</span><span class="o">=</span><span class="n">pixi_toml_path</span><span class="p">,</span>
+            <span class="n">source_repo_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s1">&#39;deploy_tmp/build_mache/mache&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">bootstrap_dir</span><span class="si">}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
+        <span class="p">)</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+        <span class="n">pixi_toml</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+        <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
+            <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+            <span class="n">pixi_toml</span><span class="o">=</span><span class="n">pixi_toml</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">install_dev_mache</span><span class="p">(</span>
+            <span class="n">pixi_shell_hook_prefix</span><span class="o">=</span><span class="n">pixi_shell_hook_prefix</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Release/tag install path: install mache from conda-forge directly.</span>
+        <span class="n">pixi_toml_path</span> <span class="o">=</span> <span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml&#39;</span>
+        <span class="n">_write_bootstrap_pixi_toml_with_mache</span><span class="p">(</span>
+            <span class="n">pixi_toml_path</span><span class="o">=</span><span class="n">pixi_toml_path</span><span class="p">,</span>
+            <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
+            <span class="n">mache_version</span><span class="o">=</span><span class="n">mache_version</span><span class="p">,</span>
+            <span class="n">python_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">python</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">bootstrap_dir</span><span class="si">}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
+        <span class="p">)</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse arguments from the configure conda environment script call</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Bootstrap a pixi environment for running mache deploy&#39;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--software&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;software&#39;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The name of the target software.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--pixi&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to the pixi executable. If not provided, pixi is found &#39;</span>
+        <span class="s1">&#39;on PATH.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--prefix&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;prefix&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Install the environment into this prefix (directory). &#39;</span>
+        <span class="s1">&#39;This is a deploy-time option; bootstrap accepts it for CLI &#39;</span>
+        <span class="s1">&#39;contract compatibility but does not use it.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--recreate&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;recreate&#39;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Recreate the environment if it exists.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--mache-fork&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;mache_fork&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Point to a mache org/fork (and branch) for testing. &#39;</span>
+        <span class="s1">&#39;Example: E3SM-Project/mache&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--mache-branch&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;mache_branch&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Point to a mache branch (and fork) for testing.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--mache-version&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;mache_version&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The version of mache to install if not from a branch.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--python&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The python major and minor version to use.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--quiet&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;quiet&#39;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Only print output to log files, not to the terminal.&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">mache_fork</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">mache_branch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;You must supply both or neither of &#39;</span>
+            <span class="s1">&#39;--mache-fork and --mache-branch&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">mache_version</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">mache_fork</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">mache_branch</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;You must supply --mache-version and/or both --mache-fork &#39;</span>
+            <span class="s1">&#39;and --mache-branch.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">args</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_popen_text_kwargs</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate subprocess text-mode kwargs for Python 3.6 compatibility.&quot;&quot;&quot;</span>
+    <span class="n">normalized</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">universal_newlines</span> <span class="o">=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;universal_newlines&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">universal_newlines</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">universal_newlines</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;text and universal_newlines must match when both are set.&#39;</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">universal_newlines</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">normalized</span><span class="p">[</span><span class="s1">&#39;universal_newlines&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">,</span> <span class="n">normalized</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_shell_on_andand</span><span class="p">(</span><span class="n">commands</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a shell command string on top-level &#39;&amp;&amp;&#39; (quote-aware).</span>
+
+<span class="sd">    This is used only for logging/pretty-printing in check_call(). It is not a</span>
+<span class="sd">    full shell parser; it is a best-effort splitter that avoids breaking</span>
+<span class="sd">    quoted sub-commands (e.g. bash -lc &#39;... &amp;&amp; ...&#39;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">quote</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">commands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">quote</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># In double quotes, backslash can escape characters.</span>
+            <span class="k">if</span> <span class="n">quote</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span> <span class="ow">and</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">commands</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">quote</span><span class="p">:</span>
+                <span class="n">quote</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Not currently in a quote</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">or</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+            <span class="n">quote</span> <span class="o">=</span> <span class="n">ch</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;&amp;&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">commands</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&amp;&#39;</span><span class="p">:</span>
+            <span class="n">part</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">part</span><span class="p">:</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+            <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+            <span class="k">continue</span>
+
+        <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">last</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">last</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parts</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_print_failure_summary</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">tail_lines</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">ERROR: bootstrap failed.&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;See log: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Failing command:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">cmd</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Details:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="n">tail_lines</span><span class="p">:])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Last </span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">tail_lines</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span><span class="si">}</span><span class="s1"> log lines:</span><span class="se">\n</span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_pixi_path</span><span class="p">():</span>
+    <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s1">&#39;.pixi&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">,</span> <span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_pixi_env_unset_prefix</span><span class="p">():</span>
+    <span class="k">return</span> <span class="s1">&#39;env &#39;</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;-u </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">PIXI_ENV_VARS_TO_UNSET</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_pixi_platform</span><span class="p">():</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">&#39;darwin&#39;</span><span class="p">:</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="s1">&#39;osx&#39;</span>
+    <span class="n">machine</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CONDA_PLATFORM_MAP</span><span class="p">[(</span><span class="n">system</span><span class="p">,</span> <span class="n">machine</span><span class="p">)]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Unsupported platform for pixi bootstrap: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_install_pixi</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">,</span> <span class="n">pixi_bin_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">env_prefix_parts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c1"># Avoid modifying shell rc files during bootstrap.</span>
+        <span class="s1">&#39;PIXI_NO_PATH_UPDATE=1&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">pixi_bin_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">env_prefix_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PIXI_BIN_DIR=</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_bin_dir</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">env_prefix</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">env_prefix_parts</span><span class="p">)</span>
+
+    <span class="n">cmd_curl</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">env_prefix</span><span class="si">}</span><span class="s1"> curl -fsSL https://pixi.sh/install.sh | sh&#39;</span>
+    <span class="n">cmd_wget</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">env_prefix</span><span class="si">}</span><span class="s1"> wget -qO- https://pixi.sh/install.sh | sh&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_curl</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="c1"># Fallback path, matching pixi installation instructions.</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_wget</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_pixi_executable</span><span class="p">(</span><span class="n">pixi</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find pixi, installing it if needed.</span>
+
+<span class="sd">    Behavior</span>
+<span class="sd">    --------</span>
+<span class="sd">    - If ``--pixi`` points to an existing executable, use it.</span>
+<span class="sd">    - If ``--pixi`` is supplied but does not exist, treat it as the desired</span>
+<span class="sd">      install location and install pixi there.</span>
+<span class="sd">    - If ``--pixi`` is not supplied and pixi is not on PATH, install pixi</span>
+<span class="sd">        in the default location (typically ``~/.pixi/bin``).</span>
+
+<span class="sd">    The upstream installer supports choosing a destination via environment</span>
+<span class="sd">    variables (not flags): ``PIXI_BIN_DIR`` and ``PIXI_HOME``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># 1) Explicit path</span>
+    <span class="k">if</span> <span class="n">pixi</span><span class="p">:</span>
+        <span class="n">pixi_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pixi</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">pixi_path</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">pixi_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">pixi_path</span>
+
+        <span class="c1"># Not an existing executable: treat as install target.</span>
+        <span class="k">if</span> <span class="n">pixi_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">pixi_path</span><span class="p">):</span>
+            <span class="n">pixi_bin_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">pixi_path</span><span class="p">)</span>
+            <span class="n">expected_exec</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pixi_bin_dir</span><span class="p">,</span> <span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pixi_bin_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pixi_path</span><span class="p">)</span>
+            <span class="n">expected_exec</span> <span class="o">=</span> <span class="n">pixi_path</span>
+
+        <span class="n">_install_pixi</span><span class="p">(</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span> <span class="n">pixi_bin_dir</span><span class="o">=</span><span class="n">pixi_bin_dir</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">expected_exec</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">expected_exec</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">expected_exec</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s1">&#39;pixi was installed but the executable was not found where &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;expected. Looked for: </span><span class="si">{</span><span class="n">expected_exec</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 2) PATH</span>
+    <span class="n">which</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">which</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">which</span>
+
+    <span class="c1"># 3) Default path</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">_default_pixi_path</span><span class="p">())</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span>
+        <span class="n">_default_pixi_path</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">_default_pixi_path</span><span class="p">()</span>
+
+    <span class="c1"># 4) Auto-install default</span>
+    <span class="n">_install_pixi</span><span class="p">(</span><span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span> <span class="n">pixi_bin_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">_default_pixi_path</span><span class="p">())</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span>
+        <span class="n">_default_pixi_path</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">_default_pixi_path</span><span class="p">()</span>
+
+    <span class="n">which</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">which</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">which</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+        <span class="s1">&#39;pixi was installed but could not be found. Expected it in the &#39;</span>
+        <span class="s2">&quot;default location (e.g. &#39;~/.pixi/bin&#39;) or on PATH.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_bootstrap_pixi_toml_with_mache</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pixi_toml_path</span><span class="p">,</span>
+    <span class="n">software</span><span class="p">,</span>
+    <span class="n">mache_version</span><span class="p">,</span>
+    <span class="n">python_version</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">-mache-bootstrap&#39;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;[workspace]&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;name = &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;channels = [&quot;conda-forge&quot;]&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;platforms = [&quot;</span><span class="si">{</span><span class="n">_get_pixi_platform</span><span class="p">()</span><span class="si">}</span><span class="s1">&quot;]&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;channel-priority = &quot;strict&quot;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;[dependencies]&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;python = &quot;</span><span class="si">{</span><span class="n">python_version</span><span class="si">}</span><span class="s1">.*&quot;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;pip = &quot;*&quot;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;rattler-build = &quot;*&quot;&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;mache = &quot;==</span><span class="si">{</span><span class="n">mache_version</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_copy_mache_pixi_toml</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dest_pixi_toml</span><span class="p">,</span> <span class="n">source_repo_dir</span><span class="p">):</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_repo_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Expected mache pixi.toml not found in cloned repo: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest_pixi_toml</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clone_mache_repo</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">mache_fork</span><span class="p">,</span>
+    <span class="n">mache_branch</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">,</span>
+    <span class="n">recreate</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">build_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;deploy_tmp/build_mache&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">repo_dir</span> <span class="o">=</span> <span class="n">build_root</span> <span class="o">/</span> <span class="s1">&#39;mache&#39;</span>
+
+    <span class="k">if</span> <span class="n">recreate</span> <span class="ow">and</span> <span class="n">build_root</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">build_root</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">repo_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># Avoid clobbering developer edits in an existing clone.</span>
+        <span class="k">return</span>
+
+    <span class="n">build_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">local_source</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LOCAL_MACHE_SOURCE_ENV</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">local_source</span><span class="p">:</span>
+        <span class="n">source_repo</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">local_source</span><span class="p">))</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">source_repo</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Local mache source override does not exist: </span><span class="si">{</span><span class="n">source_repo</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source_repo</span><span class="p">,</span> <span class="n">repo_dir</span><span class="p">,</span> <span class="n">target_is_directory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span>
+                <span class="n">source_repo</span><span class="p">,</span>
+                <span class="n">repo_dir</span><span class="p">,</span>
+                <span class="n">ignore</span><span class="o">=</span><span class="n">shutil</span><span class="o">.</span><span class="n">ignore_patterns</span><span class="p">(</span>
+                    <span class="s1">&#39;.git&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;.pixi&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;__pycache__&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;*.pyc&#39;</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">build_root</span><span class="si">!s}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
+        <span class="o">+</span> <span class="s2">&quot;GIT_SSH_COMMAND=&#39;ssh -oBatchMode=yes&#39; git clone &quot;</span>
+        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;--depth 1 --single-branch -b &quot;</span><span class="si">{</span><span class="n">mache_branch</span><span class="si">}</span><span class="s1">&quot; &#39;</span>
+        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;&quot;git@github.com:</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git&quot; mache&#39;</span>
+    <span class="p">)</span>
+    <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
