@@ -84,7 +84,8 @@ def test_meshflow_deploy_workflow_installs_jigsaw_into_deployed_manifest(
             'set -euo pipefail && '
             'source load_meshflow.sh && '
             'test "${MESHFLOW_DEPLOY_SENTINEL}" = "workflow-ok" && '
-            'python -c "import jigsawpy; print(jigsawpy.__version__)"',
+            'python -c "import lxml.etree, mache.jigsaw, jigsawpy; '
+            'print(jigsawpy.__version__)"',
         ],
         cwd=downstream,
         env=env,
@@ -132,6 +133,7 @@ def test_meshflow_cli_jigsaw_install_uses_local_pixi_manifest(
             'set -euo pipefail && '
             'source load_meshflow.sh && '
             'test "${MESHFLOW_DEPLOY_SENTINEL}" = "workflow-ok" && '
+            'python -c "import lxml.etree, mache.jigsaw" && '
             'meshflow --version && '
             'meshflow jigsaw install',
         ],
