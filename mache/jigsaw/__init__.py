@@ -13,7 +13,11 @@ from pathlib import Path
 
 from jinja2 import Environment, StrictUndefined
 
-from mache.deploy.bootstrap import check_call
+from mache.deploy.bootstrap import (
+    build_pixi_env_unset_prefix,
+    check_call,
+    check_call_with_retries,
+)
 
 JIGSAW_PYTHON_URL = 'git@github.com:dengwirda/jigsaw-python.git'
 
@@ -715,7 +719,7 @@ def _build_external_jigsaw(
             platform_name=platform_name,
         )
         command = (
-            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            f'{build_pixi_env_unset_prefix()} '
             f'{shlex.quote(pixi_exe)} run -m {shlex.quote(str(pixi_toml))} '
             'rattler-build build '
             f'--recipe-dir {shlex.quote(str(recipe_dir.resolve()))} '
@@ -758,7 +762,11 @@ def _ensure_conda_rattler_build_env(
             '--channel conda-forge '
             'rattler-build'
         )
-        check_call(command, log_filename=log_filename, quiet=quiet)
+        check_call_with_retries(
+            command,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
 
     return f'{shlex.quote(conda)} run --prefix {shlex.quote(str(tool_prefix))}'
 
@@ -931,22 +939,32 @@ def _install_into_pixi(
     package_spec = _format_pixi_jigsaw_spec(jigsaw_version)
 
     add_channel_command = (
+        f'{build_pixi_env_unset_prefix()} '
         f'{shlex.quote(pixi_exe)} workspace channel add '
         f'--manifest-path {shlex.quote(manifest)} '
         f'{feature_arg}'
         '--prepend '
         f'{shlex.quote(channel_uri)}'
     )
-    check_call(add_channel_command, log_filename=log_filename, quiet=quiet)
+    check_call_with_retries(
+        add_channel_command,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
 
     add_package_command = (
+        f'{build_pixi_env_unset_prefix()} '
         f'{shlex.quote(pixi_exe)} add '
         f'--manifest-path {shlex.quote(manifest)} '
         f'{platform_arg}'
         f'{feature_arg}'
         f'{shlex.quote(package_spec)}'
     )
-    check_call(add_package_command, log_filename=log_filename, quiet=quiet)
+    check_call_with_retries(
+        add_package_command,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
 
 
 def _infer_pixi_feature_for_active_environment(

@@ -9,6 +9,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Dict  # noqa: F401
 
@@ -27,6 +28,8 @@ PIXI_ENV_VARS_TO_UNSET = (
     'PIXI_ENVIRONMENT_NAME',
     'PIXI_IN_SHELL',
 )
+BOOTSTRAP_SETUPTOOLS_SPEC = '>=60'
+BOOTSTRAP_WHEEL_SPEC = '*'
 
 
 def check_call(
@@ -210,6 +213,39 @@ def check_call(
     return result
 
 
+def check_call_with_retries(
+    commands,
+    log_filename,
+    quiet,
+    *,
+    retries=3,
+    retry_delay=2.0,
+):
+    """Run a command with a few retries for transient pixi/network failures."""
+
+    last_error = None
+    for attempt in range(1, retries + 1):
+        try:
+            return check_call(commands, log_filename, quiet)
+        except subprocess.CalledProcessError as exc:
+            last_error = exc
+            if attempt >= retries:
+                raise
+
+            message = (
+                f'Command failed on attempt {attempt}/{retries}; '
+                f'retrying in {retry_delay:.0f}s...\n'
+            )
+            with open(log_filename, 'a', encoding='utf-8') as log_file:
+                log_file.write(message)
+            if not quiet:
+                print(message)
+            time.sleep(retry_delay)
+
+    if last_error is not None:
+        raise last_error
+
+
 def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
     """Build a shell prefix to activate a pixi env in the current shell.
 
@@ -369,6 +405,7 @@ def _run(log_filename):
         _copy_mache_pixi_toml(
             dest_pixi_toml=pixi_toml_path,
             source_repo_dir=Path('deploy_tmp/build_mache/mache'),
+            python_version=args.python,
         )
 
         cmd_install = (
@@ -376,7 +413,7 @@ def _run(log_filename):
             f'{build_pixi_env_unset_prefix()} '
             f'"{pixi_exe}" install'
         )
-        check_call(cmd_install, log_filename, quiet)
+        check_call_with_retries(cmd_install, log_filename, quiet)
 
         pixi_toml = str(pixi_toml_path.resolve())
         pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
@@ -403,7 +440,7 @@ def _run(log_filename):
             f'{build_pixi_env_unset_prefix()} '
             f'"{pixi_exe}" install'
         )
-        check_call(cmd_install, log_filename, quiet)
+        check_call_with_retries(cmd_install, log_filename, quiet)
 
 
 def _parse_args():
@@ -735,13 +772,63 @@ def _format_pixi_version_specifier(version: str) -> str:
     return f'=={normalized}'
 
 
-def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir):
+def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir, python_version):
     src = Path(source_repo_dir) / 'pixi.toml'
     if not src.is_file():
         raise RuntimeError(
             f'Expected mache pixi.toml not found in cloned repo: {src}'
         )
-    shutil.copyfile(str(src), str(dest_pixi_toml))
+    source_text = src.read_text(encoding='utf-8')
+    channels = _get_pixi_channels_from_text(source_text)
+    dependencies = _get_pixi_dependencies_from_text(source_text)
+
+    _write_bootstrap_pixi_toml_with_local_source(
+        pixi_toml_path=Path(dest_pixi_toml),
+        channels=channels,
+        dependencies=dependencies,
+        python_version=python_version,
+    )
+
+
+def _write_bootstrap_pixi_toml_with_local_source(
+    *,
+    pixi_toml_path: Path,
+    channels: list[str],
+    dependencies: dict[str, str],
+    python_version: str,
+) -> None:
+    """Write a slim bootstrap pixi manifest for a local mache source tree.
+
+    The full repo ``pixi.toml`` may contain CI-only features, named
+    environments, and multiple platforms. The bootstrap environment only needs
+    the current platform, the requested Python, and the runtime/build
+    dependencies required to install the local mache checkout.
+    """
+
+    merged_channels = channels[:] if channels else ['conda-forge']
+    merged_dependencies = dict(dependencies)
+    merged_dependencies.setdefault('pip', '*')
+    merged_dependencies.setdefault('rattler-build', '*')
+    merged_dependencies.setdefault('setuptools', BOOTSTRAP_SETUPTOOLS_SPEC)
+    merged_dependencies.setdefault('wheel', BOOTSTRAP_WHEEL_SPEC)
+
+    lines = [
+        '[workspace]',
+        'name = "mache-bootstrap-local"',
+        f'channels = [{", ".join(json.dumps(c) for c in merged_channels)}]',
+        f'platforms = ["{_get_pixi_platform()}"]',
+        'channel-priority = "strict"',
+        '',
+        '[dependencies]',
+        f'python = "{python_version}.*"',
+    ]
+
+    for name, spec in merged_dependencies.items():
+        if name == 'python':
+            continue
+        lines.append(f'{name} = {json.dumps(spec)}')
+
+    pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
 def merge_pixi_toml_dependencies(
@@ -767,10 +854,7 @@ def merge_pixi_toml_dependencies(
 
     source_text = source_pixi_toml.read_text(encoding='utf-8')
     channels = _get_pixi_channels_from_text(source_text)
-    dependencies = _get_pixi_dependencies_from_text(
-        source_text,
-        python_version=python_version,
-    )
+    dependencies = _get_pixi_dependencies_from_text(source_text)
 
     target_path = Path(target_pixi_toml)
     text = target_path.read_text(encoding='utf-8')
@@ -793,28 +877,24 @@ def _get_pixi_channels_from_text(source_text):
     return re.findall(r'"([^"]+)"', match.group(1))
 
 
-def _get_pixi_dependencies_from_text(source_text, *, python_version):
+def _get_pixi_dependencies_from_text(source_text):
     dependencies = {}  # type: Dict[str, str]
 
-    for table in (
-        'dependencies',
-        f'feature.py{python_version.replace(".", "")}.dependencies',
-    ):
-        section = _find_toml_table_block(text=source_text, table=table)
-        if section is None:
-            continue
+    section = _find_toml_table_block(text=source_text, table='dependencies')
+    if section is None:
+        return dependencies
 
-        start, end = section
-        section_text = source_text[start:end]
-        for match in re.finditer(
-            r'(?m)^([A-Za-z0-9_.-]+)\s*=\s*"([^"\n]+)"\s*$',
-            section_text,
-        ):
-            name = match.group(1)
-            spec = match.group(2)
-            if name == 'python':
-                continue
-            dependencies.setdefault(name, spec)
+    start, end = section
+    section_text = source_text[start:end]
+    for match in re.finditer(
+        r'(?m)^([A-Za-z0-9_.-]+)\s*=\s*"([^"\n]+)"\s*$',
+        section_text,
+    ):
+        name = match.group(1)
+        spec = match.group(2)
+        if name == 'python':
+            continue
+        dependencies.setdefault(name, spec)
 
     return dependencies
 
@@ -925,20 +1005,10 @@ def _clone_mache_repo(
                 f'Local mache source override does not exist: {source_repo}'
             )
 
-        try:
-            os.symlink(source_repo, repo_dir, target_is_directory=True)
-        except OSError:
-            shutil.copytree(
-                source_repo,
-                repo_dir,
-                ignore=shutil.ignore_patterns(
-                    '.git',
-                    '.pixi',
-                    'deploy_tmp',
-                    '__pycache__',
-                    '*.pyc',
-                ),
-            )
+        _copy_local_mache_source_snapshot(
+            source_repo=source_repo,
+            repo_dir=repo_dir,
+        )
         return
 
     commands = (
@@ -948,6 +1018,51 @@ def _clone_mache_repo(
         + f'"git@github.com:{mache_fork}.git" mache'
     )
     check_call(commands, log_filename, quiet)
+
+
+def _copy_local_mache_source_snapshot(
+    *, source_repo: Path, repo_dir: Path
+) -> None:
+    """Copy a clean local source snapshot for bootstrap installs.
+
+    Using the live developer worktree directly can pull in untracked files or
+    local symlinks that break setuptools packaging. Prefer a tracked-file
+    snapshot when the source is a git checkout, and fall back to a filtered
+    copytree otherwise.
+    """
+
+    try:
+        tracked = subprocess.check_output(
+            ['git', '-C', str(source_repo), 'ls-files', '-z'],
+            text=False,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        shutil.copytree(
+            source_repo,
+            repo_dir,
+            ignore=shutil.ignore_patterns(
+                '.git',
+                '.pixi',
+                'deploy_tmp',
+                '__pycache__',
+                '*.pyc',
+            ),
+        )
+        return
+
+    repo_dir.mkdir(parents=True, exist_ok=True)
+    for raw_path in tracked.split(b'\x00'):
+        if not raw_path:
+            continue
+        rel_path = Path(raw_path.decode('utf-8'))
+        src_path = source_repo / rel_path
+        dest_path = repo_dir / rel_path
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if src_path.is_symlink():
+            os.symlink(os.readlink(src_path), dest_path)
+        else:
+            shutil.copy2(src_path, dest_path)
 
 
 if __name__ == '__main__':
