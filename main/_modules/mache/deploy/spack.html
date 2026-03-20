@@ -147,6 +147,57 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">get_effective_spack_config</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return deploy config merged with runtime Spack overrides.&quot;&quot;&quot;</span>
+
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">spack_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">merged</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">)</span>
+
+    <span class="n">software_cfg</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;software&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="n">software_cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">software_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">software_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">merged</span><span class="p">[</span><span class="s1">&#39;software&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">software_cfg</span><span class="p">)</span>
+
+    <span class="n">runtime_spack</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_spack</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">merged</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">runtime_spack</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;software&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;software&#39;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">base</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">merged</span><span class="p">[</span><span class="s1">&#39;software&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="o">**</span><span class="n">value</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">merged</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="n">merged</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spack_disabled_for_run</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the CLI explicitly disables all Spack use.&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;no_spack&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spack_should_deploy_for_run</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">,</span> <span class="n">spack_cfg</span><span class="p">:</span> <span class="nb">dict</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when Spack environments should be deployed for this run.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">spack_disabled_for_run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;deploy_spack&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">))</span>
+
+
 <div class="viewcode-block" id="deploy_spack_software_env">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.spack.deploy_spack_software_env.html#mache.deploy.spack.deploy_spack_software_env">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">deploy_spack_software_env</span><span class="p">(</span>
@@ -165,7 +216,7 @@
 <span class="sd">    No CLI flags control this environment.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">get_effective_spack_config</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -175,9 +226,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">software_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;spack.software must be a mapping if provided&#39;</span><span class="p">)</span>
 
-    <span class="n">deploy_spack</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;deploy_spack&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">deploy_spack</span> <span class="o">=</span> <span class="n">spack_should_deploy_for_run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">spack_cfg</span><span class="o">=</span><span class="n">spack_cfg</span><span class="p">)</span>
 
     <span class="n">software_supported</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">software_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;supported&#39;</span><span class="p">))</span>
 
@@ -316,7 +365,7 @@
 <span class="sd">        A list of SpackDeployResult, one per (compiler, mpi)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">get_effective_spack_config</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -326,9 +375,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">software_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;spack.software must be a mapping if provided&#39;</span><span class="p">)</span>
 
-    <span class="n">deploy_spack</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;deploy_spack&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">deploy_spack</span> <span class="o">=</span> <span class="n">spack_should_deploy_for_run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">spack_cfg</span><span class="o">=</span><span class="n">spack_cfg</span><span class="p">)</span>
 
     <span class="n">library_supported</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;supported&#39;</span><span class="p">))</span>
 
@@ -473,7 +520,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SpackDeployResult</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load pre-existing Spack library environments for load scripts.&quot;&quot;&quot;</span>
 
-    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">get_effective_spack_config</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -483,15 +530,17 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">toolchain_pairs</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s1">&#39;Spack library environments are supported but no toolchain pairs &#39;</span>
-            <span class="s1">&#39;were resolved. Provide toolchain.compiler/toolchain.mpi or &#39;</span>
-            <span class="s1">&#39;--compiler/--mpi.&#39;</span>
+            <span class="s1">&#39;Spack library environments are enabled for this run but no &#39;</span>
+            <span class="s1">&#39;toolchain pairs were resolved. Provide toolchain.compiler/&#39;</span>
+            <span class="s1">&#39;toolchain.mpi or --compiler/--mpi, or disable Spack for this &#39;</span>
+            <span class="s1">&#39;run with --no-spack or a pre_spack hook.&#39;</span>
         <span class="p">)</span>
 
     <span class="n">spack_path</span> <span class="o">=</span> <span class="n">_resolve_spack_path</span><span class="p">(</span>
         <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
         <span class="n">spack_cfg</span><span class="o">=</span><span class="n">spack_cfg</span><span class="p">,</span>
-        <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;support is enabled (load scripts require existing envs)&#39;</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;support is enabled for this run (load scripts will reuse &#39;</span>
+        <span class="s1">&#39;existing envs)&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">e3sm_hdf5_netcdf</span> <span class="o">=</span> <span class="n">_get_machine_bool</span><span class="p">(</span>
@@ -558,7 +607,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpackSoftwareEnvResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a pre-existing Spack software environment for load scripts.&quot;&quot;&quot;</span>
 
-    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">get_effective_spack_config</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -574,13 +623,17 @@
 
     <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s1">&#39;Spack software environment is supported but machine is not known.&#39;</span>
+            <span class="s1">&#39;Spack software environment is enabled for this run but machine &#39;</span>
+            <span class="s1">&#39;is not known. Pass --no-spack or disable &#39;</span>
+            <span class="s1">&#39;spack.software.supported &#39;</span>
+            <span class="s1">&#39;in a pre_spack hook for Pixi-only runs.&#39;</span>
         <span class="p">)</span>
 
     <span class="n">spack_path</span> <span class="o">=</span> <span class="n">_resolve_spack_path</span><span class="p">(</span>
         <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
         <span class="n">spack_cfg</span><span class="o">=</span><span class="n">spack_cfg</span><span class="p">,</span>
-        <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;support is enabled (load scripts require existing envs)&#39;</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;support is enabled for this run (load scripts will reuse &#39;</span>
+        <span class="s1">&#39;existing envs)&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span> <span class="o">=</span> <span class="n">_resolve_software_toolchain</span><span class="p">(</span>
@@ -681,7 +734,8 @@
             <span class="s1">&#39;--spack-path, &#39;</span>
             <span class="s2">&quot;ctx.runtime[&#39;spack&#39;][&#39;spack_path&#39;]&quot;</span>
             <span class="s1">&#39; in a hook (preferred) or set spack.spack_path in &#39;</span>
-            <span class="s1">&#39;deploy/config.yaml.j2&#39;</span>
+            <span class="s1">&#39;deploy/config.yaml.j2. To bypass Spack entirely for this run, &#39;</span>
+            <span class="s1">&#39;pass --no-spack.&#39;</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">spack_path</span><span class="p">)))</span>
 

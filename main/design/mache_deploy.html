@@ -321,15 +321,18 @@ spack env)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> exposes CLI flags such as:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">--deploy-spack</span></code> (force-enable spack deployment)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--no-spack</span></code> (disable all spack use for a single run)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--spack-path</span> <span class="pre">&lt;path&gt;</span></code> (temporary override for <code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>)</p></li>
 </ul>
 </li>
 </ul>
 <p><strong>Precedence</strong></p>
 <ol class="arabic simple">
-<li><p>If the user passes <code class="docutils literal notranslate"><span class="pre">--deploy-spack</span></code>, spack deployment is enabled regardless
-of the config default.</p></li>
-<li><p>Otherwise, fall back to the <code class="docutils literal notranslate"><span class="pre">config.yaml.j2</span></code> default.</p></li>
+<li><p>If the user passes <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>, all spack use is disabled for that run.</p></li>
+<li><p>Otherwise, if the user passes <code class="docutils literal notranslate"><span class="pre">--deploy-spack</span></code>, spack deployment is enabled
+regardless of the config default.</p></li>
+<li><p>Otherwise, fall back to the <code class="docutils literal notranslate"><span class="pre">config.yaml.j2</span></code> default for deployment and
+reuse any supported pre-existing spack environments in load scripts.</p></li>
 </ol>
 <p>For spack checkout path resolution:</p>
 <ol class="arabic simple">

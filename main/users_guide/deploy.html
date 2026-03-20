@@ -298,7 +298,8 @@ load scripts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.prefix</span></code>: required in practice.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.channels</span></code>: required and must be non-empty.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
-CLI override provides it.</p></li>
+CLI override provides it, unless the user disables Spack for that run with
+<code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jigsaw.enabled</span></code>: optional.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hooks</span></code>: optional and disabled unless explicitly configured.</p></li>
 </ul>
@@ -604,13 +605,16 @@ the target repository’s <code class="docutils literal notranslate"><span class
 <h3>Spack is enabled but deployment fails because <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> is missing<a class="headerlink" href="#spack-is-enabled-but-deployment-fails-because-spack-path-is-missing" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
-<li><p>Spack support was enabled but no path was provided in config, hooks, or the
-CLI.</p></li>
+<li><p>Spack support was enabled for this run, but no path was provided in config,
+hooks, or the CLI.</p></li>
 </ul>
 <p>Fix:</p>
 <ul class="simple">
 <li><p>Set <code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>, write it in a hook through
 <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;spack&quot;][&quot;spack_path&quot;]</span></code>, or pass <code class="docutils literal notranslate"><span class="pre">--spack-path</span></code>.</p></li>
+<li><p>If this should be a Pixi-only run, pass <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">pre_spack</span></code> hook may also disable Spack for one run by returning
+<code class="docutils literal notranslate"><span class="pre">{&quot;spack&quot;:</span> <span class="pre">{&quot;supported&quot;:</span> <span class="pre">false,</span> <span class="pre">&quot;software&quot;:</span> <span class="pre">{&quot;supported&quot;:</span> <span class="pre">false}}}</span></code>.</p></li>
 </ul>
 </section>
 <section id="project-version-is-still-dynamic">

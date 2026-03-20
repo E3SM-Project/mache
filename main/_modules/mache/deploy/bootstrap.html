@@ -96,13 +96,17 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>  <span class="c1"># noqa: F401</span>
 
 <span class="n">CONDA_PLATFORM_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="s1">&#39;x86_64&#39;</span><span class="p">):</span> <span class="s1">&#39;linux-64&#39;</span><span class="p">,</span>
@@ -119,6 +123,8 @@
     <span class="s1">&#39;PIXI_ENVIRONMENT_NAME&#39;</span><span class="p">,</span>
     <span class="s1">&#39;PIXI_IN_SHELL&#39;</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">BOOTSTRAP_SETUPTOOLS_SPEC</span> <span class="o">=</span> <span class="s1">&#39;&gt;=60&#39;</span>
+<span class="n">BOOTSTRAP_WHEEL_SPEC</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
 
 
 <div class="viewcode-block" id="check_call">
@@ -305,6 +311,39 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">check_call_with_retries</span><span class="p">(</span>
+    <span class="n">commands</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">retry_delay</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a command with a few retries for transient pixi/network failures.&quot;&quot;&quot;</span>
+
+    <span class="n">last_error</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">last_error</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;=</span> <span class="n">retries</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Command failed on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">retries</span><span class="si">}</span><span class="s1">; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;retrying in </span><span class="si">{</span><span class="n">retry_delay</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">s...</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+                <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">last_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">last_error</span>
+
+
 <div class="viewcode-block" id="build_pixi_shell_hook_prefix">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.bootstrap.build_pixi_shell_hook_prefix.html#mache.deploy.bootstrap.build_pixi_shell_hook_prefix">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_pixi_shell_hook_prefix</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pixi_toml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -476,6 +515,7 @@
         <span class="n">_copy_mache_pixi_toml</span><span class="p">(</span>
             <span class="n">dest_pixi_toml</span><span class="o">=</span><span class="n">pixi_toml_path</span><span class="p">,</span>
             <span class="n">source_repo_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s1">&#39;deploy_tmp/build_mache/mache&#39;</span><span class="p">),</span>
+            <span class="n">python_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">python</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">(</span>
@@ -483,7 +523,7 @@
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
         <span class="p">)</span>
-        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+        <span class="n">check_call_with_retries</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
 
         <span class="n">pixi_toml</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
         <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
@@ -510,7 +550,7 @@
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
         <span class="p">)</span>
-        <span class="n">check_call</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+        <span class="n">check_call_with_retries</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">():</span>
@@ -823,18 +863,226 @@
         <span class="sa">f</span><span class="s1">&#39;python = &quot;</span><span class="si">{</span><span class="n">python_version</span><span class="si">}</span><span class="s1">.*&quot;&#39;</span><span class="p">,</span>
         <span class="s1">&#39;pip = &quot;*&quot;&#39;</span><span class="p">,</span>
         <span class="s1">&#39;rattler-build = &quot;*&quot;&#39;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s1">&#39;mache = &quot;==</span><span class="si">{</span><span class="n">mache_version</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;mache = &quot;</span><span class="si">{</span><span class="n">_format_pixi_version_specifier</span><span class="p">(</span><span class="n">mache_version</span><span class="p">)</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_copy_mache_pixi_toml</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dest_pixi_toml</span><span class="p">,</span> <span class="n">source_repo_dir</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_pixi_version_specifier</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a pixi version specifier from a mache version pin.</span>
+
+<span class="sd">    Pixi dependency values expect a version specifier, not a full conda</span>
+<span class="sd">    matchspec. Exact pins use ``==`` while wildcard pins already use the</span>
+<span class="sd">    correct ``3.0.2.*``-style form.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">normalized</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">version</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">normalized</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.*&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">normalized</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;==</span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_copy_mache_pixi_toml</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dest_pixi_toml</span><span class="p">,</span> <span class="n">source_repo_dir</span><span class="p">,</span> <span class="n">python_version</span><span class="p">):</span>
     <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_repo_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">&#39;Expected mache pixi.toml not found in cloned repo: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="p">)</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest_pixi_toml</span><span class="p">))</span>
+    <span class="n">source_text</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">_get_pixi_channels_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">)</span>
+    <span class="n">dependencies</span> <span class="o">=</span> <span class="n">_get_pixi_dependencies_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">)</span>
+
+    <span class="n">_write_bootstrap_pixi_toml_with_local_source</span><span class="p">(</span>
+        <span class="n">pixi_toml_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">dest_pixi_toml</span><span class="p">),</span>
+        <span class="n">channels</span><span class="o">=</span><span class="n">channels</span><span class="p">,</span>
+        <span class="n">dependencies</span><span class="o">=</span><span class="n">dependencies</span><span class="p">,</span>
+        <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_bootstrap_pixi_toml_with_local_source</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pixi_toml_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">dependencies</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">python_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a slim bootstrap pixi manifest for a local mache source tree.</span>
+
+<span class="sd">    The full repo ``pixi.toml`` may contain CI-only features, named</span>
+<span class="sd">    environments, and multiple platforms. The bootstrap environment only needs</span>
+<span class="sd">    the current platform, the requested Python, and the runtime/build</span>
+<span class="sd">    dependencies required to install the local mache checkout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">merged_channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[:]</span> <span class="k">if</span> <span class="n">channels</span> <span class="k">else</span> <span class="p">[</span><span class="s1">&#39;conda-forge&#39;</span><span class="p">]</span>
+    <span class="n">merged_dependencies</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dependencies</span><span class="p">)</span>
+    <span class="n">merged_dependencies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;pip&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+    <span class="n">merged_dependencies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;rattler-build&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+    <span class="n">merged_dependencies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;setuptools&#39;</span><span class="p">,</span> <span class="n">BOOTSTRAP_SETUPTOOLS_SPEC</span><span class="p">)</span>
+    <span class="n">merged_dependencies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;wheel&#39;</span><span class="p">,</span> <span class="n">BOOTSTRAP_WHEEL_SPEC</span><span class="p">)</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;[workspace]&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;name = &quot;mache-bootstrap-local&quot;&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;channels = [</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">merged_channels</span><span class="p">)</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;platforms = [&quot;</span><span class="si">{</span><span class="n">_get_pixi_platform</span><span class="p">()</span><span class="si">}</span><span class="s1">&quot;]&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;channel-priority = &quot;strict&quot;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;[dependencies]&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;python = &quot;</span><span class="si">{</span><span class="n">python_version</span><span class="si">}</span><span class="s1">.*&quot;&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">merged_dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;python&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_pixi_toml_dependencies</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">target_pixi_toml</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">source_repo_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">python_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge pixi channels and dependencies from a source repo into a target.</span>
+
+<span class="sd">    This is used when deploying a local/forked ``mache`` branch into a</span>
+<span class="sd">    downstream pixi environment. The source repo&#39;s ``pixi.toml`` is treated as</span>
+<span class="sd">    the authoritative dependency set, including non-PyPI tools such as</span>
+<span class="sd">    ``rsync``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">source_pixi_toml</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_repo_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">source_pixi_toml</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Expected mache pixi.toml not found in cloned repo: &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">source_pixi_toml</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">source_text</span> <span class="o">=</span> <span class="n">source_pixi_toml</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">_get_pixi_channels_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">)</span>
+    <span class="n">dependencies</span> <span class="o">=</span> <span class="n">_get_pixi_dependencies_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">)</span>
+
+    <span class="n">target_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">target_pixi_toml</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">target_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_merge_workspace_channels</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="n">channels</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_merge_dependencies_table</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span><span class="n">dependencies</span><span class="p">)</span>
+    <span class="n">target_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_pixi_channels_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">):</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="n">_find_toml_table_block</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">source_text</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;workspace&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">section</span>
+    <span class="n">workspace_text</span> <span class="o">=</span> <span class="n">source_text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?ms)^channels\s*=\s*\[(.*?)\]&#39;</span><span class="p">,</span> <span class="n">workspace_text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;&quot;([^&quot;]+)&quot;&#39;</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_pixi_dependencies_from_text</span><span class="p">(</span><span class="n">source_text</span><span class="p">):</span>
+    <span class="n">dependencies</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: Dict[str, str]</span>
+
+    <span class="n">section</span> <span class="o">=</span> <span class="n">_find_toml_table_block</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">source_text</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;dependencies&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dependencies</span>
+
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">section</span>
+    <span class="n">section_text</span> <span class="o">=</span> <span class="n">source_text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;(?m)^([A-Za-z0-9_.-]+)\s*=\s*&quot;([^&quot;\n]+)&quot;\s*$&#39;</span><span class="p">,</span>
+        <span class="n">section_text</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;python&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">dependencies</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dependencies</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_workspace_channels</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">channels</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">channels</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="n">section</span> <span class="o">=</span> <span class="n">_find_toml_table_block</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;workspace&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">section</span>
+    <span class="n">workspace_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?ms)^channels\s*=\s*\[(.*?)\]&#39;</span><span class="p">,</span> <span class="n">workspace_text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="n">existing</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;&quot;([^&quot;]+)&quot;&#39;</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="n">existing</span><span class="p">[:]</span>
+    <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">channel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">:</span>
+            <span class="n">merged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+
+    <span class="n">replacement</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;channels = [&#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+    <span class="p">)</span>
+    <span class="n">updated_workspace</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">workspace_text</span><span class="p">[:</span> <span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span>
+        <span class="o">+</span> <span class="n">replacement</span>
+        <span class="o">+</span> <span class="n">workspace_text</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">[:</span><span class="n">start</span><span class="p">]</span> <span class="o">+</span> <span class="n">updated_workspace</span> <span class="o">+</span> <span class="n">text</span><span class="p">[</span><span class="n">end</span><span class="p">:]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_dependencies_table</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">dependencies</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dependencies</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="n">section</span> <span class="o">=</span> <span class="n">_find_toml_table_block</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="s1">&#39;dependencies&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">section</span>
+    <span class="n">deps_text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+    <span class="n">existing</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;(?m)^([A-Za-z0-9_.-]+)\s*=&#39;</span><span class="p">,</span>
+            <span class="n">deps_text</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">additions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">additions</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+    <span class="k">if</span> <span class="n">deps_text</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">deps_text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+        <span class="n">deps_text</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="n">deps_text</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">additions</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">[:</span><span class="n">start</span><span class="p">]</span> <span class="o">+</span> <span class="n">deps_text</span> <span class="o">+</span> <span class="n">text</span><span class="p">[</span><span class="n">end</span><span class="p">:]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_toml_table_block</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">table</span><span class="p">):</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;(?m)^\[</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="si">}</span><span class="s1">\]\s*$&#39;</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+    <span class="n">next_header</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?m)^\[[^\]]+\]\s*$&#39;</span><span class="p">)</span>
+    <span class="n">next_match</span> <span class="o">=</span> <span class="n">next_header</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">next_match</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="k">if</span> <span class="n">next_match</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clone_mache_repo</span><span class="p">(</span>
@@ -867,20 +1115,10 @@
                 <span class="sa">f</span><span class="s1">&#39;Local mache source override does not exist: </span><span class="si">{</span><span class="n">source_repo</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="p">)</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source_repo</span><span class="p">,</span> <span class="n">repo_dir</span><span class="p">,</span> <span class="n">target_is_directory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span>
-                <span class="n">source_repo</span><span class="p">,</span>
-                <span class="n">repo_dir</span><span class="p">,</span>
-                <span class="n">ignore</span><span class="o">=</span><span class="n">shutil</span><span class="o">.</span><span class="n">ignore_patterns</span><span class="p">(</span>
-                    <span class="s1">&#39;.git&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;.pixi&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;__pycache__&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;*.pyc&#39;</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
+        <span class="n">_copy_local_mache_source_snapshot</span><span class="p">(</span>
+            <span class="n">source_repo</span><span class="o">=</span><span class="n">source_repo</span><span class="p">,</span>
+            <span class="n">repo_dir</span><span class="o">=</span><span class="n">repo_dir</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
@@ -890,6 +1128,51 @@
         <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;&quot;git@github.com:</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git&quot; mache&#39;</span>
     <span class="p">)</span>
     <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_copy_local_mache_source_snapshot</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">source_repo</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">repo_dir</span><span class="p">:</span> <span class="n">Path</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy a clean local source snapshot for bootstrap installs.</span>
+
+<span class="sd">    Using the live developer worktree directly can pull in untracked files or</span>
+<span class="sd">    local symlinks that break setuptools packaging. Prefer a tracked-file</span>
+<span class="sd">    snapshot when the source is a git checkout, and fall back to a filtered</span>
+<span class="sd">    copytree otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tracked</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;-C&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">source_repo</span><span class="p">),</span> <span class="s1">&#39;ls-files&#39;</span><span class="p">,</span> <span class="s1">&#39;-z&#39;</span><span class="p">],</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span>
+            <span class="n">source_repo</span><span class="p">,</span>
+            <span class="n">repo_dir</span><span class="p">,</span>
+            <span class="n">ignore</span><span class="o">=</span><span class="n">shutil</span><span class="o">.</span><span class="n">ignore_patterns</span><span class="p">(</span>
+                <span class="s1">&#39;.git&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;.pixi&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;__pycache__&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;*.pyc&#39;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">repo_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">raw_path</span> <span class="ow">in</span> <span class="n">tracked</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_path</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">rel_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">raw_path</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">src_path</span> <span class="o">=</span> <span class="n">source_repo</span> <span class="o">/</span> <span class="n">rel_path</span>
+        <span class="n">dest_path</span> <span class="o">=</span> <span class="n">repo_dir</span> <span class="o">/</span> <span class="n">rel_path</span>
+        <span class="n">dest_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">src_path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="n">src_path</span><span class="p">),</span> <span class="n">dest_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">dest_path</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>

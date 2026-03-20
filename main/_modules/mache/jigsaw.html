@@ -108,7 +108,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">StrictUndefined</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_call</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_pixi_env_unset_prefix</span><span class="p">,</span>
+    <span class="n">check_call</span><span class="p">,</span>
+    <span class="n">check_call_with_retries</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">JIGSAW_PYTHON_URL</span> <span class="o">=</span> <span class="s1">&#39;git@github.com:dengwirda/jigsaw-python.git&#39;</span>
 
@@ -825,7 +829,7 @@
             <span class="n">platform_name</span><span class="o">=</span><span class="n">platform_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">command</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s1">&#39;env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> run -m </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pixi_toml</span><span class="p">))</span><span class="si">}</span><span class="s1"> &#39;</span>
             <span class="s1">&#39;rattler-build build &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;--recipe-dir </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">recipe_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">()))</span><span class="si">}</span><span class="s1"> &#39;</span>
@@ -868,7 +872,11 @@
             <span class="s1">&#39;--channel conda-forge &#39;</span>
             <span class="s1">&#39;rattler-build&#39;</span>
         <span class="p">)</span>
-        <span class="n">check_call</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
+        <span class="n">check_call_with_retries</span><span class="p">(</span>
+            <span class="n">command</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">conda</span><span class="p">)</span><span class="si">}</span><span class="s1"> run --prefix </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tool_prefix</span><span class="p">))</span><span class="si">}</span><span class="s1">&#39;</span>
 
@@ -1041,22 +1049,32 @@
     <span class="n">package_spec</span> <span class="o">=</span> <span class="n">_format_pixi_jigsaw_spec</span><span class="p">(</span><span class="n">jigsaw_version</span><span class="p">)</span>
 
     <span class="n">add_channel_command</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> workspace channel add &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;--manifest-path </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span><span class="si">}</span><span class="s1"> &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">feature_arg</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="s1">&#39;--prepend &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">channel_uri</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="p">)</span>
-    <span class="n">check_call</span><span class="p">(</span><span class="n">add_channel_command</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
+    <span class="n">check_call_with_retries</span><span class="p">(</span>
+        <span class="n">add_channel_command</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">add_package_command</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> add &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;--manifest-path </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span><span class="si">}</span><span class="s1"> &#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">platform_arg</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">feature_arg</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">package_spec</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="p">)</span>
-    <span class="n">check_call</span><span class="p">(</span><span class="n">add_package_command</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
+    <span class="n">check_call_with_retries</span><span class="p">(</span>
+        <span class="n">add_package_command</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_infer_pixi_feature_for_active_environment</span><span class="p">(</span>

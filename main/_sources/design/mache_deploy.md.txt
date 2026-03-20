@@ -195,13 +195,16 @@ maintainers to do full shared-environment deployments when needed.
     “software” spack env)
 - `deploy.py` exposes CLI flags such as:
   - `--deploy-spack` (force-enable spack deployment)
+  - `--no-spack` (disable all spack use for a single run)
   - `--spack-path <path>` (temporary override for `spack.spack_path`)
 
 **Precedence**
 
-1. If the user passes `--deploy-spack`, spack deployment is enabled regardless
-   of the config default.
-2. Otherwise, fall back to the `config.yaml.j2` default.
+1. If the user passes `--no-spack`, all spack use is disabled for that run.
+2. Otherwise, if the user passes `--deploy-spack`, spack deployment is enabled
+   regardless of the config default.
+3. Otherwise, fall back to the `config.yaml.j2` default for deployment and
+   reuse any supported pre-existing spack environments in load scripts.
 
 For spack checkout path resolution:
 
