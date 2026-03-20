@@ -50,14 +50,26 @@ def run(
     cwd: Path,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        args,
-        cwd=cwd,
-        env=env,
-        check=True,
-        text=True,
-        capture_output=True,
-    )
+    try:
+        return subprocess.run(
+            args,
+            cwd=cwd,
+            env=env,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        stdout = exc.stdout or ''
+        stderr = exc.stderr or ''
+        raise AssertionError(
+            'Subprocess failed.\n'
+            f'args: {exc.cmd}\n'
+            f'cwd: {cwd}\n'
+            f'returncode: {exc.returncode}\n'
+            f'stdout:\n{stdout}\n'
+            f'stderr:\n{stderr}'
+        ) from exc
 
 
 def make_workflow_env() -> dict[str, str]:
