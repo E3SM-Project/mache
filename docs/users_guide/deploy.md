@@ -323,6 +323,19 @@ If you pass `--bootstrap-only`, the process stops here and leaves you with an
 interactive environment that can run `mache deploy update` or `mache deploy
 run` manually.
 
+This mode is especially useful when a downstream repository wants to adopt a
+new `mache` release. In that case, bootstrap the new release explicitly so the
+temporary environment contains the new `mache` code:
+
+```bash
+./deploy.py --bootstrap-only --mache-version 2.2.0
+pixi shell -m deploy_tmp/bootstrap_pixi/pixi.toml
+mache deploy update --software polaris --mache-version 2.2.0
+```
+
+After that, update `deploy/pins.cfg` manually so `[pixi] mache = 2.2.0`
+matches the regenerated `deploy/cli_spec.json`, then exit the bootstrap shell.
+
 ### Phase 3: `mache deploy run`
 
 The runtime deploy phase is where the actual target-software environment is
@@ -421,16 +434,24 @@ version of `mache`.
 
 The usual sequence is:
 
-1. Install or bootstrap the `mache` version you want to use.
-2. Update `deploy/pins.cfg`, especially `[pixi] mache = ...`.
-3. Run:
+1. Bootstrap the new release explicitly:
 
    ```bash
+   ./deploy.py --bootstrap-only --mache-version 2.2.0
+   ```
+
+2. Enter the bootstrap environment and regenerate the generated files with the
+   same version:
+
+   ```bash
+   pixi shell -m deploy_tmp/bootstrap_pixi/pixi.toml
    mache deploy update --repo-root . --software polaris --mache-version 2.2.0
    ```
 
-4. Review the diffs in `deploy.py` and `deploy/cli_spec.json`.
-5. Adjust repository-owned files such as `deploy/config.yaml.j2` only if the
+3. Update `deploy/pins.cfg`, especially `[pixi] mache = 2.2.0`.
+4. Exit the bootstrap shell.
+5. Review the diffs in `deploy.py` and `deploy/cli_spec.json`.
+6. Adjust repository-owned files such as `deploy/config.yaml.j2` only if the
    new `mache` release expects new settings or supports new behavior.
 
 Important limitation:
@@ -438,6 +459,9 @@ Important limitation:
 - `mache deploy update` does not rewrite `deploy/pins.cfg`,
   `deploy/config.yaml.j2`, `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`, or
   `deploy/hooks.py`.
+- `./deploy.py --bootstrap-only --mache-version <new_version>` is the safest
+  way to make sure the bootstrap environment and downloaded `bootstrap.py`
+  come from the new release instead of the old pin.
 
 That is intentional. Those files are treated as target-repository owned and
 should not be replaced automatically.

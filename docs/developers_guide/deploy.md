@@ -157,6 +157,13 @@ If you expand the set of files refreshed by `mache deploy update`, do so very
 carefully. Overwriting target-owned files is likely to destroy downstream
 customization.
 
+This also means version-bump documentation must be explicit: downstream users
+should bootstrap the new release with
+`./deploy.py --bootstrap-only --mache-version <new_version>`, run
+`mache deploy update --mache-version <new_version>` inside that bootstrap
+environment, and then update `deploy/pins.cfg` manually. Today, preserving
+target ownership of `deploy/pins.cfg` is more important than auto-rewriting it.
+
 ## The command-line contract from the maintainer side
 
 The runtime CLI surface is defined by `mache/deploy/templates/cli_spec.json.j2`
