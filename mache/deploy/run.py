@@ -731,18 +731,15 @@ def _resolve_toolchain_pairs(
 
 
 def _get_pixi_executable(pixi: str | None) -> str:
-    if pixi:
-        pixi = os.path.abspath(os.path.expanduser(pixi))
-        if not os.path.exists(pixi):
-            raise FileNotFoundError(f'pixi executable not found: {pixi}')
-        return pixi
-
-    which = shutil.which('pixi')
-    if which is None:
-        raise FileNotFoundError(
-            'pixi executable not found on PATH. Install pixi or pass --pixi.'
+    if not pixi:
+        raise ValueError(
+            'pixi executable must be passed explicitly to mache deploy run.'
         )
-    return which
+
+    pixi = os.path.abspath(os.path.expanduser(pixi))
+    if not os.path.exists(pixi):
+        raise FileNotFoundError(f'pixi executable not found: {pixi}')
+    return pixi
 
 
 def _write_load_script(
