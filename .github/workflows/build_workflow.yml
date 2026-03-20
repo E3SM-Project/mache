@@ -119,8 +119,10 @@ jobs:
         include:
           - python-version: "3.10"
             pixi-env: py310
+            workflow-path: workflow_tests/test_deploy_workflow.py
           - python-version: "3.14"
             pixi-env: py314
+            workflow-path: workflow_tests
       fail-fast: false
     steps:
       - id: skip_check
@@ -148,4 +150,4 @@ jobs:
       - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         name: Run workflow tests
         run: |
-          pixi run -e ${{ matrix.pixi-env }} pytest workflow_tests
+          pixi run -e ${{ matrix.pixi-env }} pytest ${{ matrix.workflow-path }}

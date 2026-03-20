@@ -1,63 +1,18 @@
 import json
-import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
-def _fixtures_dir() -> Path:
-    return _repo_root() / 'workflow_tests' / 'fixtures'
-
-
-def _mache_version() -> str:
-    namespace: dict[str, str] = {}
-    exec(
-        (_repo_root() / 'mache' / 'version.py').read_text(encoding='utf-8'),
-        namespace,
-    )
-    return namespace['__version__']
-
-
-def _copy_downstream_repo(dest: Path) -> None:
-    shutil.copytree(_fixtures_dir() / 'toyflow_repo', dest)
-
-
-def _configure_generated_deploy_files(repo_root: Path) -> dict[str, str]:
-    deploy_dir = repo_root / 'deploy'
-    overrides_dir = _fixtures_dir() / 'deploy_overrides'
-    relpaths = ('config.yaml.j2', 'pixi.toml.j2', 'load.sh')
-    expected: dict[str, str] = {}
-
-    for relpath in relpaths:
-        source = overrides_dir / relpath
-        text = source.read_text(encoding='utf-8')
-        (deploy_dir / relpath).write_text(text, encoding='utf-8')
-        expected[relpath] = text
-
-    return expected
-
-
-def _run(
-    args: list[str],
-    *,
-    cwd: Path,
-    env: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        args,
-        cwd=cwd,
-        env=env,
-        check=True,
-        text=True,
-        capture_output=True,
-    )
+from workflow_tests.helpers import (
+    configure_generated_deploy_files,
+    copy_fixture_repo,
+    init_and_update_repo,
+    mache_version,
+    make_workflow_env,
+    run,
+)
 
 
 def test_downstream_deploy_workflow(tmp_path: Path):
@@ -66,70 +21,28 @@ def test_downstream_deploy_workflow(tmp_path: Path):
         pytest.skip('pixi is required for workflow tests')
     assert pixi is not None
 
-    source_repo = _repo_root()
     downstream = tmp_path / 'toyflow-downstream'
-    _copy_downstream_repo(downstream)
+    copy_fixture_repo('toyflow_repo', downstream)
 
     python_version = f'{sys.version_info.major}.{sys.version_info.minor}'
-    mache_version = _mache_version()
-    env = os.environ.copy()
-    pythonpath = env.get('PYTHONPATH')
-    env['PYTHONPATH'] = (
-        f'{source_repo}:{pythonpath}' if pythonpath else str(source_repo)
-    )
+    expected_mache_version = mache_version()
+    env = make_workflow_env()
 
-    _run(
-        [
-            sys.executable,
-            '-m',
-            'mache',
-            'deploy',
-            'init',
-            '--repo-root',
-            str(downstream),
-            '--software',
-            'toyflow',
-            '--mache-version',
-            mache_version,
-        ],
-        cwd=source_repo,
+    init_and_update_repo(
+        downstream=downstream,
+        software='toyflow',
         env=env,
     )
 
-    preserved_files = _configure_generated_deploy_files(downstream)
-
-    (downstream / 'deploy.py').write_text(
-        '# stale deploy.py\n',
-        encoding='utf-8',
-    )
-    (downstream / 'deploy' / 'cli_spec.json').write_text(
-        '{"stale": true}\n',
-        encoding='utf-8',
-    )
-
-    _run(
-        [
-            sys.executable,
-            '-m',
-            'mache',
-            'deploy',
-            'update',
-            '--repo-root',
-            str(downstream),
-            '--software',
-            'toyflow',
-            '--mache-version',
-            mache_version,
-        ],
-        cwd=source_repo,
-        env=env,
+    preserved_files = configure_generated_deploy_files(
+        downstream, 'deploy_overrides'
     )
 
     cli_spec = json.loads(
         (downstream / 'deploy' / 'cli_spec.json').read_text(encoding='utf-8')
     )
     assert cli_spec['meta']['software'] == 'toyflow'
-    assert cli_spec['meta']['mache_version'] == mache_version
+    assert cli_spec['meta']['mache_version'] == expected_mache_version
     assert (downstream / 'deploy.py').read_text(encoding='utf-8') != (
         '# stale deploy.py\n'
     )
@@ -139,12 +52,7 @@ def test_downstream_deploy_workflow(tmp_path: Path):
             encoding='utf-8'
         ) == expected
 
-    env['MACHE_BOOTSTRAP_URL'] = (
-        (source_repo / 'mache' / 'deploy' / 'bootstrap.py').resolve().as_uri()
-    )
-    env['MACHE_LOCAL_SOURCE_PATH'] = str(source_repo)
-
-    _run(
+    run(
         [
             str(downstream / 'deploy.py'),
             '--pixi',
@@ -164,7 +72,7 @@ def test_downstream_deploy_workflow(tmp_path: Path):
     load_script = downstream / 'load_toyflow.sh'
     assert load_script.is_file()
 
-    smoke = _run(
+    smoke = run(
         [
             'bash',
             '-lc',

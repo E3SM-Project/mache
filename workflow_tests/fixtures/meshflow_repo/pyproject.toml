@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=60"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meshflow"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["meshflow"]
+
+[project.scripts]
+meshflow = "meshflow.cli:main"
