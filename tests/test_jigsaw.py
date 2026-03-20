@@ -27,7 +27,7 @@ def test_deploy_jigsawpy_in_pixi_environment(monkeypatch, tmp_path: Path):
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
     monkeypatch.setenv('PIXI_ENVIRONMENT_NAME', 'default')
@@ -182,7 +182,7 @@ def test_deploy_jigsawpy_pixi_uses_project_manifest_when_implicit(
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
 
@@ -227,7 +227,7 @@ def test_deploy_jigsawpy_pixi_uses_active_environment_feature(
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
 
@@ -268,7 +268,7 @@ def test_deploy_jigsawpy_pixi_feature_override(monkeypatch, tmp_path: Path):
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
 
@@ -304,7 +304,7 @@ def test_deploy_jigsawpy_pixi_local_manifest_copy(monkeypatch, tmp_path: Path):
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
 
@@ -358,7 +358,7 @@ def test_deploy_jigsawpy_pixi_local_adds_isolated_jigsaw_environment(
     commands: list[str] = []
     monkeypatch.setattr(
         jigsaw,
-        'check_call',
+        'check_call_with_retries',
         partial(_record_check_call, commands),
     )
 

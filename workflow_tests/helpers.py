@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -72,6 +73,13 @@ def make_workflow_env() -> dict[str, str]:
         (repo_root() / 'mache' / 'deploy' / 'bootstrap.py').resolve().as_uri()
     )
     env['MACHE_LOCAL_SOURCE_PATH'] = str(repo_root())
+
+    # Isolate nested pixi operations used by workflow tests from whatever
+    # cache/home settings the outer shell or CI job happens to export.
+    pixi_root = Path(tempfile.mkdtemp(prefix='mache-workflow-pixi-'))
+    env['PIXI_HOME'] = str(pixi_root / 'home')
+    env['RATTLER_CACHE_DIR'] = str(pixi_root / 'rattler-cache')
+    env['PIXI_CACHE_DIR'] = str(pixi_root / 'pixi-cache')
     return env
 
 

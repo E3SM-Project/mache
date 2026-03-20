@@ -158,6 +158,8 @@ def test_meshflow_cli_jigsaw_install_uses_local_pixi_manifest(
             'bash',
             '-lc',
             'set -euo pipefail && '
+            'env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT '
+            '-u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL '
             f'pixi run -m {local_manifest} -- '
             'python -c "import jigsawpy; print(jigsawpy.__file__)"',
         ],
