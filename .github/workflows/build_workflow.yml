@@ -16,6 +16,27 @@ env:
   PYTHON_VERSION: "3.14"
 
 jobs:
+  python36-compat:
+    name: python 3.6 compatibility (deploy/bootstrap)
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.6
+    timeout-minutes: 5
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          cancel_others: ${{ env.CANCEL_OTHERS }}
+          paths_ignore: ${{ env.PATHS_IGNORE }}
+
+      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        uses: actions/checkout@v6
+
+      - if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        name: Validate deploy/bootstrap parse on Python 3.6
+        run: |
+          python -m py_compile mache/deploy/bootstrap.py mache/deploy/templates/deploy.py.j2
+
   pre-commit-hooks:
     name: lint with pre-commit
     runs-on: ubuntu-latest
