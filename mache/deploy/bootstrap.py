@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import os
 import platform
+import re
 import shlex
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Dict  # noqa: F401
 
 CONDA_PLATFORM_MAP = {
     ('linux', 'x86_64'): 'linux-64',
@@ -739,6 +742,157 @@ def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir):
             f'Expected mache pixi.toml not found in cloned repo: {src}'
         )
     shutil.copyfile(str(src), str(dest_pixi_toml))
+
+
+def merge_pixi_toml_dependencies(
+    *,
+    target_pixi_toml: str,
+    source_repo_dir: str,
+    python_version: str,
+) -> None:
+    """Merge pixi channels and dependencies from a source repo into a target.
+
+    This is used when deploying a local/forked ``mache`` branch into a
+    downstream pixi environment. The source repo's ``pixi.toml`` is treated as
+    the authoritative dependency set, including non-PyPI tools such as
+    ``rsync``.
+    """
+
+    source_pixi_toml = Path(source_repo_dir) / 'pixi.toml'
+    if not source_pixi_toml.is_file():
+        raise RuntimeError(
+            f'Expected mache pixi.toml not found in cloned repo: '
+            f'{source_pixi_toml}'
+        )
+
+    source_text = source_pixi_toml.read_text(encoding='utf-8')
+    channels = _get_pixi_channels_from_text(source_text)
+    dependencies = _get_pixi_dependencies_from_text(
+        source_text,
+        python_version=python_version,
+    )
+
+    target_path = Path(target_pixi_toml)
+    text = target_path.read_text(encoding='utf-8')
+    text = _merge_workspace_channels(text=text, channels=channels)
+    text = _merge_dependencies_table(text=text, dependencies=dependencies)
+    target_path.write_text(text, encoding='utf-8')
+
+
+def _get_pixi_channels_from_text(source_text):
+    section = _find_toml_table_block(text=source_text, table='workspace')
+    if section is None:
+        return []
+
+    start, end = section
+    workspace_text = source_text[start:end]
+    match = re.search(r'(?ms)^channels\s*=\s*\[(.*?)\]', workspace_text)
+    if match is None:
+        return []
+
+    return re.findall(r'"([^"]+)"', match.group(1))
+
+
+def _get_pixi_dependencies_from_text(source_text, *, python_version):
+    dependencies = {}  # type: Dict[str, str]
+
+    for table in (
+        'dependencies',
+        f'feature.py{python_version.replace(".", "")}.dependencies',
+    ):
+        section = _find_toml_table_block(text=source_text, table=table)
+        if section is None:
+            continue
+
+        start, end = section
+        section_text = source_text[start:end]
+        for match in re.finditer(
+            r'(?m)^([A-Za-z0-9_.-]+)\s*=\s*"([^"\n]+)"\s*$',
+            section_text,
+        ):
+            name = match.group(1)
+            spec = match.group(2)
+            if name == 'python':
+                continue
+            dependencies.setdefault(name, spec)
+
+    return dependencies
+
+
+def _merge_workspace_channels(*, text, channels):
+    if not channels:
+        return text
+
+    section = _find_toml_table_block(text=text, table='workspace')
+    if section is None:
+        return text
+
+    start, end = section
+    workspace_text = text[start:end]
+    match = re.search(r'(?ms)^channels\s*=\s*\[(.*?)\]', workspace_text)
+    if match is None:
+        return text
+
+    existing = re.findall(r'"([^"]+)"', match.group(1))
+    merged = existing[:]
+    for channel in channels:
+        if channel not in merged:
+            merged.append(channel)
+
+    replacement = (
+        'channels = [' + ', '.join(json.dumps(c) for c in merged) + ']'
+    )
+    updated_workspace = (
+        workspace_text[: match.start()]
+        + replacement
+        + workspace_text[match.end() :]
+    )
+    return text[:start] + updated_workspace + text[end:]
+
+
+def _merge_dependencies_table(*, text, dependencies):
+    if not dependencies:
+        return text
+
+    section = _find_toml_table_block(text=text, table='dependencies')
+    if section is None:
+        return text
+
+    start, end = section
+    deps_text = text[start:end]
+    existing = {
+        match.group(1)
+        for match in re.finditer(
+            r'(?m)^([A-Za-z0-9_.-]+)\s*=',
+            deps_text,
+        )
+    }
+
+    additions = [
+        f'{name} = {json.dumps(spec)}'
+        for name, spec in dependencies.items()
+        if name not in existing
+    ]
+    if not additions:
+        return text
+
+    if deps_text and not deps_text.endswith('\n'):
+        deps_text += '\n'
+    deps_text += '\n'.join(additions) + '\n'
+    return text[:start] + deps_text + text[end:]
+
+
+def _find_toml_table_block(*, text, table):
+    header = re.compile(rf'(?m)^\[{re.escape(table)}\]\s*$')
+    match = header.search(text)
+    if match is None:
+        return None
+
+    start = match.end()
+    next_header = re.compile(r'(?m)^\[[^\]]+\]\s*$')
+    next_match = next_header.search(text, start)
+    end = next_match.start() if next_match else len(text)
+    return start, end
 
 
 def _clone_mache_repo(

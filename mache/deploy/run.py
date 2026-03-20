@@ -21,6 +21,7 @@ from .bootstrap import (
     check_call,
     check_location,
     install_dev_mache,
+    merge_pixi_toml_dependencies,
 )
 from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
@@ -212,6 +213,20 @@ def run_deploy(args: argparse.Namespace) -> None:
         replacements=replacements,
         output_dir=prefix,
     )
+
+    if using_mache_fork:
+        merge_pixi_toml_dependencies(
+            target_pixi_toml=os.path.join(
+                os.path.abspath(prefix),
+                'pixi.toml',
+            ),
+            source_repo_dir=os.path.join(
+                os.path.abspath('deploy_tmp'),
+                'build_mache',
+                'mache',
+            ),
+            python_version=python_version,
+        )
 
     _pixi_install(
         pixi_exe=pixi_exe,
