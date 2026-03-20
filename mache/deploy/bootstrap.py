@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict  # noqa: F401
+from typing import Dict, List  # noqa: F401
 
 CONDA_PLATFORM_MAP = {
     ('linux', 'x86_64'): 'linux-64',
@@ -793,8 +793,8 @@ def _copy_mache_pixi_toml(*, dest_pixi_toml, source_repo_dir, python_version):
 def _write_bootstrap_pixi_toml_with_local_source(
     *,
     pixi_toml_path: Path,
-    channels: list[str],
-    dependencies: dict[str, str],
+    channels: List[str],
+    dependencies: Dict[str, str],
     python_version: str,
 ) -> None:
     """Write a slim bootstrap pixi manifest for a local mache source tree.
