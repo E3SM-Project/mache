@@ -249,6 +249,12 @@ template logic.</p>
 <p>If you expand the set of files refreshed by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>, do so very
 carefully. Overwriting target-owned files is likely to destroy downstream
 customization.</p>
+<p>This also means version-bump documentation must be explicit: downstream users
+should bootstrap the new release with
+<code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--bootstrap-only</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code>, run
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code> inside that bootstrap
+environment, and then update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> manually. Today, preserving
+target ownership of <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> is more important than auto-rewriting it.</p>
 </section>
 <section id="the-command-line-contract-from-the-maintainer-side">
 <h2>The command-line contract from the maintainer side<a class="headerlink" href="#the-command-line-contract-from-the-maintainer-side" title="Link to this heading"></a></h2>

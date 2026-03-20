@@ -436,6 +436,16 @@ fork/branch clone.</p></li>
 </ol>
 <p>If you pass <code class="docutils literal notranslate"><span class="pre">--bootstrap-only</span></code>, the process stops here and leaves you with an
 interactive environment that can run <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> or <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> manually.</p>
+<p>This mode is especially useful when a downstream repository wants to adopt a
+new <code class="docutils literal notranslate"><span class="pre">mache</span></code> release. In that case, bootstrap the new release explicitly so the
+temporary environment contains the new <code class="docutils literal notranslate"><span class="pre">mache</span></code> code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./deploy.py<span class="w"> </span>--bootstrap-only<span class="w"> </span>--mache-version<span class="w"> </span><span class="m">2</span>.2.0
+pixi<span class="w"> </span>shell<span class="w"> </span>-m<span class="w"> </span>deploy_tmp/bootstrap_pixi/pixi.toml
+mache<span class="w"> </span>deploy<span class="w"> </span>update<span class="w"> </span>--software<span class="w"> </span>polaris<span class="w"> </span>--mache-version<span class="w"> </span><span class="m">2</span>.2.0
+</pre></div>
+</div>
+<p>After that, update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> manually so <code class="docutils literal notranslate"><span class="pre">[pixi]</span> <span class="pre">mache</span> <span class="pre">=</span> <span class="pre">2.2.0</span></code>
+matches the regenerated <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, then exit the bootstrap shell.</p>
 </section>
 <section id="phase-3-mache-deploy-run">
 <h3>Phase 3: <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code><a class="headerlink" href="#phase-3-mache-deploy-run" title="Link to this heading"></a></h3>
@@ -531,13 +541,20 @@ error or a version-mismatch error.</p>
 version of <code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
 <p>The usual sequence is:</p>
 <ol class="arabic">
-<li><p>Install or bootstrap the <code class="docutils literal notranslate"><span class="pre">mache</span></code> version you want to use.</p></li>
-<li><p>Update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, especially <code class="docutils literal notranslate"><span class="pre">[pixi]</span> <span class="pre">mache</span> <span class="pre">=</span> <span class="pre">...</span></code>.</p></li>
-<li><p>Run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>deploy<span class="w"> </span>update<span class="w"> </span>--repo-root<span class="w"> </span>.<span class="w"> </span>--software<span class="w"> </span>polaris<span class="w"> </span>--mache-version<span class="w"> </span><span class="m">2</span>.2.0
+<li><p>Bootstrap the new release explicitly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./deploy.py<span class="w"> </span>--bootstrap-only<span class="w"> </span>--mache-version<span class="w"> </span><span class="m">2</span>.2.0
 </pre></div>
 </div>
 </li>
+<li><p>Enter the bootstrap environment and regenerate the generated files with the
+same version:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>shell<span class="w"> </span>-m<span class="w"> </span>deploy_tmp/bootstrap_pixi/pixi.toml
+mache<span class="w"> </span>deploy<span class="w"> </span>update<span class="w"> </span>--repo-root<span class="w"> </span>.<span class="w"> </span>--software<span class="w"> </span>polaris<span class="w"> </span>--mache-version<span class="w"> </span><span class="m">2</span>.2.0
+</pre></div>
+</div>
+</li>
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, especially <code class="docutils literal notranslate"><span class="pre">[pixi]</span> <span class="pre">mache</span> <span class="pre">=</span> <span class="pre">2.2.0</span></code>.</p></li>
+<li><p>Exit the bootstrap shell.</p></li>
 <li><p>Review the diffs in <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p></li>
 <li><p>Adjust repository-owned files such as <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code> only if the
 new <code class="docutils literal notranslate"><span class="pre">mache</span></code> release expects new settings or supports new behavior.</p></li>
@@ -547,6 +564,9 @@ new <code class="docutils literal notranslate"><span class="pre">mache</span></c
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> does not rewrite <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>,
 <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--bootstrap-only</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code> is the safest
+way to make sure the bootstrap environment and downloaded <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code>
+come from the new release instead of the old pin.</p></li>
 </ul>
 <p>That is intentional. Those files are treated as target-repository owned and
 should not be replaced automatically.</p>

@@ -508,6 +508,13 @@ software-owned</p></li>
 </ul>
 <p>The <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> command updates only <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and
 <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p>
+<p>The intended upgrade workflow is therefore:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--bootstrap-only</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span> <span class="pre">--software</span> <span class="pre">&lt;software&gt;</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code>
+inside the bootstrap environment</p></li>
+<li><p>manual edit of <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> so the pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version matches</p></li>
+</ol>
 </section>
 </section>
 <hr class="docutils" />

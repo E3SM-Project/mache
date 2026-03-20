@@ -369,6 +369,13 @@ When a target software updates its pinned `mache` version:
 The `mache deploy update` command updates only `deploy.py` and
 `deploy/cli_spec.json`.
 
+The intended upgrade workflow is therefore:
+
+1. `./deploy.py --bootstrap-only --mache-version <new_version>`
+2. `mache deploy update --software <software> --mache-version <new_version>`
+   inside the bootstrap environment
+3. manual edit of `deploy/pins.cfg` so the pinned `mache` version matches
+
 ---
 
 ## Package Organization
