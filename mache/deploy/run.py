@@ -151,6 +151,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     toolchain_pairs = _resolve_toolchain_pairs(
         config=config,
         runtime=ctx.runtime,
+        machine=machine,
         machine_config=machine_config,
         args=args,
         quiet=quiet,
@@ -647,6 +648,7 @@ def _resolve_toolchain_pairs(
     *,
     config: dict[str, Any],
     runtime: dict[str, Any],
+    machine: str | None,
     machine_config: ConfigParser,
     args: argparse.Namespace,
     quiet: bool,
@@ -657,7 +659,7 @@ def _resolve_toolchain_pairs(
         1. CLI flags (--compiler/--mpi)
         2. runtime overrides from hooks (runtime['toolchain'])
         3. rendered deploy/config.yaml.j2 (config['toolchain'])
-        4. merged machine config [deploy]
+        4. merged machine config [deploy] when a machine is selected
 
     Pairing rules:
         - If both lists have the same length, they are zipped.
@@ -694,8 +696,12 @@ def _resolve_toolchain_pairs(
     compilers = cli_compilers or rt_compilers or cfg_compilers
     mpis = cli_mpis or rt_mpis or cfg_mpis
 
-    # 4) machine-config defaults
-    if compilers is None and machine_config.has_option('deploy', 'compiler'):
+    # 4) machine-config defaults (only meaningful when a machine is selected)
+    if (
+        machine is not None
+        and compilers is None
+        and machine_config.has_option('deploy', 'compiler')
+    ):
         default_comp = _normalize_optional_token(
             machine_config.get('deploy', 'compiler')
         )
@@ -712,11 +718,15 @@ def _resolve_toolchain_pairs(
             compiler_underscore = compiler.replace('-', '_')
             mpi_key = f'mpi_{compiler_underscore}'
             mpi_val = None
-            if machine_config.has_option('deploy', mpi_key):
+            if machine is not None and machine_config.has_option(
+                'deploy', mpi_key
+            ):
                 mpi_val = _normalize_optional_token(
                     machine_config.get('deploy', mpi_key)
                 )
-            elif machine_config.has_option('deploy', 'mpi'):
+            elif machine is not None and machine_config.has_option(
+                'deploy', 'mpi'
+            ):
                 mpi_val = _normalize_optional_token(
                     machine_config.get('deploy', 'mpi')
                 )

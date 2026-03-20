@@ -1,3 +1,5 @@
+import argparse
+import configparser
 from pathlib import Path
 
 import pytest
@@ -207,3 +209,39 @@ def test_copy_local_mache_source_snapshot_ignores_untracked_files(
         encoding='utf-8'
     ) == 'tracked\n'
     assert not (dest_repo / 'ignored.txt').exists()
+
+
+def test_resolve_toolchain_pairs_ignores_machine_config_without_machine():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('deploy')
+    machine_config.set('deploy', 'compiler', 'gnu')
+    machine_config.set('deploy', 'mpi_gnu', 'mpich')
+
+    pairs = deploy_run._resolve_toolchain_pairs(
+        config={},
+        runtime={},
+        machine=None,
+        machine_config=machine_config,
+        args=argparse.Namespace(compiler=None, mpi=None),
+        quiet=True,
+    )
+
+    assert pairs == []
+
+
+def test_resolve_toolchain_pairs_uses_machine_config_with_machine():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('deploy')
+    machine_config.set('deploy', 'compiler', 'gnu')
+    machine_config.set('deploy', 'mpi_gnu', 'mpich')
+
+    pairs = deploy_run._resolve_toolchain_pairs(
+        config={},
+        runtime={},
+        machine='anvil',
+        machine_config=machine_config,
+        args=argparse.Namespace(compiler=None, mpi=None),
+        quiet=True,
+    )
+
+    assert pairs == [('gnu', 'mpich')]
