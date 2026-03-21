@@ -176,8 +176,95 @@ Important settings:
 - `spack.spack_path`: required when Spack support is enabled and no hook or
   CLI override provides it, unless the user disables Spack for that run with
   `--no-spack`.
+- `spack.exclude_packages`: optional list of machine-provided Spack packages
+  that the target software wants Spack to build instead.
 - `jigsaw.enabled`: optional.
 - `hooks`: optional and disabled unless explicitly configured.
+
+Example:
+
+If a downstream package such as Compass wants to use the machine-provided
+libraries in general but build its own newer `cmake`, it can set
+`spack.exclude_packages` in `deploy/config.yaml.j2`:
+
+```yaml
+spack:
+  supported: true
+  deploy: true
+  spack_path: /path/to/shared/spack
+  exclude_packages:
+    - cmake
+```
+
+With this setting, `mache deploy run` will:
+
+- remove the machine-provided `cmake` external from the rendered Spack
+  environment YAML,
+- remove matching machine-provided `cmake` module loads and related
+  environment-variable setup from generated shell snippets, and
+- let Spack build the `cmake` version requested by `deploy/spack.yaml.j2`.
+
+The package list in `deploy/spack.yaml.j2` does not need any special syntax
+for this.  You simply request the Spack package you want, for example:
+
+```yaml
+software:
+  - "cmake@{{ spack.cmake }}"
+library:
+  - "trilinos@{{ spack.trilinos }}"
+```
+
+The same mechanism can be used for the machine-provided HDF5/NetCDF bundle:
+
+```yaml
+spack:
+  exclude_packages:
+    - hdf5_netcdf
+```
+
+This is the preferred replacement for the older `e3sm_hdf5_netcdf` flag.
+
+Another common pattern is to keep a machine-specific boolean such as
+`[deploy] use_e3sm_hdf5_netcdf` in the target repository's machine config and
+translate that into `exclude_packages` in a `pre_spack` hook.
+
+For example, if a downstream project like Compass has a machine config with:
+
+```ini
+[deploy]
+use_e3sm_hdf5_netcdf = false
+```
+
+then `deploy/hooks.py` can map that to the new mechanism:
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+from mache.deploy.hooks import DeployContext
+
+
+def pre_spack(ctx: DeployContext) -> dict[str, Any] | None:
+    updates: dict[str, Any] = {}
+
+    exclude_packages = list(ctx.config.get("spack", {}).get("exclude_packages", []))
+
+    use_bundle = False
+    if ctx.machine_config.has_section("deploy") and ctx.machine_config.has_option(
+        "deploy", "use_e3sm_hdf5_netcdf"
+    ):
+        use_bundle = ctx.machine_config.getboolean("deploy", "use_e3sm_hdf5_netcdf")
+
+    if not use_bundle:
+        exclude_packages.append("hdf5_netcdf")
+
+    updates.setdefault("spack", {})["exclude_packages"] = exclude_packages
+    return updates
+```
+
+This lets existing machine-config policy continue to drive behavior while
+moving the actual Spack selection onto `exclude_packages`.
 
 ### `deploy/pixi.toml.j2`
 
@@ -214,11 +301,19 @@ Purpose:
   specs, `software` specs, or both.
 - Supplies the target-specific package list used when `mache` constructs Spack
   environments.
+- Receives `exclude_packages` as a deploy-time Jinja variable, reflecting any
+  configured opt-outs of machine-provided Spack packages.
 
 Edit policy:
 
 - Safe and expected to edit.
 - Leave it empty if you do not support Spack yet.
+
+In most target repositories, package opt-outs belong in `deploy/config.yaml.j2`
+under `spack.exclude_packages`, not in `deploy/spack.yaml.j2`.  The Spack spec
+template is where you request the package versions and variants you want to
+build; `exclude_packages` controls which machine-provided externals are
+suppressed before concretization.
 
 ### `deploy/hooks.py`
 
