@@ -30,9 +30,18 @@ def copy_fixture_repo(fixture_name: str, dest: Path) -> None:
 def configure_generated_deploy_files(
     repo_root: Path, overrides_name: str
 ) -> dict[str, str]:
+    return configure_deploy_files(
+        repo_root,
+        overrides_name,
+        relpaths=('config.yaml.j2', 'pixi.toml.j2', 'load.sh'),
+    )
+
+
+def configure_deploy_files(
+    repo_root: Path, overrides_name: str, relpaths: tuple[str, ...]
+) -> dict[str, str]:
     deploy_dir = repo_root / 'deploy'
     overrides_dir = fixtures_dir() / overrides_name
-    relpaths = ('config.yaml.j2', 'pixi.toml.j2', 'load.sh')
     expected: dict[str, str] = {}
 
     for relpath in relpaths:

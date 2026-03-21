@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from workflow_tests.helpers import (
+    configure_deploy_files,
     configure_generated_deploy_files,
     copy_fixture_repo,
     init_and_update_repo,
@@ -52,6 +53,12 @@ def test_downstream_deploy_workflow(tmp_path: Path):
             encoding='utf-8'
         ) == expected
 
+    configure_deploy_files(
+        downstream,
+        'deploy_hook_overrides',
+        relpaths=('config.yaml.j2', 'custom_cli_spec.json', 'hooks.py'),
+    )
+
     run(
         [
             str(downstream / 'deploy.py'),
@@ -63,6 +70,7 @@ def test_downstream_deploy_workflow(tmp_path: Path):
             'local/mache',
             '--mache-branch',
             'current',
+            '--with-albany',
             '--recreate',
         ],
         cwd=downstream,
@@ -71,6 +79,9 @@ def test_downstream_deploy_workflow(tmp_path: Path):
 
     load_script = downstream / 'load_toyflow.sh'
     assert load_script.is_file()
+    assert (downstream / 'deploy_tmp' / 'with_albany.txt').read_text(
+        encoding='utf-8'
+    ) == 'enabled\n'
 
     smoke = run(
         [
