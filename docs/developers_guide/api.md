@@ -175,9 +175,11 @@ documentation.
     CliArgSpec
     CliSpec
     parse_cli_spec
+    merge_cli_specs
     routes_include
     filter_args_by_route
     load_cli_spec_file
+    load_repo_cli_spec_file
     add_args_to_parser
 ```
 

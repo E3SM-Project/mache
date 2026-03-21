@@ -43,6 +43,7 @@ deploy.py
 deploy/
   cli_spec.json
   config.yaml.j2
+  custom_cli_spec.json
   hooks.py
   load.sh
   pins.cfg
@@ -118,6 +119,31 @@ Edit policy:
   `mache deploy update`.
 - Any argument you add must remain compatible with the bootstrap parser and
   `mache deploy run` parser in the installed `mache` version.
+
+### `deploy/custom_cli_spec.json`
+
+Required: no
+
+Created by `mache deploy init`: yes
+
+Overwritten by `mache deploy update`: no
+
+Purpose:
+
+- Lets the target repository add its own command-line flags without editing
+  the generated `deploy/cli_spec.json`.
+- Is merged into the generated CLI by both `./deploy.py` and
+  `mache deploy run`.
+- Is the recommended place for downstream-only CLI additions such as optional
+  feature toggles.
+
+Edit policy:
+
+- Fully target-repository owned.
+- Safe to edit freely after `init`.
+- Keep custom `flags` and `dest` names distinct from the generated
+  `deploy/cli_spec.json`.
+- Omit `meta`; only `arguments` is needed.
 
 ### `deploy/pins.cfg`
 
@@ -280,6 +306,85 @@ them:
   target repository needs a custom environment skeleton for one machine or
   toolchain combination.
 
+## Adding a custom CLI flag
+
+Use `deploy/custom_cli_spec.json` when the target repository wants an extra
+flag that should survive `mache deploy update`.
+
+For example, Compass could add both `--with-albany` and
+`--moab-version 5.6.0` like this:
+
+```json
+{
+  "arguments": [
+    {
+      "flags": ["--with-albany"],
+      "dest": "with_albany",
+      "action": "store_true",
+      "help": "Install optional Albany and Trilinos support.",
+      "route": ["deploy", "run"]
+    },
+    {
+      "flags": ["--moab-version"],
+      "dest": "moab_version",
+      "help": "Version of MOAB to install for this deployment.",
+      "route": ["deploy", "run"]
+    }
+  ]
+}
+```
+
+This route means:
+
+- `deploy`: `./deploy.py` accepts the flag.
+- `run`: the flag is forwarded to `mache deploy run`, so hooks can inspect it.
+
+Then enable hooks in `deploy/config.yaml.j2`:
+
+```yaml
+hooks:
+  file: "deploy/hooks.py"
+  entrypoints:
+    pre_spack: "pre_spack"
+```
+
+And use the flags inside `deploy/hooks.py`:
+
+```python
+from pathlib import Path
+
+
+def pre_spack(ctx):
+    if getattr(ctx.args, "with_albany", False):
+        marker = Path(ctx.work_dir) / "with_albany.txt"
+        marker.write_text("Albany requested\n", encoding="utf-8")
+
+    moab_version = getattr(ctx.args, "moab_version", None)
+    if moab_version:
+        marker = Path(ctx.work_dir) / "moab_version.txt"
+        marker.write_text(f"{moab_version}\n", encoding="utf-8")
+```
+
+Running
+
+```bash
+./deploy.py --with-albany --moab-version 5.6.0
+```
+
+would therefore make both of these values available in hooks:
+
+- `ctx.args.with_albany == True`
+- `ctx.args.moab_version == "5.6.0"`
+
+From there, the hook can:
+
+- add derived runtime settings,
+- render target-specific files,
+- or trigger downstream install steps for optional dependencies.
+
+Use `deploy/custom_cli_spec.json` for downstream extensions. Keep
+`deploy/cli_spec.json` aligned with upstream `mache`.
+
 ## The three deployment phases
 
 From a user's point of view, deployment starts with `./deploy.py`. Internally,
@@ -291,7 +396,8 @@ The generated `deploy.py` file:
 
 1. Verifies it is being run from the target repository root.
 2. Reads the pinned `mache` and Python versions from `deploy/pins.cfg`.
-3. Reads `deploy/cli_spec.json` and builds the command-line parser.
+3. Reads `deploy/cli_spec.json` plus optional `deploy/custom_cli_spec.json`
+   and builds the command-line parser.
 4. Validates that `deploy/cli_spec.json` and `deploy/pins.cfg` agree on the
    pinned `mache` version unless a fork/branch override is being used.
 5. Downloads `mache/deploy/bootstrap.py` from the requested `mache` source.
@@ -383,6 +489,9 @@ These commands operate on the target repository itself.
 : Regenerates only the files that are intended to track `mache` closely,
   currently `deploy.py` and `deploy/cli_spec.json`.
 
+`deploy/custom_cli_spec.json`
+: Is intentionally not regenerated. Use it for target-owned CLI additions.
+
 ### How `deploy/cli_spec.json` works
 
 Each argument entry contains:
@@ -414,15 +523,34 @@ Examples from the current contract:
 - `--pixi`, `--prefix`, `--recreate`, `--quiet`, `--mache-fork`, and
   `--mache-branch` are routed across all relevant phases.
 
+### How `deploy/custom_cli_spec.json` works
+
+`deploy/custom_cli_spec.json` uses the same argument-entry format as
+`deploy/cli_spec.json`, but it is downstream-owned and optional.
+
+At runtime:
+
+1. `./deploy.py` loads `deploy/cli_spec.json`.
+2. If `deploy/custom_cli_spec.json` exists, it appends those argument entries.
+3. Duplicate `flags` or `dest` values are rejected to avoid ambiguous parsers.
+
+In practice, this means:
+
+- use `deploy/cli_spec.json` for the generated upstream contract,
+- use `deploy/custom_cli_spec.json` for downstream feature flags,
+- route custom flags to `run` when hooks need to inspect them.
+
 ### Contract rules for target-software developers
 
-When you customize `deploy/cli_spec.json`, keep these rules in mind:
+When you customize `deploy/cli_spec.json` or `deploy/custom_cli_spec.json`,
+keep these rules in mind:
 
 1. `deploy.py` exposes only the arguments listed in the JSON file.
 2. Bootstrap must accept every argument routed to `bootstrap`.
 3. `mache deploy run` must accept every argument routed to `run`.
 4. The pinned `mache` version in `deploy/pins.cfg` must match
    `deploy/cli_spec.json` unless you are intentionally testing a fork/branch.
+5. `deploy/custom_cli_spec.json` must not reuse a generated flag or `dest`.
 
 If you break this contract, deployment usually fails with an argument-parsing
 error or a version-mismatch error.
@@ -451,14 +579,16 @@ The usual sequence is:
 3. Update `deploy/pins.cfg`, especially `[pixi] mache = 2.2.0`.
 4. Exit the bootstrap shell.
 5. Review the diffs in `deploy.py` and `deploy/cli_spec.json`.
-6. Adjust repository-owned files such as `deploy/config.yaml.j2` only if the
+6. Confirm that target-owned files such as `deploy/custom_cli_spec.json` still
+   reflect the downstream CLI you want.
+7. Adjust repository-owned files such as `deploy/config.yaml.j2` only if the
    new `mache` release expects new settings or supports new behavior.
 
 Important limitation:
 
 - `mache deploy update` does not rewrite `deploy/pins.cfg`,
-  `deploy/config.yaml.j2`, `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`, or
-  `deploy/hooks.py`.
+  `deploy/config.yaml.j2`, `deploy/custom_cli_spec.json`,
+  `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`, or `deploy/hooks.py`.
 - `./deploy.py --bootstrap-only --mache-version <new_version>` is the safest
   way to make sure the bootstrap environment and downloaded `bootstrap.py`
   come from the new release instead of the old pin.

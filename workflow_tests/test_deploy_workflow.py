@@ -71,6 +71,8 @@ def test_downstream_deploy_workflow(tmp_path: Path):
             '--mache-branch',
             'current',
             '--with-albany',
+            '--moab-version',
+            '5.6.0',
             '--recreate',
         ],
         cwd=downstream,
@@ -82,6 +84,9 @@ def test_downstream_deploy_workflow(tmp_path: Path):
     assert (downstream / 'deploy_tmp' / 'with_albany.txt').read_text(
         encoding='utf-8'
     ) == 'enabled\n'
+    assert (downstream / 'deploy_tmp' / 'moab_version.txt').read_text(
+        encoding='utf-8'
+    ) == '5.6.0\n'
 
     smoke = run(
         [

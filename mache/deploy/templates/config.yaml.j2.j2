@@ -189,6 +189,8 @@ jigsaw:
 #
 # Hooks run ONLY during `mache deploy run` and execute arbitrary Python code
 # from the target repository. Use only with trusted repositories.
+# Custom CLI flags from deploy/custom_cli_spec.json are available on ctx.args
+# inside hooks when routed to "run".
 #
 # hooks:
 #   file: "deploy/hooks.py"   # default
