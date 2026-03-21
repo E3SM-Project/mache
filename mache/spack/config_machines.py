@@ -4,6 +4,11 @@ from importlib import resources as importlib_resources
 
 from lxml import etree
 
+from mache.spack.shared import (
+    classify_module_command_package_group,
+    shell_group_condition,
+)
+
 
 def extract_machine_config(xml_file, machine, compiler, mpilib):
     """
@@ -80,22 +85,22 @@ def config_to_shell_script(config, shell_type):
         script_lines.append('')
 
     module_commands = defaultdict(list)
-    e3sm_hdf5_netcdf_modules = defaultdict(list)
+    package_modules: dict[str, dict[str, list[str]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for module in config.findall('.//module_system/modules'):
         for command in module.findall('command'):
             name = command.get('name')
             value = command.text
             if value:
-                if 'command' != 'unload' and 'python' in value:
+                if name != 'unload' and 'python' in value:
                     # we don't want to load E3SM's python module
                     continue
-                elif 'command' != 'unload' and re.search(
-                    r'hdf5|netcdf', value, re.IGNORECASE
-                ):
-                    # we want to remove hdf5 and netcdf in all cases
-                    e3sm_hdf5_netcdf_modules[name].append(value)
-                else:
+                group_name = classify_module_command_package_group(value)
+                if group_name is None:
                     module_commands[name].append(value)
+                else:
+                    package_modules[group_name][name].append(value)
             elif name not in module_commands:
                 module_commands[name] = []
 
@@ -104,11 +109,11 @@ def config_to_shell_script(config, shell_type):
     )
     script_lines.append('')
 
-    if e3sm_hdf5_netcdf_modules:
-        script_lines.append('{%- if e3sm_hdf5_netcdf %}')
+    for group_name, grouped_commands in package_modules.items():
+        script_lines.append(f'{{%- if {shell_group_condition(group_name)} %}}')
         script_lines.extend(
             _convert_module_commands_to_script_lines(
-                e3sm_hdf5_netcdf_modules, shell_type
+                grouped_commands, shell_type
             )
         )
         script_lines.append('{%- endif %}')
@@ -222,7 +227,6 @@ def _convert_env_vars_to_script_lines(config, shell_type):
         List of script lines.
     """
     script_lines = []
-    e3sm_hdf5_netcdf_env_vars = []
     for env_var in config.findall('.//environment_variables/env'):
         name = env_var.get('name')
         value = env_var.text
@@ -240,30 +244,20 @@ def _convert_env_vars_to_script_lines(config, shell_type):
             continue
 
         value = re.sub(r'\$ENV{([^}]+)}', r'${\1}', value)
-        if 'NETCDF' in name and 'PATH' in name:
-            e3sm_hdf5_netcdf_env_vars.append((name, value))
-            if name == 'NETCDF_PATH':
-                # also set the NETCDF_C_PATH and NETCDF_FORTRAN_PATH, needed
-                # by MPAS standalone components
-                e3sm_hdf5_netcdf_env_vars.append(('NETCDF_C_PATH', value))
-                e3sm_hdf5_netcdf_env_vars.append(
-                    ('NETCDF_FORTRAN_PATH', value)
-                )
-        else:
-            if shell_type == 'sh':
-                script_lines.append(f'export {name}="{value}"')
-            elif shell_type == 'csh':
-                script_lines.append(f'setenv {name} "{value}"')
+        env_names = [(name, value)]
+        if name == 'NETCDF_PATH':
+            # also set the NETCDF_C_PATH and NETCDF_FORTRAN_PATH, needed
+            # by MPAS standalone components
+            env_names.append(('NETCDF_C_PATH', value))
+            env_names.append(('NETCDF_FORTRAN_PATH', value))
+
+        for env_name, env_value in env_names:
+            script_lines.append(
+                '{{ '
+                f'render_env_var({env_name!r}, {env_value!r}, {shell_type!r})'
+                ' }}'
+            )
 
     script_lines.append('')
-
-    if e3sm_hdf5_netcdf_env_vars:
-        script_lines.append('{%- if e3sm_hdf5_netcdf %}')
-        for name, value in e3sm_hdf5_netcdf_env_vars:
-            if shell_type == 'sh':
-                script_lines.append(f'export {name}="{value}"')
-            elif shell_type == 'csh':
-                script_lines.append(f'setenv {name} "{value}"')
-        script_lines.append('{%- endif %}')
 
     return script_lines

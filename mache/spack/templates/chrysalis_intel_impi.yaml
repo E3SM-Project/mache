@@ -7,12 +7,10 @@ spack:
 {%- if e3sm_lapack %}
   - intel-mkl
 {%- endif %}
-{%- if e3sm_hdf5_netcdf %}
   - "hdf5%{{ compiler }}"
   - "netcdf-c%{{ compiler }}"
   - "netcdf-fortran%{{ compiler }}"
   - "parallel-netcdf%{{ compiler }}"
-{%- endif %}
 {%- for spec in specs %}
   - "{{ spec }}%{{ compiler }}"
 {%- endfor %}
@@ -114,7 +112,6 @@ spack:
         modules:
         - intel-mkl/2020.4.304-g2qaxzf
       buildable: false
-{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.10.7+cxx+fortran+hl+mpi~shared
@@ -139,7 +136,6 @@ spack:
         modules:
         - parallel-netcdf/1.11.0-b74wv4m
       buildable: false
-{%- endif %}
   compilers:
   - compiler:
       spec: {{ compiler }}

@@ -5,6 +5,12 @@ from jinja2 import Template
 
 from mache.machine_info import discover_machine
 from mache.spack.config_machines import extract_spack_from_config_machines
+from mache.spack.shared import (
+    render_env_var,
+    resolve_e3sm_hdf5_netcdf,
+    use_system_package,
+    use_system_packages,
+)
 
 
 def get_spack_script(
@@ -19,6 +25,7 @@ def get_spack_script(
     load_spack_env=True,
     *,
     e3sm_hdf5_netcdf=None,
+    exclude_packages=None,
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -55,6 +62,12 @@ def get_spack_script(
     include_e3sm_hdf5_netcdf : bool, optional
         Deprecated alias for ``e3sm_hdf5_netcdf``.
 
+    exclude_packages : sequence of str or str, optional
+        System-provided Spack packages to opt out of.  For this function, the
+        package bundle that affects shell setup is ``e3sm_hdf5_netcdf`` (or
+        ``hdf5_netcdf``), which disables the machine-provided HDF5/NetCDF
+        module and environment-variable setup.
+
     load_spack_env : bool, optional
         Whether to load the spack environment at the start of script.
         Must be set to False when initially building the environment
@@ -87,6 +100,10 @@ def get_spack_script(
         e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
     else:
         e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
+    e3sm_hdf5_netcdf, exclude_packages = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
+    )
 
     if machine is None:
         machine = discover_machine()
@@ -136,6 +153,16 @@ def get_spack_script(
     load_script = Template(load_script_template).render(
         e3sm_lapack=include_e3sm_lapack,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=sorted(exclude_packages),
+        use_system_package=lambda package: use_system_package(
+            package, exclude_packages
+        ),
+        use_system_packages=lambda *packages: use_system_packages(
+            *packages, exclude_packages=exclude_packages
+        ),
+        render_env_var=lambda name, value, shell_type: render_env_var(
+            name, value, shell_type, exclude_packages
+        ),
     )
 
     return load_script

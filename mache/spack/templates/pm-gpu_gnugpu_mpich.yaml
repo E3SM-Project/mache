@@ -5,12 +5,10 @@ spack:
   - {{ compiler }}
   - {{ mpi }}%{{ compiler }}
   - cray-libsci
-{%- if e3sm_hdf5_netcdf %}
   - "hdf5%{{ compiler }}"
   - "netcdf-c%{{ compiler }}"
   - "netcdf-fortran%{{ compiler }}"
   - "parallel-netcdf%{{ compiler }}"
-{%- endif %}
 {%- for spec in specs %}
   - "{{ spec }}%{{ compiler }}"
 {%- endfor %}
@@ -144,7 +142,6 @@ spack:
         modules:
         - cray-libsci/25.09.0
       buildable: false
-{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.14.3.7~cxx+fortran+hl~java+mpi+shared
@@ -165,7 +162,6 @@ spack:
       - spec: netcdf-fortran@4.6.1
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.1/gnu/12.3
       buildable: false
-{%- endif %}
   compilers:
   - compiler:
       spec: {{ compiler }}

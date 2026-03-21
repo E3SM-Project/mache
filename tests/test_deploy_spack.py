@@ -7,6 +7,11 @@ import pytest
 
 from mache.deploy import spack as deploy_spack
 from mache.deploy.hooks import DeployContext
+from mache.spack.script import get_spack_script
+from mache.spack.shared import (
+    E3SM_HDF5_NETCDF_PACKAGES,
+    _get_yaml_data,
+)
 
 
 def _logger(name: str) -> logging.Logger:
@@ -151,3 +156,87 @@ def test_load_existing_spack_envs_respects_runtime_disable(tmp_path: Path):
         == []
     )
     assert deploy_spack.load_existing_spack_software_env(ctx=ctx) is None
+
+
+def test_get_excluded_spack_packages_supports_bundle_aliases():
+    excluded = deploy_spack._get_excluded_spack_packages(
+        {'exclude_packages': 'cmake, e3sm_hdf5_netcdf'}
+    )
+
+    assert 'cmake' in excluded
+    assert E3SM_HDF5_NETCDF_PACKAGES.issubset(excluded)
+
+
+def test_get_yaml_data_can_exclude_cmake_external():
+    yaml_text = _get_yaml_data(
+        machine='chicoma-cpu',
+        compiler='gnu',
+        mpi='mpich',
+        include_e3sm_lapack=False,
+        e3sm_hdf5_netcdf=False,
+        specs=['trilinos'],
+        yaml_template=None,
+        exclude_packages=['cmake'],
+    )
+
+    assert 'cmake:' not in yaml_text
+    assert 'curl:' in yaml_text
+    assert 'trilinos%gcc@12.3' in yaml_text
+
+
+def test_get_yaml_data_can_exclude_e3sm_hdf5_netcdf_bundle():
+    yaml_text = _get_yaml_data(
+        machine='chicoma-cpu',
+        compiler='gnu',
+        mpi='mpich',
+        include_e3sm_lapack=False,
+        e3sm_hdf5_netcdf=True,
+        specs=['trilinos'],
+        yaml_template=None,
+        exclude_packages=['hdf5_netcdf'],
+    )
+
+    assert 'hdf5:' not in yaml_text
+    assert 'netcdf-c:' not in yaml_text
+    assert 'netcdf-fortran:' not in yaml_text
+    assert 'parallel-netcdf:' not in yaml_text
+    assert 'hdf5%gcc@12.3' not in yaml_text
+    assert 'netcdf-c%gcc@12.3' not in yaml_text
+
+
+def test_get_spack_script_filters_compy_template_modules():
+    script = get_spack_script(
+        spack_path='/unused',
+        env_name='unused',
+        compiler='gnu',
+        mpi='openmpi',
+        shell='sh',
+        machine='compy',
+        load_spack_env=False,
+        e3sm_hdf5_netcdf=True,
+        exclude_packages=['hdf5_netcdf'],
+    )
+
+    assert 'gcc/10.2.0' in script
+    assert 'openmpi/4.0.1' in script
+    assert 'hdf5/1.10.5' not in script
+    assert 'netcdf/4.6.3' not in script
+    assert 'pnetcdf/1.9.0' not in script
+
+
+def test_get_spack_script_filters_config_machine_cmake_module():
+    script = get_spack_script(
+        spack_path='/unused',
+        env_name='unused',
+        compiler='gnu',
+        mpi='mpich',
+        shell='sh',
+        machine='chicoma-cpu',
+        load_spack_env=False,
+        e3sm_hdf5_netcdf=True,
+        exclude_packages=['cmake'],
+    )
+
+    assert 'PrgEnv-gnu/8.5.0' in script
+    assert 'cray-mpich/8.1.28' in script
+    assert 'cmake/3.29.6' not in script
