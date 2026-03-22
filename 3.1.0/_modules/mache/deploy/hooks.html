@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.deploy.hooks</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dd1205ac"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.deploy.hooks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.deploy.hooks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Deployment hooks for ``mache deploy run``.</span>
+
+<span class="sd">Security note</span>
+<span class="sd">-------------</span>
+<span class="sd">Hooks execute arbitrary Python code from the target-software repository.</span>
+<span class="sd">In this workflow, the target repository is assumed to be trusted.</span>
+
+<span class="sd">Design goals</span>
+<span class="sd">------------</span>
+<span class="sd">- Hooks are optional and only run during ``mache deploy run``.</span>
+<span class="sd">- Hooks are loaded from a single Python module file (typically</span>
+<span class="sd">  ``deploy/hooks.py`` in the target repository) and invoked via named</span>
+<span class="sd">  entrypoint functions.</span>
+<span class="sd">- Hook loading does not permanently modify ``sys.path``.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+
+<span class="n">HookCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">&#39;DeployContext&#39;</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+
+
+<span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="c1"># pixi lifecycle (preferred names)</span>
+    <span class="s1">&#39;pre_pixi&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;post_pixi&#39;</span><span class="p">,</span>
+    <span class="c1"># future spack lifecycle</span>
+    <span class="s1">&#39;pre_spack&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;post_spack&#39;</span><span class="p">,</span>
+    <span class="c1"># always last (on success by default)</span>
+    <span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="DeployContext">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.DeployContext.html#mache.deploy.hooks.DeployContext">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeployContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A small bundle of state passed to hook functions.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - Hooks may create/update files under ``work_dir``.</span>
+<span class="sd">    - Hooks should prefer writing derived values into ``runtime`` rather than</span>
+<span class="sd">      mutating ``config`` in-place.</span>
+<span class="sd">    - Hooks may raise exceptions to abort deployment.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">software</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">deploy_dir</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">work_dir</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">pins</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+    <span class="n">machine_config</span><span class="p">:</span> <span class="n">ConfigParser</span>
+
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span>
+
+    <span class="c1"># A place for hook-produced derived values (preferred over mutating config)</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="HookRegistry">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.HookRegistry.html#mache.deploy.hooks.HookRegistry">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HookRegistry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved hooks for a single deploy run.&quot;&quot;&quot;</span>
+
+    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">entrypoints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HookCallable</span><span class="p">]</span>
+
+<div class="viewcode-block" id="HookRegistry.run_hook">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.HookRegistry.run_hook.html#mache.deploy.hooks.HookRegistry.run_hook">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a hook stage if it is defined.</span>
+
+<span class="sd">        If a hook returns a mapping, it is merged into ``context.runtime``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entrypoints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">file_display</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="ow">or</span> <span class="s1">&#39;&lt;unknown&gt;&#39;</span>
+        <span class="n">func_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;callable&gt;&#39;</span><span class="p">)</span>
+
+        <span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;Running hook stage=</span><span class="si">%s</span><span class="s1"> file=</span><span class="si">%s</span><span class="s1"> func=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">stage</span><span class="p">,</span>
+            <span class="n">file_display</span><span class="p">,</span>
+            <span class="n">func_name</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover (covered indirectly)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Hook failed: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;file=</span><span class="si">{</span><span class="n">file_display</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">result</span><span class="p">:</span>
+            <span class="n">_deep_update</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deep_update</span><span class="p">(</span><span class="n">dst</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">src</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively merge ``src`` into ``dst``.</span>
+
+<span class="sd">    If both ``dst[key]`` and ``src[key]`` are dicts, merge recursively.</span>
+<span class="sd">    Otherwise, ``src[key]`` overwrites ``dst[key]``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">src_val</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">dst_val</span> <span class="o">=</span> <span class="n">dst</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dst_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">_deep_update</span><span class="p">(</span><span class="n">dst_val</span><span class="p">,</span> <span class="n">src_val</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dst</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">src_val</span>
+
+
+<div class="viewcode-block" id="load_hooks">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.load_hooks.html#mache.deploy.hooks.load_hooks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_hooks</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HookRegistry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load deployment hooks from a target-software repository.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config</span>
+<span class="sd">        Parsed config from rendered ``deploy/config.yaml.j2``.</span>
+
+<span class="sd">        Hooks are configured under the optional top-level ``hooks`` section:</span>
+
+<span class="sd">        .. code-block:: yaml</span>
+
+<span class="sd">           hooks:</span>
+<span class="sd">             file: &quot;deploy/hooks.py&quot;  # default</span>
+<span class="sd">             entrypoints:</span>
+<span class="sd">               pre_pixi: &quot;pre_pixi&quot;        # optional</span>
+<span class="sd">               post_pixi: &quot;post_pixi&quot;      # optional</span>
+<span class="sd">               pre_spack: &quot;pre_spack&quot;      # optional</span>
+<span class="sd">               post_spack: &quot;post_spack&quot;    # optional</span>
+<span class="sd">               post_deploy: &quot;post_deploy&quot;  # optional</span>
+
+<span class="sd">        If the ``hooks`` section is missing, hooks are considered disabled.</span>
+
+<span class="sd">    repo_root</span>
+<span class="sd">        Target-software repository root (the working directory where</span>
+<span class="sd">        ``deploy/`` lives).</span>
+
+<span class="sd">    logger</span>
+<span class="sd">        Logger used for hook loading and execution messages.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    HookRegistry</span>
+<span class="sd">        A registry containing a resolved hook module path and stage-&gt;callable</span>
+<span class="sd">        mapping. Stages not present are simply no-ops.</span>
+
+<span class="sd">    Missing file semantics</span>
+<span class="sd">    ----------------------</span>
+<span class="sd">    - If the ``hooks`` section is not present, a missing hooks file is treated</span>
+<span class="sd">      as &quot;no hooks&quot;.</span>
+<span class="sd">    - If the ``hooks`` section is present (explicitly configured) and the</span>
+<span class="sd">      hooks file is missing, a ``FileNotFoundError`` is raised.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hooks_cfg_raw</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hooks&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hooks_cfg_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HookRegistry</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">entrypoints</span><span class="o">=</span><span class="p">{})</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hooks_cfg_raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;hooks&#39; section must be a mapping&quot;</span><span class="p">)</span>
+
+    <span class="n">hooks_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">hooks_cfg_raw</span>
+
+    <span class="n">file_rel</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="s1">&#39;deploy/hooks.py&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">file_rel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_rel</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">file_rel</span> <span class="o">=</span> <span class="s1">&#39;deploy/hooks.py&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_rel</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hooks.file must be a string&#39;</span><span class="p">)</span>
+
+    <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entrypoints&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="n">entrypoints_cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entrypoints_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hooks.entrypoints must be a mapping&#39;</span><span class="p">)</span>
+
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">KNOWN_HOOK_STAGES</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="n">unknown_list</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">))</span>
+        <span class="n">known_list</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">KNOWN_HOOK_STAGES</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Unknown hook stage(s): </span><span class="si">{</span><span class="n">unknown_list</span><span class="si">}</span><span class="s1">. &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Known stages: </span><span class="si">{</span><span class="n">known_list</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">repo_root_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)))</span>
+    <span class="n">hooks_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root_abs</span><span class="p">,</span> <span class="n">file_rel</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">hooks_path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Hooks configured but file not found: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">module</span> <span class="o">=</span> <span class="n">_load_module_from_path</span><span class="p">(</span><span class="n">hooks_path</span><span class="o">=</span><span class="n">hooks_path</span><span class="p">)</span>
+
+    <span class="n">resolved</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HookCallable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span>
+        <span class="n">func_name</span> <span class="o">=</span> <span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">func_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">func_name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">func_name</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Hook entrypoint not found: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Hook entrypoint is not callable: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">resolved</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
+
+    <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;Loaded hooks from </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">hooks_path</span><span class="p">,</span>
+            <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;Hooks file loaded but no entrypoints configured: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">hooks_path</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">HookRegistry</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="n">hooks_path</span><span class="p">,</span> <span class="n">entrypoints</span><span class="o">=</span><span class="n">resolved</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_module_from_path</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">hooks_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamically import a module without modifying sys.path.&quot;&quot;&quot;</span>
+
+    <span class="n">module_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mache_deploy_hooks_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">hooks_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unable to load hooks module from: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">module</span>
+
+
+<div class="viewcode-block" id="configparser_to_nested_dict">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.configparser_to_nested_dict.html#mache.deploy.hooks.configparser_to_nested_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configparser_to_nested_dict</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a ``ConfigParser`` to a JSON/YAML-friendly nested mapping.&quot;&quot;&quot;</span>
+
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">sections</span><span class="p">():</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">section</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">[</span><span class="n">section</span><span class="p">]}</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.1.0">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

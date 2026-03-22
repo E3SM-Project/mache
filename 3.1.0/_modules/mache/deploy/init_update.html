@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.deploy.init_update</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dd1205ac"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.deploy.init_update</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.deploy.init_update</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">stat</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Template</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.jinja</span><span class="w"> </span><span class="kn">import</span> <span class="n">define_square_bracket_environment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">TEMPLATE_DIR</span> <span class="o">=</span> <span class="s1">&#39;templates&#39;</span>
+
+
+<div class="viewcode-block" id="init_or_update_repo">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.init_update.init_or_update_repo.html#mache.deploy.init_update.init_or_update_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_or_update_repo</span><span class="p">(</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">software</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">mache_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Init: Create/refresh the deploy starter kit in a target-software repo.</span>
+<span class="sd">    Update: Update only a subset of deployed files for a new mache version.</span>
+
+<span class="sd">    Writes:</span>
+<span class="sd">      - deploy.py (repo root)</span>
+<span class="sd">      - deploy/cli_spec.json</span>
+<span class="sd">      - deploy/custom_cli_spec.json (init only, downstream-owned)</span>
+<span class="sd">      - deploy/pins.cfg (init only)</span>
+<span class="sd">      - deploy/config.yaml.j2 (init only)</span>
+<span class="sd">      - deploy/spack.yaml.j2 (init only)</span>
+<span class="sd">      - deploy/hooks.py (init only, example-only)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repo_root : str</span>
+<span class="sd">        Path to target repo root.</span>
+<span class="sd">    software : str</span>
+<span class="sd">        Target software name (e.g. polaris).</span>
+<span class="sd">    mache_version : str | None</span>
+<span class="sd">        Pinned mache version for this repo, default is the current mache</span>
+<span class="sd">        version.</span>
+<span class="sd">    update : bool, optional</span>
+<span class="sd">        If True, perform an update rather than an init.</span>
+<span class="sd">    overwrite : bool, optional</span>
+<span class="sd">        If True, overwrite existing deploy files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">deploy_dir</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="s1">&#39;deploy&#39;</span>
+
+    <span class="k">if</span> <span class="n">mache_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mache_version</span> <span class="o">=</span> <span class="n">__version__</span>
+
+    <span class="c1"># Render cli_spec first; we also use it to decide overwrite policies.</span>
+    <span class="n">cli_spec_template</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/cli_spec.json.j2&#39;</span><span class="p">)</span>
+    <span class="n">rendered_cli_spec</span> <span class="o">=</span> <span class="n">_render_jinja_template</span><span class="p">(</span>
+        <span class="n">cli_spec_template</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">software</span><span class="p">,</span>
+            <span class="s1">&#39;mache_version&#39;</span><span class="p">:</span> <span class="n">mache_version</span><span class="p">,</span>
+            <span class="c1"># add more placeholders as you like</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Write cli_spec.json</span>
+    <span class="n">_write_text</span><span class="p">(</span>
+        <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;cli_spec.json&#39;</span><span class="p">,</span> <span class="n">rendered_cli_spec</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
+    <span class="p">)</span>
+
+    <span class="c1"># deploy.py.j2 rendered -&gt; deploy.py at repo root</span>
+    <span class="n">deploy_py_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/deploy.py.j2&#39;</span><span class="p">)</span>
+    <span class="n">deploy_py_rendered</span> <span class="o">=</span> <span class="n">_render_jinja_template</span><span class="p">(</span>
+        <span class="n">deploy_py_tmpl</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">software</span><span class="p">,</span>
+            <span class="s1">&#39;mache_version&#39;</span><span class="p">:</span> <span class="n">mache_version</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">deploy_py_path</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="s1">&#39;deploy.py&#39;</span>
+    <span class="n">_write_text</span><span class="p">(</span><span class="n">deploy_py_path</span><span class="p">,</span> <span class="n">deploy_py_rendered</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
+    <span class="n">_make_executable</span><span class="p">(</span><span class="n">deploy_py_path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">update</span><span class="p">:</span>
+        <span class="c1"># pins.cfg.j2 rendered</span>
+        <span class="n">pins_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/pins.cfg.j2&#39;</span><span class="p">)</span>
+        <span class="n">pins_rendered</span> <span class="o">=</span> <span class="n">_render_jinja_template</span><span class="p">(</span>
+            <span class="n">pins_tmpl</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">software</span><span class="p">,</span>
+                <span class="s1">&#39;mache_version&#39;</span><span class="p">:</span> <span class="n">mache_version</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;pins.cfg&#39;</span><span class="p">,</span> <span class="n">pins_rendered</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
+        <span class="p">)</span>
+
+        <span class="c1"># pixi.toml.j2.j2 rendered once using square-bracket</span>
+        <span class="c1"># delimiters so any remaining curly-brace Jinja (deployment-time) stays</span>
+        <span class="c1"># untouched. Not yet used by deploy.py, but shipped so repos can start</span>
+        <span class="c1"># iterating.</span>
+        <span class="n">pixi_toml_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/pixi.toml.j2.j2&#39;</span><span class="p">)</span>
+        <span class="n">pixi_toml_rendered</span> <span class="o">=</span> <span class="n">_render_double_jinja_template_square_brackets</span><span class="p">(</span>
+            <span class="n">pixi_toml_tmpl</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">software</span><span class="p">,</span>
+                <span class="s1">&#39;mache_version&#39;</span><span class="p">:</span> <span class="n">mache_version</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;pixi.toml.j2&#39;</span><span class="p">,</span>
+            <span class="n">pixi_toml_rendered</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># config.yaml.j2.j2 rendered once using square-bracket delimiters so</span>
+        <span class="c1"># any remaining curly-brace Jinja (deployment-time) stays untouched.</span>
+        <span class="n">config_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/config.yaml.j2.j2&#39;</span><span class="p">)</span>
+        <span class="n">config_rendered</span> <span class="o">=</span> <span class="n">_render_double_jinja_template_square_brackets</span><span class="p">(</span>
+            <span class="n">config_tmpl</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">software</span><span class="p">,</span>
+                <span class="s1">&#39;mache_version&#39;</span><span class="p">:</span> <span class="n">mache_version</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;config.yaml.j2&#39;</span><span class="p">,</span>
+            <span class="n">config_rendered</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># spack.yaml.j2 is a runtime (deployment-time) Jinja template owned by</span>
+        <span class="c1"># the target repo.</span>
+        <span class="n">spack_specs_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/spack.yaml.j2&#39;</span><span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;spack.yaml.j2&#39;</span><span class="p">,</span>
+            <span class="n">spack_specs_tmpl</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Optional example hook module (not enabled by default).</span>
+        <span class="n">hooks_py_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/hooks.py.j2&#39;</span><span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;hooks.py&#39;</span><span class="p">,</span>
+            <span class="n">hooks_py_tmpl</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">custom_cli_spec_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/custom_cli_spec.json&#39;</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;custom_cli_spec.json&#39;</span><span class="p">,</span>
+            <span class="n">custom_cli_spec_tmpl</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">load_sh</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;# bash snippet for adding </span><span class="si">{</span><span class="n">software</span><span class="si">}</span><span class="s1">-specific environment &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;variables</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;load.sh&#39;</span><span class="p">,</span>
+            <span class="n">load_sh</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_pkg_template</span><span class="p">(</span><span class="n">relpath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># relpath like &quot;templates/deploy.py.j2&quot;</span>
+    <span class="n">package</span> <span class="o">=</span> <span class="n">__package__</span>  <span class="c1"># &quot;mache.deploy&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="n">package</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">relpath</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_jinja_template</span><span class="p">(</span><span class="n">template_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">template_text</span><span class="p">)</span>
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="k">return</span> <span class="n">rendered</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_double_jinja_template_square_brackets</span><span class="p">(</span>
+    <span class="n">template_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">define_square_bracket_environment</span><span class="p">()</span>
+    <span class="n">tmpl</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">template_text</span><span class="p">)</span>
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">tmpl</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="k">return</span> <span class="n">rendered</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Refusing to overwrite existing file: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_executable</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a file executable (chmod +x), preserving existing permissions.&quot;&quot;&quot;</span>
+
+    <span class="c1"># On Windows, chmod execute bits are not meaningful in the same way.</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mode</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXOTH</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.1.0">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
