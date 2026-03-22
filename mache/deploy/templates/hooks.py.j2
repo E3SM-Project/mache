@@ -13,6 +13,29 @@ To enable, add a `hooks` section like:
       post_pixi: "post_pixi"    # optional
       post_deploy: "post_deploy"  # optional
 
+Custom CLI flags added in `deploy/custom_cli_spec.json` are available on
+`ctx.args` when their route includes `"run"`.
+
+Example `deploy/custom_cli_spec.json` entry:
+
+  {
+    "arguments": [
+      {
+        "flags": ["--with-albany"],
+        "dest": "with_albany",
+        "action": "store_true",
+        "help": "Install optional Albany and Trilinos support.",
+        "route": ["deploy", "run"]
+      },
+      {
+        "flags": ["--moab-version"],
+        "dest": "moab_version",
+        "help": "Version of MOAB to install for this deployment.",
+        "route": ["deploy", "run"]
+      }
+    ]
+  }
+
 """
 
 from __future__ import annotations
@@ -58,6 +81,13 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
 
 def post_pixi(ctx: DeployContext) -> None:
     """Run after the pixi environment is created/updated."""
+
+    # Example: downstream-owned CLI flags are available on ctx.args
+    if getattr(ctx.args, "with_albany", False):
+        ctx.logger.info("Optional Albany support was requested")
+    moab_version = getattr(ctx.args, "moab_version", None)
+    if moab_version:
+        ctx.logger.info("Using MOAB version override: %s", moab_version)
 
     # Example: write a small marker into deploy_tmp
     marker = os.path.join(ctx.work_dir, "hooks_post_pixi_ran.txt")

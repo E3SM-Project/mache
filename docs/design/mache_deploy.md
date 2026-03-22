@@ -294,7 +294,8 @@ This separation is intentional and strictly enforced.
 ### Design resolution: `cli_spec.json(.j2)`
 
 Each target software includes `deploy/cli_spec.json` rendered from the
-packaged template, which declaratively defines:
+packaged template, plus an optional downstream-owned
+`deploy/custom_cli_spec.json`, which declaratively define:
 
 - Command-line flags
 - Help text
@@ -304,17 +305,21 @@ packaged template, which declaratively defines:
 **Usage**
 
 - `deploy.py`
-  - Builds its argparse interface from `deploy/cli_spec.json`
+  - Builds its argparse interface from `deploy/cli_spec.json` plus optional
+    `deploy/custom_cli_spec.json`
   - Forwards appropriate arguments to `bootstrap.py` and `mache deploy run`
 - `mache deploy run`
   - Builds its CLI from the packaged `mache/deploy/templates/cli_spec.json.j2`
-    (the same source template used by `mache deploy init/update`)
+    plus optional `deploy/custom_cli_spec.json`
+  - Uses the same source template as `mache deploy init/update` for the
+    generated portion
 
 **Benefits**
 
 - Single source of truth for user-facing CLI
 - No duplication across repositories
 - Consistent `--help` output
+- Safe downstream extension point for repo-specific flags
 
 ---
 
@@ -328,6 +333,7 @@ packaged template, which declaratively defines:
 
 - `deploy.py`
 - `cli_spec.json.j2`
+- `custom_cli_spec.json`
 - `pins.cfg`
 - `config.yaml.j2.j2` (renders to `deploy/config.yaml.j2`)
 - `pixi.toml.j2.j2` (renders to `deploy/pixi.toml.j2`)
@@ -352,8 +358,9 @@ A command that:
 - Fills in required placeholders
 - Creates a minimal, working deployment setup
 - Writes: `deploy.py`, `deploy/cli_spec.json`, `deploy/pins.cfg`,
-  `deploy/config.yaml.j2`, `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`,
-  `deploy/hooks.py`, and a placeholder `deploy/load.sh`
+  `deploy/custom_cli_spec.json`, `deploy/config.yaml.j2`,
+  `deploy/pixi.toml.j2`, `deploy/spack.yaml.j2`, `deploy/hooks.py`, and a
+  placeholder `deploy/load.sh`
 
 ---
 
@@ -363,8 +370,8 @@ When a target software updates its pinned `mache` version:
 
 - `deploy.py` and `deploy/cli_spec.json` should be updated from the matching
   `mache` release
-- `deploy/pins.cfg`, `deploy/config.yaml.j2`, and `deploy/pixi.toml.j2` remain
-  software-owned
+- `deploy/custom_cli_spec.json`, `deploy/pins.cfg`, `deploy/config.yaml.j2`,
+  and `deploy/pixi.toml.j2` remain software-owned
 
 The `mache deploy update` command updates only `deploy.py` and
 `deploy/cli_spec.json`.

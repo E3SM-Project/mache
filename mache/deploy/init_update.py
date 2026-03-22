@@ -27,6 +27,7 @@ def init_or_update_repo(
     Writes:
       - deploy.py (repo root)
       - deploy/cli_spec.json
+      - deploy/custom_cli_spec.json (init only, downstream-owned)
       - deploy/pins.cfg (init only)
       - deploy/config.yaml.j2 (init only)
       - deploy/spack.yaml.j2 (init only)
@@ -143,6 +144,15 @@ def init_or_update_repo(
         _write_text(
             deploy_dir / 'hooks.py',
             hooks_py_tmpl,
+            overwrite=overwrite,
+        )
+
+        custom_cli_spec_tmpl = _read_pkg_template(
+            f'{TEMPLATE_DIR}/custom_cli_spec.json'
+        )
+        _write_text(
+            deploy_dir / 'custom_cli_spec.json',
+            custom_cli_spec_tmpl,
             overwrite=overwrite,
         )
 

@@ -1,0 +1,17 @@
+{
+  "arguments": [
+    {
+      "flags": ["--with-albany"],
+      "dest": "with_albany",
+      "action": "store_true",
+      "help": "Install optional Albany support.",
+      "route": ["deploy", "run"]
+    },
+    {
+      "flags": ["--moab-version"],
+      "dest": "moab_version",
+      "help": "Version of MOAB to install for this deployment.",
+      "route": ["deploy", "run"]
+    }
+  ]
+}
