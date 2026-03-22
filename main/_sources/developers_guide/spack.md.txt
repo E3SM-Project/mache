@@ -31,7 +31,16 @@ Each YAML file describes a Spack environment for a particular combination of com
 For example: `chicoma-cpu_gnu_mpich.yaml`
 
 These files are Jinja2 templates, allowing conditional inclusion of packages
-(e.g., HDF5/NetCDF, LAPACK) based on user options.
+(e.g., LAPACK) based on user options.
+
+Machine-provided HDF5/NetCDF packages should now be listed unconditionally in
+the YAML templates.  Downstream packages can opt out of them, or any other
+machine-provided external such as `cmake`, with `exclude_packages`.  Mache
+filters the rendered YAML after Jinja expansion and removes matching:
+
+- `spack.specs` entries
+- `spack.packages.<name>` external-package sections
+- matching provider specs under `spack.packages.all.providers`
 
 ### Typical External Packages
 
@@ -104,21 +113,48 @@ This pipeline greatly reduces maintenance and prevents drift between Mache and
 E3SM’s authoritative machine configuration. In most cases, you do not need to
 author or maintain shell script templates in Mache.
 
+### Package opt-outs and deprecated HDF5/NetCDF flag
+
+The preferred downstream-facing interface is `exclude_packages`, available in
+the public `mache.spack` APIs and in `mache.deploy` runtime config.
+
+Examples:
+
+- `exclude_packages=["cmake"]`: build CMake with Spack instead of using the
+  machine-provided external package and module setup.
+- `exclude_packages=["hdf5_netcdf"]`: opt out of the machine-provided
+  HDF5/NetCDF bundle.
+- `exclude_packages=["hdf5", "netcdf-c", "netcdf-fortran",
+  "parallel-netcdf"]`: the same bundle, expressed explicitly.
+
+`e3sm_hdf5_netcdf` and `include_e3sm_hdf5_netcdf` remain supported as
+deprecated compatibility flags in public `mache.spack` APIs.  New code should
+prefer `exclude_packages`.
+
 ### When to add a template override
 
 Only provide a small override in `mache/spack/templates/` if you need to:
 
 - Apply an adjustment that’s not appropriate for the shared E3SM CIME config
   (machine-local quirk, temporary workaround, etc.).
-- Add conditional behavior toggled by
-  `include_e3sm_lapack` or `e3sm_hdf5_netcdf` (both exposed as Jinja booleans
-  in templates) that cannot be expressed in the CIME config.
+- Add conditional behavior toggled by `include_e3sm_lapack` or by package
+  helper functions such as `use_system_package('cmake')` and
+  `use_system_packages('netcdf-c', 'netcdf-fortran')` that cannot be
+  expressed in the CIME config.
 
   Note: `include_e3sm_hdf5_netcdf` remains supported as a deprecated alias for
-  `e3sm_hdf5_netcdf` in public `mache.spack` APIs.
+  `e3sm_hdf5_netcdf` in public `mache.spack` APIs, but new shell overrides
+  should prefer the package helpers over `e3sm_hdf5_netcdf`.
 
 Templates are Jinja2 files and can use the same conditional logic as YAML
-templates.
+templates.  For shell overrides, the most useful helpers are:
+
+- `use_system_package('<spack-package-name>')`
+- `use_system_packages('<pkg1>', '<pkg2>', ...)`
+- `render_env_var(name, value, shell_type)`
+
+These helpers let shell overrides stay package-oriented even when the machine
+module names do not match Spack package names exactly.
 
 ## Testing
 
@@ -134,4 +170,3 @@ After adding or modifying YAML templates (or an exceptional shell override):
 
 - For the non-spack aspects of adding a new machine, see [Adding a New Machine to Mache](adding_new_machine.md).
 - For more details on Spack external packages, see the [Spack documentation on external packages](https://spack.readthedocs.io/en/latest/build_settings.html#external-packages).
-

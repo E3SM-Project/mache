@@ -427,7 +427,8 @@ arguments</p></li>
 <section id="design-resolution-cli-spec-json-j2">
 <h3>Design resolution: <code class="docutils literal notranslate"><span class="pre">cli_spec.json(.j2)</span></code><a class="headerlink" href="#design-resolution-cli-spec-json-j2" title="Link to this heading"></a></h3>
 <p>Each target software includes <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> rendered from the
-packaged template, which declaratively defines:</p>
+packaged template, plus an optional downstream-owned
+<code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, which declaratively define:</p>
 <ul class="simple">
 <li><p>Command-line flags</p></li>
 <li><p>Help text</p></li>
@@ -438,14 +439,17 @@ packaged template, which declaratively defines:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></p>
 <ul>
-<li><p>Builds its argparse interface from <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code></p></li>
+<li><p>Builds its argparse interface from <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> plus optional
+<code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></p></li>
 <li><p>Forwards appropriate arguments to <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></p></li>
 </ul>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></p>
 <ul>
 <li><p>Builds its CLI from the packaged <code class="docutils literal notranslate"><span class="pre">mache/deploy/templates/cli_spec.json.j2</span></code>
-(the same source template used by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init/update</span></code>)</p></li>
+plus optional <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></p></li>
+<li><p>Uses the same source template as <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init/update</span></code> for the
+generated portion</p></li>
 </ul>
 </li>
 </ul>
@@ -454,6 +458,7 @@ packaged template, which declaratively defines:</p>
 <li><p>Single source of truth for user-facing CLI</p></li>
 <li><p>No duplication across repositories</p></li>
 <li><p>Consistent <code class="docutils literal notranslate"><span class="pre">--help</span></code> output</p></li>
+<li><p>Safe downstream extension point for repo-specific flags</p></li>
 </ul>
 </section>
 </section>
@@ -468,6 +473,7 @@ packaged template, which declaratively defines:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cli_spec.json.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">custom_cli_spec.json</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pins.cfg</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">config.yaml.j2.j2</span></code> (renders to <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.toml.j2.j2</span></code> (renders to <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>)</p></li>
@@ -492,8 +498,9 @@ packaged template, which declaratively defines:</p>
 <li><p>Fills in required placeholders</p></li>
 <li><p>Creates a minimal, working deployment setup</p></li>
 <li><p>Writes: <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>,
-<code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>,
-<code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>, and a placeholder <code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code></p></li>
+<code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>,
+<code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>, and a
+placeholder <code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code></p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -503,8 +510,8 @@ packaged template, which declaratively defines:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> should be updated from the matching
 <code class="docutils literal notranslate"><span class="pre">mache</span></code> release</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, and <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code> remain
-software-owned</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code> remain software-owned</p></li>
 </ul>
 <p>The <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> command updates only <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and
 <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p>

@@ -57,6 +57,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#what-belongs-in-deploy">What belongs in <code class="docutils literal notranslate"><span class="pre">deploy/</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#deploy-py"><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploy-cli-spec-json"><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploy-custom-cli-spec-json"><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploy-pins-cfg"><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploy-config-yaml-j2"><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploy-pixi-toml-j2"><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code></a></li>
@@ -66,6 +67,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#optional-target-owned-additions">Optional target-owned additions</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-a-custom-cli-flag">Adding a custom CLI flag</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#the-three-deployment-phases">The three deployment phases</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#phase-1-deploy-py">Phase 1: <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phase-2-bootstrap">Phase 2: bootstrap</a></li>
@@ -75,6 +77,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#the-command-line-contract">The command-line contract</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#mache-deploy-init-and-mache-deploy-update"><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code> and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#how-deploy-cli-spec-json-works">How <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> works</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-deploy-custom-cli-spec-json-works">How <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> works</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#contract-rules-for-target-software-developers">Contract rules for target-software developers</a></li>
 </ul>
 </li>
@@ -175,6 +178,7 @@ them, re-run with <code class="docutils literal notranslate"><span class="pre">-
 deploy/
   cli_spec.json
   config.yaml.j2
+  custom_cli_spec.json
   hooks.py
   load.sh
   pins.cfg
@@ -248,6 +252,29 @@ routed to <code class="docutils literal notranslate"><span class="pre">mache</sp
 <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> parser in the installed <code class="docutils literal notranslate"><span class="pre">mache</span></code> version.</p></li>
 </ul>
 </section>
+<section id="deploy-custom-cli-spec-json">
+<h3><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code><a class="headerlink" href="#deploy-custom-cli-spec-json" title="Link to this heading"></a></h3>
+<p>Required: no</p>
+<p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
+<p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
+<p>Purpose:</p>
+<ul class="simple">
+<li><p>Lets the target repository add its own command-line flags without editing
+the generated <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p></li>
+<li><p>Is merged into the generated CLI by both <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>.</p></li>
+<li><p>Is the recommended place for downstream-only CLI additions such as optional
+feature toggles.</p></li>
+</ul>
+<p>Edit policy:</p>
+<ul class="simple">
+<li><p>Fully target-repository owned.</p></li>
+<li><p>Safe to edit freely after <code class="docutils literal notranslate"><span class="pre">init</span></code>.</p></li>
+<li><p>Keep custom <code class="docutils literal notranslate"><span class="pre">flags</span></code> and <code class="docutils literal notranslate"><span class="pre">dest</span></code> names distinct from the generated
+<code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p></li>
+<li><p>Omit <code class="docutils literal notranslate"><span class="pre">meta</span></code>; only <code class="docutils literal notranslate"><span class="pre">arguments</span></code> is needed.</p></li>
+</ul>
+</section>
 <section id="deploy-pins-cfg">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code><a class="headerlink" href="#deploy-pins-cfg" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
@@ -300,9 +327,82 @@ load scripts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
 CLI override provides it, unless the user disables Spack for that run with
 <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.exclude_packages</span></code>: optional list of machine-provided Spack packages
+that the target software wants Spack to build instead.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jigsaw.enabled</span></code>: optional.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hooks</span></code>: optional and disabled unless explicitly configured.</p></li>
 </ul>
+<p>Example:</p>
+<p>If a downstream package such as Compass wants to use the machine-provided
+libraries in general but build its own newer <code class="docutils literal notranslate"><span class="pre">cmake</span></code>, it can set
+<code class="docutils literal notranslate"><span class="pre">spack.exclude_packages</span></code> in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">spack</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supported</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">deploy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">spack_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/shared/spack</span>
+<span class="w">  </span><span class="nt">exclude_packages</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cmake</span>
+</pre></div>
+</div>
+<p>With this setting, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> will:</p>
+<ul class="simple">
+<li><p>remove the machine-provided <code class="docutils literal notranslate"><span class="pre">cmake</span></code> external from the rendered Spack
+environment YAML,</p></li>
+<li><p>remove matching machine-provided <code class="docutils literal notranslate"><span class="pre">cmake</span></code> module loads and related
+environment-variable setup from generated shell snippets, and</p></li>
+<li><p>let Spack build the <code class="docutils literal notranslate"><span class="pre">cmake</span></code> version requested by <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>.</p></li>
+</ul>
+<p>The package list in <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code> does not need any special syntax
+for this.  You simply request the Spack package you want, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">software</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cmake@{{</span><span class="nv"> </span><span class="s">spack.cmake</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">library</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;trilinos@{{</span><span class="nv"> </span><span class="s">spack.trilinos</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</pre></div>
+</div>
+<p>The same mechanism can be used for the machine-provided HDF5/NetCDF bundle:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">spack</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">exclude_packages</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdf5_netcdf</span>
+</pre></div>
+</div>
+<p>This is the preferred replacement for the older <code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> flag.</p>
+<p>Another common pattern is to keep a machine-specific boolean such as
+<code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">use_e3sm_hdf5_netcdf</span></code> in the target repository’s machine config and
+translate that into <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> in a <code class="docutils literal notranslate"><span class="pre">pre_spack</span></code> hook.</p>
+<p>For example, if a downstream project like Compass has a machine config with:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[deploy]</span>
+<span class="na">use_e3sm_hdf5_netcdf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">false</span>
+</pre></div>
+</div>
+<p>then <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code> can map that to the new mechanism:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeployContext</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pre_spack</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">exclude_packages</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spack&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude_packages&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+
+    <span class="n">use_bundle</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">&quot;deploy&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
+        <span class="s2">&quot;deploy&quot;</span><span class="p">,</span> <span class="s2">&quot;use_e3sm_hdf5_netcdf&quot;</span>
+    <span class="p">):</span>
+        <span class="n">use_bundle</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span> <span class="s2">&quot;use_e3sm_hdf5_netcdf&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_bundle</span><span class="p">:</span>
+        <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hdf5_netcdf&quot;</span><span class="p">)</span>
+
+    <span class="n">updates</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;spack&quot;</span><span class="p">,</span> <span class="p">{})[</span><span class="s2">&quot;exclude_packages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exclude_packages</span>
+    <span class="k">return</span> <span class="n">updates</span>
+</pre></div>
+</div>
+<p>This lets existing machine-config policy continue to drive behavior while
+moving the actual Spack selection onto <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>.</p>
 </section>
 <section id="deploy-pixi-toml-j2">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code><a class="headerlink" href="#deploy-pixi-toml-j2" title="Link to this heading"></a></h3>
@@ -334,12 +434,19 @@ expects, you must also update the runtime code.</p></li>
 specs, <code class="docutils literal notranslate"><span class="pre">software</span></code> specs, or both.</p></li>
 <li><p>Supplies the target-specific package list used when <code class="docutils literal notranslate"><span class="pre">mache</span></code> constructs Spack
 environments.</p></li>
+<li><p>Receives <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> as a deploy-time Jinja variable, reflecting any
+configured opt-outs of machine-provided Spack packages.</p></li>
 </ul>
 <p>Edit policy:</p>
 <ul class="simple">
 <li><p>Safe and expected to edit.</p></li>
 <li><p>Leave it empty if you do not support Spack yet.</p></li>
 </ul>
+<p>In most target repositories, package opt-outs belong in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>
+under <code class="docutils literal notranslate"><span class="pre">spack.exclude_packages</span></code>, not in <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>.  The Spack spec
+template is where you request the package versions and variants you want to
+build; <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> controls which machine-provided externals are
+suppressed before concretization.</p>
 </section>
 <section id="deploy-hooks-py">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code><a class="headerlink" href="#deploy-hooks-py" title="Link to this heading"></a></h3>
@@ -398,6 +505,76 @@ toolchain combination.</p>
 </dl>
 </section>
 </section>
+<section id="adding-a-custom-cli-flag">
+<h2>Adding a custom CLI flag<a class="headerlink" href="#adding-a-custom-cli-flag" title="Link to this heading"></a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> when the target repository wants an extra
+flag that should survive <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>.</p>
+<p>For example, Compass could add both <code class="docutils literal notranslate"><span class="pre">--with-albany</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--moab-version</span> <span class="pre">5.6.0</span></code> like this:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;flags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--with-albany&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;dest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;with_albany&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;help&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Install optional Albany and Trilinos support.&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;route&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;run&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;flags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--moab-version&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;dest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;moab_version&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;help&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Version of MOAB to install for this deployment.&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;route&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;run&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This route means:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy</span></code>: <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> accepts the flag.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run</span></code>: the flag is forwarded to <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>, so hooks can inspect it.</p></li>
+</ul>
+<p>Then enable hooks in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy/hooks.py&quot;</span>
+<span class="w">  </span><span class="nt">entrypoints</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pre_spack</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;pre_spack&quot;</span>
+</pre></div>
+</div>
+<p>And use the flags inside <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pre_spack</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;with_albany&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;with_albany.txt&quot;</span>
+        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;Albany requested</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="n">moab_version</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;moab_version&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">moab_version</span><span class="p">:</span>
+        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;moab_version.txt&quot;</span>
+        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">moab_version</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Running</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./deploy.py<span class="w"> </span>--with-albany<span class="w"> </span>--moab-version<span class="w"> </span><span class="m">5</span>.6.0
+</pre></div>
+</div>
+<p>would therefore make both of these values available in hooks:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ctx.args.with_albany</span> <span class="pre">==</span> <span class="pre">True</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ctx.args.moab_version</span> <span class="pre">==</span> <span class="pre">&quot;5.6.0&quot;</span></code></p></li>
+</ul>
+<p>From there, the hook can:</p>
+<ul class="simple">
+<li><p>add derived runtime settings,</p></li>
+<li><p>render target-specific files,</p></li>
+<li><p>or trigger downstream install steps for optional dependencies.</p></li>
+</ul>
+<p>Use <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> for downstream extensions. Keep
+<code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> aligned with upstream <code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
+</section>
 <section id="the-three-deployment-phases">
 <h2>The three deployment phases<a class="headerlink" href="#the-three-deployment-phases" title="Link to this heading"></a></h2>
 <p>From a user’s point of view, deployment starts with <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code>. Internally,
@@ -408,7 +585,8 @@ that process has three phases.</p>
 <ol class="arabic simple">
 <li><p>Verifies it is being run from the target repository root.</p></li>
 <li><p>Reads the pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> and Python versions from <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>.</p></li>
-<li><p>Reads <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> and builds the command-line parser.</p></li>
+<li><p>Reads <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> plus optional <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>
+and builds the command-line parser.</p></li>
 <li><p>Validates that <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> agree on the
 pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version unless a fork/branch override is being used.</p></li>
 <li><p>Downloads <code class="docutils literal notranslate"><span class="pre">mache/deploy/bootstrap.py</span></code> from the requested <code class="docutils literal notranslate"><span class="pre">mache</span></code> source.</p></li>
@@ -490,6 +668,8 @@ deployment completes.</p>
 <dt><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code></dt><dd><p>Regenerates only the files that are intended to track <code class="docutils literal notranslate"><span class="pre">mache</span></code> closely,
 currently <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p>
 </dd>
+<dt><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></dt><dd><p>Is intentionally not regenerated. Use it for target-owned CLI additions.</p>
+</dd>
 </dl>
 </section>
 <section id="how-deploy-cli-spec-json-works">
@@ -521,15 +701,34 @@ currently <code class="docutils literal notranslate"><span class="pre">deploy.py
 <code class="docutils literal notranslate"><span class="pre">--mache-branch</span></code> are routed across all relevant phases.</p></li>
 </ul>
 </section>
+<section id="how-deploy-custom-cli-spec-json-works">
+<h3>How <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> works<a class="headerlink" href="#how-deploy-custom-cli-spec-json-works" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> uses the same argument-entry format as
+<code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, but it is downstream-owned and optional.</p>
+<p>At runtime:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> loads <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> exists, it appends those argument entries.</p></li>
+<li><p>Duplicate <code class="docutils literal notranslate"><span class="pre">flags</span></code> or <code class="docutils literal notranslate"><span class="pre">dest</span></code> values are rejected to avoid ambiguous parsers.</p></li>
+</ol>
+<p>In practice, this means:</p>
+<ul class="simple">
+<li><p>use <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> for the generated upstream contract,</p></li>
+<li><p>use <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> for downstream feature flags,</p></li>
+<li><p>route custom flags to <code class="docutils literal notranslate"><span class="pre">run</span></code> when hooks need to inspect them.</p></li>
+</ul>
+</section>
 <section id="contract-rules-for-target-software-developers">
 <h3>Contract rules for target-software developers<a class="headerlink" href="#contract-rules-for-target-software-developers" title="Link to this heading"></a></h3>
-<p>When you customize <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, keep these rules in mind:</p>
+<p>When you customize <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> or <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>,
+keep these rules in mind:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> exposes only the arguments listed in the JSON file.</p></li>
 <li><p>Bootstrap must accept every argument routed to <code class="docutils literal notranslate"><span class="pre">bootstrap</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> must accept every argument routed to <code class="docutils literal notranslate"><span class="pre">run</span></code>.</p></li>
 <li><p>The pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version in <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> must match
 <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> unless you are intentionally testing a fork/branch.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> must not reuse a generated flag or <code class="docutils literal notranslate"><span class="pre">dest</span></code>.</p></li>
 </ol>
 <p>If you break this contract, deployment usually fails with an argument-parsing
 error or a version-mismatch error.</p>
@@ -556,14 +755,16 @@ mache<span class="w"> </span>deploy<span class="w"> </span>update<span class="w"
 <li><p>Update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, especially <code class="docutils literal notranslate"><span class="pre">[pixi]</span> <span class="pre">mache</span> <span class="pre">=</span> <span class="pre">2.2.0</span></code>.</p></li>
 <li><p>Exit the bootstrap shell.</p></li>
 <li><p>Review the diffs in <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p></li>
+<li><p>Confirm that target-owned files such as <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> still
+reflect the downstream CLI you want.</p></li>
 <li><p>Adjust repository-owned files such as <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code> only if the
 new <code class="docutils literal notranslate"><span class="pre">mache</span></code> release expects new settings or supports new behavior.</p></li>
 </ol>
 <p>Important limitation:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> does not rewrite <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>,
-<code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>, or
-<code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>,
+<code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>, or <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--bootstrap-only</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code> is the safest
 way to make sure the bootstrap environment and downloaded <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code>
 come from the new release instead of the old pin.</p></li>

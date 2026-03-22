@@ -55,6 +55,7 @@ make_spack_env(
     config_file=machine_config,
     include_e3sm_lapack=include_e3sm_lapack,
     e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    exclude_packages=exclude_packages,
     yaml_template=yaml_template,
     tmpdir=tmpdir,
     spack_mirror=spack_mirror,
@@ -71,8 +72,16 @@ make_spack_env(
 - `compiler`, `mpi`: Compiler and MPI library names.
 - `machine`: Machine name (optional, auto-detected if not provided).
 - `config_file`: Path to a machine config file (optional).
-- `include_e3sm_lapack`, `e3sm_hdf5_netcdf`: Whether to include E3SM-specific
-  LAPACK or HDF5/NetCDF packages.
+- `include_e3sm_lapack`: Whether to include E3SM-specific LAPACK packages.
+- `exclude_packages`: A package name or list of package names whose
+  machine-provided externals, modules, and related environment variables
+  should be removed so Spack can build them instead.  For example, setting
+  `exclude_packages=["cmake"]` lets a downstream package build a newer CMake
+  than the system provides.
+- `e3sm_hdf5_netcdf`: Deprecated compatibility flag for opting into the
+  machine-provided HDF5/NetCDF bundle.  New code should prefer
+  `exclude_packages=["hdf5_netcdf"]` (or the individual package names
+  `hdf5`, `netcdf-c`, `netcdf-fortran`, and `parallel-netcdf`) instead.
 - `yaml_template`: Path to a custom Jinja2 YAML template (optional).
 - `tmpdir`: Temporary directory for builds (optional).
 - `spack_mirror`: Path to a local Spack mirror (optional).
@@ -84,6 +93,36 @@ make_spack_env(
 - Writes a YAML file describing the environment.
 - Generates and runs a shell script to create the Spack environment.
 - Loads any required modules and sets up environment variables as needed.
+
+**Recommended pattern for downstream packages:**
+
+```python
+exclude_packages = []
+if needs_newer_cmake:
+    exclude_packages.append("cmake")
+
+make_spack_env(
+    ...,
+    exclude_packages=exclude_packages,
+)
+```
+
+To opt out of the machine-provided HDF5/NetCDF bundle, use either:
+
+```python
+exclude_packages=["hdf5_netcdf"]
+```
+
+or the individual package names:
+
+```python
+exclude_packages=[
+    "hdf5",
+    "netcdf-c",
+    "netcdf-fortran",
+    "parallel-netcdf",
+]
+```
 
 ---
 
@@ -116,6 +155,7 @@ spack_script = get_spack_script(
     machine=machine,
     include_e3sm_lapack=include_e3sm_lapack,
     e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    exclude_packages=exclude_packages,
 )
 ```
 
@@ -132,6 +172,13 @@ The returned snippet is assembled in three steps:
 
 This design keeps Mache aligned with E3SM’s authoritative machine
 configuration and minimizes maintenance.
+
+`exclude_packages` applies here too, so `get_spack_script()` removes matching
+machine-provided module loads and environment variables from both:
+
+- shell snippets derived from `config_machines.xml`, and
+- any package-local shell overrides in `mache/spack/templates/*.sh` or
+  `*.csh`.
 
 **Usage in activation scripts:**
 
@@ -167,6 +214,7 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
     shell='sh',  # or 'csh'
     include_e3sm_lapack=include_e3sm_lapack,
     e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+    exclude_packages=exclude_packages,
 )
 ```
 
@@ -177,6 +225,9 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
 - `mpifc`: Name of the MPI Fortran compiler wrapper (e.g., `mpif90` or `ftn`).
 - `mod_env_commands`: Shell commands to load modules and set environment variables.
 
+As with `get_spack_script()`, `exclude_packages` can be used to remove
+machine-provided package setup from the generated shell snippet.
+
 **Notes and usage in build scripts:**
 
 ```bash
@@ -184,10 +235,10 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
 # Now safe to use $mpicc, $mpicxx, $mpifc for building MPI-dependent software
 ```
 
-- This helper produces a minimal snippet based on Mache’s template overrides
-  (when present). It does not auto-generate content from
-  `config_machines.xml`. If you need the full environment setup used by
-  downstream activation scripts, prefer `get_spack_script`.
+- This helper uses the same shell-generation logic as `get_spack_script()`
+  but does not activate a Spack environment. It therefore includes the
+  machine-derived setup from `config_machines.xml` plus any matching Mache
+  shell overrides.
 
 ---
 
@@ -211,9 +262,11 @@ mpicc, mpicxx, mpifc, mod_env_commands = get_modules_env_vars_and_mpi_compilers(
 
 - These functions are intended for use in deployment scripts, not for
   interactive use.
+- `e3sm_hdf5_netcdf` and `include_e3sm_hdf5_netcdf` remain supported for
+  backward compatibility, but new downstream code should use
+  `exclude_packages` instead.
 - The downstream package is responsible for determining the correct arguments
   (machine, compiler, MPI, etc.) and for integrating the generated scripts
   into their activation workflow.
 - For more details, see the source code and examples in the downstream
   packages listed above.
-

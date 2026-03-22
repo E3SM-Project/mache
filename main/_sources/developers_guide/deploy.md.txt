@@ -78,6 +78,10 @@ These are the only files currently refreshed by `mache deploy update`.
 
 ### Rendered only during `mache deploy init`
 
+`custom_cli_spec.json`
+: Rendered into `deploy/custom_cli_spec.json` as a downstream-owned extension
+  point for extra CLI flags.
+
 `pins.cfg.j2`
 : Rendered into `deploy/pins.cfg`.
 
@@ -144,6 +148,7 @@ Generated and expected to track `mache` closely:
 
 Target-owned after `init`:
 
+- `deploy/custom_cli_spec.json`
 - `deploy/pins.cfg`
 - `deploy/config.yaml.j2`
 - `deploy/pixi.toml.j2`
@@ -167,7 +172,8 @@ target ownership of `deploy/pins.cfg` is more important than auto-rewriting it.
 ## The command-line contract from the maintainer side
 
 The runtime CLI surface is defined by `mache/deploy/templates/cli_spec.json.j2`
-and consumed in three places:
+plus an optional downstream-owned `deploy/custom_cli_spec.json`, and consumed
+in three places:
 
 1. Target-side `deploy.py` reads the rendered JSON and exposes the user-facing
    arguments.
@@ -184,9 +190,11 @@ When changing the CLI contract:
 5. Update or add tests.
 
 One important subtlety is that `mache deploy run` builds its parser from the
-package template, while target repositories use their rendered
-`deploy/cli_spec.json`. A downstream repo therefore remains safe only when its
-rendered JSON stays compatible with the pinned `mache` version.
+package template plus optional `deploy/custom_cli_spec.json`, while target
+repositories use their rendered `deploy/cli_spec.json` plus the same optional
+custom file. A downstream repo therefore remains safe only when its rendered
+JSON stays compatible with the pinned `mache` version and its custom entries
+avoid duplicate `flags` and `dest` values.
 
 ## Changing starter-kit generation
 

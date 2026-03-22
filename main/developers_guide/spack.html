@@ -69,6 +69,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#automatic-shell-script-generation-preferred">Automatic shell script generation (preferred)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#package-opt-outs-and-deprecated-hdf5-netcdf-flag">Package opt-outs and deprecated HDF5/NetCDF flag</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#when-to-add-a-template-override">When to add a template override</a></li>
 </ul>
 </li>
@@ -141,7 +142,16 @@ template override when strictly necessary (see below).</p></li>
 </div>
 <p>For example: <code class="docutils literal notranslate"><span class="pre">chicoma-cpu_gnu_mpich.yaml</span></code></p>
 <p>These files are Jinja2 templates, allowing conditional inclusion of packages
-(e.g., HDF5/NetCDF, LAPACK) based on user options.</p>
+(e.g., LAPACK) based on user options.</p>
+<p>Machine-provided HDF5/NetCDF packages should now be listed unconditionally in
+the YAML templates.  Downstream packages can opt out of them, or any other
+machine-provided external such as <code class="docutils literal notranslate"><span class="pre">cmake</span></code>, with <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>.  Mache
+filters the rendered YAML after Jinja expansion and removes matching:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.specs</span></code> entries</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.packages.&lt;name&gt;</span></code> external-package sections</p></li>
+<li><p>matching provider specs under <code class="docutils literal notranslate"><span class="pre">spack.packages.all.providers</span></code></p></li>
+</ul>
 <section id="typical-external-packages">
 <h3>Typical External Packages<a class="headerlink" href="#typical-external-packages" title="Link to this heading"></a></h3>
 <p>On most HPC systems, the following packages are provided by the system and
@@ -211,21 +221,46 @@ requested <code class="docutils literal notranslate"><span class="pre">(machine,
 <p>This pipeline greatly reduces maintenance and prevents drift between Mache and
 E3SM’s authoritative machine configuration. In most cases, you do not need to
 author or maintain shell script templates in Mache.</p>
+<section id="package-opt-outs-and-deprecated-hdf5-netcdf-flag">
+<h3>Package opt-outs and deprecated HDF5/NetCDF flag<a class="headerlink" href="#package-opt-outs-and-deprecated-hdf5-netcdf-flag" title="Link to this heading"></a></h3>
+<p>The preferred downstream-facing interface is <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>, available in
+the public <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> APIs and in <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> runtime config.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;cmake&quot;]</span></code>: build CMake with Spack instead of using the
+machine-provided external package and module setup.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;hdf5_netcdf&quot;]</span></code>: opt out of the machine-provided
+HDF5/NetCDF bundle.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;hdf5&quot;,</span> <span class="pre">&quot;netcdf-c&quot;,</span> <span class="pre">&quot;netcdf-fortran&quot;,</span> <span class="pre">&quot;parallel-netcdf&quot;]</span></code>: the same bundle, expressed explicitly.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> and <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code> remain supported as
+deprecated compatibility flags in public <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> APIs.  New code should
+prefer <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>.</p>
+</section>
 <section id="when-to-add-a-template-override">
 <h3>When to add a template override<a class="headerlink" href="#when-to-add-a-template-override" title="Link to this heading"></a></h3>
 <p>Only provide a small override in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> if you need to:</p>
 <ul>
 <li><p>Apply an adjustment that’s not appropriate for the shared E3SM CIME config
 (machine-local quirk, temporary workaround, etc.).</p></li>
-<li><p>Add conditional behavior toggled by
-<code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code> or <code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> (both exposed as Jinja booleans
-in templates) that cannot be expressed in the CIME config.</p>
+<li><p>Add conditional behavior toggled by <code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code> or by package
+helper functions such as <code class="docutils literal notranslate"><span class="pre">use_system_package('cmake')</span></code> and
+<code class="docutils literal notranslate"><span class="pre">use_system_packages('netcdf-c',</span> <span class="pre">'netcdf-fortran')</span></code> that cannot be
+expressed in the CIME config.</p>
 <p>Note: <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code> remains supported as a deprecated alias for
-<code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> in public <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> APIs.</p>
+<code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> in public <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> APIs, but new shell overrides
+should prefer the package helpers over <code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code>.</p>
 </li>
 </ul>
 <p>Templates are Jinja2 files and can use the same conditional logic as YAML
-templates.</p>
+templates.  For shell overrides, the most useful helpers are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">use_system_package('&lt;spack-package-name&gt;')</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">use_system_packages('&lt;pkg1&gt;',</span> <span class="pre">'&lt;pkg2&gt;',</span> <span class="pre">...)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">render_env_var(name,</span> <span class="pre">value,</span> <span class="pre">shell_type)</span></code></p></li>
+</ul>
+<p>These helpers let shell overrides stay package-oriented even when the machine
+module names do not match Spack package names exactly.</p>
 </section>
 </section>
 <section id="testing">

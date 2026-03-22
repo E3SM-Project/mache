@@ -180,6 +180,9 @@ templates.</p>
 <section id="rendered-only-during-mache-deploy-init">
 <h3>Rendered only during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code><a class="headerlink" href="#rendered-only-during-mache-deploy-init" title="Link to this heading"></a></h3>
 <dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">custom_cli_spec.json</span></code></dt><dd><p>Rendered into <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> as a downstream-owned extension
+point for extra CLI flags.</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">pins.cfg.j2</span></code></dt><dd><p>Rendered into <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">config.yaml.j2.j2</span></code></dt><dd><p>Rendered once with square-bracket delimiters into <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>.
@@ -237,6 +240,7 @@ template logic.</p>
 </ul>
 <p>Target-owned after <code class="docutils literal notranslate"><span class="pre">init</span></code>:</p>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code></p></li>
@@ -259,7 +263,8 @@ target ownership of <code class="docutils literal notranslate"><span class="pre"
 <section id="the-command-line-contract-from-the-maintainer-side">
 <h2>The command-line contract from the maintainer side<a class="headerlink" href="#the-command-line-contract-from-the-maintainer-side" title="Link to this heading"></a></h2>
 <p>The runtime CLI surface is defined by <code class="docutils literal notranslate"><span class="pre">mache/deploy/templates/cli_spec.json.j2</span></code>
-and consumed in three places:</p>
+plus an optional downstream-owned <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, and consumed
+in three places:</p>
 <ol class="arabic simple">
 <li><p>Target-side <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> reads the rendered JSON and exposes the user-facing
 arguments.</p></li>
@@ -276,9 +281,11 @@ arguments.</p></li>
 <li><p>Update or add tests.</p></li>
 </ol>
 <p>One important subtlety is that <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> builds its parser from the
-package template, while target repositories use their rendered
-<code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>. A downstream repo therefore remains safe only when its
-rendered JSON stays compatible with the pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version.</p>
+package template plus optional <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, while target
+repositories use their rendered <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> plus the same optional
+custom file. A downstream repo therefore remains safe only when its rendered
+JSON stays compatible with the pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version and its custom entries
+avoid duplicate <code class="docutils literal notranslate"><span class="pre">flags</span></code> and <code class="docutils literal notranslate"><span class="pre">dest</span></code> values.</p>
 </section>
 <section id="changing-starter-kit-generation">
 <h2>Changing starter-kit generation<a class="headerlink" href="#changing-starter-kit-generation" title="Link to this heading"></a></h2>

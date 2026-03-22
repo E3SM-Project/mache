@@ -154,6 +154,7 @@ packages and configuration for the target HPC system.</p></li>
     <span class="n">config_file</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
     <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">,</span>
     <span class="n">tmpdir</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span>
     <span class="n">spack_mirror</span><span class="o">=</span><span class="n">spack_mirror</span><span class="p">,</span>
@@ -170,8 +171,16 @@ packages and configuration for the target HPC system.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code>: Compiler and MPI library names.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">machine</span></code>: Machine name (optional, auto-detected if not provided).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">config_file</span></code>: Path to a machine config file (optional).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code>, <code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code>: Whether to include E3SM-specific
-LAPACK or HDF5/NetCDF packages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code>: Whether to include E3SM-specific LAPACK packages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>: A package name or list of package names whose
+machine-provided externals, modules, and related environment variables
+should be removed so Spack can build them instead.  For example, setting
+<code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;cmake&quot;]</span></code> lets a downstream package build a newer CMake
+than the system provides.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code>: Deprecated compatibility flag for opting into the
+machine-provided HDF5/NetCDF bundle.  New code should prefer
+<code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;hdf5_netcdf&quot;]</span></code> (or the individual package names
+<code class="docutils literal notranslate"><span class="pre">hdf5</span></code>, <code class="docutils literal notranslate"><span class="pre">netcdf-c</span></code>, <code class="docutils literal notranslate"><span class="pre">netcdf-fortran</span></code>, and <code class="docutils literal notranslate"><span class="pre">parallel-netcdf</span></code>) instead.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">yaml_template</span></code>: Path to a custom Jinja2 YAML template (optional).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tmpdir</span></code>: Temporary directory for builds (optional).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack_mirror</span></code>: Path to a local Spack mirror (optional).</p></li>
@@ -184,6 +193,30 @@ LAPACK or HDF5/NetCDF packages.</p></li>
 <li><p>Generates and runs a shell script to create the Spack environment.</p></li>
 <li><p>Loads any required modules and sets up environment variables as needed.</p></li>
 </ul>
+<p><strong>Recommended pattern for downstream packages:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">if</span> <span class="n">needs_newer_cmake</span><span class="p">:</span>
+    <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;cmake&quot;</span><span class="p">)</span>
+
+<span class="n">make_spack_env</span><span class="p">(</span>
+    <span class="o">...</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>To opt out of the machine-provided HDF5/NetCDF bundle, use either:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hdf5_netcdf&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>or the individual package names:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span>
+    <span class="s2">&quot;hdf5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;netcdf-c&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;netcdf-fortran&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parallel-netcdf&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</div>
 </section>
 <hr class="docutils" />
 <section id="get-spack-script">
@@ -211,6 +244,7 @@ activated in the user’s shell.</p></li>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -226,6 +260,13 @@ the given <code class="docutils literal notranslate"><span class="pre">(machine,
 </ol>
 <p>This design keeps Mache aligned with E3SM’s authoritative machine
 configuration and minimizes maintenance.</p>
+<p><code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> applies here too, so <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code> removes matching
+machine-provided module loads and environment variables from both:</p>
+<ul class="simple">
+<li><p>shell snippets derived from <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, and</p></li>
+<li><p>any package-local shell overrides in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/*.sh</span></code> or
+<code class="docutils literal notranslate"><span class="pre">*.csh</span></code>.</p></li>
+</ul>
 <p><strong>Usage in activation scripts:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example in a load script</span>
 <span class="o">{{</span><span class="w"> </span>spack_script<span class="w"> </span><span class="o">}}</span>
@@ -254,6 +295,7 @@ environment variables for a given machine, compiler, and MPI library.</p>
     <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -264,16 +306,18 @@ environment variables for a given machine, compiler, and MPI library.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">mpifc</span></code>: Name of the MPI Fortran compiler wrapper (e.g., <code class="docutils literal notranslate"><span class="pre">mpif90</span></code> or <code class="docutils literal notranslate"><span class="pre">ftn</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mod_env_commands</span></code>: Shell commands to load modules and set environment variables.</p></li>
 </ul>
+<p>As with <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code>, <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> can be used to remove
+machine-provided package setup from the generated shell snippet.</p>
 <p><strong>Notes and usage in build scripts:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{{</span><span class="w"> </span>mod_env_commands<span class="w"> </span><span class="o">}}</span>
 <span class="c1"># Now safe to use $mpicc, $mpicxx, $mpifc for building MPI-dependent software</span>
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>This helper produces a minimal snippet based on Mache’s template overrides
-(when present). It does not auto-generate content from
-<code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>. If you need the full environment setup used by
-downstream activation scripts, prefer <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code>.</p></li>
+<li><p>This helper uses the same shell-generation logic as <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code>
+but does not activate a Spack environment. It therefore includes the
+machine-derived setup from <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> plus any matching Mache
+shell overrides.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -297,6 +341,9 @@ See: <a class="reference external" href="https://github.com/E3SM-Project/e3sm-un
 <ul class="simple">
 <li><p>These functions are intended for use in deployment scripts, not for
 interactive use.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> and <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code> remain supported for
+backward compatibility, but new downstream code should use
+<code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> instead.</p></li>
 <li><p>The downstream package is responsible for determining the correct arguments
 (machine, compiler, MPI, etc.) and for integrating the generated scripts
 into their activation workflow.</p></li>

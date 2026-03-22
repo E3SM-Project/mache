@@ -124,6 +124,7 @@
 <span class="sd">    Writes:</span>
 <span class="sd">      - deploy.py (repo root)</span>
 <span class="sd">      - deploy/cli_spec.json</span>
+<span class="sd">      - deploy/custom_cli_spec.json (init only, downstream-owned)</span>
 <span class="sd">      - deploy/pins.cfg (init only)</span>
 <span class="sd">      - deploy/config.yaml.j2 (init only)</span>
 <span class="sd">      - deploy/spack.yaml.j2 (init only)</span>
@@ -240,6 +241,15 @@
         <span class="n">_write_text</span><span class="p">(</span>
             <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;hooks.py&#39;</span><span class="p">,</span>
             <span class="n">hooks_py_tmpl</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">custom_cli_spec_tmpl</span> <span class="o">=</span> <span class="n">_read_pkg_template</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">TEMPLATE_DIR</span><span class="si">}</span><span class="s1">/custom_cli_spec.json&#39;</span>
+        <span class="p">)</span>
+        <span class="n">_write_text</span><span class="p">(</span>
+            <span class="n">deploy_dir</span> <span class="o">/</span> <span class="s1">&#39;custom_cli_spec.json&#39;</span><span class="p">,</span>
+            <span class="n">custom_cli_spec_tmpl</span><span class="p">,</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
         <span class="p">)</span>
 
