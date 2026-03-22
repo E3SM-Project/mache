@@ -7,12 +7,10 @@ spack:
 {%- if e3sm_lapack %}
   - intel-oneapi-mkl
 {%- endif %}
-{%- if e3sm_hdf5_netcdf %}
   - "hdf5%{{ compiler }}"
   - "netcdf-c%{{ compiler }}"
   - "netcdf-fortran%{{ compiler }}"
   - "parallel-netcdf%{{ compiler }}"
-{%- endif %}
 {%- for spec in specs %}
   - "{{ spec }}%{{ compiler }}"
 {%- endfor %}
@@ -126,7 +124,6 @@ spack:
         modules:
         - intel-oneapi-mkl/2025.2.0-bcimxay
       buildable: false
-{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.14.6+cxx+fortran+hl+mpi
@@ -151,7 +148,6 @@ spack:
         modules:
         - parallel-netcdf/1.14.1-f2fwvr2
       buildable: false
-{%- endif %}
   compilers:
   - compiler:
       spec: {{ compiler }}

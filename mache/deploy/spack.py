@@ -14,7 +14,11 @@ from yaml import safe_load
 from mache.deploy.bootstrap import check_call
 from mache.deploy.hooks import DeployContext
 from mache.spack.script import get_spack_script
-from mache.spack.shared import _get_yaml_data
+from mache.spack.shared import (
+    _get_yaml_data,
+    normalize_excluded_packages,
+    resolve_e3sm_hdf5_netcdf,
+)
 from mache.version import __version__
 
 
@@ -146,6 +150,11 @@ def deploy_spack_software_env(
         option='use_e3sm_hdf5_netcdf',
         default=False,
     )
+    exclude_packages = _get_excluded_spack_packages(spack_cfg)
+    e3sm_hdf5_netcdf, exclude_packages = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
+    )
 
     spack_path = _resolve_spack_path(
         ctx=ctx,
@@ -176,6 +185,7 @@ def deploy_spack_software_env(
         mpi=mpi,
         section='software',
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
     )
 
     yaml_path = _write_mache_spack_env_yaml(
@@ -186,6 +196,7 @@ def deploy_spack_software_env(
         env_name=env_name,
         spack_specs=specs,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
     )
 
     _install_spack_env(
@@ -295,6 +306,11 @@ def deploy_spack_envs(
         option='use_e3sm_hdf5_netcdf',
         default=False,
     )
+    exclude_packages = _get_excluded_spack_packages(spack_cfg)
+    e3sm_hdf5_netcdf, exclude_packages = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
+    )
 
     env_name_prefix = str(
         spack_cfg.get('env_name_prefix') or 'spack_env'
@@ -341,6 +357,7 @@ def deploy_spack_envs(
             mpi=mpi,
             section='library',
             e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+            exclude_packages=exclude_packages,
         )
 
         yaml_path = _write_mache_spack_env_yaml(
@@ -351,6 +368,7 @@ def deploy_spack_envs(
             env_name=env_name,
             spack_specs=specs,
             e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+            exclude_packages=exclude_packages,
         )
 
         _install_spack_env(
@@ -439,6 +457,11 @@ def load_existing_spack_envs(
         section='deploy',
         option='use_e3sm_hdf5_netcdf',
         default=False,
+    )
+    exclude_packages = _get_excluded_spack_packages(spack_cfg)
+    e3sm_hdf5_netcdf, _ = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
     )
 
     env_name_prefix = str(
@@ -680,6 +703,12 @@ def _resolve_software_toolchain(
     return compiler, mpi
 
 
+def _get_excluded_spack_packages(spack_cfg: dict) -> set[str]:
+    """Read the opt-out list for machine-provided Spack packages."""
+
+    return normalize_excluded_packages(spack_cfg.get('exclude_packages'))
+
+
 def _render_spack_specs(
     *,
     template_path: str,
@@ -688,6 +717,7 @@ def _render_spack_specs(
     mpi: str,
     section: str,
     e3sm_hdf5_netcdf: bool,
+    exclude_packages: set[str],
 ) -> list[str]:
     if not os.path.exists(template_path):
         raise FileNotFoundError(
@@ -709,6 +739,7 @@ def _render_spack_specs(
         machine=ctx.machine or '',
         compiler=compiler,
         mpi=mpi,
+        exclude_packages=sorted(exclude_packages),
         # Naming: prefer e3sm_hdf5_netcdf in templates; keep use_* to align
         # with the machine-config option name.
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
@@ -777,6 +808,7 @@ def _write_mache_spack_env_yaml(
     env_name: str,
     spack_specs: list[str],
     e3sm_hdf5_netcdf: bool,
+    exclude_packages: set[str],
 ) -> Path:
     """Write the full spack environment YAML using mache's templates."""
 
@@ -803,6 +835,7 @@ def _write_mache_spack_env_yaml(
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         specs=spack_specs,
         yaml_template=yaml_template,
+        exclude_packages=exclude_packages,
     )
 
     yaml_path = work / f'{env_name}.yaml'

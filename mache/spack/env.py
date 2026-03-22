@@ -8,7 +8,7 @@ from packaging.version import Version
 
 from mache.machine_info import MachineInfo, discover_machine
 from mache.spack.script import get_spack_script
-from mache.spack.shared import _get_yaml_data
+from mache.spack.shared import _get_yaml_data, resolve_e3sm_hdf5_netcdf
 from mache.version import __version__
 
 MPI_COMPILERS = {
@@ -33,6 +33,7 @@ def make_spack_env(
     include_e3sm_hdf5_netcdf=None,
     e3sm_hdf5_netcdf=None,
     yaml_template=None,
+    exclude_packages=None,
     tmpdir=None,
     spack_mirror=None,
     custom_spack='',
@@ -82,6 +83,13 @@ def make_spack_env(
         of the mache template.  This allows you to use compilers and other
         modules that differ from E3SM.
 
+    exclude_packages : sequence of str or str, optional
+        System-provided Spack packages to opt out of when rendering the
+        machine template.  These package entries are removed from the rendered
+        YAML so Spack can build them instead.  The aliases
+        ``e3sm_hdf5_netcdf`` and ``hdf5_netcdf`` exclude the machine-provided
+        HDF5/NetCDF bundle.
+
     tmpdir : str, optional
         A temporary directory for building spack packages
 
@@ -112,6 +120,10 @@ def make_spack_env(
         e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
     else:
         e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
+    e3sm_hdf5_netcdf, exclude_packages = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
+    )
 
     if machine is None:
         machine = discover_machine()
@@ -132,6 +144,7 @@ def make_spack_env(
         e3sm_hdf5_netcdf,
         spack_specs,
         yaml_template,
+        exclude_packages=exclude_packages,
     )
 
     yaml_filename = os.path.abspath(f'{env_name}.yaml')
@@ -150,6 +163,7 @@ def make_spack_env(
         include_e3sm_lapack,
         load_spack_env=False,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
     )
     modules = f'{modules}\n{bash_script}'
 
@@ -200,6 +214,7 @@ def get_modules_env_vars_and_mpi_compilers(
     include_e3sm_hdf5_netcdf=None,
     *,
     e3sm_hdf5_netcdf=None,
+    exclude_packages=None,
 ):
     """
     Get the non-spack modules, environment variables and compiler names for a
@@ -230,6 +245,12 @@ def get_modules_env_vars_and_mpi_compilers(
 
     include_e3sm_hdf5_netcdf : bool, optional
         Deprecated alias for ``e3sm_hdf5_netcdf``.
+
+    exclude_packages : sequence of str or str, optional
+        System-provided Spack packages to opt out of.  For this function, the
+        package bundle that affects shell setup is ``e3sm_hdf5_netcdf`` (or
+        ``hdf5_netcdf``), which disables the machine-provided HDF5/NetCDF
+        module and environment-variable setup.
 
     Returns
     -------
@@ -265,6 +286,10 @@ def get_modules_env_vars_and_mpi_compilers(
         e3sm_hdf5_netcdf = bool(e3sm_hdf5_netcdf)
     else:
         e3sm_hdf5_netcdf = bool(include_e3sm_hdf5_netcdf)
+    e3sm_hdf5_netcdf, exclude_packages = resolve_e3sm_hdf5_netcdf(
+        e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
+    )
 
     if machine is None:
         machine = discover_machine()
@@ -291,6 +316,7 @@ def get_modules_env_vars_and_mpi_compilers(
         load_spack_env=False,
         include_e3sm_lapack=include_e3sm_lapack,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        exclude_packages=exclude_packages,
     )
 
     mpicc, mpicxx, mpifc = _get_mpi_compilers(

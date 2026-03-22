@@ -5,6 +5,8 @@
 #   - software, machine, compiler, mpi
 #   - pins (dict of dicts from deploy/pins.cfg)
 #   - spack / pixi / all (shortcuts for pins sections)
+#   - exclude_packages (normalized list of machine-provided packages to build
+#     with Spack instead)
 #
 # Expected format: a YAML mapping with one or both keys:
 #   - library:  specs for the per-toolchain "library" environment(s)

@@ -5,12 +5,10 @@ spack:
   specs:
   # don't include {{ compiler }} since there isn't a "oneapi" package
   - {{ mpi }}%{{ compiler }}
-{%- if e3sm_hdf5_netcdf %}
   - "hdf5%{{ compiler }}"
   - "netcdf-c%{{ compiler }}"
   - "netcdf-fortran%{{ compiler }}"
   - "parallel-netcdf%{{ compiler }}"
-{%- endif %}
 {%- for spec in specs %}
   - "{{ spec }}%{{ compiler }}"
 {%- endfor %}
@@ -119,7 +117,6 @@ spack:
       - spec: {{ mpi }}%{{ compiler }}
         prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/mpich-5.0.0.aurora_test.3c70a61-hlkigtk
       buildable: false
-{%- if e3sm_hdf5_netcdf %}
     hdf5:
       externals:
       - spec: hdf5@1.14.6+cxx+fortran+hl+mpi
@@ -140,7 +137,6 @@ spack:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
         prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/parallel-netcdf-1.14.1-44pgfig
       buildable: false
-{%- endif %}
   compilers:
   - compiler:
       spec: {{ compiler }}

@@ -170,6 +170,22 @@ spack:
   # each containing a list of spec strings.
   specs_template: "deploy/spack.yaml.j2"
 
+  # Optional list of machine-provided Spack packages to suppress so Spack can
+  # build them instead.
+  #
+  # Typical examples:
+  #   exclude_packages:
+  #     - cmake
+  #
+  # To opt out of the machine-provided HDF5/NetCDF bundle, prefer:
+  #   exclude_packages:
+  #     - hdf5_netcdf
+  #
+  # In some target repositories, this list is set dynamically in `pre_spack()`
+  # based on merged machine config, for example when [deploy]
+  # use_e3sm_hdf5_netcdf = false should map to excluding the bundle.
+  exclude_packages: []
+
   # Optional spack build settings
   tmpdir: null
   mirror: null
