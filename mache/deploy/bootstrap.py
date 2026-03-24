@@ -49,9 +49,10 @@ def check_call(
 
     Parameters
     ----------
-    commands : str
-        A single shell command string (possibly chaining commands with "&&" or
-        ";")
+    commands : str or list[str]
+        Either a single shell command string (possibly chaining commands with
+        "&&" or ";") or an argv-style command list for direct execution
+        without a shell.
 
     log_filename : str
         The path to the log file to append to
@@ -104,12 +105,15 @@ def check_call(
 
     # Echo the commands being run (like a lightweight trace) so the log is
     # self-contained and debuggable.
-    # Keep nested quoted commands intact (e.g. bash -lc '... && ...').
-    command_list = _split_shell_on_andand(commands)
-    if command_list:
-        print_command = '\n   '.join(command_list)
+    # Keep nested quoted commands intact (e.g. bash -c '... && ...').
+    if isinstance(commands, str):
+        command_list = _split_shell_on_andand(commands)
+        if command_list:
+            print_command = '\n   '.join(command_list)
+        else:
+            print_command = commands
     else:
-        print_command = commands
+        print_command = ' '.join(shlex.quote(str(arg)) for arg in commands)
     print_command = f'\n Running:\n   {print_command}\n'
 
     os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
@@ -130,11 +134,18 @@ def check_call(
     stdout_data = None
 
     base_popen_kwargs = {
-        'executable': '/bin/bash',
-        'shell': True,
         'universal_newlines': text,
         'bufsize': bufsize,
     }
+    if isinstance(commands, str):
+        base_popen_kwargs.update(
+            {
+                'executable': '/bin/bash',
+                'shell': True,
+            }
+        )
+    else:
+        base_popen_kwargs.setdefault('shell', False)
     # Allow callers to override defaults.
     base_popen_kwargs.update(popen_kwargs)
 
@@ -220,13 +231,14 @@ def check_call_with_retries(
     *,
     retries=3,
     retry_delay=2.0,
+    **popen_kwargs,
 ):
     """Run a command with a few retries for transient pixi/network failures."""
 
     last_error = None
     for attempt in range(1, retries + 1):
         try:
-            return check_call(commands, log_filename, quiet)
+            return check_call(commands, log_filename, quiet, **popen_kwargs)
         except subprocess.CalledProcessError as exc:
             last_error = exc
             if attempt >= retries:
@@ -258,6 +270,14 @@ def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
         f'{shlex.quote(pixi_toml)}'
     )
     return f'eval "$({hook_cmd})" &&'
+
+
+def build_pixi_env(base_env=None):
+    """Build an environment with pixi nesting variables removed."""
+    env = dict(os.environ if base_env is None else base_env)
+    for var in PIXI_ENV_VARS_TO_UNSET:
+        env.pop(var, None)
+    return env
 
 
 def check_location(software=None):
@@ -408,12 +428,14 @@ def _run(log_filename):
             python_version=args.python,
         )
 
-        cmd_install = (
-            f'cd "{bootstrap_dir}" && '
-            f'{build_pixi_env_unset_prefix()} '
-            f'"{pixi_exe}" install'
+        cmd_install = [pixi_exe, 'install']
+        check_call_with_retries(
+            cmd_install,
+            log_filename,
+            quiet,
+            cwd=str(bootstrap_dir),
+            env=build_pixi_env(),
         )
-        check_call_with_retries(cmd_install, log_filename, quiet)
 
         pixi_toml = str(pixi_toml_path.resolve())
         pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
@@ -435,12 +457,14 @@ def _run(log_filename):
             python_version=args.python,
         )
 
-        cmd_install = (
-            f'cd "{bootstrap_dir}" && '
-            f'{build_pixi_env_unset_prefix()} '
-            f'"{pixi_exe}" install'
+        cmd_install = [pixi_exe, 'install']
+        check_call_with_retries(
+            cmd_install,
+            log_filename,
+            quiet,
+            cwd=str(bootstrap_dir),
+            env=build_pixi_env(),
         )
-        check_call_with_retries(cmd_install, log_filename, quiet)
 
 
 def _parse_args():
@@ -552,7 +576,7 @@ def _split_shell_on_andand(commands):
 
     This is used only for logging/pretty-printing in check_call(). It is not a
     full shell parser; it is a best-effort splitter that avoids breaking
-    quoted sub-commands (e.g. bash -lc '... && ...').
+    quoted sub-commands (e.g. bash -c '... && ...').
     """
     parts = []
     buf = []
@@ -1011,13 +1035,26 @@ def _clone_mache_repo(
         )
         return
 
-    commands = (
-        f'cd "{build_root!s}" && '
-        + "GIT_SSH_COMMAND='ssh -oBatchMode=yes' git clone "
-        + f'--depth 1 --single-branch -b "{mache_branch}" '
-        + f'"git@github.com:{mache_fork}.git" mache'
+    env = build_pixi_env()
+    env['GIT_SSH_COMMAND'] = 'ssh -oBatchMode=yes'
+    commands = [
+        'git',
+        'clone',
+        '--depth',
+        '1',
+        '--single-branch',
+        '-b',
+        mache_branch,
+        f'git@github.com:{mache_fork}.git',
+        'mache',
+    ]
+    check_call(
+        commands,
+        log_filename,
+        quiet,
+        cwd=str(build_root),
+        env=env,
     )
-    check_call(commands, log_filename, quiet)
 
 
 def _copy_local_mache_source_snapshot(

@@ -6,7 +6,7 @@ project:
   # Optional: a command that prints the *runtime* version string for the
   # deployed software.
   #
-  # This command is run via `pixi run -m <pixi.toml> bash -lc <cmd>` *before*
+  # This command is run via `pixi run -m <pixi.toml> -- bash -c <cmd>` *before*
   # the load script activates the environment, so it can safely `return` on
   # mismatch without changing your shell environment.
   #

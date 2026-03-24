@@ -16,7 +16,7 @@ from mache.jigsaw import deploy_jigsawpy
 
 from .bootstrap import (
     _format_pixi_version_specifier,
-    build_pixi_env_unset_prefix,
+    build_pixi_env,
     build_pixi_shell_hook_prefix,
     check_call,
     check_location,
@@ -1018,12 +1018,14 @@ def _pixi_install(
     # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
     #   PIXI_CACHE_DIR in shell startup or modulefiles.
     # - Otherwise pixi uses its own defaults (typically under $HOME).
-    cmd = (
-        f'cd {shlex.quote(project_dir)} && '
-        f'{build_pixi_env_unset_prefix()} '
-        f'{shlex.quote(pixi_exe)} install'
+    cmd = [pixi_exe, 'install']
+    check_call(
+        cmd,
+        log_filename=log_filename,
+        quiet=quiet,
+        cwd=project_dir,
+        env=build_pixi_env(),
     )
-    check_call(cmd, log_filename=log_filename, quiet=quiet)
 
 
 def _get_mpi_settings(
