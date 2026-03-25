@@ -317,6 +317,7 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
     deploy_run._apply_deploy_permissions(
         prefix=str(prefix),
         load_script_paths=[str(load_script)],
+        spack_env_paths=[],
         group='e3sm',
         world_readable=False,
         logger=logger,
@@ -363,9 +364,95 @@ def test_apply_deploy_permissions_is_noop_without_group(
     deploy_run._apply_deploy_permissions(
         prefix=str(tmp_path / 'prefix'),
         load_script_paths=[],
+        spack_env_paths=[],
         group=None,
         world_readable=True,
         logger=logger,
     )
 
     assert calls == []
+
+
+def test_apply_deploy_permissions_includes_deployed_spack_envs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    spack_lib = tmp_path / 'spack' / 'var' / 'spack' / 'environments' / 'lib'
+    spack_lib.mkdir(parents=True)
+    spack_soft = (
+        tmp_path / 'spack' / 'var' / 'spack' / 'environments' / 'software'
+    )
+    spack_soft.mkdir(parents=True)
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-spack'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        load_script_paths=[],
+        spack_env_paths=[str(spack_lib), str(spack_soft)],
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 2
+
+    second_args, second_kwargs = calls[1]
+    assert second_args[1] == 'e3sm'
+    assert sorted(second_args[0]) == sorted(
+        [
+            str(spack_lib),
+            str(spack_soft),
+        ]
+    )
+    assert second_kwargs['show_progress'] is True
+    assert second_kwargs['recursive'] is True
+
+
+def test_get_deployed_spack_env_paths_includes_library_and_software_envs():
+    spack_results = [
+        deploy_run.SpackDeployResult(
+            compiler='gnu',
+            mpi='mpich',
+            env_name='spack_env_gnu_mpich',
+            spack_path='/opt/spack',
+            view_path=(
+                '/opt/spack/var/spack/environments/spack_env_gnu_mpich/'
+                '.spack-env/view'
+            ),
+            activation='',
+        )
+    ]
+    spack_software_env = deploy_run.SpackSoftwareEnvResult(
+        compiler='gnu',
+        mpi='mpich',
+        env_name='myproj_software',
+        spack_path='/opt/spack',
+        view_path=(
+            '/opt/spack/var/spack/environments/myproj_software/.spack-env/view'
+        ),
+        path_setup='',
+    )
+
+    assert deploy_run._get_deployed_spack_env_paths(
+        spack_results=spack_results,
+        spack_software_env=spack_software_env,
+    ) == [
+        '/opt/spack/var/spack/environments/spack_env_gnu_mpich',
+        '/opt/spack/var/spack/environments/myproj_software',
+    ]

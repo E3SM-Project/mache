@@ -29,6 +29,8 @@ from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .machine import get_machine, get_machine_config
 from .spack import (
+    SpackDeployResult,
+    SpackSoftwareEnvResult,
     deploy_spack_envs,
     deploy_spack_software_env,
     get_effective_spack_config,
@@ -336,6 +338,14 @@ def run_deploy(args: argparse.Namespace) -> None:
     _apply_deploy_permissions(
         prefix=prefix,
         load_script_paths=load_script_paths,
+        spack_env_paths=(
+            _get_deployed_spack_env_paths(
+                spack_results=spack_results,
+                spack_software_env=spack_software_env,
+            )
+            if deploy_spack
+            else []
+        ),
         group=permissions_group,
         world_readable=world_readable,
         logger=logger,
@@ -674,6 +684,7 @@ def _apply_deploy_permissions(
     *,
     prefix: str,
     load_script_paths: list[str],
+    spack_env_paths: list[str],
     group: str | None,
     world_readable: bool,
     logger: logging.Logger,
@@ -707,6 +718,9 @@ def _apply_deploy_permissions(
         managed_paths.extend(str(path) for path in prefix_path.iterdir())
     elif prefix_path.exists():
         managed_paths.append(prefix_abs)
+    managed_paths.extend(spack_env_paths)
+
+    managed_paths = list(dict.fromkeys(managed_paths))
 
     if not managed_paths:
         return
@@ -719,6 +733,40 @@ def _apply_deploy_permissions(
         other_readable=world_readable,
         recursive=True,
     )
+
+
+def _get_deployed_spack_env_paths(
+    *,
+    spack_results: list[SpackDeployResult],
+    spack_software_env: SpackSoftwareEnvResult | None,
+) -> list[str]:
+    """Return absolute paths for deployed Spack environment roots."""
+
+    paths = []
+
+    for result in spack_results:
+        paths.append(
+            os.path.join(
+                result.spack_path,
+                'var',
+                'spack',
+                'environments',
+                result.env_name,
+            )
+        )
+
+    if spack_software_env is not None:
+        paths.append(
+            os.path.join(
+                spack_software_env.spack_path,
+                'var',
+                'spack',
+                'environments',
+                spack_software_env.env_name,
+            )
+        )
+
+    return paths
 
 
 def _normalize_optional_token(value: Any) -> str | None:
