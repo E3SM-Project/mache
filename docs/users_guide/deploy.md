@@ -199,6 +199,12 @@ Important settings:
 - `machines.path`: optional path to target-owned machine config files.
 - `pixi.prefix`: required in practice.
 - `pixi.channels`: required and must be non-empty.
+- `permissions.group`: optional shared-filesystem group to apply after a
+  successful deploy. If unset, `mache deploy run` falls back to merged machine
+  config `[deploy] group`, then legacy `[e3sm_unified] group`.
+- `permissions.world_readable`: optional boolean controlling whether deployed
+  files are readable outside the shared group. Hooks may override both values
+  through `ctx.runtime["permissions"]`.
 - `spack.spack_path`: required when Spack support is enabled and no hook or
   CLI override provides it, unless the user disables Spack for that run with
   `--no-spack`.

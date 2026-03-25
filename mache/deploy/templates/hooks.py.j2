@@ -71,10 +71,15 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # Runtime override keys consumed by `mache deploy run`:
     # - runtime["project"]["version"]: overrides `project.version`
     # - runtime["pixi"]["mpi"]: overrides `pixi.mpi`
+    # - runtime["permissions"]["group"]: overrides `permissions.group`
+    # - runtime["permissions"]["world_readable"]:
+    #     overrides `permissions.world_readable`
     #
     # Example (commented out):
     # updates.setdefault("project", {})["version"] = "v1.2.3"
     # updates.setdefault("pixi", {})["mpi"] = "openmpi"
+    # updates.setdefault("permissions", {})["group"] = "e3sm"
+    # updates.setdefault("permissions", {})["world_readable"] = False
 
     return updates
 
