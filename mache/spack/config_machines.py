@@ -38,16 +38,16 @@ def extract_machine_config(xml_file, machine, compiler, mpilib):
             for mod_sys in mach.findall('module_system'):
                 for mod in mod_sys.findall('modules'):
                     if not (
-                        re.match(mod.get('compiler', '.*'), compiler)
-                        and re.match(mod.get('mpilib', '.*'), mpilib)
-                        and re.match(mod.get('DEBUG', '.*'), 'FALSE')
+                        _matches_selector(mod.get('compiler', '.*'), compiler)
+                        and _matches_selector(mod.get('mpilib', '.*'), mpilib)
+                        and _matches_selector(mod.get('DEBUG', '.*'), 'FALSE')
                     ):
                         mod_sys.remove(mod)
             for env_vars in mach.findall('environment_variables'):
                 if not (
-                    re.match(env_vars.get('compiler', '.*'), compiler)
-                    and re.match(env_vars.get('mpilib', '.*'), mpilib)
-                    and re.match(env_vars.get('DEBUG', '.*'), 'FALSE')
+                    _matches_selector(env_vars.get('compiler', '.*'), compiler)
+                    and _matches_selector(env_vars.get('mpilib', '.*'), mpilib)
+                    and _matches_selector(env_vars.get('DEBUG', '.*'), 'FALSE')
                 ):
                     mach.remove(env_vars)
             return mach
@@ -165,6 +165,11 @@ def extract_spack_from_config_machines(
             f.write(script)
 
     return script
+
+
+def _matches_selector(pattern, value):
+    """Return whether a selector regex matches the whole value."""
+    return re.fullmatch(pattern, value) is not None
 
 
 def _convert_module_commands_to_script_lines(module_commands, shell_type):
