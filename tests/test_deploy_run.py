@@ -317,7 +317,7 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
     deploy_run._apply_deploy_permissions(
         prefix=str(prefix),
         load_script_paths=[str(load_script)],
-        spack_env_paths=[],
+        spack_paths=[],
         group='e3sm',
         world_readable=False,
         logger=logger,
@@ -364,7 +364,7 @@ def test_apply_deploy_permissions_is_noop_without_group(
     deploy_run._apply_deploy_permissions(
         prefix=str(tmp_path / 'prefix'),
         load_script_paths=[],
-        spack_env_paths=[],
+        spack_paths=[],
         group=None,
         world_readable=True,
         logger=logger,
@@ -373,18 +373,16 @@ def test_apply_deploy_permissions_is_noop_without_group(
     assert calls == []
 
 
-def test_apply_deploy_permissions_includes_deployed_spack_envs(
+def test_apply_deploy_permissions_includes_deployed_spack_paths(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     prefix = tmp_path / 'prefix'
     prefix.mkdir()
 
-    spack_lib = tmp_path / 'spack' / 'var' / 'spack' / 'environments' / 'lib'
-    spack_lib.mkdir(parents=True)
-    spack_soft = (
-        tmp_path / 'spack' / 'var' / 'spack' / 'environments' / 'software'
-    )
-    spack_soft.mkdir(parents=True)
+    spack_lib = tmp_path / 'spack-lib'
+    spack_lib.mkdir()
+    spack_soft = tmp_path / 'spack-soft'
+    spack_soft.mkdir()
 
     calls = []
 
@@ -404,7 +402,7 @@ def test_apply_deploy_permissions_includes_deployed_spack_envs(
     deploy_run._apply_deploy_permissions(
         prefix=str(prefix),
         load_script_paths=[],
-        spack_env_paths=[str(spack_lib), str(spack_soft)],
+        spack_paths=[str(spack_lib), str(spack_soft)],
         group='e3sm',
         world_readable=True,
         logger=logger,
@@ -449,10 +447,9 @@ def test_get_deployed_spack_env_paths_includes_library_and_software_envs():
         path_setup='',
     )
 
-    assert deploy_run._get_deployed_spack_env_paths(
+    assert deploy_run._get_deployed_spack_paths(
         spack_results=spack_results,
         spack_software_env=spack_software_env,
     ) == [
-        '/opt/spack/var/spack/environments/spack_env_gnu_mpich',
-        '/opt/spack/var/spack/environments/myproj_software',
+        '/opt/spack',
     ]

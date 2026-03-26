@@ -338,8 +338,8 @@ def run_deploy(args: argparse.Namespace) -> None:
     _apply_deploy_permissions(
         prefix=prefix,
         load_script_paths=load_script_paths,
-        spack_env_paths=(
-            _get_deployed_spack_env_paths(
+        spack_paths=(
+            _get_deployed_spack_paths(
                 spack_results=spack_results,
                 spack_software_env=spack_software_env,
             )
@@ -684,7 +684,7 @@ def _apply_deploy_permissions(
     *,
     prefix: str,
     load_script_paths: list[str],
-    spack_env_paths: list[str],
+    spack_paths: list[str],
     group: str | None,
     world_readable: bool,
     logger: logging.Logger,
@@ -718,7 +718,7 @@ def _apply_deploy_permissions(
         managed_paths.extend(str(path) for path in prefix_path.iterdir())
     elif prefix_path.exists():
         managed_paths.append(prefix_abs)
-    managed_paths.extend(spack_env_paths)
+    managed_paths.extend(spack_paths)
 
     managed_paths = list(dict.fromkeys(managed_paths))
 
@@ -735,38 +735,19 @@ def _apply_deploy_permissions(
     )
 
 
-def _get_deployed_spack_env_paths(
+def _get_deployed_spack_paths(
     *,
     spack_results: list[SpackDeployResult],
     spack_software_env: SpackSoftwareEnvResult | None,
 ) -> list[str]:
-    """Return absolute paths for deployed Spack environment roots."""
+    """Return absolute base Spack checkout paths for deployed envs."""
 
-    paths = []
-
-    for result in spack_results:
-        paths.append(
-            os.path.join(
-                result.spack_path,
-                'var',
-                'spack',
-                'environments',
-                result.env_name,
-            )
-        )
+    paths = [result.spack_path for result in spack_results]
 
     if spack_software_env is not None:
-        paths.append(
-            os.path.join(
-                spack_software_env.spack_path,
-                'var',
-                'spack',
-                'environments',
-                spack_software_env.env_name,
-            )
-        )
+        paths.append(spack_software_env.spack_path)
 
-    return paths
+    return list(dict.fromkeys(paths))
 
 
 def _normalize_optional_token(value: Any) -> str | None:
