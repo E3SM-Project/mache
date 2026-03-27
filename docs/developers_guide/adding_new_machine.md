@@ -22,6 +22,15 @@ machine.
 Adding a new config file is usually straightforward if you follow the format of
 an existing config file.
 
+For machines with a known E3SM inputdata location, also add an `[inputdata]`
+section with:
+
+- `base_path`: base directory for the shared E3SM inputdata tree
+
+When the machine also appears in
+`mache/cime_machine_config/config_machines.xml`, this value should match that
+machine's `DIN_LOC_ROOT` entry.
+
 ### Parallel execution settings
 
 Machine config files now include parallel-resource settings that are consumed
@@ -106,4 +115,3 @@ if machine is None and 'LMOD_SYSTEM_NAME' in os.environ:
 Identifying the machine by environment variables is **not recommended** unless
 absolutely necessary.
 :::
-

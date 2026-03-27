@@ -104,6 +104,7 @@ The following public functions are available in the top-level `mache` package:
 - `e3sm_unified_base`: Base path for E3SM-Unified and activation scripts.
 - `e3sm_unified_activation`: Activation script for E3SM-Unified.
 - `diagnostics_base`: Base directory for diagnostics data.
+- `inputdata_base`: Base directory for E3SM inputdata.
 - `web_portal_base`: Base directory for the web portal.
 - `web_portal_url`: Base URL for the web portal.
 - `username`: The current user's name.
