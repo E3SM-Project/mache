@@ -146,9 +146,10 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    commands : str</span>
-<span class="sd">        A single shell command string (possibly chaining commands with &quot;&amp;&amp;&quot; or</span>
-<span class="sd">        &quot;;&quot;)</span>
+<span class="sd">    commands : str or list[str]</span>
+<span class="sd">        Either a single shell command string (possibly chaining commands with</span>
+<span class="sd">        &quot;&amp;&amp;&quot; or &quot;;&quot;) or an argv-style command list for direct execution</span>
+<span class="sd">        without a shell.</span>
 
 <span class="sd">    log_filename : str</span>
 <span class="sd">        The path to the log file to append to</span>
@@ -201,12 +202,15 @@
 
     <span class="c1"># Echo the commands being run (like a lightweight trace) so the log is</span>
     <span class="c1"># self-contained and debuggable.</span>
-    <span class="c1"># Keep nested quoted commands intact (e.g. bash -lc &#39;... &amp;&amp; ...&#39;).</span>
-    <span class="n">command_list</span> <span class="o">=</span> <span class="n">_split_shell_on_andand</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">command_list</span><span class="p">:</span>
-        <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command_list</span><span class="p">)</span>
+    <span class="c1"># Keep nested quoted commands intact (e.g. bash -c &#39;... &amp;&amp; ...&#39;).</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">command_list</span> <span class="o">=</span> <span class="n">_split_shell_on_andand</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">command_list</span><span class="p">:</span>
+            <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command_list</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">print_command</span> <span class="o">=</span> <span class="n">commands</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">print_command</span> <span class="o">=</span> <span class="n">commands</span>
+        <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">commands</span><span class="p">)</span>
     <span class="n">print_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> Running:</span><span class="se">\n</span><span class="s1">   </span><span class="si">{</span><span class="n">print_command</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
 
     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -227,11 +231,18 @@
     <span class="n">stdout_data</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">base_popen_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;executable&#39;</span><span class="p">:</span> <span class="s1">&#39;/bin/bash&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;shell&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s1">&#39;universal_newlines&#39;</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
         <span class="s1">&#39;bufsize&#39;</span><span class="p">:</span> <span class="n">bufsize</span><span class="p">,</span>
     <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;executable&#39;</span><span class="p">:</span> <span class="s1">&#39;/bin/bash&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;shell&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;shell&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="c1"># Allow callers to override defaults.</span>
     <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
 
@@ -318,13 +329,14 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">retry_delay</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a command with a few retries for transient pixi/network failures.&quot;&quot;&quot;</span>
 
     <span class="n">last_error</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">,</span> <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">last_error</span> <span class="o">=</span> <span class="n">exc</span>
             <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;=</span> <span class="n">retries</span><span class="p">:</span>
@@ -359,6 +371,14 @@
     <span class="p">)</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;eval &quot;$(</span><span class="si">{</span><span class="n">hook_cmd</span><span class="si">}</span><span class="s1">)&quot; &amp;&amp;&#39;</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_pixi_env</span><span class="p">(</span><span class="n">base_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an environment with pixi nesting variables removed.&quot;&quot;&quot;</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="k">if</span> <span class="n">base_env</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">base_env</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">PIXI_ENV_VARS_TO_UNSET</span><span class="p">:</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">env</span>
 
 
 <div class="viewcode-block" id="check_location">
@@ -518,12 +538,14 @@
             <span class="n">python_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">python</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">bootstrap_dir</span><span class="si">}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
+        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">]</span>
+        <span class="n">check_call_with_retries</span><span class="p">(</span>
+            <span class="n">cmd_install</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="p">),</span>
+            <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
         <span class="p">)</span>
-        <span class="n">check_call_with_retries</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
 
         <span class="n">pixi_toml</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
         <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
@@ -545,12 +567,14 @@
             <span class="n">python_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">python</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">bootstrap_dir</span><span class="si">}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">pixi_exe</span><span class="si">}</span><span class="s1">&quot; install&#39;</span>
+        <span class="n">cmd_install</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">]</span>
+        <span class="n">check_call_with_retries</span><span class="p">(</span>
+            <span class="n">cmd_install</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="p">),</span>
+            <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
         <span class="p">)</span>
-        <span class="n">check_call_with_retries</span><span class="p">(</span><span class="n">cmd_install</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">():</span>
@@ -662,7 +686,7 @@
 
 <span class="sd">    This is used only for logging/pretty-printing in check_call(). It is not a</span>
 <span class="sd">    full shell parser; it is a best-effort splitter that avoids breaking</span>
-<span class="sd">    quoted sub-commands (e.g. bash -lc &#39;... &amp;&amp; ...&#39;).</span>
+<span class="sd">    quoted sub-commands (e.g. bash -c &#39;... &amp;&amp; ...&#39;).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1121,13 +1145,26 @@
         <span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s1">&#39;cd &quot;</span><span class="si">{</span><span class="n">build_root</span><span class="si">!s}</span><span class="s1">&quot; &amp;&amp; &#39;</span>
-        <span class="o">+</span> <span class="s2">&quot;GIT_SSH_COMMAND=&#39;ssh -oBatchMode=yes&#39; git clone &quot;</span>
-        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;--depth 1 --single-branch -b &quot;</span><span class="si">{</span><span class="n">mache_branch</span><span class="si">}</span><span class="s1">&quot; &#39;</span>
-        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;&quot;git@github.com:</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git&quot; mache&#39;</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">build_pixi_env</span><span class="p">()</span>
+    <span class="n">env</span><span class="p">[</span><span class="s1">&#39;GIT_SSH_COMMAND&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ssh -oBatchMode=yes&#39;</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;git&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;clone&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--depth&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;--single-branch&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;-b&#39;</span><span class="p">,</span>
+        <span class="n">mache_branch</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;git@github.com:</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;mache&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">check_call</span><span class="p">(</span>
+        <span class="n">commands</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="p">,</span>
+        <span class="n">cwd</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">build_root</span><span class="p">),</span>
+        <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_copy_local_mache_source_snapshot</span><span class="p">(</span>

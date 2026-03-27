@@ -113,7 +113,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_format_pixi_version_specifier</span><span class="p">,</span>
-    <span class="n">build_pixi_env_unset_prefix</span><span class="p">,</span>
+    <span class="n">build_pixi_env</span><span class="p">,</span>
     <span class="n">build_pixi_shell_hook_prefix</span><span class="p">,</span>
     <span class="n">check_call</span><span class="p">,</span>
     <span class="n">check_location</span><span class="p">,</span>
@@ -1289,12 +1289,14 @@
     <span class="c1"># - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /</span>
     <span class="c1">#   PIXI_CACHE_DIR in shell startup or modulefiles.</span>
     <span class="c1"># - Otherwise pixi uses its own defaults (typically under $HOME).</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s1">&#39;cd </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">project_dir</span><span class="p">)</span><span class="si">}</span><span class="s1"> &amp;&amp; &#39;</span>
-        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">build_pixi_env_unset_prefix</span><span class="p">()</span><span class="si">}</span><span class="s1"> &#39;</span>
-        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">pixi_exe</span><span class="p">)</span><span class="si">}</span><span class="s1"> install&#39;</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">]</span>
+    <span class="n">check_call</span><span class="p">(</span>
+        <span class="n">cmd</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="n">cwd</span><span class="o">=</span><span class="n">project_dir</span><span class="p">,</span>
+        <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
     <span class="p">)</span>
-    <span class="n">check_call</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_mpi_settings</span><span class="p">(</span>
