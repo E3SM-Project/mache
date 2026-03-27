@@ -55,6 +55,9 @@ class MachineInfo:
     diagnostics_base : str
         The base directory for diagnostics data
 
+    inputdata_base : str
+        The base directory for inputdata
+
     web_portal_base : str
         The base directory for the web portal
 
@@ -102,6 +105,9 @@ class MachineInfo:
 
         self.diagnostics_base = None
         self._get_diagnostics_info()
+
+        self.inputdata_base = None
+        self._get_inputdata_info()
 
         self.web_portal_base = None
         self.web_portal_url = None
@@ -165,6 +171,14 @@ class MachineInfo:
 
             if self.diagnostics_base is not None:
                 info = f'{info}\n  Base path: {self.diagnostics_base}'
+            info = f'{info}\n'
+
+        print_inputdata = self.inputdata_base is not None
+        if print_inputdata:
+            info = f'{info}\nInput Data: '
+
+            if self.inputdata_base is not None:
+                info = f'{info}\n  Base path: {self.inputdata_base}'
             info = f'{info}\n'
 
         info = f'{info}\nConfig options: '
@@ -446,6 +460,14 @@ class MachineInfo:
             'diagnostics', 'base_path'
         ):
             self.diagnostics_base = config.get('diagnostics', 'base_path')
+
+    def _get_inputdata_info(self):
+        """Get config options related to inputdata"""
+
+        config = self.config
+
+        if config is not None and config.has_option('inputdata', 'base_path'):
+            self.inputdata_base = config.get('inputdata', 'base_path')
 
     def _get_scheduler_value(self, section: str, option: str) -> str | None:
         """Get a scheduler-target config value, treating empty as unset."""
