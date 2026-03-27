@@ -63,6 +63,47 @@ def test_check_call_binary_mode_still_uses_popen_compatible_kwargs(
     assert recorded['kwargs']['universal_newlines'] is False
 
 
+def test_check_call_list_commands_use_direct_popen_without_shell(
+    monkeypatch, tmp_path: Path
+):
+    recorded = {}
+
+    def fake_popen(commands, **kwargs):
+        recorded['commands'] = commands
+        recorded['kwargs'] = kwargs
+        return _FakeProcess(stdout=['hello\n'])
+
+    monkeypatch.setattr(bootstrap.subprocess, 'Popen', fake_popen)
+
+    result = bootstrap.check_call(
+        ['pixi', 'install'],
+        str(tmp_path / 'bootstrap.log'),
+        quiet=True,
+        capture_output=True,
+    )
+
+    assert result.stdout == 'hello\n'
+    assert recorded['commands'] == ['pixi', 'install']
+    assert recorded['kwargs']['shell'] is False
+    assert 'executable' not in recorded['kwargs']
+
+
+def test_build_pixi_env_unsets_nested_pixi_variables(monkeypatch):
+    monkeypatch.setenv('PIXI_PROJECT_MANIFEST', 'manifest')
+    monkeypatch.setenv('PIXI_PROJECT_ROOT', 'root')
+    monkeypatch.setenv('PIXI_ENVIRONMENT_NAME', 'env')
+    monkeypatch.setenv('PIXI_IN_SHELL', '1')
+    monkeypatch.setenv('KEEP_ME', 'ok')
+
+    env = bootstrap.build_pixi_env()
+
+    assert 'PIXI_PROJECT_MANIFEST' not in env
+    assert 'PIXI_PROJECT_ROOT' not in env
+    assert 'PIXI_ENVIRONMENT_NAME' not in env
+    assert 'PIXI_IN_SHELL' not in env
+    assert env['KEEP_ME'] == 'ok'
+
+
 def test_write_bootstrap_pixi_toml_with_mache_includes_platform(
     monkeypatch, tmp_path: Path
 ):

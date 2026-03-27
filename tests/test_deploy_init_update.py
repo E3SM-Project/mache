@@ -52,3 +52,25 @@ def test_update_preserves_custom_cli_spec_file(tmp_path: Path):
     )
 
     assert custom_cli_spec.read_text(encoding='utf-8') == expected
+
+
+def test_generated_deploy_py_runs_mache_without_nested_login_shell(
+    tmp_path: Path,
+):
+    init_or_update_repo(
+        repo_root=str(tmp_path),
+        software='polaris',
+        mache_version='1.2.3',
+        update=False,
+        overwrite=False,
+    )
+
+    deploy_py = (tmp_path / 'deploy.py').read_text(encoding='utf-8')
+
+    assert 'bash -lc' not in deploy_py
+    assert 'subprocess.run(cmd, cwd=repo_root, env=env, check=True)' in (
+        deploy_py
+    )
+    assert "'mache'," in deploy_py
+    assert "'deploy'," in deploy_py
+    assert "'run'," in deploy_py
