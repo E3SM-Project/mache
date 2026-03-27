@@ -324,6 +324,12 @@ load scripts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">machines.path</span></code>: optional path to target-owned machine config files.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.prefix</span></code>: required in practice.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.channels</span></code>: required and must be non-empty.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permissions.group</span></code>: optional shared-filesystem group to apply after a
+successful deploy. If unset, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> falls back to merged machine
+config <code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">group</span></code>, then legacy <code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span> <span class="pre">group</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permissions.world_readable</span></code>: optional boolean controlling whether deployed
+files are readable outside the shared group. Hooks may override both values
+through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;permissions&quot;]</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
 CLI override provides it, unless the user disables Spack for that run with
 <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
