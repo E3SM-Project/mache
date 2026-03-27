@@ -1,4 +1,15 @@
+from pathlib import Path
+
+import pytest
+from lxml import etree
+
 from mache import MachineInfo, discover_machine
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MACHINES_DIR = REPO_ROOT / 'mache' / 'machines'
+CONFIG_MACHINES_XML = (
+    REPO_ROOT / 'mache' / 'cime_machine_config' / 'config_machines.xml'
+)
 
 
 def test_discover_machine():
@@ -151,3 +162,60 @@ def test_get_scheduler_specs_invalid_target_type():
         assert 'Unexpected target_type' in str(exc)
     else:
         raise AssertionError('Expected get_scheduler_specs() to fail.')
+
+
+@pytest.mark.parametrize(
+    'machine, expected_inputdata_base',
+    [
+        ('chrysalis', '/lcrc/group/e3sm/data/inputdata'),
+        ('pm-cpu', '/global/cfs/cdirs/e3sm/inputdata'),
+        ('aurora', '/lus/flare/projects/E3SMinput/data'),
+        ('andes', '/lustre/orion/cli115/world-shared/e3sm/inputdata'),
+    ],
+)
+def test_inputdata_base(machine, expected_inputdata_base):
+    machinfo = MachineInfo(machine=machine)
+    assert machinfo.inputdata_base == expected_inputdata_base
+
+
+def test_inputdata_base_missing_for_chicoma_cpu():
+    machinfo = MachineInfo(machine='chicoma-cpu')
+    assert machinfo.inputdata_base is None
+
+
+def test_inputdata_base_matches_config_machines_xml():
+    din_loc_root_by_machine = _get_xml_din_loc_root_by_machine()
+
+    machine_names = _get_machine_config_names()
+    for machine in machine_names:
+        machinfo = MachineInfo(machine=machine)
+        if machinfo.inputdata_base is None:
+            continue
+        if machine not in din_loc_root_by_machine:
+            continue
+
+        assert machinfo.inputdata_base == din_loc_root_by_machine[machine]
+
+
+def _get_xml_din_loc_root_by_machine():
+    root = etree.parse(str(CONFIG_MACHINES_XML))
+    machines = next(root.iter('config_machines'))
+    din_loc_root_by_machine = {}
+    for machine in machines:
+        if machine.tag != 'machine':
+            continue
+
+        for child in machine:
+            if child.tag == 'DIN_LOC_ROOT':
+                din_loc_root_by_machine[machine.attrib['MACH']] = child.text
+                break
+
+    return din_loc_root_by_machine
+
+
+def _get_machine_config_names():
+    return sorted(
+        path.stem
+        for path in MACHINES_DIR.glob('*.cfg')
+        if path.stem != 'default'
+    )
