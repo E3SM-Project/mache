@@ -3,7 +3,7 @@ from mache import MachineInfo, discover_machine
 
 machine = discover_machine()
 
-machinfo = MachineInfo(machine='anvil')
+machinfo = MachineInfo(machine='chrysalis')
 print(machinfo)
 
 machinfo = MachineInfo(machine='unknown')
