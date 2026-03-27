@@ -7,12 +7,14 @@ import shlex
 import shutil
 from configparser import ConfigParser
 from importlib import resources
+from pathlib import Path
 from typing import Any
 
 from jinja2 import Template
 from yaml import safe_load
 
 from mache.jigsaw import deploy_jigsawpy
+from mache.permissions import update_permissions
 
 from .bootstrap import (
     _format_pixi_version_specifier,
@@ -27,6 +29,8 @@ from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .machine import get_machine, get_machine_config
 from .spack import (
+    SpackDeployResult,
+    SpackSoftwareEnvResult,
     deploy_spack_envs,
     deploy_spack_software_env,
     get_effective_spack_config,
@@ -313,7 +317,7 @@ def run_deploy(args: argparse.Namespace) -> None:
             quiet=quiet,
         )
 
-    _write_load_scripts(
+    load_script_paths = _write_load_scripts(
         prefix=prefix,
         pixi_exe=pixi_exe,
         software=software,
@@ -324,6 +328,27 @@ def run_deploy(args: argparse.Namespace) -> None:
         spack_results=spack_results,
         spack_software_env=spack_software_env,
         quiet=quiet,
+    )
+
+    permissions_group, world_readable = _resolve_deploy_permissions(
+        config=config,
+        runtime=ctx.runtime,
+        machine_config=machine_config,
+    )
+    _apply_deploy_permissions(
+        prefix=prefix,
+        load_script_paths=load_script_paths,
+        spack_paths=(
+            _get_deployed_spack_paths(
+                spack_results=spack_results,
+                spack_software_env=spack_software_env,
+            )
+            if deploy_spack
+            else []
+        ),
+        group=permissions_group,
+        world_readable=world_readable,
+        logger=logger,
     )
 
     hook_registry.run_hook('post_deploy', ctx)
@@ -575,6 +600,154 @@ def _resolve_pixi_mpi(
     else:
         mpi_cfg = pixi_cfg
     return _get_mpi_settings(pixi_cfg=mpi_cfg)
+
+
+def _coerce_optional_bool(
+    value: Any,
+    *,
+    field_name: str,
+) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+        if candidate in ('true', 'yes', 'on', '1'):
+            return True
+        if candidate in ('false', 'no', 'off', '0'):
+            return False
+        if candidate in ('', 'none', 'null', 'dynamic'):
+            return None
+    raise ValueError(f'{field_name} must be a boolean if provided')
+
+
+def _resolve_deploy_permissions(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+    machine_config: ConfigParser,
+) -> tuple[str | None, bool]:
+    """Resolve shared-deployment permission settings.
+
+    Priority:
+      1. runtime['permissions'] (hooks)
+      2. config['permissions']
+      3. merged machine config [deploy]
+      4. merged machine config [e3sm_unified] (legacy fallback for group only)
+
+    If no group is resolved, permission updates are skipped.
+    """
+
+    runtime_permissions = runtime.get('permissions')
+    if runtime_permissions is None:
+        runtime_permissions = {}
+    if not isinstance(runtime_permissions, dict):
+        raise ValueError('runtime.permissions must be a mapping if provided')
+
+    config_permissions = config.get('permissions')
+    if config_permissions is None:
+        config_permissions = {}
+    if not isinstance(config_permissions, dict):
+        raise ValueError('permissions section must be a mapping if provided')
+
+    group = _normalize_optional_token(runtime_permissions.get('group'))
+    if group is None:
+        group = _normalize_optional_token(config_permissions.get('group'))
+    if group is None and machine_config.has_option('deploy', 'group'):
+        group = _normalize_optional_token(
+            machine_config.get('deploy', 'group')
+        )
+    if group is None and machine_config.has_option('e3sm_unified', 'group'):
+        group = _normalize_optional_token(
+            machine_config.get('e3sm_unified', 'group')
+        )
+
+    world_readable = _coerce_optional_bool(
+        runtime_permissions.get('world_readable'),
+        field_name='runtime.permissions.world_readable',
+    )
+    if world_readable is None:
+        world_readable = _coerce_optional_bool(
+            config_permissions.get('world_readable'),
+            field_name='permissions.world_readable',
+        )
+    if world_readable is None and machine_config.has_option(
+        'deploy', 'world_readable'
+    ):
+        world_readable = machine_config.getboolean('deploy', 'world_readable')
+
+    return group, True if world_readable is None else world_readable
+
+
+def _apply_deploy_permissions(
+    *,
+    prefix: str,
+    load_script_paths: list[str],
+    spack_paths: list[str],
+    group: str | None,
+    world_readable: bool,
+    logger: logging.Logger,
+) -> None:
+    """Apply post-deploy file permissions when configured."""
+
+    if group is None:
+        logger.info('Skipping deploy permission update: no group configured.')
+        return
+
+    prefix_abs = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(str(prefix)))
+    )
+    logger.info(
+        'Updating deployment permissions: group=%s world_readable=%s',
+        group,
+        world_readable,
+    )
+
+    update_permissions(
+        prefix_abs,
+        group,
+        group_writable=True,
+        other_readable=world_readable,
+        recursive=False,
+    )
+
+    managed_paths = [str(path) for path in load_script_paths]
+    prefix_path = Path(prefix_abs)
+    if prefix_path.is_dir():
+        managed_paths.extend(str(path) for path in prefix_path.iterdir())
+    elif prefix_path.exists():
+        managed_paths.append(prefix_abs)
+    managed_paths.extend(spack_paths)
+
+    managed_paths = list(dict.fromkeys(managed_paths))
+
+    if not managed_paths:
+        return
+
+    update_permissions(
+        managed_paths,
+        group,
+        show_progress=True,
+        group_writable=False,
+        other_readable=world_readable,
+        recursive=True,
+    )
+
+
+def _get_deployed_spack_paths(
+    *,
+    spack_results: list[SpackDeployResult],
+    spack_software_env: SpackSoftwareEnvResult | None,
+) -> list[str]:
+    """Return absolute base Spack checkout paths for deployed envs."""
+
+    paths = [result.spack_path for result in spack_results]
+
+    if spack_software_env is not None:
+        paths.append(spack_software_env.spack_path)
+
+    return list(dict.fromkeys(paths))
 
 
 def _normalize_optional_token(value: Any) -> str | None:

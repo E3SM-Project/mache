@@ -245,3 +245,211 @@ def test_resolve_toolchain_pairs_uses_machine_config_with_machine():
     )
 
     assert pairs == [('gnu', 'mpich')]
+
+
+def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('deploy')
+    machine_config.set('deploy', 'group', 'deployers')
+    machine_config.set('deploy', 'world_readable', 'false')
+    machine_config.add_section('e3sm_unified')
+    machine_config.set('e3sm_unified', 'group', 'legacy')
+
+    group, world_readable = deploy_run._resolve_deploy_permissions(
+        config={
+            'permissions': {
+                'group': 'from-config',
+                'world_readable': True,
+            }
+        },
+        runtime={
+            'permissions': {
+                'group': 'from-hook',
+                'world_readable': False,
+            }
+        },
+        machine_config=machine_config,
+    )
+
+    assert group == 'from-hook'
+    assert world_readable is False
+
+
+def test_resolve_deploy_permissions_uses_legacy_group_fallback():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('e3sm_unified')
+    machine_config.set('e3sm_unified', 'group', 'legacy-group')
+
+    group, world_readable = deploy_run._resolve_deploy_permissions(
+        config={},
+        runtime={},
+        machine_config=machine_config,
+    )
+
+    assert group == 'legacy-group'
+    assert world_readable is True
+
+
+def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+    (prefix / 'pixi.toml').write_text('[workspace]\n', encoding='utf-8')
+    (prefix / 'bin').mkdir()
+
+    load_script = tmp_path / 'load_demo.sh'
+    load_script.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger('test-apply-deploy-permissions')
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        load_script_paths=[str(load_script)],
+        spack_paths=[],
+        group='e3sm',
+        world_readable=False,
+        logger=logger,
+    )
+
+    assert len(calls) == 2
+
+    first_args, first_kwargs = calls[0]
+    assert first_args == (str(prefix), 'e3sm')
+    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['other_readable'] is False
+    assert first_kwargs['recursive'] is False
+
+    second_args, second_kwargs = calls[1]
+    assert second_args[1] == 'e3sm'
+    assert sorted(second_args[0]) == sorted(
+        [
+            str(load_script),
+            str(prefix / 'pixi.toml'),
+            str(prefix / 'bin'),
+        ]
+    )
+    assert second_kwargs['group_writable'] is False
+    assert second_kwargs['other_readable'] is False
+    assert second_kwargs['recursive'] is True
+
+
+def test_apply_deploy_permissions_is_noop_without_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger('test-apply-deploy-permissions-noop')
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(tmp_path / 'prefix'),
+        load_script_paths=[],
+        spack_paths=[],
+        group=None,
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert calls == []
+
+
+def test_apply_deploy_permissions_includes_deployed_spack_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    spack_lib = tmp_path / 'spack-lib'
+    spack_lib.mkdir()
+    spack_soft = tmp_path / 'spack-soft'
+    spack_soft.mkdir()
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-spack'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        load_script_paths=[],
+        spack_paths=[str(spack_lib), str(spack_soft)],
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 2
+
+    second_args, second_kwargs = calls[1]
+    assert second_args[1] == 'e3sm'
+    assert sorted(second_args[0]) == sorted(
+        [
+            str(spack_lib),
+            str(spack_soft),
+        ]
+    )
+    assert second_kwargs['show_progress'] is True
+    assert second_kwargs['recursive'] is True
+
+
+def test_get_deployed_spack_env_paths_includes_library_and_software_envs():
+    spack_results = [
+        deploy_run.SpackDeployResult(
+            compiler='gnu',
+            mpi='mpich',
+            env_name='spack_env_gnu_mpich',
+            spack_path='/opt/spack',
+            view_path=(
+                '/opt/spack/var/spack/environments/spack_env_gnu_mpich/'
+                '.spack-env/view'
+            ),
+            activation='',
+        )
+    ]
+    spack_software_env = deploy_run.SpackSoftwareEnvResult(
+        compiler='gnu',
+        mpi='mpich',
+        env_name='myproj_software',
+        spack_path='/opt/spack',
+        view_path=(
+            '/opt/spack/var/spack/environments/myproj_software/.spack-env/view'
+        ),
+        path_setup='',
+    )
+
+    assert deploy_run._get_deployed_spack_paths(
+        spack_results=spack_results,
+        spack_software_env=spack_software_env,
+    ) == [
+        '/opt/spack',
+    ]

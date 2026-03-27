@@ -260,14 +260,16 @@ def _merge_optional_cli_spec(cli_spec, custom_cli_spec):
     if custom_cli_spec is None:
         return cli_spec
 
+    merged_meta = dict(cli_spec.get('meta', {}))  # type: dict
+    merged_arguments = list(cli_spec.get('arguments', []))  # type: list
     merged = {
-        'meta': dict(cli_spec.get('meta', {})),
-        'arguments': list(cli_spec.get('arguments', [])),
+        'meta': merged_meta,
+        'arguments': merged_arguments,
     }
 
     seen_dests = set()
     seen_flags = set()
-    for entry in merged['arguments']:
+    for entry in merged_arguments:
         dest = entry.get('dest')
         if dest:
             seen_dests.add(dest)
@@ -289,7 +291,7 @@ def _merge_optional_cli_spec(cli_spec, custom_cli_spec):
                 'ERROR: deploy/custom_cli_spec.json duplicates generated '
                 f'flags: {dup_str}'
             )
-        merged['arguments'].append(entry)
+        merged_arguments.append(entry)
         if dest:
             seen_dests.add(dest)
         seen_flags.update(flags)
