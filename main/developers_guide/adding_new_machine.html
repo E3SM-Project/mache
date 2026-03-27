@@ -120,6 +120,14 @@ machine.</p>
 <span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Link to this heading"></a></h2>
 <p>Adding a new config file is usually straightforward if you follow the format of
 an existing config file.</p>
+<p>For machines with a known E3SM inputdata location, also add an <code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code>
+section with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code>: base directory for the shared E3SM inputdata tree</p></li>
+</ul>
+<p>When the machine also appears in
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>, this value should match that
+machine’s <code class="docutils literal notranslate"><span class="pre">DIN_LOC_ROOT</span></code> entry.</p>
 <section id="parallel-execution-settings">
 <h3>Parallel execution settings<a class="headerlink" href="#parallel-execution-settings" title="Link to this heading"></a></h3>
 <p>Machine config files now include parallel-resource settings that are consumed

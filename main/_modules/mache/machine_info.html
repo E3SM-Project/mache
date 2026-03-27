@@ -152,6 +152,9 @@
 <span class="sd">    diagnostics_base : str</span>
 <span class="sd">        The base directory for diagnostics data</span>
 
+<span class="sd">    inputdata_base : str</span>
+<span class="sd">        The base directory for inputdata</span>
+
 <span class="sd">    web_portal_base : str</span>
 <span class="sd">        The base directory for the web portal</span>
 
@@ -201,6 +204,9 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_diagnostics_info</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_inputdata_info</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">web_portal_base</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">web_portal_url</span> <span class="o">=</span> <span class="kc">None</span>
@@ -265,6 +271,14 @@
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+        <span class="n">print_inputdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">print_inputdata</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Input Data: &#39;</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
 
         <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Config options: &#39;</span>
@@ -558,6 +572,14 @@
             <span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span>
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_inputdata_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get config options related to inputdata&quot;&quot;&quot;</span>
+
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;inputdata&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;inputdata&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_scheduler_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a scheduler-target config value, treating empty as unset.&quot;&quot;&quot;</span>
