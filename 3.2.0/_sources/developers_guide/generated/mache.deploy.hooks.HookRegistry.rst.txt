@@ -1,0 +1,30 @@
+﻿mache.deploy.hooks.HookRegistry
+===============================
+
+.. currentmodule:: mache.deploy.hooks
+
+.. autoclass:: HookRegistry
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HookRegistry.__init__
+      ~HookRegistry.run_hook
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HookRegistry.file_path
+      ~HookRegistry.entrypoints
+   
+   
