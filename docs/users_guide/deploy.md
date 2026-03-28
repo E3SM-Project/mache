@@ -201,7 +201,7 @@ Important settings:
 - `pixi.channels`: required and must be non-empty.
 - `permissions.group`: optional shared-filesystem group to apply after a
   successful deploy. If unset, `mache deploy run` falls back to merged machine
-  config `[deploy] group`, then legacy `[e3sm_unified] group`.
+  config `[deploy] group`.
 - `permissions.world_readable`: optional boolean controlling whether deployed
   files are readable outside the shared group. Hooks may override both values
   through `ctx.runtime["permissions"]`.

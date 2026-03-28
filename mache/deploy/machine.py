@@ -32,7 +32,7 @@ def get_known_mache_machines(*, package: str = 'mache.machines') -> set[str]:
         if not name.endswith('.cfg'):
             continue
         machine = name[:-4]
-        if machine == 'default':
+        if machine == 'default' or machine.startswith('default-'):
             continue
         known.add(machine)
     return known
@@ -70,7 +70,7 @@ def get_known_target_machines(*, machines_path: str | None) -> set[str]:
         if not entry.endswith('.cfg'):
             continue
         machine = entry[:-4]
-        if machine == 'default':
+        if machine == 'default' or machine.startswith('default-'):
             continue
         known.add(machine)
     return known
