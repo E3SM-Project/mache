@@ -55,7 +55,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Parsed command-line options for the deploy run. Expected attributes
         include ``quiet`` and may include deploy overrides such as machine,
-        prefix, pixi executable, toolchain values, and Spack options.
+        pixi path, pixi executable, toolchain values, and Spack options.
     """
     check_location()
 
@@ -442,7 +442,11 @@ def _resolve_pixi_prefix(
     config: dict[str, Any],
     runtime: dict[str, Any],
 ) -> str:
-    prefix = getattr(args, 'prefix', None)
+    prefix = getattr(args, 'pixi_path', None)
+    if prefix is None:
+        # Backward compatibility for older callers still constructing
+        # namespaces with the legacy attribute name.
+        prefix = getattr(args, 'prefix', None)
     if prefix is None:
         runtime_pixi = runtime.get('pixi')
         if isinstance(runtime_pixi, dict):
@@ -452,7 +456,8 @@ def _resolve_pixi_prefix(
     if not prefix:
         raise ValueError(
             "'prefix' not found in [pixi] section of deploy/config.yaml.j2 "
-            'and --prefix not provided'
+            'and neither --pixi-path nor the deprecated --prefix was '
+            'provided'
         )
     return os.path.abspath(os.path.expanduser(os.path.expandvars(str(prefix))))
 

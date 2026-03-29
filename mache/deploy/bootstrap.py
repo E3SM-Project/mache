@@ -488,11 +488,13 @@ def _parse_args():
         'on PATH.',
     )
     parser.add_argument(
+        '--pixi-path',
         '--prefix',
-        dest='prefix',
-        help='Install the environment into this prefix (directory). '
+        dest='pixi_path',
+        help='Install the pixi environment at this path (directory). '
         'This is a deploy-time option; bootstrap accepts it for CLI '
-        'contract compatibility but does not use it.',
+        'contract compatibility but does not use it. `--prefix` is '
+        'deprecated.',
     )
     parser.add_argument(
         '--recreate',

@@ -84,14 +84,34 @@ def test_run_uses_exact_pixi_version_specifier_for_exact_mache_pin():
     assert deploy_run._format_pixi_version_specifier('3.0.2') == '==3.0.2'
 
 
+def test_resolve_pixi_prefix_prefers_new_cli_flag():
+    prefix = deploy_run._resolve_pixi_prefix(
+        args=argparse.Namespace(pixi_path='/cli/pixi-path'),
+        config={'pixi': {'prefix': '/config/prefix'}},
+        runtime={'pixi': {'prefix': '/runtime/prefix'}},
+    )
+
+    assert prefix == '/cli/pixi-path'
+
+
 def test_resolve_pixi_prefix_prefers_runtime_when_cli_missing():
     prefix = deploy_run._resolve_pixi_prefix(
-        args=argparse.Namespace(prefix=None),
+        args=argparse.Namespace(pixi_path=None),
         config={'pixi': {'prefix': '/config/prefix'}},
         runtime={'pixi': {'prefix': '/runtime/prefix'}},
     )
 
     assert prefix == '/runtime/prefix'
+
+
+def test_resolve_pixi_prefix_accepts_legacy_prefix_attribute():
+    prefix = deploy_run._resolve_pixi_prefix(
+        args=argparse.Namespace(prefix='/legacy/prefix'),
+        config={'pixi': {'prefix': '/config/prefix'}},
+        runtime={},
+    )
+
+    assert prefix == '/legacy/prefix'
 
 
 def test_resolve_pixi_channels_prefers_runtime_override():

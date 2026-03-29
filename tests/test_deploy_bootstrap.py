@@ -140,6 +140,50 @@ def test_write_bootstrap_pixi_toml_with_mache_preserves_wildcard_version(
     assert 'mache = "==3.0.2.*"' not in text
 
 
+def test_parse_args_accepts_new_pixi_path_flag(monkeypatch):
+    monkeypatch.setattr(
+        bootstrap.sys,
+        'argv',
+        [
+            'bootstrap.py',
+            '--software',
+            'polaris',
+            '--python',
+            '3.12',
+            '--mache-version',
+            '3.0.0',
+            '--pixi-path',
+            '/tmp/pixi-env',
+        ],
+    )
+
+    args = bootstrap._parse_args()
+
+    assert args.pixi_path == '/tmp/pixi-env'
+
+
+def test_parse_args_accepts_legacy_prefix_flag(monkeypatch):
+    monkeypatch.setattr(
+        bootstrap.sys,
+        'argv',
+        [
+            'bootstrap.py',
+            '--software',
+            'polaris',
+            '--python',
+            '3.12',
+            '--mache-version',
+            '3.0.0',
+            '--prefix',
+            '/tmp/pixi-env',
+        ],
+    )
+
+    args = bootstrap._parse_args()
+
+    assert args.pixi_path == '/tmp/pixi-env'
+
+
 def test_clone_mache_repo_uses_local_source_override(
     monkeypatch, tmp_path: Path
 ):
