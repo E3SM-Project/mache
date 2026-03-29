@@ -102,20 +102,22 @@ def test_machine_config_without_machine_has_no_deploy_defaults():
     assert not cfg.has_section('deploy')
 
 
-def test_machine_config_has_toolchain_defaults_for_newly_completed_machines():
+def test_machine_config_leaves_pixi_only_machines_without_toolchain_defaults():
     platform, _ = get_conda_platform_and_system()
-    expected = {
-        'andes': ('gnu', 'mpich'),
-        'chicoma-cpu': ('gnu', 'mpich'),
-        'polaris': ('gnu', 'mpich'),
-    }
-
-    for machine, (compiler, mpi) in expected.items():
+    for machine in ('andes', 'chicoma-cpu', 'polaris'):
         cfg = get_machine_config(
             machine=machine,
             machines_path=None,
             platform=platform,
             quiet=True,
         )
-        assert cfg.get('e3sm_unified', 'compiler') == compiler
-        assert cfg.get('e3sm_unified', 'mpi') == mpi
+        assert not cfg.has_option('e3sm_unified', 'compiler')
+        assert not cfg.has_option('e3sm_unified', 'mpi')
+
+    chicoma_cfg = get_machine_config(
+        machine='chicoma-cpu',
+        machines_path=None,
+        platform=platform,
+        quiet=True,
+    )
+    assert not chicoma_cfg.has_option('e3sm_unified', 'use_e3sm_hdf5_netcdf')
