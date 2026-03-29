@@ -65,6 +65,20 @@ pixi:
   #   - dynamic (determine by the "pre_pixi" hook)
   mpi: nompi
 
+  # Optional alternate MPI provider for login nodes.
+  #
+  # If set, mache may deploy a second pixi environment for login-node use and
+  # the generated load script will auto-select between login and compute
+  # environments based on common batch-job environment variables.
+  login_mpi: null
+
+  # Optional install location for the login-node pixi environment.
+  #
+  # Default behavior:
+  #   - same as `prefix` if login_mpi resolves to the same MPI as `mpi`
+  #   - otherwise `<prefix>_login`
+  login_prefix: null
+
   # Whether to install the target software in editable/development mode.
   install_dev_software: false
 

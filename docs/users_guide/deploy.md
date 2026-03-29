@@ -199,6 +199,14 @@ Important settings:
 - `machines.path`: optional path to target-owned machine config files.
 - `pixi.prefix`: required in practice.
 - `pixi.channels`: required and must be non-empty.
+- `pixi.login_mpi`: optional alternate MPI setting for login nodes. When set,
+  `mache deploy run` may create a second pixi environment for login-node use
+  and the generated load script will auto-select between the login and compute
+  environments.
+- `pixi.login_prefix`: optional install path for that login-node pixi
+  environment. If omitted, mache reuses `pixi.prefix` when the login and
+  compute MPI settings match, or defaults to `<pixi.prefix>_login` when they
+  differ.
 - `permissions.group`: optional shared-filesystem group to apply after a
   successful deploy. If unset, `mache deploy run` falls back to merged machine
   config `[deploy] group`.
@@ -557,12 +565,15 @@ created.
 5. Resolves toolchain pairs for Spack.
 6. Renders `deploy/pixi.toml.j2` into the install prefix and runs
    `pixi install`.
-7. Optionally installs a development copy of `mache` when a fork/branch was
+7. Optionally creates a second login-node pixi environment when
+   `pixi.login_mpi` is configured or a hook sets `ctx.runtime["pixi"]`
+   accordingly.
+8. Optionally installs a development copy of `mache` when a fork/branch was
    requested.
-8. Optionally builds and installs JIGSAW.
-9. Optionally deploys or loads Spack environments.
-10. Optionally installs the target software in editable mode.
-11. Writes one or more `load_<software>*.sh` scripts.
+9. Optionally builds and installs JIGSAW.
+10. Optionally deploys or loads Spack environments.
+11. Optionally installs the target software in editable mode.
+12. Writes one or more `load_<software>*.sh` scripts.
 
 When a toolchain pair is selected, script names include machine, compiler,
 and MPI tags, for example:
@@ -571,6 +582,11 @@ and MPI tags, for example:
 
 Those load scripts are the main artifact a downstream user consumes after the
 deployment completes.
+
+When a login pixi environment is configured, the generated load script chooses
+the login environment on login nodes and the compute environment inside common
+batch jobs such as Slurm, PBS, or Cobalt. Spack activation remains compute-only
+in that split-environment case.
 
 ## The command-line contract
 
@@ -621,8 +637,10 @@ Examples from the current contract:
 - `--bootstrap-only` is deploy-only.
 - `--machine` is deploy-plus-run.
 - `--mache-version` is bootstrap-plus-run.
-- `--pixi`, `--prefix`, `--recreate`, `--quiet`, `--mache-fork`, and
+- `--pixi`, `--pixi-path`, `--recreate`, `--quiet`, `--mache-fork`, and
   `--mache-branch` are routed across all relevant phases.
+- `--prefix` is still accepted as a deprecated compatibility alias for
+  `--pixi-path`.
 
 ### How `deploy/custom_cli_spec.json` works
 
