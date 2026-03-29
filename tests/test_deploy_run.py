@@ -15,11 +15,13 @@ def test_write_load_script_includes_machine_for_toolchain(
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'prefix'),
+        login_env=None,
         pixi_exe='/usr/bin/pixi',
         software='polaris',
         software_version='1.0.0',
         runtime_version_cmd=None,
         machine='pm-gpu',
+        compute_pixi_mpi='nompi',
         toolchain_compiler='oneapi/2024.2',
         toolchain_mpi='mpich@4.2',
         spack_library_view=None,
@@ -38,11 +40,13 @@ def test_write_load_script_without_toolchain_keeps_default_name(
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'prefix'),
+        login_env=None,
         pixi_exe='/usr/bin/pixi',
         software='polaris',
         software_version='1.0.0',
         runtime_version_cmd=None,
         machine='chrysalis',
+        compute_pixi_mpi='nompi',
         toolchain_compiler=None,
         toolchain_mpi=None,
         spack_library_view=None,
@@ -78,6 +82,128 @@ def test_run_uses_valid_pixi_version_specifier_for_wildcard_mache_pin():
 
 def test_run_uses_exact_pixi_version_specifier_for_exact_mache_pin():
     assert deploy_run._format_pixi_version_specifier('3.0.2') == '==3.0.2'
+
+
+def test_resolve_pixi_prefix_prefers_new_cli_flag():
+    prefix = deploy_run._resolve_pixi_prefix(
+        args=argparse.Namespace(pixi_path='/cli/pixi-path'),
+        config={'pixi': {'prefix': '/config/prefix'}},
+        runtime={'pixi': {'prefix': '/runtime/prefix'}},
+    )
+
+    assert prefix == '/cli/pixi-path'
+
+
+def test_resolve_pixi_prefix_prefers_runtime_when_cli_missing():
+    prefix = deploy_run._resolve_pixi_prefix(
+        args=argparse.Namespace(pixi_path=None),
+        config={'pixi': {'prefix': '/config/prefix'}},
+        runtime={'pixi': {'prefix': '/runtime/prefix'}},
+    )
+
+    assert prefix == '/runtime/prefix'
+
+
+def test_resolve_pixi_prefix_accepts_legacy_prefix_attribute():
+    prefix = deploy_run._resolve_pixi_prefix(
+        args=argparse.Namespace(prefix='/legacy/prefix'),
+        config={'pixi': {'prefix': '/config/prefix'}},
+        runtime={},
+    )
+
+    assert prefix == '/legacy/prefix'
+
+
+def test_resolve_pixi_channels_prefers_runtime_override():
+    channels = deploy_run._resolve_pixi_channels(
+        pixi_cfg={'channels': ['conda-forge']},
+        runtime={'pixi': {'channels': ['file:///tmp/local-channel']}},
+    )
+
+    assert channels == ['file:///tmp/local-channel']
+
+
+def test_resolve_login_pixi_env_uses_distinct_login_prefix():
+    login_env = deploy_run._resolve_login_pixi_env(
+        prefix='/tmp/compute-env',
+        pixi_cfg={'login_mpi': 'nompi'},
+        runtime={},
+        compute_mpi='hpc',
+    )
+
+    assert login_env == {
+        'prefix': '/tmp/compute-env_login',
+        'mpi': 'nompi',
+        'mpi_prefix': 'nompi',
+    }
+
+
+def test_resolve_login_pixi_env_runtime_can_disable_login_env():
+    login_env = deploy_run._resolve_login_pixi_env(
+        prefix='/tmp/compute-env',
+        pixi_cfg={'login_mpi': 'nompi'},
+        runtime={'pixi': {'login_mpi': None}},
+        compute_mpi='openmpi',
+    )
+
+    assert login_env is None
+
+
+def test_write_load_script_includes_login_env_metadata(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(tmp_path / 'compute'),
+        login_env={
+            'prefix': str(tmp_path / 'login'),
+            'mpi': 'nompi',
+            'mpi_prefix': 'nompi',
+        },
+        pixi_exe='/usr/bin/pixi',
+        software='e3sm-unified',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine='pm-cpu',
+        compute_pixi_mpi='hpc',
+        toolchain_compiler='gnu',
+        toolchain_mpi='mpich',
+        spack_library_view=None,
+        spack_activation='echo spack',
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert 'MACHE_DEPLOY_LOGIN_PIXI_TOML' in script_text
+    assert '_mache_deploy_is_compute_node' in script_text
+    assert 'MACHE_DEPLOY_ACTIVE_ENV_KIND' in script_text
+    assert (
+        'if [[ "${MACHE_DEPLOY_ACTIVE_ENV_KIND}" == "compute" ]]; then'
+        in script_text
+    )
+
+
+def test_write_load_script_without_login_env_skips_compute_detection(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(tmp_path / 'compute'),
+        login_env=None,
+        pixi_exe='/usr/bin/pixi',
+        software='e3sm-unified',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine=None,
+        compute_pixi_mpi='mpich',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert '_mache_deploy_is_compute_node' not in script_text
+    assert 'MACHE_DEPLOY_ACTIVE_ENV_KIND="compute"' in script_text
 
 
 def test_copy_mache_pixi_toml_writes_slim_bootstrap_manifest(tmp_path: Path):
@@ -275,7 +401,7 @@ def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
     assert world_readable is False
 
 
-def test_resolve_deploy_permissions_uses_legacy_group_fallback():
+def test_resolve_deploy_permissions_does_not_use_e3sm_unified_group():
     machine_config = configparser.ConfigParser()
     machine_config.add_section('e3sm_unified')
     machine_config.set('e3sm_unified', 'group', 'legacy-group')
@@ -286,7 +412,7 @@ def test_resolve_deploy_permissions_uses_legacy_group_fallback():
         machine_config=machine_config,
     )
 
-    assert group == 'legacy-group'
+    assert group is None
     assert world_readable is True
 
 
@@ -316,6 +442,7 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
 
     deploy_run._apply_deploy_permissions(
         prefix=str(prefix),
+        extra_prefixes=None,
         load_script_paths=[str(load_script)],
         spack_paths=[],
         group='e3sm',
@@ -363,6 +490,7 @@ def test_apply_deploy_permissions_is_noop_without_group(
 
     deploy_run._apply_deploy_permissions(
         prefix=str(tmp_path / 'prefix'),
+        extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[],
         group=None,
@@ -401,6 +529,7 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
 
     deploy_run._apply_deploy_permissions(
         prefix=str(prefix),
+        extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[str(spack_lib), str(spack_soft)],
         group='e3sm',
