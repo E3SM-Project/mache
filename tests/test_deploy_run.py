@@ -551,6 +551,35 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
     assert second_kwargs['recursive'] is True
 
 
+def test_pixi_install_writes_project_local_pixi_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    calls = []
+
+    def _fake_check_call(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(deploy_run, 'check_call', _fake_check_call)
+
+    project_dir = tmp_path / 'prefix'
+    project_dir.mkdir()
+
+    deploy_run._pixi_install(
+        pixi_exe='/usr/bin/pixi',
+        project_dir=str(project_dir),
+        recreate=False,
+        log_filename=str(tmp_path / 'deploy.log'),
+        quiet=True,
+    )
+
+    config_toml = project_dir / '.pixi' / 'config.toml'
+    assert config_toml.is_file()
+    assert '"https://conda.anaconda.org/conda-forge/label" = [' in (
+        config_toml.read_text(encoding='utf-8')
+    )
+    assert len(calls) == 1
+
+
 def test_get_deployed_spack_env_paths_includes_library_and_software_envs():
     spack_results = [
         deploy_run.SpackDeployResult(

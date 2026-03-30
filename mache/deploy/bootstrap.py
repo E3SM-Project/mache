@@ -407,10 +407,11 @@ def _run(log_filename):
 
     bootstrap_dir = Path('deploy_tmp/bootstrap_pixi').resolve()
     bootstrap_dir.mkdir(parents=True, exist_ok=True)
-    _write_bootstrap_pixi_config(bootstrap_dir=bootstrap_dir)
 
     if args.recreate and (bootstrap_dir / '.pixi').exists():
         shutil.rmtree(bootstrap_dir / '.pixi')
+
+    _write_bootstrap_pixi_config(bootstrap_dir=bootstrap_dir)
 
     # Create/update the bootstrap env
     if args.mache_fork is not None and args.mache_branch is not None:
