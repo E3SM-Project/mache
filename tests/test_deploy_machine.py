@@ -69,3 +69,55 @@ def test_machine_config_target_only_machine():
         quiet=True,
     )
     assert cfg.get('target', 'x') == '1'
+
+
+def test_machine_config_keeps_e3sm_unified_metadata_out_of_deploy():
+    platform, _ = get_conda_platform_and_system()
+    cfg = get_machine_config(
+        machine='aurora',
+        machines_path=None,
+        platform=platform,
+        quiet=True,
+    )
+
+    assert cfg.get('e3sm_unified', 'group') == 'E3SMinput'
+    assert cfg.get('e3sm_unified', 'base_path') == (
+        '/lus/flare/projects/E3SMinput/soft/e3sm-unified'
+    )
+    assert cfg.get('e3sm_unified', 'compiler') == 'oneapi-ifx'
+    assert cfg.get('e3sm_unified', 'mpi') == 'mpich'
+    assert cfg.getboolean('e3sm_unified', 'use_e3sm_hdf5_netcdf') is True
+    assert not cfg.has_section('deploy')
+
+
+def test_machine_config_without_machine_has_no_deploy_defaults():
+    platform, _ = get_conda_platform_and_system()
+    cfg = get_machine_config(
+        machine=None,
+        machines_path=None,
+        platform=platform,
+        quiet=True,
+    )
+
+    assert not cfg.has_section('deploy')
+
+
+def test_machine_config_leaves_pixi_only_machines_without_toolchain_defaults():
+    platform, _ = get_conda_platform_and_system()
+    for machine in ('andes', 'chicoma-cpu', 'polaris'):
+        cfg = get_machine_config(
+            machine=machine,
+            machines_path=None,
+            platform=platform,
+            quiet=True,
+        )
+        assert not cfg.has_option('e3sm_unified', 'compiler')
+        assert not cfg.has_option('e3sm_unified', 'mpi')
+
+    chicoma_cfg = get_machine_config(
+        machine='chicoma-cpu',
+        machines_path=None,
+        platform=platform,
+        quiet=True,
+    )
+    assert not chicoma_cfg.has_option('e3sm_unified', 'use_e3sm_hdf5_netcdf')

@@ -36,6 +36,8 @@ sphinx = ">=7.0.0"
 sphinx_rtd_theme = "*"
 myst-parser = "*"
 
+[pypi-dependencies]
+mache = { path = ".", editable = true }
 
 # Features and environments for CI
 [feature.py310.dependencies]

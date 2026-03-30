@@ -140,6 +140,112 @@ def test_write_bootstrap_pixi_toml_with_mache_preserves_wildcard_version(
     assert 'mache = "==3.0.2.*"' not in text
 
 
+def test_parse_args_accepts_new_pixi_path_flag(monkeypatch):
+    monkeypatch.setattr(
+        bootstrap.sys,
+        'argv',
+        [
+            'bootstrap.py',
+            '--software',
+            'polaris',
+            '--python',
+            '3.12',
+            '--mache-version',
+            '3.0.0',
+            '--pixi-path',
+            '/tmp/pixi-env',
+        ],
+    )
+
+    args = bootstrap._parse_args()
+
+    assert args.pixi_path == '/tmp/pixi-env'
+
+
+def test_parse_args_accepts_legacy_prefix_flag(monkeypatch):
+    monkeypatch.setattr(
+        bootstrap.sys,
+        'argv',
+        [
+            'bootstrap.py',
+            '--software',
+            'polaris',
+            '--python',
+            '3.12',
+            '--mache-version',
+            '3.0.0',
+            '--prefix',
+            '/tmp/pixi-env',
+        ],
+    )
+
+    args = bootstrap._parse_args()
+
+    assert args.pixi_path == '/tmp/pixi-env'
+
+
+def test_write_bootstrap_pixi_toml_with_mache_uses_mache_dev_for_rc(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.setattr(bootstrap, '_get_pixi_platform', lambda: 'linux-64')
+
+    pixi_toml = tmp_path / 'pixi.toml'
+    bootstrap._write_bootstrap_pixi_toml_with_mache(
+        pixi_toml_path=pixi_toml,
+        software='polaris',
+        mache_version='3.3.0rc1',
+        python_version='3.12',
+    )
+
+    text = pixi_toml.read_text(encoding='utf-8')
+    assert (
+        'channels = ["https://conda.anaconda.org/conda-forge/label/'
+        'mache_dev", "conda-forge"]'
+    ) in text
+
+
+def test_write_bootstrap_pixi_toml_with_mache_uses_conda_forge_for_release(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.setattr(bootstrap, '_get_pixi_platform', lambda: 'linux-64')
+
+    pixi_toml = tmp_path / 'pixi.toml'
+    bootstrap._write_bootstrap_pixi_toml_with_mache(
+        pixi_toml_path=pixi_toml,
+        software='polaris',
+        mache_version='3.3.0',
+        python_version='3.12',
+    )
+
+    text = pixi_toml.read_text(encoding='utf-8')
+    assert 'channels = ["conda-forge"]' in text
+
+
+def test_get_bootstrap_channels_for_mache_version_detects_rc():
+    channels = bootstrap._get_bootstrap_channels_for_mache_version('3.3.0rc1')
+
+    assert channels == [
+        'https://conda.anaconda.org/conda-forge/label/mache_dev',
+        'conda-forge',
+    ]
+
+
+def test_get_bootstrap_channels_for_mache_version_uses_release_channel():
+    channels = bootstrap._get_bootstrap_channels_for_mache_version('3.3.0')
+
+    assert channels == ['conda-forge']
+
+
+def test_write_bootstrap_pixi_config_adds_label_mirror(tmp_path: Path):
+    bootstrap._write_bootstrap_pixi_config(bootstrap_dir=tmp_path)
+
+    config_toml = tmp_path / '.pixi' / 'config.toml'
+    text = config_toml.read_text(encoding='utf-8')
+    assert config_toml.is_file()
+    assert '[mirrors]' in text
+    assert '"https://conda.anaconda.org/conda-forge/label" = [' in text
+
+
 def test_clone_mache_repo_uses_local_source_override(
     monkeypatch, tmp_path: Path
 ):
