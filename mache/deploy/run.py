@@ -18,6 +18,7 @@ from mache.permissions import update_permissions
 
 from .bootstrap import (
     _format_pixi_version_specifier,
+    _write_bootstrap_pixi_config,
     build_pixi_env,
     build_pixi_shell_hook_prefix,
     check_call,
@@ -1378,6 +1379,8 @@ def _pixi_install(
     pixi_dir = os.path.join(project_dir, '.pixi')
     if recreate and os.path.exists(pixi_dir):
         shutil.rmtree(pixi_dir)
+
+    _write_bootstrap_pixi_config(bootstrap_dir=Path(project_dir))
 
     # Do not force cache/home locations here.
     # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
