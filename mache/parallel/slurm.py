@@ -105,12 +105,13 @@ class SlurmSystem(ParallelSystem):
                 f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
                 f'likely need to allocate more nodes.'
             )
+        launch_nodes = _ceil_division(ntasks, max_mpi_tasks_per_node)
 
         parallel_args = [
             '-c',
             f'{cpus_per_task}',
             '-N',
-            f'{nodes}',
+            f'{launch_nodes}',
             '-n',
             f'{ntasks}',
         ]

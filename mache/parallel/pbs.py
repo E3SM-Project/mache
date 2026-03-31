@@ -91,19 +91,20 @@ class PbsSystem(ParallelSystem):
         if nodes is None:
             raise ValueError('Node count is not set for the pbs system.')
 
-        tasks_per_node = _ceil_division(ntasks, nodes)
         max_mpi_tasks_per_node = self.get_config_int('max_mpi_tasks_per_node')
         if max_mpi_tasks_per_node is None:
             raise ValueError(
                 'max_mpi_tasks_per_node must be set in the config for the pbs '
                 'system.'
             )
+        tasks_per_node = _ceil_division(ntasks, nodes)
         if tasks_per_node > max_mpi_tasks_per_node:
             raise ValueError(
                 f'Calculated tasks_per_node ({tasks_per_node}) exceeds the '
                 f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
                 f'likely need to allocate more nodes.'
             )
+        tasks_per_node = min(ntasks, max_mpi_tasks_per_node)
 
         parallel_args = [
             '-n',
