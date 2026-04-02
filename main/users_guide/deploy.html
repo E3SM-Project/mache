@@ -324,9 +324,17 @@ load scripts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">machines.path</span></code>: optional path to target-owned machine config files.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.prefix</span></code>: required in practice.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pixi.channels</span></code>: required and must be non-empty.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pixi.login_mpi</span></code>: optional alternate MPI setting for login nodes. When set,
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> may create a second pixi environment for login-node use
+and the generated load script will auto-select between the login and compute
+environments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pixi.login_prefix</span></code>: optional install path for that login-node pixi
+environment. If omitted, mache reuses <code class="docutils literal notranslate"><span class="pre">pixi.prefix</span></code> when the login and
+compute MPI settings match, or defaults to <code class="docutils literal notranslate"><span class="pre">&lt;pixi.prefix&gt;_login</span></code> when they
+differ.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">permissions.group</span></code>: optional shared-filesystem group to apply after a
 successful deploy. If unset, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> falls back to merged machine
-config <code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">group</span></code>, then legacy <code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span> <span class="pre">group</span></code>.</p></li>
+config <code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">group</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">permissions.world_readable</span></code>: optional boolean controlling whether deployed
 files are readable outside the shared group. Hooks may override both values
 through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;permissions&quot;]</span></code>.</p></li>
@@ -644,6 +652,9 @@ created.</p>
 <li><p>Resolves toolchain pairs for Spack.</p></li>
 <li><p>Renders <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code> into the install prefix and runs
 <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code>.</p></li>
+<li><p>Optionally creates a second login-node pixi environment when
+<code class="docutils literal notranslate"><span class="pre">pixi.login_mpi</span></code> is configured or a hook sets <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;pixi&quot;]</span></code>
+accordingly.</p></li>
 <li><p>Optionally installs a development copy of <code class="docutils literal notranslate"><span class="pre">mache</span></code> when a fork/branch was
 requested.</p></li>
 <li><p>Optionally builds and installs JIGSAW.</p></li>
@@ -656,6 +667,10 @@ and MPI tags, for example:</p>
 <p><code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code></p>
 <p>Those load scripts are the main artifact a downstream user consumes after the
 deployment completes.</p>
+<p>When a login pixi environment is configured, the generated load script chooses
+the login environment on login nodes and the compute environment inside common
+batch jobs such as Slurm, PBS, or Cobalt. Spack activation remains compute-only
+in that split-environment case.</p>
 </section>
 </section>
 <section id="the-command-line-contract">
@@ -703,8 +718,10 @@ currently <code class="docutils literal notranslate"><span class="pre">deploy.py
 <li><p><code class="docutils literal notranslate"><span class="pre">--bootstrap-only</span></code> is deploy-only.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--machine</span></code> is deploy-plus-run.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--mache-version</span></code> is bootstrap-plus-run.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--pixi</span></code>, <code class="docutils literal notranslate"><span class="pre">--prefix</span></code>, <code class="docutils literal notranslate"><span class="pre">--recreate</span></code>, <code class="docutils literal notranslate"><span class="pre">--quiet</span></code>, <code class="docutils literal notranslate"><span class="pre">--mache-fork</span></code>, and
+<li><p><code class="docutils literal notranslate"><span class="pre">--pixi</span></code>, <code class="docutils literal notranslate"><span class="pre">--pixi-path</span></code>, <code class="docutils literal notranslate"><span class="pre">--recreate</span></code>, <code class="docutils literal notranslate"><span class="pre">--quiet</span></code>, <code class="docutils literal notranslate"><span class="pre">--mache-fork</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">--mache-branch</span></code> are routed across all relevant phases.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--prefix</span></code> is still accepted as a deprecated compatibility alias for
+<code class="docutils literal notranslate"><span class="pre">--pixi-path</span></code>.</p></li>
 </ul>
 </section>
 <section id="how-deploy-custom-cli-spec-json-works">

@@ -113,6 +113,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_format_pixi_version_specifier</span><span class="p">,</span>
+    <span class="n">_write_bootstrap_pixi_config</span><span class="p">,</span>
     <span class="n">build_pixi_env</span><span class="p">,</span>
     <span class="n">build_pixi_shell_hook_prefix</span><span class="p">,</span>
     <span class="n">check_call</span><span class="p">,</span>
@@ -152,7 +153,7 @@
 <span class="sd">    args : argparse.Namespace</span>
 <span class="sd">        Parsed command-line options for the deploy run. Expected attributes</span>
 <span class="sd">        include ``quiet`` and may include deploy overrides such as machine,</span>
-<span class="sd">        prefix, pixi executable, toolchain values, and Spack options.</span>
+<span class="sd">        pixi path, pixi executable, toolchain values, and Spack options.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">check_location</span><span class="p">()</span>
 
@@ -216,18 +217,6 @@
         <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;mache_branch&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="p">)</span>
 
-    <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">prefix</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;prefix&#39; not found in [pixi] section of deploy/config.yaml.j2 &quot;</span>
-            <span class="s1">&#39;and --prefix not provided&#39;</span>
-        <span class="p">)</span>
-    <span class="n">prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">)))</span>
-    <span class="p">)</span>
-
     <span class="n">pixi_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -248,6 +237,12 @@
     <span class="p">)</span>
 
     <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;pre_pixi&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">_resolve_pixi_prefix</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">toolchain_pairs</span> <span class="o">=</span> <span class="n">_resolve_toolchain_pairs</span><span class="p">(</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
@@ -277,9 +272,21 @@
         <span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">,</span>
         <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">login_env</span> <span class="o">=</span> <span class="n">_resolve_login_pixi_env</span><span class="p">(</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+        <span class="n">compute_mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;pixi&#39;</span><span class="p">][</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prefix</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;pixi&#39;</span><span class="p">][</span><span class="s1">&#39;mpi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mpi</span>
+    <span class="k">if</span> <span class="n">login_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;pixi&#39;</span><span class="p">][</span><span class="s1">&#39;login_prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;pixi&#39;</span><span class="p">][</span><span class="s1">&#39;login_mpi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">]</span>
 
     <span class="n">python_version</span> <span class="o">=</span> <span class="n">_resolve_pixi_python_version</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">pins</span><span class="o">=</span><span class="n">pins</span><span class="p">)</span>
-    <span class="n">channels</span> <span class="o">=</span> <span class="n">_resolve_pixi_channels</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">)</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">_resolve_pixi_channels</span><span class="p">(</span><span class="n">pixi_cfg</span><span class="o">=</span><span class="n">pixi_cfg</span><span class="p">,</span> <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">)</span>
 
     <span class="n">jigsaw_enabled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;jigsaw&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enabled&#39;</span><span class="p">))</span>
 
@@ -305,6 +312,7 @@
     <span class="n">replacements</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
         <span class="p">{</span>
             <span class="s1">&#39;python&#39;</span><span class="p">:</span> <span class="n">python_version</span><span class="p">,</span>
+            <span class="s1">&#39;software_version&#39;</span><span class="p">:</span> <span class="n">software_version</span><span class="p">,</span>
             <span class="s1">&#39;pixi_channels&#39;</span><span class="p">:</span> <span class="n">channels</span><span class="p">,</span>
             <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">mpi</span><span class="p">,</span>
             <span class="s1">&#39;mpi_prefix&#39;</span><span class="p">:</span> <span class="n">mpi_prefix</span><span class="p">,</span>
@@ -313,45 +321,38 @@
         <span class="p">}</span>
     <span class="p">)</span>
 
-    <span class="n">_write_pixi_toml</span><span class="p">(</span>
-        <span class="n">template_path</span><span class="o">=</span><span class="s1">&#39;deploy/pixi.toml.j2&#39;</span><span class="p">,</span>
+    <span class="n">_deploy_target_pixi_env</span><span class="p">(</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
         <span class="n">replacements</span><span class="o">=</span><span class="n">replacements</span><span class="p">,</span>
-        <span class="n">output_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">using_mache_fork</span><span class="p">:</span>
-        <span class="n">merge_pixi_toml_dependencies</span><span class="p">(</span>
-            <span class="n">target_pixi_toml</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span>
-                <span class="s1">&#39;pixi.toml&#39;</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">source_repo_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;deploy_tmp&#39;</span><span class="p">),</span>
-                <span class="s1">&#39;build_mache&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;mache&#39;</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="n">_pixi_install</span><span class="p">(</span>
+        <span class="n">using_mache_fork</span><span class="o">=</span><span class="n">using_mache_fork</span><span class="p">,</span>
         <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
-        <span class="n">project_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
         <span class="n">recreate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">recreate</span><span class="p">,</span>
         <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">using_mache_fork</span><span class="p">:</span>
-        <span class="n">prefix_pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
-        <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
-            <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
-            <span class="n">pixi_toml</span><span class="o">=</span><span class="n">prefix_pixi_toml</span><span class="p">,</span>
+    <span class="k">if</span> <span class="n">login_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">login_replacements</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">replacements</span><span class="p">)</span>
+        <span class="n">login_replacements</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;mpi_prefix&#39;</span><span class="p">:</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi_prefix&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
         <span class="p">)</span>
-        <span class="n">install_dev_mache</span><span class="p">(</span>
-            <span class="n">pixi_shell_hook_prefix</span><span class="o">=</span><span class="n">pixi_shell_hook_prefix</span><span class="p">,</span>
-            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
-            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">prefix</span>
+            <span class="ow">or</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mpi</span>
+            <span class="ow">or</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi_prefix&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mpi_prefix</span>
+        <span class="p">):</span>
+            <span class="n">_deploy_target_pixi_env</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">],</span>
+                <span class="n">replacements</span><span class="o">=</span><span class="n">login_replacements</span><span class="p">,</span>
+                <span class="n">using_mache_fork</span><span class="o">=</span><span class="n">using_mache_fork</span><span class="p">,</span>
+                <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                <span class="n">recreate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">recreate</span><span class="p">,</span>
+                <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+                <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="n">_maybe_deploy_jigsaw</span><span class="p">(</span>
         <span class="n">enabled</span><span class="o">=</span><span class="n">jigsaw_enabled</span><span class="p">,</span>
@@ -404,6 +405,30 @@
             <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;spack&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;spack&#39;</span><span class="p">][</span><span class="s1">&#39;results&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;compiler&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">compiler</span><span class="p">,</span>
+            <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">mpi</span><span class="p">,</span>
+            <span class="s1">&#39;env_name&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="p">,</span>
+            <span class="s1">&#39;spack_path&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">spack_path</span><span class="p">,</span>
+            <span class="s1">&#39;view_path&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">view_path</span><span class="p">,</span>
+            <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">spack_results</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">spack_software_env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;spack&#39;</span><span class="p">][</span><span class="s1">&#39;software_result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;spack&#39;</span><span class="p">][</span><span class="s1">&#39;software_result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;compiler&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">compiler</span><span class="p">,</span>
+            <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">mpi</span><span class="p">,</span>
+            <span class="s1">&#39;env_name&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">env_name</span><span class="p">,</span>
+            <span class="s1">&#39;spack_path&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">spack_path</span><span class="p">,</span>
+            <span class="s1">&#39;view_path&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">view_path</span><span class="p">,</span>
+            <span class="s1">&#39;path_setup&#39;</span><span class="p">:</span> <span class="n">spack_software_env</span><span class="o">.</span><span class="n">path_setup</span><span class="p">,</span>
+        <span class="p">}</span>
+
     <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_spack&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">install_dev_software</span><span class="p">:</span>
@@ -416,16 +441,19 @@
 
     <span class="n">load_script_paths</span> <span class="o">=</span> <span class="n">_write_load_scripts</span><span class="p">(</span>
         <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">login_env</span><span class="o">=</span><span class="n">login_env</span><span class="p">,</span>
         <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
         <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
         <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
         <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
         <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+        <span class="n">compute_pixi_mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
         <span class="n">toolchain_pairs</span><span class="o">=</span><span class="n">toolchain_pairs</span><span class="p">,</span>
         <span class="n">spack_results</span><span class="o">=</span><span class="n">spack_results</span><span class="p">,</span>
         <span class="n">spack_software_env</span><span class="o">=</span><span class="n">spack_software_env</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;load_scripts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_script_paths</span>
 
     <span class="n">permissions_group</span><span class="p">,</span> <span class="n">world_readable</span> <span class="o">=</span> <span class="n">_resolve_deploy_permissions</span><span class="p">(</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
@@ -434,6 +462,11 @@
     <span class="p">)</span>
     <span class="n">_apply_deploy_permissions</span><span class="p">(</span>
         <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">extra_prefixes</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">login_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">prefix</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">),</span>
         <span class="n">load_script_paths</span><span class="o">=</span><span class="n">load_script_paths</span><span class="p">,</span>
         <span class="n">spack_paths</span><span class="o">=</span><span class="p">(</span>
             <span class="n">_get_deployed_spack_paths</span><span class="p">(</span>
@@ -502,13 +535,49 @@
     <span class="k">return</span> <span class="n">python_version</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_channels</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="k">if</span> <span class="s1">&#39;channels&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pixi_cfg</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_prefix</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;pixi_path&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Backward compatibility for older callers still constructing</span>
+        <span class="c1"># namespaces with the legacy attribute name.</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">runtime_pixi</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_pixi</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;channels&#39; not found in [pixi] section of deploy/config.yaml.j2&quot;</span>
+            <span class="s2">&quot;&#39;prefix&#39; not found in [pixi] section of deploy/config.yaml.j2 &quot;</span>
+            <span class="s1">&#39;and neither --pixi-path nor the deprecated --prefix was &#39;</span>
+            <span class="s1">&#39;provided&#39;</span>
         <span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">))))</span>
 
-    <span class="n">channels</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pixi_channels</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">runtime_pixi</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_pixi</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;channels&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pixi_cfg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;&#39;channels&#39; not found in [pixi] section of &quot;</span>
+                <span class="s1">&#39;deploy/config.yaml.j2&#39;</span>
+            <span class="p">)</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="p">(</span>
         <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
         <span class="ow">or</span> <span class="ow">not</span> <span class="n">channels</span>
@@ -517,6 +586,102 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;pixi.channels must be a non-empty list of strings&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">channels</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_login_pixi_env</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pixi_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">compute_mpi</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">runtime_pixi</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pixi&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">runtime_pixi</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">runtime_pixi</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="s1">&#39;login_mpi&#39;</span> <span class="ow">in</span> <span class="n">runtime_pixi</span><span class="p">:</span>
+        <span class="n">login_mpi_raw</span> <span class="o">=</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;login_mpi&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">login_mpi_raw</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;login_mpi&#39;</span><span class="p">)</span>
+
+    <span class="n">login_mpi</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span><span class="n">login_mpi_raw</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">login_mpi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">resolved_login_mpi</span><span class="p">,</span> <span class="n">login_mpi_prefix</span> <span class="o">=</span> <span class="n">_get_mpi_settings</span><span class="p">(</span>
+        <span class="n">pixi_cfg</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">login_mpi</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;login_prefix&#39;</span> <span class="ow">in</span> <span class="n">runtime_pixi</span><span class="p">:</span>
+        <span class="n">login_prefix_raw</span> <span class="o">=</span> <span class="n">runtime_pixi</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;login_prefix&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">login_prefix_raw</span> <span class="o">=</span> <span class="n">pixi_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;login_prefix&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">login_prefix_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">resolved_login_mpi</span> <span class="o">==</span> <span class="n">compute_mpi</span><span class="p">:</span>
+            <span class="n">login_prefix_raw</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">login_prefix_raw</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">_login&#39;</span>
+
+    <span class="n">login_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">login_prefix_raw</span><span class="p">)))</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;prefix&#39;</span><span class="p">:</span> <span class="n">login_prefix</span><span class="p">,</span>
+        <span class="s1">&#39;mpi&#39;</span><span class="p">:</span> <span class="n">resolved_login_mpi</span><span class="p">,</span>
+        <span class="s1">&#39;mpi_prefix&#39;</span><span class="p">:</span> <span class="n">login_mpi_prefix</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deploy_target_pixi_env</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">replacements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">using_mache_fork</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">recreate</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">_write_pixi_toml</span><span class="p">(</span>
+        <span class="n">template_path</span><span class="o">=</span><span class="s1">&#39;deploy/pixi.toml.j2&#39;</span><span class="p">,</span>
+        <span class="n">replacements</span><span class="o">=</span><span class="n">replacements</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">using_mache_fork</span><span class="p">:</span>
+        <span class="n">merge_pixi_toml_dependencies</span><span class="p">(</span>
+            <span class="n">target_pixi_toml</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span>
+                <span class="s1">&#39;pixi.toml&#39;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">source_repo_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;deploy_tmp&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;build_mache&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;mache&#39;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">python_version</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">replacements</span><span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+    <span class="n">_pixi_install</span><span class="p">(</span>
+        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+        <span class="n">project_dir</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+        <span class="n">recreate</span><span class="o">=</span><span class="n">recreate</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">using_mache_fork</span><span class="p">:</span>
+        <span class="n">prefix_pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+        <span class="n">pixi_shell_hook_prefix</span> <span class="o">=</span> <span class="n">build_pixi_shell_hook_prefix</span><span class="p">(</span>
+            <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+            <span class="n">pixi_toml</span><span class="o">=</span><span class="n">prefix_pixi_toml</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">install_dev_mache</span><span class="p">(</span>
+            <span class="n">pixi_shell_hook_prefix</span><span class="o">=</span><span class="n">pixi_shell_hook_prefix</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_deploy_jigsaw</span><span class="p">(</span>
@@ -732,7 +897,6 @@
 <span class="sd">      1. runtime[&#39;permissions&#39;] (hooks)</span>
 <span class="sd">      2. config[&#39;permissions&#39;]</span>
 <span class="sd">      3. merged machine config [deploy]</span>
-<span class="sd">      4. merged machine config [e3sm_unified] (legacy fallback for group only)</span>
 
 <span class="sd">    If no group is resolved, permission updates are skipped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -756,10 +920,6 @@
         <span class="n">group</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
             <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">)</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">group</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;e3sm_unified&#39;</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">):</span>
-        <span class="n">group</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
-            <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;e3sm_unified&#39;</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">)</span>
-        <span class="p">)</span>
 
     <span class="n">world_readable</span> <span class="o">=</span> <span class="n">_coerce_optional_bool</span><span class="p">(</span>
         <span class="n">runtime_permissions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;world_readable&#39;</span><span class="p">),</span>
@@ -781,6 +941,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_apply_deploy_permissions</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extra_prefixes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">load_script_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">spack_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -802,20 +963,31 @@
         <span class="n">world_readable</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">update_permissions</span><span class="p">(</span>
-        <span class="n">prefix_abs</span><span class="p">,</span>
-        <span class="n">group</span><span class="p">,</span>
-        <span class="n">group_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
-        <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">prefixes</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix_abs</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">extra_prefixes</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">extra_prefix</span> <span class="ow">in</span> <span class="n">extra_prefixes</span><span class="p">:</span>
+            <span class="n">extra_prefix_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">extra_prefix</span><span class="p">)))</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">extra_prefix_abs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+                <span class="n">prefixes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extra_prefix_abs</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+        <span class="n">update_permissions</span><span class="p">(</span>
+            <span class="n">managed_prefix</span><span class="p">,</span>
+            <span class="n">group</span><span class="p">,</span>
+            <span class="n">group_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
+            <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">managed_paths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">load_script_paths</span><span class="p">]</span>
-    <span class="n">prefix_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
-    <span class="k">elif</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">managed_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+        <span class="n">prefix_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">managed_prefix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">managed_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">managed_prefix</span><span class="p">)</span>
     <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spack_paths</span><span class="p">)</span>
 
     <span class="n">managed_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">managed_paths</span><span class="p">))</span>
@@ -1052,11 +1224,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_load_script</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">login_env</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">software</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">software_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">runtime_version_cmd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">compute_pixi_mpi</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">toolchain_compiler</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">toolchain_mpi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">spack_library_view</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1076,6 +1250,15 @@
         <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">prefix</span><span class="p">))</span>
     <span class="p">)</span>
     <span class="n">pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">prefix_abs</span><span class="p">,</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+    <span class="n">login_prefix_abs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">login_pixi_toml</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">login_pixi_mpi</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">login_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">login_prefix_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]))</span>
+        <span class="p">)</span>
+        <span class="n">login_pixi_toml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">login_prefix_abs</span><span class="p">,</span> <span class="s1">&#39;pixi.toml&#39;</span><span class="p">)</span>
+        <span class="n">login_pixi_mpi</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">login_env</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">toolchain_compiler</span> <span class="ow">and</span> <span class="n">toolchain_mpi</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1114,6 +1297,10 @@
         <span class="n">runtime_version_cmd_sh</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">runtime_version_cmd</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
         <span class="n">machine</span><span class="o">=</span><span class="n">machine</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="n">load_script</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">script_path</span><span class="p">),</span>
+        <span class="n">compute_pixi_mpi</span><span class="o">=</span><span class="n">compute_pixi_mpi</span><span class="p">,</span>
+        <span class="n">login_prefix</span><span class="o">=</span><span class="n">login_prefix_abs</span><span class="p">,</span>
+        <span class="n">login_pixi_toml</span><span class="o">=</span><span class="n">login_pixi_toml</span><span class="p">,</span>
+        <span class="n">login_pixi_mpi</span><span class="o">=</span><span class="n">login_pixi_mpi</span><span class="p">,</span>
         <span class="n">toolchain_compiler</span><span class="o">=</span><span class="n">toolchain_compiler</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="n">toolchain_mpi</span><span class="o">=</span><span class="n">toolchain_mpi</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
         <span class="n">spack_library_view</span><span class="o">=</span><span class="n">spack_library_view</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
@@ -1134,11 +1321,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_load_scripts</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">login_env</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">software</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">software_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">runtime_version_cmd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">compute_pixi_mpi</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">toolchain_pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
     <span class="n">spack_results</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">spack_software_env</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1177,11 +1366,13 @@
             <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">_write_load_script</span><span class="p">(</span>
                     <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                    <span class="n">login_env</span><span class="o">=</span><span class="n">login_env</span><span class="p">,</span>
                     <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
                     <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
                     <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
                     <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
                     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                    <span class="n">compute_pixi_mpi</span><span class="o">=</span><span class="n">compute_pixi_mpi</span><span class="p">,</span>
                     <span class="n">toolchain_compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
                     <span class="n">toolchain_mpi</span><span class="o">=</span><span class="n">mpilib</span><span class="p">,</span>
                     <span class="n">spack_library_view</span><span class="o">=</span><span class="n">spack_library_view</span><span class="p">,</span>
@@ -1195,11 +1386,13 @@
         <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">_write_load_script</span><span class="p">(</span>
                 <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">login_env</span><span class="o">=</span><span class="n">login_env</span><span class="p">,</span>
                 <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
                 <span class="n">software</span><span class="o">=</span><span class="n">software</span><span class="p">,</span>
                 <span class="n">software_version</span><span class="o">=</span><span class="n">software_version</span><span class="p">,</span>
                 <span class="n">runtime_version_cmd</span><span class="o">=</span><span class="n">runtime_version_cmd</span><span class="p">,</span>
                 <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+                <span class="n">compute_pixi_mpi</span><span class="o">=</span><span class="n">compute_pixi_mpi</span><span class="p">,</span>
                 <span class="n">toolchain_compiler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">toolchain_mpi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">spack_library_view</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1285,6 +1478,8 @@
     <span class="k">if</span> <span class="n">recreate</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pixi_dir</span><span class="p">):</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">pixi_dir</span><span class="p">)</span>
 
+    <span class="n">_write_bootstrap_pixi_config</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">project_dir</span><span class="p">))</span>
+
     <span class="c1"># Do not force cache/home locations here.</span>
     <span class="c1"># - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /</span>
     <span class="c1">#   PIXI_CACHE_DIR in shell startup or modulefiles.</span>
@@ -1330,10 +1525,14 @@
             <span class="s1">&#39;contain whitespace&#39;</span>
         <span class="p">)</span>
 
-    <span class="c1"># Legacy Polaris deploy behavior:</span>
+    <span class="c1"># Conda-forge build-string prefixes:</span>
     <span class="c1">#   - nompi -&gt; &quot;nompi&quot;</span>
+    <span class="c1">#   - hpc   -&gt; &quot;hpc&quot;</span>
     <span class="c1">#   - otherwise -&gt; &quot;mpi_&lt;mpi&gt;&quot; (e.g. mpi_mpich, mpi_openmpi)</span>
-    <span class="n">mpi_prefix</span> <span class="o">=</span> <span class="s1">&#39;nompi&#39;</span> <span class="k">if</span> <span class="n">mpi</span> <span class="o">==</span> <span class="s1">&#39;nompi&#39;</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">mpi</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">if</span> <span class="n">mpi</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;nompi&#39;</span><span class="p">,</span> <span class="s1">&#39;hpc&#39;</span><span class="p">):</span>
+        <span class="n">mpi_prefix</span> <span class="o">=</span> <span class="n">mpi</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mpi_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">mpi</span><span class="si">}</span><span class="s1">&#39;</span>
 
     <span class="k">return</span> <span class="n">mpi</span><span class="p">,</span> <span class="n">mpi_prefix</span>
 
