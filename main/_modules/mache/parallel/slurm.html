@@ -209,12 +209,13 @@
                 <span class="sa">f</span><span class="s1">&#39;max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You &#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;likely need to allocate more nodes.&#39;</span>
             <span class="p">)</span>
+        <span class="n">launch_nodes</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
 
         <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s1">&#39;-c&#39;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
             <span class="s1">&#39;-N&#39;</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">launch_nodes</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
             <span class="s1">&#39;-n&#39;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
         <span class="p">]</span>

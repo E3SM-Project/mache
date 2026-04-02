@@ -195,19 +195,20 @@
         <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Node count is not set for the pbs system.&#39;</span><span class="p">)</span>
 
-        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
         <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;max_mpi_tasks_per_node&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">max_mpi_tasks_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;max_mpi_tasks_per_node must be set in the config for the pbs &#39;</span>
                 <span class="s1">&#39;system.&#39;</span>
             <span class="p">)</span>
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">tasks_per_node</span> <span class="o">&gt;</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s1">&#39;Calculated tasks_per_node (</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">) exceeds the &#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You &#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;likely need to allocate more nodes.&#39;</span>
             <span class="p">)</span>
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
 
         <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s1">&#39;-n&#39;</span><span class="p">,</span>
