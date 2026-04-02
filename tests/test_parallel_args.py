@@ -63,6 +63,52 @@ def test_slurm_custom_gpus_per_task_flag(monkeypatch):
     assert args[index + 1] == '1'
 
 
+def test_slurm_uses_minimum_nodes_for_single_task(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '4',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 6
+    )
+
+    system = SlurmSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=1, ntasks=1
+    )
+
+    index = args.index('-N')
+    assert args[index + 1] == '1'
+
+
+def test_slurm_uses_minimum_nodes_for_task_count(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '4',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 6
+    )
+
+    system = SlurmSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=17
+    )
+
+    index = args.index('-N')
+    assert args[index + 1] == '5'
+
+
 def test_pbs_skips_gpu_flag_when_not_configured(monkeypatch):
     config = _get_config(
         {
@@ -110,3 +156,51 @@ def test_pbs_uses_configured_gpu_flag(monkeypatch):
     assert '--gpus-per-task' in args
     index = args.index('--gpus-per-task')
     assert args[index + 1] == '1'
+
+
+def test_pbs_uses_minimum_nodes_for_single_task(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '4',
+            'cpus_per_task_flag': '--depth',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 6
+    )
+
+    system = PbsSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=1
+    )
+
+    index = args.index('--ppn')
+    assert args[index + 1] == '1'
+
+
+def test_pbs_uses_minimum_nodes_for_task_count(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '4',
+            'cpus_per_task_flag': '--depth',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 6
+    )
+
+    system = PbsSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=17
+    )
+
+    index = args.index('--ppn')
+    assert args[index + 1] == '4'
