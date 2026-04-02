@@ -18,6 +18,7 @@ from mache.permissions import update_permissions
 
 from .bootstrap import (
     _format_pixi_version_specifier,
+    _write_bootstrap_pixi_config,
     build_pixi_env,
     build_pixi_shell_hook_prefix,
     check_call,
@@ -55,7 +56,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Parsed command-line options for the deploy run. Expected attributes
         include ``quiet`` and may include deploy overrides such as machine,
-        prefix, pixi executable, toolchain values, and Spack options.
+        pixi path, pixi executable, toolchain values, and Spack options.
     """
     check_location()
 
@@ -119,18 +120,6 @@ def run_deploy(args: argparse.Namespace) -> None:
         and getattr(args, 'mache_branch', None) is not None
     )
 
-    prefix = getattr(args, 'prefix', None)
-    if prefix is None:
-        prefix = config.get('pixi', {}).get('prefix')
-    if not prefix:
-        raise ValueError(
-            "'prefix' not found in [pixi] section of deploy/config.yaml.j2 "
-            'and --prefix not provided'
-        )
-    prefix = os.path.abspath(
-        os.path.expanduser(os.path.expandvars(str(prefix)))
-    )
-
     pixi_cfg = config.get('pixi')
     if not isinstance(pixi_cfg, dict):
         raise ValueError(
@@ -151,6 +140,12 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
 
     hook_registry.run_hook('pre_pixi', ctx)
+
+    prefix = _resolve_pixi_prefix(
+        args=args,
+        config=config,
+        runtime=ctx.runtime,
+    )
 
     toolchain_pairs = _resolve_toolchain_pairs(
         config=config,
@@ -180,9 +175,21 @@ def run_deploy(args: argparse.Namespace) -> None:
         pixi_cfg=pixi_cfg,
         runtime=ctx.runtime,
     )
+    login_env = _resolve_login_pixi_env(
+        prefix=prefix,
+        pixi_cfg=pixi_cfg,
+        runtime=ctx.runtime,
+        compute_mpi=mpi,
+    )
+    ctx.runtime.setdefault('pixi', {})
+    ctx.runtime['pixi']['prefix'] = prefix
+    ctx.runtime['pixi']['mpi'] = mpi
+    if login_env is not None:
+        ctx.runtime['pixi']['login_prefix'] = login_env['prefix']
+        ctx.runtime['pixi']['login_mpi'] = login_env['mpi']
 
     python_version = _resolve_pixi_python_version(args=args, pins=pins)
-    channels = _resolve_pixi_channels(pixi_cfg=pixi_cfg)
+    channels = _resolve_pixi_channels(pixi_cfg=pixi_cfg, runtime=ctx.runtime)
 
     jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
 
@@ -208,6 +215,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     replacements.update(
         {
             'python': python_version,
+            'software_version': software_version,
             'pixi_channels': channels,
             'mpi': mpi,
             'mpi_prefix': mpi_prefix,
@@ -216,45 +224,38 @@ def run_deploy(args: argparse.Namespace) -> None:
         }
     )
 
-    _write_pixi_toml(
-        template_path='deploy/pixi.toml.j2',
+    _deploy_target_pixi_env(
+        prefix=prefix,
         replacements=replacements,
-        output_dir=prefix,
-    )
-
-    if using_mache_fork:
-        merge_pixi_toml_dependencies(
-            target_pixi_toml=os.path.join(
-                os.path.abspath(prefix),
-                'pixi.toml',
-            ),
-            source_repo_dir=os.path.join(
-                os.path.abspath('deploy_tmp'),
-                'build_mache',
-                'mache',
-            ),
-            python_version=python_version,
-        )
-
-    _pixi_install(
+        using_mache_fork=using_mache_fork,
         pixi_exe=pixi_exe,
-        project_dir=prefix,
         recreate=args.recreate,
         log_filename=log_filename,
         quiet=quiet,
     )
 
-    if using_mache_fork:
-        prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
-        pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
-            pixi_exe=pixi_exe,
-            pixi_toml=prefix_pixi_toml,
+    if login_env is not None:
+        login_replacements = dict(replacements)
+        login_replacements.update(
+            {
+                'mpi': login_env['mpi'],
+                'mpi_prefix': login_env['mpi_prefix'],
+            }
         )
-        install_dev_mache(
-            pixi_shell_hook_prefix=pixi_shell_hook_prefix,
-            log_filename=log_filename,
-            quiet=quiet,
-        )
+        if (
+            login_env['prefix'] != prefix
+            or login_env['mpi'] != mpi
+            or login_env['mpi_prefix'] != mpi_prefix
+        ):
+            _deploy_target_pixi_env(
+                prefix=login_env['prefix'],
+                replacements=login_replacements,
+                using_mache_fork=using_mache_fork,
+                pixi_exe=pixi_exe,
+                recreate=args.recreate,
+                log_filename=log_filename,
+                quiet=quiet,
+            )
 
     _maybe_deploy_jigsaw(
         enabled=jigsaw_enabled,
@@ -307,6 +308,30 @@ def run_deploy(args: argparse.Namespace) -> None:
             ctx=ctx,
         )
 
+    ctx.runtime.setdefault('spack', {})
+    ctx.runtime['spack']['results'] = [
+        {
+            'compiler': result.compiler,
+            'mpi': result.mpi,
+            'env_name': result.env_name,
+            'spack_path': result.spack_path,
+            'view_path': result.view_path,
+            'activation': result.activation,
+        }
+        for result in spack_results
+    ]
+    if spack_software_env is None:
+        ctx.runtime['spack']['software_result'] = None
+    else:
+        ctx.runtime['spack']['software_result'] = {
+            'compiler': spack_software_env.compiler,
+            'mpi': spack_software_env.mpi,
+            'env_name': spack_software_env.env_name,
+            'spack_path': spack_software_env.spack_path,
+            'view_path': spack_software_env.view_path,
+            'path_setup': spack_software_env.path_setup,
+        }
+
     hook_registry.run_hook('post_spack', ctx)
 
     if install_dev_software:
@@ -319,16 +344,19 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     load_script_paths = _write_load_scripts(
         prefix=prefix,
+        login_env=login_env,
         pixi_exe=pixi_exe,
         software=software,
         software_version=software_version,
         runtime_version_cmd=runtime_version_cmd,
         machine=machine,
+        compute_pixi_mpi=mpi,
         toolchain_pairs=toolchain_pairs,
         spack_results=spack_results,
         spack_software_env=spack_software_env,
         quiet=quiet,
     )
+    ctx.runtime['load_scripts'] = load_script_paths
 
     permissions_group, world_readable = _resolve_deploy_permissions(
         config=config,
@@ -337,6 +365,11 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
     _apply_deploy_permissions(
         prefix=prefix,
+        extra_prefixes=(
+            [login_env['prefix']]
+            if login_env is not None and login_env['prefix'] != prefix
+            else []
+        ),
         load_script_paths=load_script_paths,
         spack_paths=(
             _get_deployed_spack_paths(
@@ -404,13 +437,49 @@ def _resolve_pixi_python_version(
     return python_version
 
 
-def _resolve_pixi_channels(*, pixi_cfg: dict[str, Any]) -> list[str]:
-    if 'channels' not in pixi_cfg:
+def _resolve_pixi_prefix(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+) -> str:
+    prefix = getattr(args, 'pixi_path', None)
+    if prefix is None:
+        # Backward compatibility for older callers still constructing
+        # namespaces with the legacy attribute name.
+        prefix = getattr(args, 'prefix', None)
+    if prefix is None:
+        runtime_pixi = runtime.get('pixi')
+        if isinstance(runtime_pixi, dict):
+            prefix = runtime_pixi.get('prefix')
+    if prefix is None:
+        prefix = config.get('pixi', {}).get('prefix')
+    if not prefix:
         raise ValueError(
-            "'channels' not found in [pixi] section of deploy/config.yaml.j2"
+            "'prefix' not found in [pixi] section of deploy/config.yaml.j2 "
+            'and neither --pixi-path nor the deprecated --prefix was '
+            'provided'
         )
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(str(prefix))))
 
-    channels = pixi_cfg.get('channels')
+
+def _resolve_pixi_channels(
+    *, pixi_cfg: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    runtime_pixi = runtime.get('pixi')
+    if (
+        isinstance(runtime_pixi, dict)
+        and runtime_pixi.get('channels') is not None
+    ):
+        channels = runtime_pixi.get('channels')
+    else:
+        if 'channels' not in pixi_cfg:
+            raise ValueError(
+                "'channels' not found in [pixi] section of "
+                'deploy/config.yaml.j2'
+            )
+        channels = pixi_cfg.get('channels')
+
     if (
         not isinstance(channels, list)
         or not channels
@@ -419,6 +488,102 @@ def _resolve_pixi_channels(*, pixi_cfg: dict[str, Any]) -> list[str]:
         raise ValueError('pixi.channels must be a non-empty list of strings')
 
     return channels
+
+
+def _resolve_login_pixi_env(
+    *,
+    prefix: str,
+    pixi_cfg: dict[str, Any],
+    runtime: dict[str, Any],
+    compute_mpi: str,
+) -> dict[str, str] | None:
+    runtime_pixi = runtime.get('pixi')
+    if not isinstance(runtime_pixi, dict):
+        runtime_pixi = {}
+
+    if 'login_mpi' in runtime_pixi:
+        login_mpi_raw = runtime_pixi.get('login_mpi')
+    else:
+        login_mpi_raw = pixi_cfg.get('login_mpi')
+
+    login_mpi = _normalize_optional_token(login_mpi_raw)
+    if login_mpi is None:
+        return None
+
+    resolved_login_mpi, login_mpi_prefix = _get_mpi_settings(
+        pixi_cfg={'mpi': login_mpi}
+    )
+
+    if 'login_prefix' in runtime_pixi:
+        login_prefix_raw = runtime_pixi.get('login_prefix')
+    else:
+        login_prefix_raw = pixi_cfg.get('login_prefix')
+
+    if login_prefix_raw is None:
+        if resolved_login_mpi == compute_mpi:
+            login_prefix_raw = prefix
+        else:
+            login_prefix_raw = f'{prefix}_login'
+
+    login_prefix = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(str(login_prefix_raw)))
+    )
+    return {
+        'prefix': login_prefix,
+        'mpi': resolved_login_mpi,
+        'mpi_prefix': login_mpi_prefix,
+    }
+
+
+def _deploy_target_pixi_env(
+    *,
+    prefix: str,
+    replacements: dict[str, Any],
+    using_mache_fork: bool,
+    pixi_exe: str,
+    recreate: bool,
+    log_filename: str,
+    quiet: bool,
+) -> None:
+    _write_pixi_toml(
+        template_path='deploy/pixi.toml.j2',
+        replacements=replacements,
+        output_dir=prefix,
+    )
+
+    if using_mache_fork:
+        merge_pixi_toml_dependencies(
+            target_pixi_toml=os.path.join(
+                os.path.abspath(prefix),
+                'pixi.toml',
+            ),
+            source_repo_dir=os.path.join(
+                os.path.abspath('deploy_tmp'),
+                'build_mache',
+                'mache',
+            ),
+            python_version=str(replacements['python']),
+        )
+
+    _pixi_install(
+        pixi_exe=pixi_exe,
+        project_dir=prefix,
+        recreate=recreate,
+        log_filename=log_filename,
+        quiet=quiet,
+    )
+
+    if using_mache_fork:
+        prefix_pixi_toml = os.path.join(os.path.abspath(prefix), 'pixi.toml')
+        pixi_shell_hook_prefix = build_pixi_shell_hook_prefix(
+            pixi_exe=pixi_exe,
+            pixi_toml=prefix_pixi_toml,
+        )
+        install_dev_mache(
+            pixi_shell_hook_prefix=pixi_shell_hook_prefix,
+            log_filename=log_filename,
+            quiet=quiet,
+        )
 
 
 def _maybe_deploy_jigsaw(
@@ -634,7 +799,6 @@ def _resolve_deploy_permissions(
       1. runtime['permissions'] (hooks)
       2. config['permissions']
       3. merged machine config [deploy]
-      4. merged machine config [e3sm_unified] (legacy fallback for group only)
 
     If no group is resolved, permission updates are skipped.
     """
@@ -658,10 +822,6 @@ def _resolve_deploy_permissions(
         group = _normalize_optional_token(
             machine_config.get('deploy', 'group')
         )
-    if group is None and machine_config.has_option('e3sm_unified', 'group'):
-        group = _normalize_optional_token(
-            machine_config.get('e3sm_unified', 'group')
-        )
 
     world_readable = _coerce_optional_bool(
         runtime_permissions.get('world_readable'),
@@ -683,6 +843,7 @@ def _resolve_deploy_permissions(
 def _apply_deploy_permissions(
     *,
     prefix: str,
+    extra_prefixes: list[str] | None,
     load_script_paths: list[str],
     spack_paths: list[str],
     group: str | None,
@@ -704,20 +865,31 @@ def _apply_deploy_permissions(
         world_readable,
     )
 
-    update_permissions(
-        prefix_abs,
-        group,
-        group_writable=True,
-        other_readable=world_readable,
-        recursive=False,
-    )
+    prefixes = [prefix_abs]
+    if extra_prefixes:
+        for extra_prefix in extra_prefixes:
+            extra_prefix_abs = os.path.abspath(
+                os.path.expanduser(os.path.expandvars(str(extra_prefix)))
+            )
+            if extra_prefix_abs not in prefixes:
+                prefixes.append(extra_prefix_abs)
+
+    for managed_prefix in prefixes:
+        update_permissions(
+            managed_prefix,
+            group,
+            group_writable=True,
+            other_readable=world_readable,
+            recursive=False,
+        )
 
     managed_paths = [str(path) for path in load_script_paths]
-    prefix_path = Path(prefix_abs)
-    if prefix_path.is_dir():
-        managed_paths.extend(str(path) for path in prefix_path.iterdir())
-    elif prefix_path.exists():
-        managed_paths.append(prefix_abs)
+    for managed_prefix in prefixes:
+        prefix_path = Path(managed_prefix)
+        if prefix_path.is_dir():
+            managed_paths.extend(str(path) for path in prefix_path.iterdir())
+        elif prefix_path.exists():
+            managed_paths.append(managed_prefix)
     managed_paths.extend(spack_paths)
 
     managed_paths = list(dict.fromkeys(managed_paths))
@@ -954,11 +1126,13 @@ def _get_pixi_executable(pixi: str | None) -> str:
 def _write_load_script(
     *,
     prefix: str,
+    login_env: dict[str, str] | None,
     pixi_exe: str,
     software: str,
     software_version: str,
     runtime_version_cmd: str | None,
     machine: str | None,
+    compute_pixi_mpi: str,
     toolchain_compiler: str | None,
     toolchain_mpi: str | None,
     spack_library_view: str | None,
@@ -978,6 +1152,15 @@ def _write_load_script(
         os.path.expanduser(os.path.expandvars(prefix))
     )
     pixi_toml = os.path.join(prefix_abs, 'pixi.toml')
+    login_prefix_abs = ''
+    login_pixi_toml = ''
+    login_pixi_mpi = ''
+    if login_env is not None:
+        login_prefix_abs = os.path.abspath(
+            os.path.expanduser(os.path.expandvars(login_env['prefix']))
+        )
+        login_pixi_toml = os.path.join(login_prefix_abs, 'pixi.toml')
+        login_pixi_mpi = str(login_env['mpi'])
 
     if toolchain_compiler and toolchain_mpi:
         if machine is None:
@@ -1016,6 +1199,10 @@ def _write_load_script(
         runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
         machine=machine or '',
         load_script=os.path.abspath(script_path),
+        compute_pixi_mpi=compute_pixi_mpi,
+        login_prefix=login_prefix_abs,
+        login_pixi_toml=login_pixi_toml,
+        login_pixi_mpi=login_pixi_mpi,
         toolchain_compiler=toolchain_compiler or '',
         toolchain_mpi=toolchain_mpi or '',
         spack_library_view=spack_library_view or '',
@@ -1036,11 +1223,13 @@ def _write_load_script(
 def _write_load_scripts(
     *,
     prefix: str,
+    login_env: dict[str, str] | None,
     pixi_exe: str,
     software: str,
     software_version: str,
     runtime_version_cmd: str | None,
     machine: str | None,
+    compute_pixi_mpi: str,
     toolchain_pairs: list[tuple[str, str]],
     spack_results: Any,
     spack_software_env: Any,
@@ -1079,11 +1268,13 @@ def _write_load_scripts(
             paths.append(
                 _write_load_script(
                     prefix=prefix,
+                    login_env=login_env,
                     pixi_exe=pixi_exe,
                     software=software,
                     software_version=software_version,
                     runtime_version_cmd=runtime_version_cmd,
                     machine=machine,
+                    compute_pixi_mpi=compute_pixi_mpi,
                     toolchain_compiler=compiler,
                     toolchain_mpi=mpilib,
                     spack_library_view=spack_library_view,
@@ -1097,11 +1288,13 @@ def _write_load_scripts(
         paths.append(
             _write_load_script(
                 prefix=prefix,
+                login_env=login_env,
                 pixi_exe=pixi_exe,
                 software=software,
                 software_version=software_version,
                 runtime_version_cmd=runtime_version_cmd,
                 machine=machine,
+                compute_pixi_mpi=compute_pixi_mpi,
                 toolchain_compiler=None,
                 toolchain_mpi=None,
                 spack_library_view=None,
@@ -1187,6 +1380,8 @@ def _pixi_install(
     if recreate and os.path.exists(pixi_dir):
         shutil.rmtree(pixi_dir)
 
+    _write_bootstrap_pixi_config(bootstrap_dir=Path(project_dir))
+
     # Do not force cache/home locations here.
     # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
     #   PIXI_CACHE_DIR in shell startup or modulefiles.
@@ -1232,10 +1427,14 @@ def _get_mpi_settings(
             'contain whitespace'
         )
 
-    # Legacy Polaris deploy behavior:
+    # Conda-forge build-string prefixes:
     #   - nompi -> "nompi"
+    #   - hpc   -> "hpc"
     #   - otherwise -> "mpi_<mpi>" (e.g. mpi_mpich, mpi_openmpi)
-    mpi_prefix = 'nompi' if mpi == 'nompi' else f'mpi_{mpi}'
+    if mpi in ('nompi', 'hpc'):
+        mpi_prefix = mpi
+    else:
+        mpi_prefix = f'mpi_{mpi}'
 
     return mpi, mpi_prefix
 

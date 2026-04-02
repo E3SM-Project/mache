@@ -30,6 +30,8 @@ PIXI_ENV_VARS_TO_UNSET = (
 )
 BOOTSTRAP_SETUPTOOLS_SPEC = '>=60'
 BOOTSTRAP_WHEEL_SPEC = '*'
+CONDA_FORGE_LABEL_ROOT = 'https://conda.anaconda.org/conda-forge/label'
+MACHE_DEV_LABEL = f'{CONDA_FORGE_LABEL_ROOT}/mache_dev'
 
 
 def check_call(
@@ -409,6 +411,8 @@ def _run(log_filename):
     if args.recreate and (bootstrap_dir / '.pixi').exists():
         shutil.rmtree(bootstrap_dir / '.pixi')
 
+    _write_bootstrap_pixi_config(bootstrap_dir=bootstrap_dir)
+
     # Create/update the bootstrap env
     if args.mache_fork is not None and args.mache_branch is not None:
         _clone_mache_repo(
@@ -488,11 +492,13 @@ def _parse_args():
         'on PATH.',
     )
     parser.add_argument(
+        '--pixi-path',
         '--prefix',
-        dest='prefix',
-        help='Install the environment into this prefix (directory). '
+        dest='pixi_path',
+        help='Install the pixi environment at this path (directory). '
         'This is a deploy-time option; bootstrap accepts it for CLI '
-        'contract compatibility but does not use it.',
+        'contract compatibility but does not use it. `--prefix` is '
+        'deprecated.',
     )
     parser.add_argument(
         '--recreate',
@@ -766,10 +772,11 @@ def _write_bootstrap_pixi_toml_with_mache(
     python_version,
 ):
     name = f'{software}-mache-bootstrap'
+    channels = _get_bootstrap_channels_for_mache_version(mache_version)
     lines = [
         '[workspace]',
         f'name = "{name}"',
-        'channels = ["conda-forge"]',
+        f'channels = [{", ".join(json.dumps(c) for c in channels)}]',
         f'platforms = ["{_get_pixi_platform()}"]',
         'channel-priority = "strict"',
         '',
@@ -780,6 +787,30 @@ def _write_bootstrap_pixi_toml_with_mache(
         f'mache = "{_format_pixi_version_specifier(mache_version)}"',
     ]
     pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
+def _write_bootstrap_pixi_config(*, bootstrap_dir: Path) -> None:
+    config_dir = bootstrap_dir / '.pixi'
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_toml = config_dir / 'config.toml'
+    lines = [
+        '# Keep conda-forge label channels on Anaconda because prefix.dev',
+        '# does not currently mirror public conda-forge labels such as ',
+        '# mache_dev.',
+        '[mirrors]',
+        f'"{CONDA_FORGE_LABEL_ROOT}" = [',
+        f'  "{CONDA_FORGE_LABEL_ROOT}",',
+        ']',
+    ]
+    config_toml.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
+def _get_bootstrap_channels_for_mache_version(mache_version: str) -> List[str]:
+    normalized = str(mache_version).strip().lower()
+    if 'rc' in normalized:
+        return [MACHE_DEV_LABEL, 'conda-forge']
+
+    return ['conda-forge']
 
 
 def _format_pixi_version_specifier(version: str) -> str:
