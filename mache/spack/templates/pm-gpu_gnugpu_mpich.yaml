@@ -112,7 +112,7 @@ spack:
         - cray-libsci/25.09.0
         - libfabric/1.22.0
         - craype/2.7.35
-        - cudatoolkit/12.4
+        - cudatoolkit/12.9
         extra_attributes:
           compilers:
             c: cc
@@ -121,7 +121,7 @@ spack:
       buildable: false
     cuda:
       externals:
-      - spec: cuda@12.4
+      - spec: cuda@12.9
         modules:
         - PrgEnv-gnu/8.6.0
         - gcc-native/14
@@ -129,7 +129,7 @@ spack:
         - cray-libsci/25.09.0
         - libfabric/1.22.0
         - craype/2.7.35
-        - cudatoolkit/12.4
+        - cudatoolkit/12.9
       buildable: false
     cray-mpich:
       externals:
@@ -180,7 +180,7 @@ spack:
       - cray-libsci/25.09.0
       - libfabric/1.22.0
       - craype/2.7.35
-      - cudatoolkit/12.4
+      - cudatoolkit/12.9
       environment:
         prepend_path:
           PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
