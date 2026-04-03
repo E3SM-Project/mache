@@ -50,6 +50,16 @@ Depending on the parallel system, the following options are typically required:
 - `cpu_bind`, `gpu_bind`, `mem_bind`, `placement` (optional launcher tuning)
 - `login_cores`, `login_gpus` (for the `login` system)
 
+For machines with hyperthreading, mache's convention is that `cores_per_node`
+should normally be the physical-core count, not the hardware-thread count.
+Likewise, `max_mpi_tasks_per_node` should normally reflect the default
+non-hyperthreaded layout used by E3SM and most downstream software, and
+`cpu_bind = cores` is the preferred default when supported by the launcher.
+Downstream projects that intentionally want hyperthreading can override these
+settings in their own config to use hardware-thread counts and thread binding.
+In other words, these config fields are the hyperthreading controls rather
+than a dedicated boolean option.
+
 Compiler-specific overrides can be provided in optional
 `[parallel.<compiler>]` sections, e.g. `[parallel.gnu]`.
 

@@ -49,6 +49,48 @@ When `gpus_per_task > 0` is passed to `get_parallel_command()`:
 - `pbs` systems require a machine-specific `gpus_per_task_flag` to be set in
     config before a GPU-per-task argument is added.
 
+## Hyperthreading
+
+`mache.parallel` does not currently have a dedicated
+`hyperthreading = true/false` switch. Instead, hyperthreading behavior is
+controlled through the machine's `[parallel]` config and the resource values
+passed to `get_parallel_command()`. The most important config knobs are
+`cores_per_node`, `max_mpi_tasks_per_node`, and `cpu_bind`.
+
+The default convention in mache's machine configs is to describe CPU resources
+in terms of physical cores, not hardware threads. For E3SM itself, and for
+most downstream software, this means:
+
+- `cores_per_node` should usually be the number of physical CPU cores per node
+- `max_mpi_tasks_per_node` should usually reflect the intended non-hyperthreaded
+    MPI rank count per node
+- `cpu_bind = cores` is the recommended default when the launcher supports it
+- `cpus_per_task` should usually be sized assuming physical cores
+
+This is why several shipped machine configs explicitly document
+`cores_per_node` as the count "without hyperthreading".
+
+If a downstream application wants to take advantage of hyperthreading, it
+should opt in by overriding the relevant parallel config values for that use
+case. In practice, that usually means switching from physical-core counts to
+hardware-thread counts and adjusting binding accordingly. For example, on a
+machine with 64 physical cores and 2 hardware threads per core:
+
+```ini
+[parallel]
+cores_per_node = 128
+max_mpi_tasks_per_node = 128
+cpu_bind = threads
+```
+
+Then, calls to `get_parallel_command()` should use `cpus_per_task` and
+`ntasks` values that match that threaded layout.
+
+The important point is that hyperthreading is opt-in. Mache's default machine
+configs should generally preserve the physical-core layout that is appropriate
+for E3SM and most downstream tools, while still allowing downstream users to
+provide a config override when they intentionally want thread-level placement.
+
 ## Using this in generated job scripts
 
 A common pattern is to generate scheduler directives separately, then use
