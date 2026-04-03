@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#typical-downstream-workflow">Typical downstream workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-build-a-launcher-command">Example: build a launcher command</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gpu-per-task-flags">GPU-per-task flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hyperthreading">Hyperthreading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-this-in-generated-job-scripts">Using this in generated job scripts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#selecting-scheduler-options-by-node-count">Selecting scheduler options by node count</a></li>
 </ul>
@@ -150,6 +151,43 @@ with <code class="docutils literal notranslate"><span class="pre">gpus_per_task_
 <li><p><code class="docutils literal notranslate"><span class="pre">pbs</span></code> systems require a machine-specific <code class="docutils literal notranslate"><span class="pre">gpus_per_task_flag</span></code> to be set in
 config before a GPU-per-task argument is added.</p></li>
 </ul>
+</section>
+<section id="hyperthreading">
+<h2>Hyperthreading<a class="headerlink" href="#hyperthreading" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> does not currently have a dedicated
+<code class="docutils literal notranslate"><span class="pre">hyperthreading</span> <span class="pre">=</span> <span class="pre">true/false</span></code> switch. Instead, hyperthreading behavior is
+controlled through the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config and the resource values
+passed to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>. The most important config knobs are
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code>, and <code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>.</p>
+<p>The default convention in mache’s machine configs is to describe CPU resources
+in terms of physical cores, not hardware threads. For E3SM itself, and for
+most downstream software, this means:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> should usually be the number of physical CPU cores per node</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code> should usually reflect the intended non-hyperthreaded
+MPI rank count per node</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> is the recommended default when the launcher supports it</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> should usually be sized assuming physical cores</p></li>
+</ul>
+<p>This is why several shipped machine configs explicitly document
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> as the count “without hyperthreading”.</p>
+<p>If a downstream application wants to take advantage of hyperthreading, it
+should opt in by overriding the relevant parallel config values for that use
+case. In practice, that usually means switching from physical-core counts to
+hardware-thread counts and adjusting binding accordingly. For example, on a
+machine with 64 physical cores and 2 hardware threads per core:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[parallel]</span>
+<span class="na">cores_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">128</span>
+<span class="na">max_mpi_tasks_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">128</span>
+<span class="na">cpu_bind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">threads</span>
+</pre></div>
+</div>
+<p>Then, calls to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> should use <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ntasks</span></code> values that match that threaded layout.</p>
+<p>The important point is that hyperthreading is opt-in. Mache’s default machine
+configs should generally preserve the physical-core layout that is appropriate
+for E3SM and most downstream tools, while still allowing downstream users to
+provide a config override when they intentionally want thread-level placement.</p>
 </section>
 <section id="using-this-in-generated-job-scripts">
 <h2>Using this in generated job scripts<a class="headerlink" href="#using-this-in-generated-job-scripts" title="Link to this heading"></a></h2>

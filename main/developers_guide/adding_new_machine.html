@@ -147,6 +147,15 @@ section with:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">placement</span></code> (optional launcher tuning)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">login_cores</span></code>, <code class="docutils literal notranslate"><span class="pre">login_gpus</span></code> (for the <code class="docutils literal notranslate"><span class="pre">login</span></code> system)</p></li>
 </ul>
+<p>For machines with hyperthreading, mache’s convention is that <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>
+should normally be the physical-core count, not the hardware-thread count.
+Likewise, <code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code> should normally reflect the default
+non-hyperthreaded layout used by E3SM and most downstream software, and
+<code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> is the preferred default when supported by the launcher.
+Downstream projects that intentionally want hyperthreading can override these
+settings in their own config to use hardware-thread counts and thread binding.
+In other words, these config fields are the hyperthreading controls rather
+than a dedicated boolean option.</p>
 <p>Compiler-specific overrides can be provided in optional
 <code class="docutils literal notranslate"><span class="pre">[parallel.&lt;compiler&gt;]</span></code> sections, e.g. <code class="docutils literal notranslate"><span class="pre">[parallel.gnu]</span></code>.</p>
 <p>For machines with scheduler-target policy limits, you can also define optional
