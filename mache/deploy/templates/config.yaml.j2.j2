@@ -18,6 +18,16 @@ project:
   #   runtime_version_cmd: "e3sm_diags --version"
   runtime_version_cmd: null
 
+  # Optional: value exported as <SOFTWARE>_BRANCH by the generated load script.
+  #
+  # Default behavior when this key is omitted entirely is to preserve the
+  # legacy export of the target repository root for downstream compatibility.
+  #
+  # Set to:
+  #   - null to suppress the export entirely
+  #   - an explicit shared path to export a different location
+  branch_path: null
+
   # Machine name selection.
   # Priority order in `mache deploy run`:
   #   1. CLI --machine
@@ -51,6 +61,19 @@ pixi:
   # Absolute path is recommended for shared deployments.
   # Environment variables will be expanded at runtime (e.g. $SCRATCH).
   prefix: pixi-env
+
+  # Optional: how generated load scripts should find the pixi executable.
+  #
+  # Supported values:
+  #   - omitted: preserve the legacy behavior and embed the pixi path passed
+  #     to `mache deploy run` (mainly for backward compatibility)
+  #   - shared: copy pixi into the deployed prefix/prefixes and use that
+  #   - null (or "path"): use $PIXI or `pixi` on PATH at load-script runtime
+  #   - /explicit/path/to/pixi: use that path in the generated load script
+  #
+  # New templates default to `null` so per-user deployments pick up each
+  # user's own pixi install unless a downstream opts into another mode.
+  load_script_exe: null
 
   # Channels used by pixi for this environment.
   channels:
