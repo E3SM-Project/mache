@@ -15,14 +15,23 @@ fi
 
 source share/spack/setup-env.sh
 
+spack_root={{ spack_path_q }}
+env_name={{ env_name_q }}
+env_dir="$spack_root/var/spack/environments/$env_name"
+
 {%- if mirror %}
 spack mirror remove spack_mirror >& /dev/null || true
 spack mirror add spack_mirror file://{{ mirror }}
 {%- endif %}
 
-spack env remove -y {{ env_name_q }} >& /dev/null && echo "recreating environment: {{ env_name }}" || echo "creating new environment: {{ env_name }}"
-spack env create {{ env_name_q }} {{ yaml_path_q }}
-spack env activate {{ env_name_q }}
+if [ -e "$env_dir" ]; then
+  spack env remove -y "$env_name" >& /dev/null
+  echo "recreating environment: {{ env_name }}"
+else
+  echo "creating new environment: {{ env_name }}"
+fi
+spack env create "$env_name" {{ yaml_path_q }}
+spack env activate "$env_name"
 spack install
 
 {%- if custom_spack %}
