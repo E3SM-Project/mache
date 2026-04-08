@@ -190,6 +190,12 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     python_version = _resolve_pixi_python_version(args=args, pins=pins)
     channels = _resolve_pixi_channels(pixi_cfg=pixi_cfg, runtime=ctx.runtime)
+    extra_dependencies = _resolve_pixi_extra_dependencies(
+        pixi_cfg=pixi_cfg, runtime=ctx.runtime
+    )
+    omit_dependencies = _resolve_pixi_omit_dependencies(
+        pixi_cfg=pixi_cfg, runtime=ctx.runtime
+    )
 
     jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
 
@@ -220,6 +226,8 @@ def run_deploy(args: argparse.Namespace) -> None:
             'mpi': mpi,
             'mpi_prefix': mpi_prefix,
             'include_mache': include_mache,
+            'extra_dependencies': extra_dependencies,
+            'omit_dependencies': omit_dependencies,
             'include_jigsaw': False,
         }
     )
@@ -488,6 +496,36 @@ def _resolve_pixi_channels(
         raise ValueError('pixi.channels must be a non-empty list of strings')
 
     return channels
+
+
+def _resolve_pixi_extra_dependencies(
+    *, pixi_cfg: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict) and 'extra_dependencies' in runtime_pixi:
+        extra_dependencies = runtime_pixi.get('extra_dependencies')
+    else:
+        extra_dependencies = pixi_cfg.get('extra_dependencies')
+
+    return _normalize_string_list(
+        extra_dependencies,
+        field_name='pixi.extra_dependencies',
+    )
+
+
+def _resolve_pixi_omit_dependencies(
+    *, pixi_cfg: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict) and 'omit_dependencies' in runtime_pixi:
+        omit_dependencies = runtime_pixi.get('omit_dependencies')
+    else:
+        omit_dependencies = pixi_cfg.get('omit_dependencies')
+
+    return _normalize_string_list(
+        omit_dependencies,
+        field_name='pixi.omit_dependencies',
+    )
 
 
 def _resolve_login_pixi_env(
@@ -967,6 +1005,27 @@ def _normalize_optional_tokens(value: Any) -> list[str] | None:
     if token is None:
         return None
     return [token]
+
+
+def _normalize_string_list(value: Any, *, field_name: str) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            return []
+        return [candidate]
+    if isinstance(value, list):
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ValueError(f'{field_name} entries must be strings')
+            candidate = item.strip()
+            if not candidate:
+                continue
+            normalized.append(candidate)
+        return normalized
+    raise ValueError(f'{field_name} must be a string or list of strings')
 
 
 def _sanitize_script_tag(value: str) -> str:

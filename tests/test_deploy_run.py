@@ -123,6 +123,42 @@ def test_resolve_pixi_channels_prefers_runtime_override():
     assert channels == ['file:///tmp/local-channel']
 
 
+def test_resolve_pixi_extra_dependencies_defaults_empty():
+    extra_dependencies = deploy_run._resolve_pixi_extra_dependencies(
+        pixi_cfg={},
+        runtime={},
+    )
+
+    assert extra_dependencies == []
+
+
+def test_resolve_pixi_extra_dependencies_prefers_runtime_override():
+    extra_dependencies = deploy_run._resolve_pixi_extra_dependencies(
+        pixi_cfg={'extra_dependencies': ['foo = "*"']},
+        runtime={'pixi': {'extra_dependencies': ['bar = "*"']}},
+    )
+
+    assert extra_dependencies == ['bar = "*"']
+
+
+def test_resolve_pixi_omit_dependencies_defaults_empty():
+    omit_dependencies = deploy_run._resolve_pixi_omit_dependencies(
+        pixi_cfg={},
+        runtime={},
+    )
+
+    assert omit_dependencies == []
+
+
+def test_resolve_pixi_omit_dependencies_prefers_runtime_override():
+    omit_dependencies = deploy_run._resolve_pixi_omit_dependencies(
+        pixi_cfg={'omit_dependencies': ['git']},
+        runtime={'pixi': {'omit_dependencies': ['git', 'ncview']}},
+    )
+
+    assert omit_dependencies == ['git', 'ncview']
+
+
 def test_resolve_login_pixi_env_uses_distinct_login_prefix():
     login_env = deploy_run._resolve_login_pixi_env(
         prefix='/tmp/compute-env',

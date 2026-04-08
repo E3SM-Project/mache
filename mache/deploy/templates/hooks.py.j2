@@ -75,6 +75,10 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # - runtime["pixi"]["mpi"]: overrides `pixi.mpi`
     # - runtime["pixi"]["login_mpi"]: overrides `pixi.login_mpi`
     # - runtime["pixi"]["login_prefix"]: overrides `pixi.login_prefix`
+    # - runtime["pixi"]["extra_dependencies"]: appends dependency lines to
+    #     `deploy/pixi.toml.j2`
+    # - runtime["pixi"]["omit_dependencies"]: removes named dependencies from
+    #     `deploy/pixi.toml.j2`
     # - runtime["permissions"]["group"]: overrides `permissions.group`
     # - runtime["permissions"]["world_readable"]:
     #     overrides `permissions.world_readable`
@@ -85,6 +89,10 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # updates.setdefault("pixi", {})["channels"] = ["conda-forge"]
     # updates.setdefault("pixi", {})["mpi"] = "openmpi"
     # updates.setdefault("pixi", {})["login_mpi"] = "nompi"
+    # updates.setdefault("pixi", {})["extra_dependencies"] = [
+    #     'my-tool = ">=1.2"',
+    # ]
+    # updates.setdefault("pixi", {})["omit_dependencies"] = ["git"]
     # updates.setdefault("permissions", {})["group"] = "e3sm"
     # updates.setdefault("permissions", {})["world_readable"] = False
 
