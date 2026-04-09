@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JIGSAW</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=b0e360d0"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Parallel execution with mache.parallel" href="parallel.html" />
+    <link rel="prev" title="Deploying target software" href="deploy.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploying target software</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">JIGSAW</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#when-deploy-py-installs-jigsaw-automatically">When <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> installs JIGSAW automatically</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-jigsaw-into-an-existing-environment">Installing JIGSAW into an existing environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pixi-workflow">Pixi workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conda-workflow">Conda workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source-requirements">Source requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">JIGSAW</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/users_guide/jigsaw.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="jigsaw">
+<h1>JIGSAW<a class="headerlink" href="#jigsaw" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> can install JIGSAW and <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> in two ways:</p>
+<ol class="arabic simple">
+<li><p>Automatically as part of a downstream <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> workflow.</p></li>
+<li><p>Directly with <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">jigsaw</span> <span class="pre">install</span></code> for an existing pixi or conda
+environment.</p></li>
+</ol>
+<section id="when-deploy-py-installs-jigsaw-automatically">
+<h2>When <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> installs JIGSAW automatically<a class="headerlink" href="#when-deploy-py-installs-jigsaw-automatically" title="Link to this heading"></a></h2>
+<p>Downstream target software can enable JIGSAW in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">jigsaw</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">jigsaw_python_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jigsaw-python</span>
+</pre></div>
+</div>
+<p>When this is enabled, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> will:</p>
+<ol class="arabic simple">
+<li><p>Create the base pixi environment from <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>.</p></li>
+<li><p>Build a local conda package for <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> if needed.</p></li>
+<li><p>Install <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> into the deployed pixi environment.</p></li>
+</ol>
+<p>This is the usual path for downstream packages such as Polaris.</p>
+</section>
+<section id="installing-jigsaw-into-an-existing-environment">
+<h2>Installing JIGSAW into an existing environment<a class="headerlink" href="#installing-jigsaw-into-an-existing-environment" title="Link to this heading"></a></h2>
+<p>The direct command is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>jigsaw<span class="w"> </span>install
+</pre></div>
+</div>
+<p>This command builds a local conda package for <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> and installs it into
+the current pixi or conda environment.</p>
+<p>Backend selection is automatic by default:</p>
+<ul class="simple">
+<li><p>If pixi environment variables are present, pixi is used.</p></li>
+<li><p>Otherwise, if <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> is set, conda is used.</p></li>
+</ul>
+<p>If neither backend can be inferred, the command fails and you should run it
+from an active pixi or conda environment.</p>
+</section>
+<section id="pixi-workflow">
+<h2>Pixi workflow<a class="headerlink" href="#pixi-workflow" title="Link to this heading"></a></h2>
+<p>For pixi development workflows, the recommended form is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>jigsaw<span class="w"> </span>install<span class="w"> </span>--pixi-local
+</pre></div>
+</div>
+<p>This keeps your source-controlled manifest unchanged.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code> creates or refreshes a local manifest copy under
+<code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw/pixi-local</span></code> and installs <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> there. When the
+source manifest already defines pixi environments, <code class="docutils literal notranslate"><span class="pre">mache</span></code> also creates or
+reuses an isolated local <code class="docutils literal notranslate"><span class="pre">jigsaw</span></code> feature/environment to reduce solver
+conflicts.</p>
+<p>Useful pixi options are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--pixi-manifest</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--pixi-feature</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-path</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--repo-root</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--quiet</span></code></p></li>
+</ul>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--pixi-manifest</span></code> and <code class="docutils literal notranslate"><span class="pre">--pixi-feature</span></code> when you intentionally want to
+target a specific existing manifest instead of the auto-managed local copy.</p>
+</section>
+<section id="conda-workflow">
+<h2>Conda workflow<a class="headerlink" href="#conda-workflow" title="Link to this heading"></a></h2>
+<p>From an active conda environment, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>jigsaw<span class="w"> </span>install
+</pre></div>
+</div>
+<p>The conda backend installs <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> into <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> unless you provide a
+different prefix programmatically.</p>
+<p>For most users, no additional options are required beyond:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-path</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--repo-root</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--quiet</span></code></p></li>
+</ul>
+</section>
+<section id="source-requirements">
+<h2>Source requirements<a class="headerlink" href="#source-requirements" title="Link to this heading"></a></h2>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">mache</span></code> looks for <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> under <code class="docutils literal notranslate"><span class="pre">./jigsaw-python</span></code> relative
+to <code class="docutils literal notranslate"><span class="pre">--repo-root</span></code>.</p>
+<p>If the source tree is missing:</p>
+<ul class="simple">
+<li><p>In downstream deploy workflows, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> can clone or initialize
+the source automatically when JIGSAW is enabled.</p></li>
+<li><p>In direct <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">jigsaw</span> <span class="pre">install</span></code> workflows, <code class="docutils literal notranslate"><span class="pre">mache</span></code> will also try to make
+the source available before building.</p></li>
+</ul>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>If installation fails:</p>
+<ol class="arabic simple">
+<li><p>Confirm you are in an active pixi or conda environment.</p></li>
+<li><p>Check that <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> is present at the expected path.</p></li>
+<li><p>Re-run with terminal output enabled and inspect the build logs under
+<code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw</span></code> or the deploy logs under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/logs</span></code>.</p></li>
+<li><p>For pixi, prefer <code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code> if modifying the main manifest causes
+solver conflicts.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="deploy.html" class="btn btn-neutral float-left" title="Deploying target software" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="parallel.html" class="btn btn-neutral float-right" title="Parallel execution with mache.parallel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.4.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
