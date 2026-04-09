@@ -1013,7 +1013,7 @@ def _apply_deploy_permissions(
             shared_base_path,
             group,
             show_progress=True,
-            group_writable=True,
+            group_writable=False,
             other_readable=world_readable,
             recursive=True,
         )
@@ -1039,7 +1039,7 @@ def _apply_deploy_permissions(
         update_permissions(
             managed_prefix,
             group,
-            group_writable=True,
+            group_writable=False,
             other_readable=world_readable,
             recursive=False,
         )
