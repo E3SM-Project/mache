@@ -6,6 +6,7 @@ import pytest
 
 from mache.deploy import bootstrap as deploy_bootstrap
 from mache.deploy import run as deploy_run
+from mache.deploy.shared import SharedDeployArtifacts
 
 
 def _make_pixi_executable(tmp_path: Path) -> str:
@@ -707,6 +708,10 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
         extra_prefixes=None,
         load_script_paths=[str(load_script)],
         spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group='e3sm',
         world_readable=False,
         logger=logger,
@@ -755,6 +760,10 @@ def test_apply_deploy_permissions_is_noop_without_group(
         extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group=None,
         world_readable=True,
         logger=logger,
@@ -794,6 +803,10 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
         extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[str(spack_lib), str(spack_soft)],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group='e3sm',
         world_readable=True,
         logger=logger,
@@ -811,6 +824,56 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
     )
     assert second_kwargs['show_progress'] is True
     assert second_kwargs['recursive'] is True
+
+
+def test_apply_deploy_permissions_includes_shared_managed_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    shared_dir = tmp_path / 'shared'
+    shared_dir.mkdir()
+    shared_file = shared_dir / 'load_demo.sh'
+    shared_file.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-shared'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[],
+        spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[str(shared_dir)],
+            managed_files=[str(shared_file)],
+        ),
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 2
+
+    first_args, _ = calls[0]
+    assert first_args == ([str(prefix), str(shared_dir)], 'e3sm')
+
+    second_args, _ = calls[1]
+    assert second_args[1] == 'e3sm'
+    assert second_args[0] == [str(shared_file)]
 
 
 def test_pixi_install_writes_project_local_pixi_config(

@@ -160,6 +160,36 @@ permissions:
   # group. Directories keep execute permission when needed for traversal.
   world_readable: true
 
+shared:
+  # Optional extra shared-deployment artifacts managed by `mache deploy run`.
+  #
+  # These are most useful for shared release/test installs that need copies of
+  # the generated load script in well-known shared locations.
+  #
+  # Priority order:
+  #   1. runtime["shared"] values returned from hooks
+  #   2. values here
+  #
+  # `load_script_copies` entries are copied from the single generated
+  # `load_<software>*.sh` script after deployment completes successfully.
+  # Each entry may be either:
+  #   - "/absolute/or/relative/path/to/copied_load_script.sh"
+  #   - {path: "/path/to/copied_load_script.sh"}
+  load_script_copies: []
+
+  # Optional symlinks created after any copied load scripts.
+  # Each entry must provide:
+  #   - path: path to the symlink to create
+  #   - target: path the symlink should point to
+  load_script_symlinks: []
+
+  # Optional extra shared directories/files to include in mache's
+  # post-deploy permission update step. This is helpful when a downstream
+  # post_deploy hook creates additional shared artifacts that mache itself
+  # does not create.
+  managed_directories: []
+  managed_files: []
+
 spack:
   # Whether to deploy Spack environments at all.
   #
