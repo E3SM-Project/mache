@@ -170,6 +170,12 @@ shared:
   #   1. runtime["shared"] values returned from hooks
   #   2. values here
   #
+  # Optional shared base directory to update permissions on recursively before
+  # mache processes specific deployed prefixes, load scripts, Spack paths, and
+  # other managed shared artifacts. Set this to "dynamic" when hooks will
+  # decide the path at runtime.
+  base_path: "dynamic"
+  #
   # `load_script_copies` entries are copied from the single generated
   # `load_<software>*.sh` script after deployment completes successfully.
   # Each entry may be either:

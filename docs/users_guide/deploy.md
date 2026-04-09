@@ -213,6 +213,10 @@ Important settings:
 - `permissions.world_readable`: optional boolean controlling whether deployed
   files are readable outside the shared group. Hooks may override both values
   through `ctx.runtime["permissions"]`.
+- `shared.base_path`: optional shared base directory whose permissions mache
+  updates recursively before any path-specific permission updates. Hooks may
+  override this through `ctx.runtime["shared"]["base_path"]`, and `"dynamic"`
+  is useful when the path depends on machine-specific logic in `deploy/hooks.py`.
 - `spack.spack_path`: required when Spack support is enabled and no hook or
   CLI override provides it, unless the user disables Spack for that run with
   `--no-spack`.
