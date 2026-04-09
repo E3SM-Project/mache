@@ -8,15 +8,38 @@ from mache.deploy import bootstrap as deploy_bootstrap
 from mache.deploy import run as deploy_run
 
 
+def _make_pixi_executable(tmp_path: Path) -> str:
+    pixi = tmp_path / 'bin' / 'pixi'
+    pixi.parent.mkdir(parents=True, exist_ok=True)
+    pixi.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+    pixi.chmod(0o755)
+    return str(pixi)
+
+
+def _shared_load_script_pixi() -> dict[str, str]:
+    return {'mode': 'shared', 'path': ''}
+
+
+def _explicit_load_script_pixi(path: str) -> dict[str, str]:
+    return {'mode': 'explicit', 'path': path}
+
+
+def _path_load_script_pixi() -> dict[str, str]:
+    return {'mode': 'path', 'path': ''}
+
+
 def test_write_load_script_includes_machine_for_toolchain(
     tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'prefix'),
         login_env=None,
-        pixi_exe='/usr/bin/pixi',
+        pixi_exe=pixi_exe,
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_explicit_load_script_pixi(pixi_exe),
         software='polaris',
         software_version='1.0.0',
         runtime_version_cmd=None,
@@ -37,11 +60,14 @@ def test_write_load_script_without_toolchain_keeps_default_name(
     monkeypatch,
 ):
     monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'prefix'),
         login_env=None,
-        pixi_exe='/usr/bin/pixi',
+        pixi_exe=pixi_exe,
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_explicit_load_script_pixi(pixi_exe),
         software='polaris',
         software_version='1.0.0',
         runtime_version_cmd=None,
@@ -84,6 +110,59 @@ def test_run_uses_exact_pixi_version_specifier_for_exact_mache_pin():
     assert deploy_run._format_pixi_version_specifier('3.0.2') == '==3.0.2'
 
 
+def test_resolve_load_script_branch_path_defaults_to_repo_root():
+    branch_path = deploy_run._resolve_load_script_branch_path(
+        config={'project': {}},
+        runtime={},
+        repo_root='/tmp/downstream',
+    )
+
+    assert branch_path == '/tmp/downstream'
+
+
+def test_resolve_load_script_branch_path_runtime_none_disables_export():
+    branch_path = deploy_run._resolve_load_script_branch_path(
+        config={'project': {'branch_path': '/tmp/downstream'}},
+        runtime={'project': {'branch_path': None}},
+        repo_root='/tmp/repo',
+    )
+
+    assert branch_path is None
+
+
+def test_resolve_load_script_pixi_exe_defaults_to_run_argument():
+    resolved = deploy_run._resolve_load_script_pixi_exe(
+        config={'pixi': {}},
+        runtime={},
+        pixi_exe='/tmp/pixi-from-run',
+    )
+
+    assert resolved == {
+        'mode': 'explicit',
+        'path': '/tmp/pixi-from-run',
+    }
+
+
+def test_resolve_load_script_pixi_exe_null_uses_path_mode():
+    resolved = deploy_run._resolve_load_script_pixi_exe(
+        config={'pixi': {'load_script_exe': None}},
+        runtime={},
+        pixi_exe='/tmp/pixi-from-run',
+    )
+
+    assert resolved == {'mode': 'path', 'path': ''}
+
+
+def test_resolve_load_script_pixi_exe_shared_mode():
+    resolved = deploy_run._resolve_load_script_pixi_exe(
+        config={'pixi': {'load_script_exe': 'shared'}},
+        runtime={},
+        pixi_exe='/tmp/pixi-from-run',
+    )
+
+    assert resolved == {'mode': 'shared', 'path': ''}
+
+
 def test_resolve_pixi_prefix_prefers_new_cli_flag():
     prefix = deploy_run._resolve_pixi_prefix(
         args=argparse.Namespace(pixi_path='/cli/pixi-path'),
@@ -123,6 +202,42 @@ def test_resolve_pixi_channels_prefers_runtime_override():
     assert channels == ['file:///tmp/local-channel']
 
 
+def test_resolve_pixi_extra_dependencies_defaults_empty():
+    extra_dependencies = deploy_run._resolve_pixi_extra_dependencies(
+        pixi_cfg={},
+        runtime={},
+    )
+
+    assert extra_dependencies == []
+
+
+def test_resolve_pixi_extra_dependencies_prefers_runtime_override():
+    extra_dependencies = deploy_run._resolve_pixi_extra_dependencies(
+        pixi_cfg={'extra_dependencies': ['foo = "*"']},
+        runtime={'pixi': {'extra_dependencies': ['bar = "*"']}},
+    )
+
+    assert extra_dependencies == ['bar = "*"']
+
+
+def test_resolve_pixi_omit_dependencies_defaults_empty():
+    omit_dependencies = deploy_run._resolve_pixi_omit_dependencies(
+        pixi_cfg={},
+        runtime={},
+    )
+
+    assert omit_dependencies == []
+
+
+def test_resolve_pixi_omit_dependencies_prefers_runtime_override():
+    omit_dependencies = deploy_run._resolve_pixi_omit_dependencies(
+        pixi_cfg={'omit_dependencies': ['git']},
+        runtime={'pixi': {'omit_dependencies': ['git', 'ncview']}},
+    )
+
+    assert omit_dependencies == ['git', 'ncview']
+
+
 def test_resolve_login_pixi_env_uses_distinct_login_prefix():
     login_env = deploy_run._resolve_login_pixi_env(
         prefix='/tmp/compute-env',
@@ -151,6 +266,7 @@ def test_resolve_login_pixi_env_runtime_can_disable_login_env():
 
 def test_write_load_script_includes_login_env_metadata(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'compute'),
@@ -159,7 +275,9 @@ def test_write_load_script_includes_login_env_metadata(tmp_path, monkeypatch):
             'mpi': 'nompi',
             'mpi_prefix': 'nompi',
         },
-        pixi_exe='/usr/bin/pixi',
+        pixi_exe=pixi_exe,
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_explicit_load_script_pixi(pixi_exe),
         software='e3sm-unified',
         software_version='1.0.0',
         runtime_version_cmd=None,
@@ -181,15 +299,159 @@ def test_write_load_script_includes_login_env_metadata(tmp_path, monkeypatch):
     )
 
 
-def test_write_load_script_without_login_env_skips_compute_detection(
-    tmp_path, monkeypatch
+def test_write_load_script_stages_shared_assets_and_omits_branch_when_disabled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    repo_root = tmp_path / 'repo'
+    deploy_dir = repo_root / 'deploy'
+    deploy_dir.mkdir(parents=True)
+    (deploy_dir / 'load.sh').write_text(
+        'export FROM_STAGED_SNIPPET=1\n',
+        encoding='utf-8',
+    )
+
+    source_pixi = repo_root / 'pixi-source'
+    source_pixi.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+    source_pixi.chmod(0o755)
+
+    monkeypatch.chdir(repo_root)
+
+    compute_prefix = tmp_path / 'compute'
+    login_prefix = tmp_path / 'login'
+    script_path = deploy_run._write_load_script(
+        prefix=str(compute_prefix),
+        login_env={
+            'prefix': str(login_prefix),
+            'mpi': 'nompi',
+            'mpi_prefix': 'nompi',
+        },
+        pixi_exe=str(source_pixi),
+        branch_path=None,
+        load_script_pixi_exe=_shared_load_script_pixi(),
+        software='e3sm-unified',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine='pm-cpu',
+        compute_pixi_mpi='hpc',
+        toolchain_compiler='gnu',
+        toolchain_mpi='mpich',
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    compute_staged_pixi = compute_prefix / 'bin' / 'pixi'
+    login_staged_pixi = login_prefix / 'bin' / 'pixi'
+    compute_staged_load = (
+        compute_prefix / 'share' / 'mache' / 'deploy' / 'load.sh'
+    )
+    login_staged_load = login_prefix / 'share' / 'mache' / 'deploy' / 'load.sh'
+
+    assert (
+        compute_staged_pixi.read_text(encoding='utf-8')
+        == '#!/bin/sh\nexit 0\n'
+    )
+    assert (
+        login_staged_pixi.read_text(encoding='utf-8') == '#!/bin/sh\nexit 0\n'
+    )
+    assert (
+        compute_staged_load.read_text(encoding='utf-8')
+        == 'export FROM_STAGED_SNIPPET=1\n'
+    )
+    assert (
+        login_staged_load.read_text(encoding='utf-8')
+        == 'export FROM_STAGED_SNIPPET=1\n'
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert str(source_pixi) not in script_text
+    assert str(deploy_dir / 'load.sh') not in script_text
+    assert str(compute_staged_pixi) in script_text
+    assert str(login_staged_pixi) in script_text
+    assert str(compute_staged_load) in script_text
+    assert str(login_staged_load) in script_text
+    assert 'export PIXI="${MACHE_DEPLOY_ACTIVE_PIXI_EXE}"' in script_text
+    assert (
+        'export MACHE_DEPLOY_TARGET_LOAD_SNIPPET='
+        '"${MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET}"' in script_text
+    )
+    assert 'E3SM_UNIFIED_BRANCH' not in script_text
+
+
+def test_write_load_script_exports_branch_when_configured(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
 
     script_path = deploy_run._write_load_script(
         prefix=str(tmp_path / 'compute'),
         login_env=None,
-        pixi_exe='/usr/bin/pixi',
+        pixi_exe=pixi_exe,
+        branch_path='/shared/downstream/source',
+        load_script_pixi_exe=_explicit_load_script_pixi('/shared/tools/pixi'),
+        software='polaris',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine=None,
+        compute_pixi_mpi='nompi',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert 'export POLARIS_BRANCH="/shared/downstream/source"' in script_text
+    assert (
+        'export MACHE_DEPLOY_COMPUTE_PIXI_EXE="/shared/tools/pixi"'
+        in script_text
+    )
+
+
+def test_write_load_script_uses_user_pixi_when_configured_for_path_lookup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(tmp_path / 'compute'),
+        login_env=None,
+        pixi_exe=pixi_exe,
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_path_load_script_pixi(),
+        software='compass',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine=None,
+        compute_pixi_mpi='nompi',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert 'export MACHE_DEPLOY_COMPUTE_PIXI_EXE=""' in script_text
+    assert (
+        'if [[ -z "${MACHE_DEPLOY_ACTIVE_PIXI_EXE:-}" ]]; then' in script_text
+    )
+    assert 'command -v pixi' in script_text
+    assert 'Set PIXI to a pixi executable path' in script_text
+
+
+def test_write_load_script_without_login_env_skips_compute_detection(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(tmp_path / 'compute'),
+        login_env=None,
+        pixi_exe=pixi_exe,
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_explicit_load_script_pixi(pixi_exe),
         software='e3sm-unified',
         software_version='1.0.0',
         runtime_version_cmd=None,

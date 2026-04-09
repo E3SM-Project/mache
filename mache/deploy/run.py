@@ -171,6 +171,16 @@ def run_deploy(args: argparse.Namespace) -> None:
         config=config,
         runtime=ctx.runtime,
     )
+    branch_path = _resolve_load_script_branch_path(
+        config=config,
+        runtime=ctx.runtime,
+        repo_root=repo_root,
+    )
+    load_script_pixi_exe = _resolve_load_script_pixi_exe(
+        config=config,
+        runtime=ctx.runtime,
+        pixi_exe=pixi_exe,
+    )
     mpi, mpi_prefix = _resolve_pixi_mpi(
         pixi_cfg=pixi_cfg,
         runtime=ctx.runtime,
@@ -190,6 +200,12 @@ def run_deploy(args: argparse.Namespace) -> None:
 
     python_version = _resolve_pixi_python_version(args=args, pins=pins)
     channels = _resolve_pixi_channels(pixi_cfg=pixi_cfg, runtime=ctx.runtime)
+    extra_dependencies = _resolve_pixi_extra_dependencies(
+        pixi_cfg=pixi_cfg, runtime=ctx.runtime
+    )
+    omit_dependencies = _resolve_pixi_omit_dependencies(
+        pixi_cfg=pixi_cfg, runtime=ctx.runtime
+    )
 
     jigsaw_enabled = bool(config.get('jigsaw', {}).get('enabled'))
 
@@ -220,6 +236,8 @@ def run_deploy(args: argparse.Namespace) -> None:
             'mpi': mpi,
             'mpi_prefix': mpi_prefix,
             'include_mache': include_mache,
+            'extra_dependencies': extra_dependencies,
+            'omit_dependencies': omit_dependencies,
             'include_jigsaw': False,
         }
     )
@@ -346,6 +364,8 @@ def run_deploy(args: argparse.Namespace) -> None:
         prefix=prefix,
         login_env=login_env,
         pixi_exe=pixi_exe,
+        branch_path=branch_path,
+        load_script_pixi_exe=load_script_pixi_exe,
         software=software,
         software_version=software_version,
         runtime_version_cmd=runtime_version_cmd,
@@ -488,6 +508,36 @@ def _resolve_pixi_channels(
         raise ValueError('pixi.channels must be a non-empty list of strings')
 
     return channels
+
+
+def _resolve_pixi_extra_dependencies(
+    *, pixi_cfg: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict) and 'extra_dependencies' in runtime_pixi:
+        extra_dependencies = runtime_pixi.get('extra_dependencies')
+    else:
+        extra_dependencies = pixi_cfg.get('extra_dependencies')
+
+    return _normalize_string_list(
+        extra_dependencies,
+        field_name='pixi.extra_dependencies',
+    )
+
+
+def _resolve_pixi_omit_dependencies(
+    *, pixi_cfg: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict) and 'omit_dependencies' in runtime_pixi:
+        omit_dependencies = runtime_pixi.get('omit_dependencies')
+    else:
+        omit_dependencies = pixi_cfg.get('omit_dependencies')
+
+    return _normalize_string_list(
+        omit_dependencies,
+        field_name='pixi.omit_dependencies',
+    )
 
 
 def _resolve_login_pixi_env(
@@ -751,6 +801,86 @@ def _resolve_runtime_version_cmd(
     return value or None
 
 
+def _resolve_load_script_branch_path(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+    repo_root: str,
+) -> str | None:
+    """Resolve an optional ``<SOFTWARE>_BRANCH`` export for load scripts.
+
+    Priority:
+    1. runtime['project']['branch_path'] (set by hooks)
+    2. config['project']['branch_path']
+    3. repo_root (legacy default for downstream compatibility)
+    """
+
+    runtime_project = runtime.get('project')
+    if isinstance(runtime_project, dict) and 'branch_path' in runtime_project:
+        value = runtime_project.get('branch_path')
+    else:
+        project_cfg = config.get('project')
+        if isinstance(project_cfg, dict) and 'branch_path' in project_cfg:
+            value = project_cfg.get('branch_path')
+        else:
+            value = repo_root
+
+    if value is None:
+        return None
+
+    candidate = str(value).strip()
+    if candidate.lower() in ('', 'none', 'null'):
+        return None
+
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(candidate)))
+
+
+def _resolve_load_script_pixi_exe(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+    pixi_exe: str,
+) -> dict[str, str]:
+    """Resolve how generated load scripts should find ``pixi``.
+
+    Priority:
+    1. runtime['pixi']['load_script_exe'] (set by hooks)
+    2. config['pixi']['load_script_exe']
+    3. pixi_exe passed to ``mache deploy run`` (legacy default)
+
+    Supported values:
+    - ``shared``: stage the pixi executable into the deployed prefix/prefixes
+    - ``path`` / ``null`` / ``none`` / empty: use ``$PIXI`` or ``pixi`` on PATH
+    - any other non-empty string: use that explicit path in the load script
+    """
+
+    runtime_pixi = runtime.get('pixi')
+    if isinstance(runtime_pixi, dict) and 'load_script_exe' in runtime_pixi:
+        value = runtime_pixi.get('load_script_exe')
+    else:
+        pixi_cfg = config.get('pixi')
+        if isinstance(pixi_cfg, dict) and 'load_script_exe' in pixi_cfg:
+            value = pixi_cfg.get('load_script_exe')
+        else:
+            value = pixi_exe
+
+    if value is None:
+        return {'mode': 'path', 'path': ''}
+
+    candidate = str(value).strip()
+    if candidate.lower() in ('', 'none', 'null', 'path'):
+        return {'mode': 'path', 'path': ''}
+    if candidate.lower() == 'shared':
+        return {'mode': 'shared', 'path': ''}
+
+    return {
+        'mode': 'explicit',
+        'path': os.path.abspath(
+            os.path.expanduser(os.path.expandvars(candidate))
+        ),
+    }
+
+
 def _resolve_pixi_mpi(
     *,
     pixi_cfg: dict[str, Any],
@@ -969,6 +1099,27 @@ def _normalize_optional_tokens(value: Any) -> list[str] | None:
     return [token]
 
 
+def _normalize_string_list(value: Any, *, field_name: str) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            return []
+        return [candidate]
+    if isinstance(value, list):
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ValueError(f'{field_name} entries must be strings')
+            candidate = item.strip()
+            if not candidate:
+                continue
+            normalized.append(candidate)
+        return normalized
+    raise ValueError(f'{field_name} must be a string or list of strings')
+
+
 def _sanitize_script_tag(value: str) -> str:
     """Make a filesystem-safe token for use in script filenames."""
 
@@ -1123,11 +1274,74 @@ def _get_pixi_executable(pixi: str | None) -> str:
     return pixi
 
 
+def _stage_pixi_executable(*, prefix: str, pixi_exe: str) -> str:
+    """Copy the pixi executable into the deployed prefix for shared reuse."""
+
+    prefix_abs = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(prefix))
+    )
+    staged_pixi = os.path.join(prefix_abs, 'bin', 'pixi')
+    staged_dir = os.path.dirname(staged_pixi)
+    os.makedirs(staged_dir, exist_ok=True)
+
+    source_pixi = os.path.abspath(os.path.expanduser(pixi_exe))
+    if os.path.abspath(staged_pixi) != source_pixi:
+        shutil.copy2(source_pixi, staged_pixi)
+
+    current_mode = os.stat(staged_pixi).st_mode
+    os.chmod(staged_pixi, current_mode | 0o111)
+    return staged_pixi
+
+
+def _stage_target_load_snippet(*, prefix: str) -> str:
+    """Copy the optional target load snippet into the deployed prefix."""
+
+    source_path = os.path.join(
+        os.path.abspath(os.getcwd()),
+        'deploy',
+        'load.sh',
+    )
+    if not os.path.isfile(source_path):
+        return ''
+
+    prefix_abs = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(prefix))
+    )
+    staged_snippet = os.path.join(
+        prefix_abs,
+        'share',
+        'mache',
+        'deploy',
+        'load.sh',
+    )
+    os.makedirs(os.path.dirname(staged_snippet), exist_ok=True)
+    shutil.copy2(source_path, staged_snippet)
+    return staged_snippet
+
+
+def _resolve_rendered_load_script_pixi_exe(
+    *,
+    mode: str,
+    configured_path: str,
+    prefix: str,
+    pixi_exe: str,
+) -> str:
+    """Resolve the pixi executable path used by a generated load script."""
+
+    if mode == 'shared':
+        return _stage_pixi_executable(prefix=prefix, pixi_exe=pixi_exe)
+    if mode == 'path':
+        return ''
+    return configured_path
+
+
 def _write_load_script(
     *,
     prefix: str,
     login_env: dict[str, str] | None,
     pixi_exe: str,
+    branch_path: str | None,
+    load_script_pixi_exe: dict[str, str],
     software: str,
     software_version: str,
     runtime_version_cmd: str | None,
@@ -1152,15 +1366,37 @@ def _write_load_script(
         os.path.expanduser(os.path.expandvars(prefix))
     )
     pixi_toml = os.path.join(prefix_abs, 'pixi.toml')
+    compute_pixi_exe = _resolve_rendered_load_script_pixi_exe(
+        mode=load_script_pixi_exe['mode'],
+        configured_path=load_script_pixi_exe['path'],
+        prefix=prefix_abs,
+        pixi_exe=pixi_exe,
+    )
+    compute_target_load_snippet = _stage_target_load_snippet(prefix=prefix_abs)
     login_prefix_abs = ''
     login_pixi_toml = ''
     login_pixi_mpi = ''
+    login_pixi_exe = ''
+    login_target_load_snippet = ''
     if login_env is not None:
         login_prefix_abs = os.path.abspath(
             os.path.expanduser(os.path.expandvars(login_env['prefix']))
         )
         login_pixi_toml = os.path.join(login_prefix_abs, 'pixi.toml')
         login_pixi_mpi = str(login_env['mpi'])
+        if login_prefix_abs == prefix_abs:
+            login_pixi_exe = compute_pixi_exe
+            login_target_load_snippet = compute_target_load_snippet
+        else:
+            login_pixi_exe = _resolve_rendered_load_script_pixi_exe(
+                mode=load_script_pixi_exe['mode'],
+                configured_path=load_script_pixi_exe['path'],
+                prefix=login_prefix_abs,
+                pixi_exe=pixi_exe,
+            )
+            login_target_load_snippet = _stage_target_load_snippet(
+                prefix=login_prefix_abs
+            )
 
     if toolchain_compiler and toolchain_mpi:
         if machine is None:
@@ -1185,16 +1421,15 @@ def _write_load_script(
     tmpl = Template(template_text, keep_trailing_newline=True)
 
     software_upper = software.upper().replace('-', '_')
-    source_path = os.path.abspath(os.getcwd())
-    target_load_snippet = os.path.join(source_path, 'deploy', 'load.sh')
 
     rendered = tmpl.render(
         software=software,
         software_upper=software_upper,
         prefix=prefix_abs,
         pixi_toml=pixi_toml,
-        pixi_exe=pixi_exe,
-        source_path=source_path,
+        compute_pixi_exe=compute_pixi_exe,
+        compute_target_load_snippet=compute_target_load_snippet,
+        branch_path=branch_path or '',
         software_version=software_version,
         runtime_version_cmd_sh=shlex.quote(runtime_version_cmd or ''),
         machine=machine or '',
@@ -1203,11 +1438,12 @@ def _write_load_script(
         login_prefix=login_prefix_abs,
         login_pixi_toml=login_pixi_toml,
         login_pixi_mpi=login_pixi_mpi,
+        login_pixi_exe=login_pixi_exe,
+        login_target_load_snippet=login_target_load_snippet,
         toolchain_compiler=toolchain_compiler or '',
         toolchain_mpi=toolchain_mpi or '',
         spack_library_view=spack_library_view or '',
         spack_activation=spack_activation,
-        target_load_snippet=target_load_snippet,
     )
 
     os.makedirs(prefix_abs, exist_ok=True)
@@ -1225,6 +1461,8 @@ def _write_load_scripts(
     prefix: str,
     login_env: dict[str, str] | None,
     pixi_exe: str,
+    branch_path: str | None,
+    load_script_pixi_exe: dict[str, str],
     software: str,
     software_version: str,
     runtime_version_cmd: str | None,
@@ -1270,6 +1508,8 @@ def _write_load_scripts(
                     prefix=prefix,
                     login_env=login_env,
                     pixi_exe=pixi_exe,
+                    branch_path=branch_path,
+                    load_script_pixi_exe=load_script_pixi_exe,
                     software=software,
                     software_version=software_version,
                     runtime_version_cmd=runtime_version_cmd,
@@ -1290,6 +1530,8 @@ def _write_load_scripts(
                 prefix=prefix,
                 login_env=login_env,
                 pixi_exe=pixi_exe,
+                branch_path=branch_path,
+                load_script_pixi_exe=load_script_pixi_exe,
                 software=software,
                 software_version=software_version,
                 runtime_version_cmd=runtime_version_cmd,

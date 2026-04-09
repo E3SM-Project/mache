@@ -222,6 +222,13 @@ including:
 - load-script generation,
 - JIGSAW wiring.
 
+Before adding a new package-specific branch in `run.py`, prefer checking
+whether the target repository can solve the problem with hook-driven template
+inputs instead. In particular, downstream hooks can already provide generic
+`runtime["pixi"]["extra_dependencies"]` and
+`runtime["pixi"]["omit_dependencies"]` lists, which `deploy/pixi.toml.j2` can
+use to customize optional tools on a per-machine basis.
+
 Use the companion modules for narrower changes:
 
 - `hooks.py` for hook semantics and runtime overrides,
