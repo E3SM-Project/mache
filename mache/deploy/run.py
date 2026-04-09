@@ -29,6 +29,7 @@ from .bootstrap import (
 from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .machine import get_machine, get_machine_config
+from .shared import SharedDeployArtifacts, create_shared_deploy_artifacts
 from .spack import (
     SpackDeployResult,
     SpackSoftwareEnvResult,
@@ -378,6 +379,16 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
     ctx.runtime['load_scripts'] = load_script_paths
 
+    hook_registry.run_hook('post_deploy', ctx)
+
+    shared_artifacts = create_shared_deploy_artifacts(
+        config=config,
+        runtime=ctx.runtime,
+        repo_root=repo_root,
+        load_script_paths=load_script_paths,
+        logger=logger,
+    )
+
     permissions_group, world_readable = _resolve_deploy_permissions(
         config=config,
         runtime=ctx.runtime,
@@ -399,12 +410,11 @@ def run_deploy(args: argparse.Namespace) -> None:
             if deploy_spack
             else []
         ),
+        shared_artifacts=shared_artifacts,
         group=permissions_group,
         world_readable=world_readable,
         logger=logger,
     )
-
-    hook_registry.run_hook('post_deploy', ctx)
 
 
 def _get_deploy_logger(*, log_filename: str, quiet: bool) -> logging.Logger:
@@ -976,6 +986,7 @@ def _apply_deploy_permissions(
     extra_prefixes: list[str] | None,
     load_script_paths: list[str],
     spack_paths: list[str],
+    shared_artifacts: SharedDeployArtifacts,
     group: str | None,
     world_readable: bool,
     logger: logging.Logger,
@@ -1004,7 +1015,10 @@ def _apply_deploy_permissions(
             if extra_prefix_abs not in prefixes:
                 prefixes.append(extra_prefix_abs)
 
-    for managed_prefix in prefixes:
+    permission_roots = prefixes + shared_artifacts.managed_dirs
+    permission_roots = list(dict.fromkeys(permission_roots))
+
+    for managed_prefix in permission_roots:
         update_permissions(
             managed_prefix,
             group,
@@ -1021,6 +1035,7 @@ def _apply_deploy_permissions(
         elif prefix_path.exists():
             managed_paths.append(managed_prefix)
     managed_paths.extend(spack_paths)
+    managed_paths.extend(shared_artifacts.managed_files)
 
     managed_paths = list(dict.fromkeys(managed_paths))
 

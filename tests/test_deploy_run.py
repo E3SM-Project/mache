@@ -6,6 +6,7 @@ import pytest
 
 from mache.deploy import bootstrap as deploy_bootstrap
 from mache.deploy import run as deploy_run
+from mache.deploy.shared import SharedDeployArtifacts
 
 
 def _make_pixi_executable(tmp_path: Path) -> str:
@@ -468,6 +469,40 @@ def test_write_load_script_without_login_env_skips_compute_detection(
     assert 'MACHE_DEPLOY_ACTIVE_ENV_KIND="compute"' in script_text
 
 
+def test_write_load_script_omits_optional_exports_when_values_are_empty(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+    pixi_exe = _make_pixi_executable(tmp_path)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(tmp_path / 'compute'),
+        login_env=None,
+        pixi_exe=pixi_exe,
+        branch_path=None,
+        load_script_pixi_exe=_path_load_script_pixi(),
+        software='e3sm-unified',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine=None,
+        compute_pixi_mpi='nompi',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    script_text = Path(script_path).read_text(encoding='utf-8')
+    assert 'export MACHE_DEPLOY_RUNTIME_VERSION_CMD=' not in script_text
+    assert 'export MACHE_DEPLOY_LOGIN_PIXI_TOML=' not in script_text
+    assert 'export MACHE_DEPLOY_TOOLCHAIN_COMPILER=' not in script_text
+    assert 'export MACHE_DEPLOY_SPACK_LIBRARY_VIEW=' not in script_text
+    assert 'export E3SM_UNIFIED_MACHINE=' not in script_text
+    assert 'export E3SM_UNIFIED_COMPILER=' not in script_text
+    assert 'export E3SM_UNIFIED_MPI=' not in script_text
+    assert 'E3SM_UNIFIED_LOAD_SCRIPT' in script_text
+
+
 def test_copy_mache_pixi_toml_writes_slim_bootstrap_manifest(tmp_path: Path):
     source_repo = tmp_path / 'source'
     source_repo.mkdir()
@@ -707,6 +742,10 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
         extra_prefixes=None,
         load_script_paths=[str(load_script)],
         spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group='e3sm',
         world_readable=False,
         logger=logger,
@@ -755,6 +794,10 @@ def test_apply_deploy_permissions_is_noop_without_group(
         extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group=None,
         world_readable=True,
         logger=logger,
@@ -794,6 +837,10 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
         extra_prefixes=None,
         load_script_paths=[],
         spack_paths=[str(spack_lib), str(spack_soft)],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[],
+            managed_files=[],
+        ),
         group='e3sm',
         world_readable=True,
         logger=logger,
@@ -811,6 +858,65 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
     )
     assert second_kwargs['show_progress'] is True
     assert second_kwargs['recursive'] is True
+
+
+def test_apply_deploy_permissions_includes_shared_managed_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    shared_dir = tmp_path / 'shared'
+    shared_dir.mkdir()
+    shared_file = shared_dir / 'load_demo.sh'
+    shared_file.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-shared'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[],
+        spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_dirs=[str(shared_dir)],
+            managed_files=[str(shared_file)],
+        ),
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 3
+
+    first_args, first_kwargs = calls[0]
+    assert first_args == (str(prefix), 'e3sm')
+    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['recursive'] is False
+
+    second_args, second_kwargs = calls[1]
+    assert second_args == (str(shared_dir), 'e3sm')
+    assert second_kwargs['group_writable'] is True
+    assert second_kwargs['recursive'] is False
+
+    third_args, third_kwargs = calls[2]
+    assert third_args[1] == 'e3sm'
+    assert third_args[0] == [str(shared_file)]
+    assert third_kwargs['group_writable'] is False
+    assert third_kwargs['recursive'] is True
 
 
 def test_pixi_install_writes_project_local_pixi_config(

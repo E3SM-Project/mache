@@ -4,27 +4,43 @@
 
 export MACHE_DEPLOY_TARGET_SOFTWARE={{ software | tojson }}
 export MACHE_DEPLOY_TARGET_VERSION={{ software_version | tojson }}
+{% if runtime_version_cmd_sh != "''" -%}
 export MACHE_DEPLOY_RUNTIME_VERSION_CMD={{ runtime_version_cmd_sh }}
+{% endif -%}
+{% if toolchain_compiler -%}
 export MACHE_DEPLOY_TOOLCHAIN_COMPILER={{ toolchain_compiler | tojson }}
+{% endif -%}
+{% if toolchain_mpi -%}
 export MACHE_DEPLOY_TOOLCHAIN_MPI={{ toolchain_mpi | tojson }}
+{% endif -%}
+{% if spack_library_view -%}
 export MACHE_DEPLOY_SPACK_LIBRARY_VIEW={{ spack_library_view | tojson }}
+{% endif -%}
 export MACHE_DEPLOY_COMPUTE_PIXI_EXE={{ compute_pixi_exe | tojson }}
 export MACHE_DEPLOY_COMPUTE_PIXI_PREFIX={{ prefix | tojson }}
 export MACHE_DEPLOY_COMPUTE_PIXI_TOML={{ pixi_toml | tojson }}
 export MACHE_DEPLOY_COMPUTE_PIXI_MPI={{ compute_pixi_mpi | tojson }}
 export MACHE_DEPLOY_COMPUTE_TARGET_LOAD_SNIPPET={{ compute_target_load_snippet | tojson }}
+{% if login_pixi_toml -%}
 export MACHE_DEPLOY_LOGIN_PIXI_EXE={{ login_pixi_exe | tojson }}
 export MACHE_DEPLOY_LOGIN_PIXI_PREFIX={{ login_prefix | tojson }}
 export MACHE_DEPLOY_LOGIN_PIXI_TOML={{ login_pixi_toml | tojson }}
 export MACHE_DEPLOY_LOGIN_PIXI_MPI={{ login_pixi_mpi | tojson }}
 export MACHE_DEPLOY_LOGIN_TARGET_LOAD_SNIPPET={{ login_target_load_snippet | tojson }}
+{% endif -%}
+{% if machine -%}
 export {{ software_upper }}_MACHINE={{ machine | tojson }}
-{% if branch_path %}
+{% endif -%}
+{% if branch_path -%}
 export {{ software_upper }}_BRANCH={{ branch_path | tojson }}
-{% endif %}
+{% endif -%}
 export {{ software_upper }}_VERSION={{ software_version | tojson }}
+{% if toolchain_compiler -%}
 export {{ software_upper }}_COMPILER={{ toolchain_compiler | tojson }}
+{% endif -%}
+{% if toolchain_mpi -%}
 export {{ software_upper }}_MPI={{ toolchain_mpi | tojson }}
+{% endif -%}
 export {{ software_upper }}_LOAD_SCRIPT={{ load_script | tojson }}
 
 # Activate the pixi environment in the *current* shell.
@@ -45,7 +61,7 @@ if ! (return 0 2>/dev/null); then
   exit 1
 fi
 
-{% if login_pixi_toml %}
+{% if login_pixi_toml -%}
 _mache_deploy_is_compute_node() {
   [[ -n "${SLURM_JOB_ID:-}" || -n "${COBALT_JOBID:-}" || -n "${PBS_JOBID:-}" ]]
 }
@@ -65,14 +81,14 @@ if [[ -n "${MACHE_DEPLOY_LOGIN_PIXI_TOML:-}" ]] && ! _mache_deploy_is_compute_no
   MACHE_DEPLOY_ACTIVE_PIXI_MPI="${MACHE_DEPLOY_LOGIN_PIXI_MPI}"
   MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET="${MACHE_DEPLOY_LOGIN_TARGET_LOAD_SNIPPET}"
 fi
-{% else %}
+{% else -%}
 MACHE_DEPLOY_ACTIVE_ENV_KIND="compute"
 MACHE_DEPLOY_ACTIVE_PIXI_EXE="${MACHE_DEPLOY_COMPUTE_PIXI_EXE}"
 MACHE_DEPLOY_ACTIVE_PIXI_PREFIX="${MACHE_DEPLOY_COMPUTE_PIXI_PREFIX}"
 MACHE_DEPLOY_ACTIVE_PIXI_TOML="${MACHE_DEPLOY_COMPUTE_PIXI_TOML}"
 MACHE_DEPLOY_ACTIVE_PIXI_MPI="${MACHE_DEPLOY_COMPUTE_PIXI_MPI}"
 MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET="${MACHE_DEPLOY_COMPUTE_TARGET_LOAD_SNIPPET}"
-{% endif %}
+{% endif -%}
 
 if [[ -z "${MACHE_DEPLOY_ACTIVE_PIXI_EXE:-}" ]]; then
   if [[ -n "${PIXI:-}" ]]; then
@@ -157,13 +173,13 @@ eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
 echo "   pixi env loaded."
 
 # Spack activation (optional)
-{% if spack_activation %}
+{% if spack_activation -%}
 if [[ "${MACHE_DEPLOY_ACTIVE_ENV_KIND}" == "compute" ]]; then
 echo "activating spack env..."
 {{ spack_activation }}
 echo "   spack env activated."
 fi
-{% endif %}
+{% endif -%}
 
 # Target software load snippet (optional)
 if [[ -n "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET:-}" \
