@@ -779,7 +779,7 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
 
     first_args, first_kwargs = calls[0]
     assert first_args == (str(prefix), 'e3sm')
-    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['group_writable'] is False
     assert first_kwargs['other_readable'] is False
     assert first_kwargs['recursive'] is False
 
@@ -928,12 +928,12 @@ def test_apply_deploy_permissions_includes_shared_managed_paths(
 
     first_args, first_kwargs = calls[0]
     assert first_args == (str(prefix), 'e3sm')
-    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['group_writable'] is False
     assert first_kwargs['recursive'] is False
 
     second_args, second_kwargs = calls[1]
     assert second_args == (str(shared_dir), 'e3sm')
-    assert second_kwargs['group_writable'] is True
+    assert second_kwargs['group_writable'] is False
     assert second_kwargs['recursive'] is False
 
     third_args, third_kwargs = calls[2]
@@ -1017,13 +1017,13 @@ def test_apply_deploy_permissions_updates_shared_base_first(
 
     first_args, first_kwargs = calls[0]
     assert first_args == (str(shared_base), 'e3sm')
-    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['group_writable'] is False
     assert first_kwargs['other_readable'] is True
     assert first_kwargs['recursive'] is True
 
     second_args, second_kwargs = calls[1]
     assert second_args == (str(managed_dir_outside), 'e3sm')
-    assert second_kwargs['group_writable'] is True
+    assert second_kwargs['group_writable'] is False
     assert second_kwargs['recursive'] is False
 
     third_args, third_kwargs = calls[2]
