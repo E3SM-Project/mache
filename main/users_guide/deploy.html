@@ -338,6 +338,10 @@ config <code class="docutils literal notranslate"><span class="pre">[deploy]</sp
 <li><p><code class="docutils literal notranslate"><span class="pre">permissions.world_readable</span></code>: optional boolean controlling whether deployed
 files are readable outside the shared group. Hooks may override both values
 through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;permissions&quot;]</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shared.base_path</span></code>: optional shared base directory whose permissions mache
+updates recursively before any path-specific permission updates. Hooks may
+override this through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;shared&quot;][&quot;base_path&quot;]</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;dynamic&quot;</span></code>
+is useful when the path depends on machine-specific logic in <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
 CLI override provides it, unless the user disables Spack for that run with
 <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>

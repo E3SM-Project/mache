@@ -1104,16 +1104,34 @@
         <span class="n">world_readable</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="c1"># A declared shared base absorbs permission management for any descendant</span>
+    <span class="c1"># artifacts, so we update it first and then only handle out-of-tree paths.</span>
+    <span class="n">shared_base_path</span> <span class="o">=</span> <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">shared_artifacts</span><span class="o">.</span><span class="n">base_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shared_base_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">update_permissions</span><span class="p">(</span>
+            <span class="n">shared_base_path</span><span class="p">,</span>
+            <span class="n">group</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">group_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
+            <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="n">prefixes</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix_abs</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">extra_prefixes</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">extra_prefix</span> <span class="ow">in</span> <span class="n">extra_prefixes</span><span class="p">:</span>
-            <span class="n">extra_prefix_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">extra_prefix</span><span class="p">)))</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">extra_prefix_abs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+            <span class="n">extra_prefix_abs</span> <span class="o">=</span> <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">extra_prefix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">extra_prefix_abs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">extra_prefix_abs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes</span>
+            <span class="p">):</span>
                 <span class="n">prefixes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extra_prefix_abs</span><span class="p">)</span>
 
-    <span class="n">permission_roots</span> <span class="o">=</span> <span class="n">prefixes</span> <span class="o">+</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_dirs</span>
+    <span class="n">permission_roots</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">path</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prefixes</span> <span class="o">+</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_dirs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_permission_path_is_within</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">shared_base_path</span><span class="p">)</span>
+    <span class="p">]</span>
     <span class="n">permission_roots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">permission_roots</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">permission_roots</span><span class="p">:</span>
@@ -1125,15 +1143,29 @@
             <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="n">managed_paths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">load_script_paths</span><span class="p">]</span>
+    <span class="n">managed_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">load_script_paths</span>
+    <span class="p">]</span>
     <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
         <span class="n">prefix_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">managed_prefix</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
             <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
         <span class="k">elif</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">managed_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">managed_prefix</span><span class="p">)</span>
-    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spack_paths</span><span class="p">)</span>
-    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_files</span><span class="p">)</span>
+    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">spack_paths</span>
+    <span class="p">)</span>
+    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_files</span>
+    <span class="p">)</span>
+
+    <span class="n">managed_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">path</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">managed_paths</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">_permission_path_is_within</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">shared_base_path</span><span class="p">)</span>
+    <span class="p">]</span>
 
     <span class="n">managed_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">managed_paths</span><span class="p">))</span>
 
@@ -1148,6 +1180,29 @@
         <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
         <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_permission_path_is_within</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">base_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">base_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">normalized_path</span> <span class="o">=</span> <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normalized_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonpath</span><span class="p">([</span><span class="n">normalized_path</span><span class="p">,</span> <span class="n">base_path</span><span class="p">])</span> <span class="o">==</span> <span class="n">base_path</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_deployed_spack_paths</span><span class="p">(</span>
