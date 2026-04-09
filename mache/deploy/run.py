@@ -1006,16 +1006,34 @@ def _apply_deploy_permissions(
         world_readable,
     )
 
+    # A declared shared base absorbs permission management for any descendant
+    # artifacts, so we update it first and then only handle out-of-tree paths.
+    shared_base_path = _normalize_permission_path(shared_artifacts.base_path)
+    if shared_base_path is not None:
+        update_permissions(
+            shared_base_path,
+            group,
+            show_progress=True,
+            group_writable=True,
+            other_readable=world_readable,
+            recursive=True,
+        )
+
     prefixes = [prefix_abs]
     if extra_prefixes:
         for extra_prefix in extra_prefixes:
-            extra_prefix_abs = os.path.abspath(
-                os.path.expanduser(os.path.expandvars(str(extra_prefix)))
-            )
-            if extra_prefix_abs not in prefixes:
+            extra_prefix_abs = _normalize_permission_path(extra_prefix)
+            if (
+                extra_prefix_abs is not None
+                and extra_prefix_abs not in prefixes
+            ):
                 prefixes.append(extra_prefix_abs)
 
-    permission_roots = prefixes + shared_artifacts.managed_dirs
+    permission_roots = [
+        path
+        for path in prefixes + shared_artifacts.managed_dirs
+        if not _permission_path_is_within(path, shared_base_path)
+    ]
     permission_roots = list(dict.fromkeys(permission_roots))
 
     for managed_prefix in permission_roots:
@@ -1027,15 +1045,29 @@ def _apply_deploy_permissions(
             recursive=False,
         )
 
-    managed_paths = [str(path) for path in load_script_paths]
+    managed_paths = [
+        _normalize_permission_path(path) for path in load_script_paths
+    ]
     for managed_prefix in prefixes:
         prefix_path = Path(managed_prefix)
         if prefix_path.is_dir():
             managed_paths.extend(str(path) for path in prefix_path.iterdir())
         elif prefix_path.exists():
             managed_paths.append(managed_prefix)
-    managed_paths.extend(spack_paths)
-    managed_paths.extend(shared_artifacts.managed_files)
+    managed_paths.extend(
+        _normalize_permission_path(path) for path in spack_paths
+    )
+    managed_paths.extend(
+        _normalize_permission_path(path)
+        for path in shared_artifacts.managed_files
+    )
+
+    managed_paths = [
+        path
+        for path in managed_paths
+        if path is not None
+        and not _permission_path_is_within(path, shared_base_path)
+    ]
 
     managed_paths = list(dict.fromkeys(managed_paths))
 
@@ -1050,6 +1082,29 @@ def _apply_deploy_permissions(
         other_readable=world_readable,
         recursive=True,
     )
+
+
+def _normalize_permission_path(path: str | None) -> str | None:
+    if path is None:
+        return None
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(str(path))))
+
+
+def _permission_path_is_within(
+    path: str,
+    base_path: str | None,
+) -> bool:
+    if base_path is None:
+        return False
+
+    normalized_path = _normalize_permission_path(path)
+    if normalized_path is None:
+        return False
+
+    try:
+        return os.path.commonpath([normalized_path, base_path]) == base_path
+    except ValueError:
+        return False
 
 
 def _get_deployed_spack_paths(

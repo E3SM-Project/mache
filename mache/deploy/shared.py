@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 
 @dataclass(frozen=True)
 class SharedDeployArtifacts:
-    managed_dirs: list[str]
-    managed_files: list[str]
+    base_path: str | None = None
+    managed_dirs: list[str] = field(default_factory=list)
+    managed_files: list[str] = field(default_factory=list)
 
 
 def create_shared_deploy_artifacts(
@@ -23,6 +24,11 @@ def create_shared_deploy_artifacts(
 ) -> SharedDeployArtifacts:
     shared_cfg = _merge_shared_config(config=config, runtime=runtime)
 
+    base_path = _resolve_optional_path(
+        value=shared_cfg.get('base_path'),
+        repo_root=repo_root,
+        field_name='shared.base_path',
+    )
     managed_dirs = _normalize_path_entries(
         shared_cfg.get('managed_directories'),
         repo_root=repo_root,
@@ -76,6 +82,7 @@ def create_shared_deploy_artifacts(
         managed_dirs.append(str(dest_link.parent))
 
     return SharedDeployArtifacts(
+        base_path=base_path,
         managed_dirs=_dedupe_existing_paths(managed_dirs),
         managed_files=_dedupe_existing_paths(managed_files),
     )
@@ -225,6 +232,26 @@ def _resolve_path(
     if os.path.isabs(expanded):
         return os.path.abspath(expanded)
     return os.path.abspath(os.path.join(repo_root, expanded))
+
+
+def _resolve_optional_path(
+    *,
+    value: Any,
+    repo_root: str,
+    field_name: str,
+) -> str | None:
+    if value is None:
+        return None
+
+    candidate = str(value).strip()
+    if not candidate or candidate.lower() in ('none', 'null', 'dynamic'):
+        return None
+
+    return _resolve_path(
+        value=candidate,
+        repo_root=repo_root,
+        field_name=field_name,
+    )
 
 
 def _require_single_load_script(

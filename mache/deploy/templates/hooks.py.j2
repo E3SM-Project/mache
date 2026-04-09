@@ -86,6 +86,8 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     #     the generated load script in shared locations
     # - runtime["shared"]["load_script_symlinks"]: additional managed
     #     symlinks for shared load-script aliases
+    # - runtime["shared"]["base_path"]: shared base directory to update
+    #     permissions on recursively before path-specific updates
     # - runtime["shared"]["managed_directories"]: extra shared directories to
     #     include in the permission update step
     # - runtime["shared"]["managed_files"]: extra shared files to include in
@@ -103,6 +105,7 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # updates.setdefault("pixi", {})["omit_dependencies"] = ["git"]
     # updates.setdefault("permissions", {})["group"] = "e3sm"
     # updates.setdefault("permissions", {})["world_readable"] = False
+    # updates.setdefault("shared", {})["base_path"] = "/shared/my-software"
     # updates.setdefault("shared", {})["load_script_copies"] = [
     #     "/shared/load_my_software.sh",
     # ]

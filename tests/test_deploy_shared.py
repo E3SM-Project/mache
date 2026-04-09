@@ -57,6 +57,7 @@ def test_create_shared_deploy_artifacts_copies_load_scripts_and_links(
     assert latest_link.is_symlink()
     assert os.readlink(latest_link) == str(copied_script)
     assert artifacts == SharedDeployArtifacts(
+        base_path=None,
         managed_dirs=[
             str(extra_dir),
             str(copied_script.parent),
@@ -65,6 +66,27 @@ def test_create_shared_deploy_artifacts_copies_load_scripts_and_links(
             str(extra_file),
             str(copied_script),
         ],
+    )
+
+
+def test_create_shared_deploy_artifacts_resolves_runtime_base_path(
+    tmp_path: Path,
+):
+    repo_root = tmp_path / 'repo'
+    repo_root.mkdir()
+
+    artifacts = create_shared_deploy_artifacts(
+        config={'shared': {'base_path': 'shared/from-config'}},
+        runtime={'shared': {'base_path': 'shared/from-runtime'}},
+        repo_root=str(repo_root),
+        load_script_paths=[],
+        logger=_logger(),
+    )
+
+    assert artifacts == SharedDeployArtifacts(
+        base_path=str(repo_root / 'shared' / 'from-runtime'),
+        managed_dirs=[],
+        managed_files=[],
     )
 
 

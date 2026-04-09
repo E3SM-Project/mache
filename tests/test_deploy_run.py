@@ -919,6 +919,102 @@ def test_apply_deploy_permissions_includes_shared_managed_paths(
     assert third_kwargs['recursive'] is True
 
 
+def test_apply_deploy_permissions_updates_shared_base_first(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    shared_base = tmp_path / 'shared'
+    shared_base.mkdir()
+
+    prefix = shared_base / 'prefix'
+    prefix.mkdir()
+    (prefix / 'pixi.toml').write_text('[workspace]\n', encoding='utf-8')
+    (prefix / 'bin').mkdir()
+
+    load_script_in_base = shared_base / 'load_demo.sh'
+    load_script_in_base.write_text('#!/bin/sh\n', encoding='utf-8')
+    load_script_outside = tmp_path / 'load_external.sh'
+    load_script_outside.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    spack_in_base = shared_base / 'spack'
+    spack_in_base.mkdir()
+    spack_outside = tmp_path / 'spack-outside'
+    spack_outside.mkdir()
+
+    managed_dir_in_base = shared_base / 'managed-dir'
+    managed_dir_in_base.mkdir()
+    managed_dir_outside = tmp_path / 'managed-dir-outside'
+    managed_dir_outside.mkdir()
+
+    managed_file_in_base = shared_base / 'managed.txt'
+    managed_file_in_base.write_text('shared\n', encoding='utf-8')
+    managed_file_outside = tmp_path / 'managed-outside.txt'
+    managed_file_outside.write_text('outside\n', encoding='utf-8')
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-shared-base'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[
+            str(load_script_in_base),
+            str(load_script_outside),
+        ],
+        spack_paths=[str(spack_in_base), str(spack_outside)],
+        shared_artifacts=SharedDeployArtifacts(
+            base_path=str(shared_base),
+            managed_dirs=[
+                str(managed_dir_in_base),
+                str(managed_dir_outside),
+            ],
+            managed_files=[
+                str(managed_file_in_base),
+                str(managed_file_outside),
+            ],
+        ),
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 3
+
+    first_args, first_kwargs = calls[0]
+    assert first_args == (str(shared_base), 'e3sm')
+    assert first_kwargs['group_writable'] is True
+    assert first_kwargs['other_readable'] is True
+    assert first_kwargs['recursive'] is True
+
+    second_args, second_kwargs = calls[1]
+    assert second_args == (str(managed_dir_outside), 'e3sm')
+    assert second_kwargs['group_writable'] is True
+    assert second_kwargs['recursive'] is False
+
+    third_args, third_kwargs = calls[2]
+    assert third_args[1] == 'e3sm'
+    assert sorted(third_args[0]) == sorted(
+        [
+            str(load_script_outside),
+            str(spack_outside),
+            str(managed_file_outside),
+        ]
+    )
+    assert third_kwargs['group_writable'] is False
+    assert third_kwargs['recursive'] is True
+
+
 def test_pixi_install_writes_project_local_pixi_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
