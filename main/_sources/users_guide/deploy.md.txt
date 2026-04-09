@@ -318,7 +318,9 @@ Purpose:
 
 - Template for the deployed pixi project written to `<prefix>/pixi.toml`.
 - Receives deploy-time replacements such as Python version, selected channels,
-  MPI flavor, and whether `mache` or `jigsawpy` should be included.
+  MPI flavor, whether `mache` or `jigsawpy` should be included, and optional
+  hook-provided dependency lists such as `extra_dependencies` and
+  `omit_dependencies`.
 
 Edit policy:
 
@@ -326,6 +328,28 @@ Edit policy:
 - Safe to customize for package dependencies and features.
 - If you remove or rename the Jinja placeholders that `mache deploy run`
   expects, you must also update the runtime code.
+
+One useful pattern is to keep the dependency list mostly static in
+`deploy/pixi.toml.j2`, then let hooks add or remove a few machine-specific
+tools. For example:
+
+```toml
+[dependencies]
+python = "{{ python }}.*"
+pip = "*"
+setuptools = ">=60"
+{%- set omitted_dependencies = omit_dependencies | default([]) %}
+{%- if 'git' not in omitted_dependencies %}
+git = "*"
+{%- endif %}
+{%- for dependency in extra_dependencies | default([]) %}
+{{ dependency }}
+{%- endfor %}
+```
+
+This lets a downstream repository keep using the system `git` command on one
+machine while still installing conda `git` everywhere else, without teaching
+`mache` about a new package-specific toggle.
 
 ### `deploy/spack.yaml.j2`
 
@@ -381,6 +405,32 @@ Known hook stages are:
 - `pre_spack`
 - `post_spack`
 - `post_deploy`
+
+Hooks can also drive generic pixi dependency overrides. For example, a
+downstream repository can omit `git` on a machine whose host OS is too old for
+the current conda-forge `git` builds:
+
+```python
+def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
+    omit_dependencies: list[str] = []
+    if (
+        ctx.machine_config.has_section("my_software")
+        and ctx.machine_config.has_option("my_software", "use_system_git")
+        and ctx.machine_config.getboolean("my_software", "use_system_git")
+    ):
+        omit_dependencies.append("git")
+
+    return {
+        "pixi": {
+            "omit_dependencies": omit_dependencies,
+            "extra_dependencies": ['my-extra-tool = ">=1.0"'],
+        }
+    }
+```
+
+Combined with a matching `deploy/pixi.toml.j2`, this gives downstream projects
+an escape hatch for optional tools without needing a new hard-coded helper in
+`mache.deploy.run`.
 
 ### `deploy/load.sh`
 

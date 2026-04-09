@@ -427,7 +427,9 @@ moving the actual Spack selection onto <code class="docutils literal notranslate
 <ul class="simple">
 <li><p>Template for the deployed pixi project written to <code class="docutils literal notranslate"><span class="pre">&lt;prefix&gt;/pixi.toml</span></code>.</p></li>
 <li><p>Receives deploy-time replacements such as Python version, selected channels,
-MPI flavor, and whether <code class="docutils literal notranslate"><span class="pre">mache</span></code> or <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> should be included.</p></li>
+MPI flavor, whether <code class="docutils literal notranslate"><span class="pre">mache</span></code> or <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> should be included, and optional
+hook-provided dependency lists such as <code class="docutils literal notranslate"><span class="pre">extra_dependencies</span></code> and
+<code class="docutils literal notranslate"><span class="pre">omit_dependencies</span></code>.</p></li>
 </ul>
 <p>Edit policy:</p>
 <ul class="simple">
@@ -436,6 +438,25 @@ MPI flavor, and whether <code class="docutils literal notranslate"><span class="
 <li><p>If you remove or rename the Jinja placeholders that <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>
 expects, you must also update the runtime code.</p></li>
 </ul>
+<p>One useful pattern is to keep the dependency list mostly static in
+<code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, then let hooks add or remove a few machine-specific
+tools. For example:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[dependencies]</span>
+<span class="n">python</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;{{ python }}.*&quot;</span>
+<span class="n">pip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="n">setuptools</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;=60&quot;</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">set</span><span class="w"> </span><span class="n">omitted_dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">omit</span><span class="mi">_</span><span class="n">dependencies</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="n">default</span><span class="err">(</span><span class="k">[]</span><span class="err">)</span><span class="w"> </span><span class="err">%}</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">if</span><span class="w"> </span><span class="s1">&#39;git&#39;</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">omitted_dependencies</span><span class="w"> </span><span class="err">%}</span>
+<span class="n">git</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">endif</span><span class="w"> </span><span class="err">%}</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="n">dependency</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">extra_dependencies</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="n">default</span><span class="err">(</span><span class="k">[]</span><span class="err">)</span><span class="w"> </span><span class="err">%}</span>
+<span class="err">{{</span><span class="w"> </span><span class="n">dependency</span><span class="w"> </span><span class="err">}}</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">endfor</span><span class="w"> </span><span class="err">%}</span>
+</pre></div>
+</div>
+<p>This lets a downstream repository keep using the system <code class="docutils literal notranslate"><span class="pre">git</span></code> command on one
+machine while still installing conda <code class="docutils literal notranslate"><span class="pre">git</span></code> everywhere else, without teaching
+<code class="docutils literal notranslate"><span class="pre">mache</span></code> about a new package-specific toggle.</p>
 </section>
 <section id="deploy-spack-yaml-j2">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code><a class="headerlink" href="#deploy-spack-yaml-j2" title="Link to this heading"></a></h3>
@@ -486,6 +507,29 @@ itself.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">post_spack</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">post_deploy</span></code></p></li>
 </ul>
+<p>Hooks can also drive generic pixi dependency overrides. For example, a
+downstream repository can omit <code class="docutils literal notranslate"><span class="pre">git</span></code> on a machine whose host OS is too old for
+the current conda-forge <code class="docutils literal notranslate"><span class="pre">git</span></code> builds:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">pre_pixi</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">omit_dependencies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">,</span> <span class="s2">&quot;use_system_git&quot;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">,</span> <span class="s2">&quot;use_system_git&quot;</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">omit_dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;git&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;pixi&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;omit_dependencies&quot;</span><span class="p">:</span> <span class="n">omit_dependencies</span><span class="p">,</span>
+            <span class="s2">&quot;extra_dependencies&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;my-extra-tool = &quot;&gt;=1.0&quot;&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>Combined with a matching <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, this gives downstream projects
+an escape hatch for optional tools without needing a new hard-coded helper in
+<code class="docutils literal notranslate"><span class="pre">mache.deploy.run</span></code>.</p>
 </section>
 <section id="deploy-load-sh">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code><a class="headerlink" href="#deploy-load-sh" title="Link to this heading"></a></h3>
