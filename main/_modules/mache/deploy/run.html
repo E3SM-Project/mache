@@ -124,6 +124,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conda</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_conda_platform_and_system</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeployContext</span><span class="p">,</span> <span class="n">configparser_to_nested_dict</span><span class="p">,</span> <span class="n">load_hooks</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.machine</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_machine</span><span class="p">,</span> <span class="n">get_machine_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">SharedDeployArtifacts</span><span class="p">,</span> <span class="n">create_shared_deploy_artifacts</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spack</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SpackDeployResult</span><span class="p">,</span>
     <span class="n">SpackSoftwareEnvResult</span><span class="p">,</span>
@@ -475,6 +476,16 @@
     <span class="p">)</span>
     <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;load_scripts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_script_paths</span>
 
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="n">shared_artifacts</span> <span class="o">=</span> <span class="n">create_shared_deploy_artifacts</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
+        <span class="n">load_script_paths</span><span class="o">=</span><span class="n">load_script_paths</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">permissions_group</span><span class="p">,</span> <span class="n">world_readable</span> <span class="o">=</span> <span class="n">_resolve_deploy_permissions</span><span class="p">(</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
         <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
@@ -496,12 +507,11 @@
             <span class="k">if</span> <span class="n">deploy_spack</span>
             <span class="k">else</span> <span class="p">[]</span>
         <span class="p">),</span>
+        <span class="n">shared_artifacts</span><span class="o">=</span><span class="n">shared_artifacts</span><span class="p">,</span>
         <span class="n">group</span><span class="o">=</span><span class="n">permissions_group</span><span class="p">,</span>
         <span class="n">world_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
         <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
+    <span class="p">)</span></div>
 
 
 
@@ -1074,6 +1084,7 @@
     <span class="n">extra_prefixes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">load_script_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">spack_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">shared_artifacts</span><span class="p">:</span> <span class="n">SharedDeployArtifacts</span><span class="p">,</span>
     <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">world_readable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
@@ -1102,7 +1113,10 @@
             <span class="k">if</span> <span class="n">extra_prefix_abs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
                 <span class="n">prefixes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extra_prefix_abs</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+    <span class="n">permission_roots</span> <span class="o">=</span> <span class="n">prefixes</span> <span class="o">+</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_dirs</span>
+    <span class="n">permission_roots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">permission_roots</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">managed_prefix</span> <span class="ow">in</span> <span class="n">permission_roots</span><span class="p">:</span>
         <span class="n">update_permissions</span><span class="p">(</span>
             <span class="n">managed_prefix</span><span class="p">,</span>
             <span class="n">group</span><span class="p">,</span>
@@ -1119,6 +1133,7 @@
         <span class="k">elif</span> <span class="n">prefix_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">managed_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">managed_prefix</span><span class="p">)</span>
     <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spack_paths</span><span class="p">)</span>
+    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_files</span><span class="p">)</span>
 
     <span class="n">managed_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">managed_paths</span><span class="p">))</span>
 

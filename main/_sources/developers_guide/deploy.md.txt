@@ -43,6 +43,10 @@ That separation is the main thing to preserve when changing the design.
 `mache/deploy/hooks.py`
 : Hook discovery, hook execution, and the `DeployContext` data model.
 
+`mache/deploy/shared.py`
+: Shared-deployment artifact helpers for copied load scripts, symlinks, and
+  extra permission-managed paths outside the deployed prefix.
+
 `mache/deploy/machine.py`
 : Machine selection and merged machine-config loading from both
   `mache.machines` and target-owned config files.
@@ -220,6 +224,7 @@ including:
 - toolchain pairing,
 - pixi installation,
 - load-script generation,
+- shared load-script aliases and shared permission-managed artifacts,
 - JIGSAW wiring.
 
 Before adding a new package-specific branch in `run.py`, prefer checking

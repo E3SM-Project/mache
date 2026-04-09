@@ -149,6 +149,9 @@ optionally installs JIGSAW and Spack environments, and writes load scripts.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/hooks.py</span></code></dt><dd><p>Hook discovery, hook execution, and the <code class="docutils literal notranslate"><span class="pre">DeployContext</span></code> data model.</p>
 </dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/shared.py</span></code></dt><dd><p>Shared-deployment artifact helpers for copied load scripts, symlinks, and
+extra permission-managed paths outside the deployed prefix.</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/machine.py</span></code></dt><dd><p>Machine selection and merged machine-config loading from both
 <code class="docutils literal notranslate"><span class="pre">mache.machines</span></code> and target-owned config files.</p>
 </dd>
@@ -310,6 +313,7 @@ including:</p>
 <li><p>toolchain pairing,</p></li>
 <li><p>pixi installation,</p></li>
 <li><p>load-script generation,</p></li>
+<li><p>shared load-script aliases and shared permission-managed artifacts,</p></li>
 <li><p>JIGSAW wiring.</p></li>
 </ul>
 <p>Before adding a new package-specific branch in <code class="docutils literal notranslate"><span class="pre">run.py</span></code>, prefer checking
