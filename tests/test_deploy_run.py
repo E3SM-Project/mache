@@ -239,6 +239,30 @@ def test_resolve_pixi_omit_dependencies_prefers_runtime_override():
     assert omit_dependencies == ['git', 'ncview']
 
 
+def test_get_mpi_settings_allows_missing_mpi():
+    mpi, mpi_prefix = deploy_run._get_mpi_settings(pixi_cfg={})
+
+    assert mpi is None
+    assert mpi_prefix is None
+
+
+def test_get_mpi_settings_allows_null_mpi():
+    mpi, mpi_prefix = deploy_run._get_mpi_settings(pixi_cfg={'mpi': None})
+
+    assert mpi is None
+    assert mpi_prefix is None
+
+
+def test_resolve_pixi_mpi_runtime_override_can_disable_mpi():
+    mpi, mpi_prefix = deploy_run._resolve_pixi_mpi(
+        pixi_cfg={'mpi': 'openmpi'},
+        runtime={'pixi': {'mpi': None}},
+    )
+
+    assert mpi is None
+    assert mpi_prefix is None
+
+
 def test_resolve_login_pixi_env_uses_distinct_login_prefix():
     login_env = deploy_run._resolve_login_pixi_env(
         prefix='/tmp/compute-env',
