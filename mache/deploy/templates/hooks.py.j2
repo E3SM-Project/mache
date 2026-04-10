@@ -8,10 +8,14 @@ To enable, add a `hooks` section like:
 
   hooks:
     file: "deploy/hooks.py"  # default
+    log_context: false       # optional; also emit JSON snapshots in the log
     entrypoints:
       pre_pixi: "pre_pixi"      # optional
       post_pixi: "post_pixi"    # optional
       post_deploy: "post_deploy"  # optional
+
+After each configured hook runs, `mache` writes a JSON snapshot of the
+post-hook context to `deploy_tmp/hooks/<stage>_context.json`.
 
 Custom CLI flags added in `deploy/custom_cli_spec.json` are available on
 `ctx.args` when their route includes `"run"`.

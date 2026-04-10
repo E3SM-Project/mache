@@ -410,6 +410,11 @@ Known hook stages are:
 - `post_spack`
 - `post_deploy`
 
+For debugging, each executed hook also writes a JSON snapshot to
+`deploy_tmp/hooks/<stage>_context.json`. Set `hooks.log_context: true` in
+`deploy/config.yaml.j2` if you want the same snapshot mirrored into the deploy
+log as well.
+
 Hooks can also drive generic pixi dependency overrides. For example, a
 downstream repository can omit `git` on a machine whose host OS is too old for
 the current conda-forge `git` builds:
