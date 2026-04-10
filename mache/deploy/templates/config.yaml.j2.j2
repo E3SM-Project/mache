@@ -192,7 +192,7 @@ shared:
 
   # Optional extra shared directories/files to include in mache's
   # post-deploy permission update step. This is helpful when a downstream
-  # post_deploy hook creates additional shared artifacts that mache itself
+  # pre_publish hook creates additional shared artifacts that mache itself
   # does not create.
   managed_directories: []
   managed_files: []
@@ -310,4 +310,5 @@ jigsaw:
 #     post_pixi: "post_pixi"      # optional
 #     pre_spack: "pre_spack"      # optional
 #     post_spack: "post_spack"    # optional
-#     post_deploy: "post_deploy"  # optional
+#     pre_publish: "pre_publish"  # optional
+#     post_publish: "post_publish"  # optional

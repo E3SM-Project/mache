@@ -107,7 +107,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     work_dir = os.path.join(repo_root, 'deploy_tmp')
 
     # Hooks are optional and only run during `mache deploy run`.
-    # Behavior: `post_deploy` is invoked only on success.
+    # Publication hooks are invoked only on success.
     hook_registry = load_hooks(
         config=config,
         repo_root=repo_root,
@@ -379,7 +379,7 @@ def run_deploy(args: argparse.Namespace) -> None:
     )
     ctx.runtime['load_scripts'] = load_script_paths
 
-    hook_registry.run_hook('post_deploy', ctx)
+    hook_registry.run_hook('pre_publish', ctx)
 
     shared_artifacts = create_shared_deploy_artifacts(
         config=config,
@@ -415,6 +415,8 @@ def run_deploy(args: argparse.Namespace) -> None:
         world_readable=world_readable,
         logger=logger,
     )
+
+    hook_registry.run_hook('post_publish', ctx)
 
 
 def _get_deploy_logger(*, log_filename: str, quiet: bool) -> logging.Logger:

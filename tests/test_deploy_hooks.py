@@ -221,3 +221,79 @@ def test_load_hooks_writes_failure_snapshot(tmp_path: Path):
         'type': 'ValueError',
         'message': 'boom',
     }
+
+
+def test_load_hooks_maps_post_deploy_alias_to_pre_publish(tmp_path: Path):
+    (tmp_path / 'deploy').mkdir(parents=True)
+    (tmp_path / 'deploy' / 'hooks.py').write_text(
+        "def post_deploy(ctx):\n    ctx.runtime['alias_ran'] = True\n",
+        encoding='utf-8',
+    )
+
+    logger = logging.getLogger('t7')
+    logger.setLevel(logging.INFO)
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    logger.handlers = [handler]
+    logger.propagate = False
+
+    reg = load_hooks(
+        config={
+            'hooks': {
+                'file': 'deploy/hooks.py',
+                'entrypoints': {'post_deploy': 'post_deploy'},
+            }
+        },
+        repo_root=str(tmp_path),
+        logger=logger,
+    )
+
+    assert 'pre_publish' in reg.entrypoints
+    assert 'post_deploy' not in reg.entrypoints
+    assert 'deprecated' in stream.getvalue()
+
+    ctx = DeployContext(
+        software='demo',
+        machine=None,
+        repo_root=str(tmp_path),
+        deploy_dir=str(tmp_path / 'deploy'),
+        work_dir=str(tmp_path / 'deploy_tmp'),
+        config={},
+        pins={},
+        machine_config=configparser.ConfigParser(),
+        args=argparse.Namespace(),
+        logger=logger,
+    )
+
+    reg.run_hook('pre_publish', ctx)
+    assert ctx.runtime['alias_ran'] is True
+
+
+def test_load_hooks_rejects_post_deploy_and_pre_publish_together(
+    tmp_path: Path,
+):
+    (tmp_path / 'deploy').mkdir(parents=True)
+    (tmp_path / 'deploy' / 'hooks.py').write_text(
+        'def old_name(ctx):\n'
+        '    return None\n'
+        '\n'
+        'def new_name(ctx):\n'
+        '    return None\n',
+        encoding='utf-8',
+    )
+
+    cfg = {
+        'hooks': {
+            'file': 'deploy/hooks.py',
+            'entrypoints': {
+                'post_deploy': 'old_name',
+                'pre_publish': 'new_name',
+            },
+        }
+    }
+
+    with pytest.raises(
+        ValueError,
+        match='deprecated alias for hooks.entrypoints.pre_publish',
+    ):
+        load_hooks(config=cfg, repo_root=str(tmp_path), logger=_logger('t8'))

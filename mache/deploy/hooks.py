@@ -31,15 +31,24 @@ from typing import Any, Callable
 HookCallable = Callable[['DeployContext'], Any]
 
 
-KNOWN_HOOK_STAGES: tuple[str, ...] = (
+HOOK_STAGE_ORDER: tuple[str, ...] = (
     # pixi lifecycle (preferred names)
     'pre_pixi',
     'post_pixi',
     # future spack lifecycle
     'pre_spack',
     'post_spack',
-    # always last (on success by default)
-    'post_deploy',
+    # publication lifecycle
+    'pre_publish',
+    'post_publish',
+)
+
+DEPRECATED_HOOK_STAGE_ALIASES: dict[str, str] = {
+    'post_deploy': 'pre_publish',
+}
+
+KNOWN_HOOK_STAGES: tuple[str, ...] = HOOK_STAGE_ORDER + tuple(
+    DEPRECATED_HOOK_STAGE_ALIASES
 )
 
 
@@ -179,7 +188,8 @@ def load_hooks(
                post_pixi: "post_pixi"      # optional
                pre_spack: "pre_spack"      # optional
                post_spack: "post_spack"    # optional
-               post_deploy: "post_deploy"  # optional
+               pre_publish: "pre_publish"  # optional
+               post_publish: "post_publish"  # optional
 
         If the ``hooks`` section is missing, hooks are considered disabled.
 
@@ -241,6 +251,11 @@ def load_hooks(
             )
         )
 
+    entrypoints_cfg = _normalize_entrypoints_config(
+        entrypoints_cfg=entrypoints_cfg,
+        logger=logger,
+    )
+
     repo_root_abs = os.path.abspath(os.path.expanduser(str(repo_root)))
     hooks_path = os.path.abspath(os.path.join(repo_root_abs, file_rel))
 
@@ -252,7 +267,7 @@ def load_hooks(
     module = _load_module_from_path(hooks_path=hooks_path)
 
     resolved: dict[str, HookCallable] = {}
-    for stage in KNOWN_HOOK_STAGES:
+    for stage in HOOK_STAGE_ORDER:
         func_name = entrypoints_cfg.get(stage)
         if func_name is None:
             continue
@@ -291,6 +306,55 @@ def load_hooks(
         entrypoints=resolved,
         log_context=log_context,
     )
+
+
+def _normalize_entrypoints_config(
+    *,
+    entrypoints_cfg: dict[str, Any],
+    logger: logging.Logger,
+) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+
+    for stage in HOOK_STAGE_ORDER:
+        func_name = _normalize_entrypoint_name(entrypoints_cfg.get(stage))
+        if func_name is not None:
+            normalized[stage] = func_name
+
+    for alias, canonical_stage in DEPRECATED_HOOK_STAGE_ALIASES.items():
+        alias_func_name = _normalize_entrypoint_name(
+            entrypoints_cfg.get(alias)
+        )
+        if alias_func_name is None:
+            continue
+
+        if canonical_stage in normalized:
+            raise ValueError(
+                'hooks.entrypoints.'
+                f'{alias} is a deprecated alias for '
+                f'hooks.entrypoints.{canonical_stage}; '
+                'do not configure both.'
+            )
+
+        logger.warning(
+            'hooks.entrypoints.%s is deprecated; use '
+            'hooks.entrypoints.%s instead.',
+            alias,
+            canonical_stage,
+        )
+        normalized[canonical_stage] = alias_func_name
+
+    return normalized
+
+
+def _normalize_entrypoint_name(value: Any) -> str | None:
+    if value is None:
+        return None
+
+    func_name = str(value).strip()
+    if not func_name:
+        return None
+
+    return func_name
 
 
 def _load_module_from_path(*, hooks_path: str) -> ModuleType:

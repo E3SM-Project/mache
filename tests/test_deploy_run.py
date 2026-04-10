@@ -694,6 +694,184 @@ def test_resolve_toolchain_pairs_uses_machine_config_with_machine():
     assert pairs == [('gnu', 'mpich')]
 
 
+def test_run_deploy_runs_post_publish_after_publish_steps(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+
+    events: list[str] = []
+
+    class _FakeHookRegistry:
+        def run_hook(self, stage, _ctx):
+            events.append(stage)
+
+    logger = deploy_run.logging.getLogger('test-run-deploy-hook-order')
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    monkeypatch.setattr(deploy_run, 'check_location', lambda: None)
+    monkeypatch.setattr(
+        deploy_run,
+        '_read_pins',
+        lambda _path: configparser.ConfigParser(),
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        'get_conda_platform_and_system',
+        lambda: ('linux-64', 'linux'),
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_render_config_yaml',
+        lambda _path, _replacements: {
+            'project': {'software': 'demo'},
+            'pixi': {
+                'install_dev_software': False,
+            },
+            'spack': {'deploy': False, 'supported': False},
+            'jigsaw': {'enabled': False},
+        },
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_get_machine_and_config',
+        lambda **_kwargs: (None, configparser.ConfigParser()),
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_get_deploy_logger',
+        lambda **_kwargs: logger,
+    )
+    monkeypatch.setattr(deploy_run, '_is_deploy_enabled', lambda _config: True)
+    monkeypatch.setattr(
+        deploy_run,
+        'load_hooks',
+        lambda **_kwargs: _FakeHookRegistry(),
+    )
+    monkeypatch.setattr(
+        deploy_run, '_get_pixi_executable', lambda _pixi: '/tmp/pixi'
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_pixi_prefix', lambda **_kwargs: '/tmp/prefix'
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_toolchain_pairs', lambda **_kwargs: []
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_software_version', lambda **_kwargs: '1.0.0'
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_runtime_version_cmd', lambda **_kwargs: None
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_resolve_load_script_branch_path',
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_resolve_load_script_pixi_exe',
+        lambda **_kwargs: {'mode': 'path', 'path': ''},
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_pixi_mpi', lambda **_kwargs: (None, None)
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_login_pixi_env', lambda **_kwargs: None
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_pixi_python_version', lambda **_kwargs: '3.12'
+    )
+    monkeypatch.setattr(
+        deploy_run, '_resolve_pixi_channels', lambda **_kwargs: ['conda-forge']
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_resolve_pixi_extra_dependencies',
+        lambda **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_resolve_pixi_omit_dependencies',
+        lambda **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        deploy_run, '_deploy_target_pixi_env', lambda **_kwargs: None
+    )
+    monkeypatch.setattr(
+        deploy_run, '_maybe_deploy_jigsaw', lambda **_kwargs: None
+    )
+    monkeypatch.setattr(
+        deploy_run, 'get_effective_spack_config', lambda **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        deploy_run, 'spack_should_deploy_for_run', lambda **_kwargs: False
+    )
+    monkeypatch.setattr(
+        deploy_run, 'spack_disabled_for_run', lambda **_kwargs: False
+    )
+    monkeypatch.setattr(
+        deploy_run, 'load_existing_spack_envs', lambda **_kwargs: []
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        'load_existing_spack_software_env',
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_write_load_scripts',
+        lambda **_kwargs: ['load_demo.sh'],
+    )
+
+    def _fake_create_shared_deploy_artifacts(**_kwargs):
+        events.append('create_shared')
+        return SharedDeployArtifacts(managed_dirs=[], managed_files=[])
+
+    def _fake_apply_deploy_permissions(**_kwargs):
+        events.append('apply_permissions')
+
+    monkeypatch.setattr(
+        deploy_run,
+        'create_shared_deploy_artifacts',
+        _fake_create_shared_deploy_artifacts,
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_resolve_deploy_permissions',
+        lambda **_kwargs: ('deployers', True),
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_apply_deploy_permissions',
+        _fake_apply_deploy_permissions,
+    )
+
+    deploy_run.run_deploy(
+        argparse.Namespace(
+            quiet=True,
+            pixi='/tmp/pixi',
+            mache_version='1.0.0',
+            mache_fork=None,
+            mache_branch=None,
+            recreate=False,
+            deploy_spack=False,
+            no_spack=False,
+        )
+    )
+
+    assert events == [
+        'pre_pixi',
+        'post_pixi',
+        'pre_spack',
+        'post_spack',
+        'pre_publish',
+        'create_shared',
+        'apply_permissions',
+        'post_publish',
+    ]
+
+
 def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
     machine_config = configparser.ConfigParser()
     machine_config.add_section('deploy')
