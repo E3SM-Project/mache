@@ -509,8 +509,10 @@ itself.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">post_pixi</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pre_spack</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">post_spack</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">post_deploy</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pre_publish</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">post_publish</span></code></p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">post_deploy</span></code> is a deprecated alias for <code class="docutils literal notranslate"><span class="pre">pre_publish</span></code>.</p>
 <p>For debugging, each executed hook also writes a JSON snapshot to
 <code class="docutils literal notranslate"><span class="pre">deploy_tmp/hooks/&lt;stage&gt;_context.json</span></code>. Set <code class="docutils literal notranslate"><span class="pre">hooks.log_context:</span> <span class="pre">true</span></code> in
 <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code> if you want the same snapshot mirrored into the deploy

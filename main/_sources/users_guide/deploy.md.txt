@@ -408,7 +408,10 @@ Known hook stages are:
 - `post_pixi`
 - `pre_spack`
 - `post_spack`
-- `post_deploy`
+- `pre_publish`
+- `post_publish`
+
+`post_deploy` is a deprecated alias for `pre_publish`.
 
 For debugging, each executed hook also writes a JSON snapshot to
 `deploy_tmp/hooks/<stage>_context.json`. Set `hooks.log_context: true` in

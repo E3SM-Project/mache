@@ -126,15 +126,24 @@
 <span class="n">HookCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">&#39;DeployContext&#39;</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 
 
-<span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<span class="n">HOOK_STAGE_ORDER</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="c1"># pixi lifecycle (preferred names)</span>
     <span class="s1">&#39;pre_pixi&#39;</span><span class="p">,</span>
     <span class="s1">&#39;post_pixi&#39;</span><span class="p">,</span>
     <span class="c1"># future spack lifecycle</span>
     <span class="s1">&#39;pre_spack&#39;</span><span class="p">,</span>
     <span class="s1">&#39;post_spack&#39;</span><span class="p">,</span>
-    <span class="c1"># always last (on success by default)</span>
-    <span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span>
+    <span class="c1"># publication lifecycle</span>
+    <span class="s1">&#39;pre_publish&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;post_publish&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">DEPRECATED_HOOK_STAGE_ALIASES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;post_deploy&#39;</span><span class="p">:</span> <span class="s1">&#39;pre_publish&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">HOOK_STAGE_ORDER</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span>
+    <span class="n">DEPRECATED_HOOK_STAGE_ALIASES</span>
 <span class="p">)</span>
 
 
@@ -285,7 +294,8 @@
 <span class="sd">               post_pixi: &quot;post_pixi&quot;      # optional</span>
 <span class="sd">               pre_spack: &quot;pre_spack&quot;      # optional</span>
 <span class="sd">               post_spack: &quot;post_spack&quot;    # optional</span>
-<span class="sd">               post_deploy: &quot;post_deploy&quot;  # optional</span>
+<span class="sd">               pre_publish: &quot;pre_publish&quot;  # optional</span>
+<span class="sd">               post_publish: &quot;post_publish&quot;  # optional</span>
 
 <span class="sd">        If the ``hooks`` section is missing, hooks are considered disabled.</span>
 
@@ -347,6 +357,11 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
+    <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="n">_normalize_entrypoints_config</span><span class="p">(</span>
+        <span class="n">entrypoints_cfg</span><span class="o">=</span><span class="n">entrypoints_cfg</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">repo_root_abs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)))</span>
     <span class="n">hooks_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root_abs</span><span class="p">,</span> <span class="n">file_rel</span><span class="p">))</span>
 
@@ -358,7 +373,7 @@
     <span class="n">module</span> <span class="o">=</span> <span class="n">_load_module_from_path</span><span class="p">(</span><span class="n">hooks_path</span><span class="o">=</span><span class="n">hooks_path</span><span class="p">)</span>
 
     <span class="n">resolved</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HookCallable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">HOOK_STAGE_ORDER</span><span class="p">:</span>
         <span class="n">func_name</span> <span class="o">=</span> <span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">func_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -398,6 +413,55 @@
         <span class="n">log_context</span><span class="o">=</span><span class="n">log_context</span><span class="p">,</span>
     <span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_entrypoints_config</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">entrypoints_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">HOOK_STAGE_ORDER</span><span class="p">:</span>
+        <span class="n">func_name</span> <span class="o">=</span> <span class="n">_normalize_entrypoint_name</span><span class="p">(</span><span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">func_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">normalized</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span> <span class="o">=</span> <span class="n">func_name</span>
+
+    <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">canonical_stage</span> <span class="ow">in</span> <span class="n">DEPRECATED_HOOK_STAGE_ALIASES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">alias_func_name</span> <span class="o">=</span> <span class="n">_normalize_entrypoint_name</span><span class="p">(</span>
+            <span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">alias_func_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">canonical_stage</span> <span class="ow">in</span> <span class="n">normalized</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;hooks.entrypoints.&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s1"> is a deprecated alias for &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;hooks.entrypoints.</span><span class="si">{</span><span class="n">canonical_stage</span><span class="si">}</span><span class="s1">; &#39;</span>
+                <span class="s1">&#39;do not configure both.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> is deprecated; use &#39;</span>
+            <span class="s1">&#39;hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> instead.&#39;</span><span class="p">,</span>
+            <span class="n">alias</span><span class="p">,</span>
+            <span class="n">canonical_stage</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">normalized</span><span class="p">[</span><span class="n">canonical_stage</span><span class="p">]</span> <span class="o">=</span> <span class="n">alias_func_name</span>
+
+    <span class="k">return</span> <span class="n">normalized</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_entrypoint_name</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">func_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">func_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">func_name</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_module_from_path</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">hooks_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>

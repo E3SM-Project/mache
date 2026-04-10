@@ -204,7 +204,7 @@
     <span class="n">work_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="s1">&#39;deploy_tmp&#39;</span><span class="p">)</span>
 
     <span class="c1"># Hooks are optional and only run during `mache deploy run`.</span>
-    <span class="c1"># Behavior: `post_deploy` is invoked only on success.</span>
+    <span class="c1"># Publication hooks are invoked only on success.</span>
     <span class="n">hook_registry</span> <span class="o">=</span> <span class="n">load_hooks</span><span class="p">(</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
         <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
@@ -476,7 +476,7 @@
     <span class="p">)</span>
     <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;load_scripts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_script_paths</span>
 
-    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_deploy&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;pre_publish&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
 
     <span class="n">shared_artifacts</span> <span class="o">=</span> <span class="n">create_shared_deploy_artifacts</span><span class="p">(</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
@@ -511,7 +511,9 @@
         <span class="n">group</span><span class="o">=</span><span class="n">permissions_group</span><span class="p">,</span>
         <span class="n">world_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
         <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">&#39;post_publish&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
 
 
 
