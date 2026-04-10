@@ -88,6 +88,31 @@ def test_check_call_list_commands_use_direct_popen_without_shell(
     assert 'executable' not in recorded['kwargs']
 
 
+def test_check_call_logs_effective_working_directory(
+    monkeypatch, tmp_path: Path
+):
+    working_dir = tmp_path / 'workdir'
+    working_dir.mkdir()
+
+    def fake_popen(commands, **kwargs):
+        return _FakeProcess(stdout=['hello\n'])
+
+    monkeypatch.setattr(bootstrap.subprocess, 'Popen', fake_popen)
+
+    log_filename = tmp_path / 'bootstrap.log'
+    bootstrap.check_call(
+        ['pixi', 'install'],
+        str(log_filename),
+        quiet=True,
+        capture_output=True,
+        cwd=working_dir,
+    )
+
+    log_text = log_filename.read_text(encoding='utf-8')
+    assert f' Running from:\n   {working_dir}\n' in log_text
+    assert ' Running:\n   pixi install\n' in log_text
+
+
 def test_build_pixi_env_unsets_nested_pixi_variables(monkeypatch):
     monkeypatch.setenv('PIXI_PROJECT_MANIFEST', 'manifest')
     monkeypatch.setenv('PIXI_PROJECT_ROOT', 'root')

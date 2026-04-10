@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import logging
 import os
 import uuid
@@ -78,11 +79,14 @@ class HookRegistry:
 
     file_path: str | None
     entrypoints: dict[str, HookCallable]
+    log_context: bool = False
 
     def run_hook(self, stage: str, context: DeployContext) -> None:
         """Run a hook stage if it is defined.
 
         If a hook returns a mapping, it is merged into ``context.runtime``.
+        After the hook finishes, a JSON snapshot of the context is written
+        under ``deploy_tmp/hooks`` to aid debugging.
         """
 
         func = self.entrypoints.get(stage)
@@ -99,18 +103,41 @@ class HookRegistry:
             func_name,
         )
 
+        runtime_before = _json_ready(context.runtime)
+        result: Any = None
+        error: Exception | None = None
+
         try:
             result = func(context)
         except Exception as exc:  # pragma: no cover (covered indirectly)
+            error = exc
+
+        if isinstance(result, dict) and result:
+            _deep_update(context.runtime, result)
+
+        snapshot = _build_context_snapshot(
+            stage=stage,
+            context=context,
+            file_path=file_display,
+            func_name=func_name,
+            runtime_before=runtime_before,
+            hook_result=result,
+            error=error,
+        )
+        _persist_context_snapshot(
+            stage=stage,
+            context=context,
+            snapshot=snapshot,
+            log_context=self.log_context,
+        )
+
+        if error is not None:
             raise RuntimeError(
                 (
                     f'Hook failed: stage={stage} func={func_name} '
                     f'file={file_display}'
                 )
-            ) from exc
-
-        if isinstance(result, dict) and result:
-            _deep_update(context.runtime, result)
+            ) from error
 
 
 def _deep_update(dst: dict[str, Any], src: dict[str, Any]) -> None:
@@ -146,6 +173,7 @@ def load_hooks(
 
            hooks:
              file: "deploy/hooks.py"  # default
+             log_context: false        # optional
              entrypoints:
                pre_pixi: "pre_pixi"        # optional
                post_pixi: "post_pixi"      # optional
@@ -191,6 +219,10 @@ def load_hooks(
         file_rel = 'deploy/hooks.py'
     if not isinstance(file_rel, str):
         raise ValueError('hooks.file must be a string')
+
+    log_context = hooks_cfg.get('log_context', False)
+    if not isinstance(log_context, bool):
+        raise ValueError('hooks.log_context must be a boolean')
 
     entrypoints_cfg = hooks_cfg.get('entrypoints', {})
     if entrypoints_cfg is None:
@@ -254,7 +286,11 @@ def load_hooks(
             hooks_path,
         )
 
-    return HookRegistry(file_path=hooks_path, entrypoints=resolved)
+    return HookRegistry(
+        file_path=hooks_path,
+        entrypoints=resolved,
+        log_context=log_context,
+    )
 
 
 def _load_module_from_path(*, hooks_path: str) -> ModuleType:
@@ -280,3 +316,104 @@ def configparser_to_nested_dict(
     for section in cfg.sections():
         out[section] = {k: cfg.get(section, k) for k in cfg[section]}
     return out
+
+
+def _build_context_snapshot(
+    *,
+    stage: str,
+    context: DeployContext,
+    file_path: str,
+    func_name: str,
+    runtime_before: Any,
+    hook_result: Any,
+    error: Exception | None,
+) -> dict[str, Any]:
+    """Build a JSON-friendly context snapshot for hook debugging."""
+
+    snapshot: dict[str, Any] = {
+        'stage': stage,
+        'status': 'failed' if error is not None else 'ok',
+        'file': file_path,
+        'function': func_name,
+        'context': {
+            'software': context.software,
+            'machine': context.machine,
+            'repo_root': context.repo_root,
+            'deploy_dir': context.deploy_dir,
+            'work_dir': context.work_dir,
+            'config': _json_ready(context.config),
+            'pins': _json_ready(context.pins),
+            'machine_config': configparser_to_nested_dict(
+                context.machine_config
+            ),
+            'args': _json_ready(vars(context.args)),
+            'runtime_before': runtime_before,
+            'runtime_after': _json_ready(context.runtime),
+        },
+    }
+
+    if hook_result is not None:
+        snapshot['hook_result'] = _json_ready(hook_result)
+
+    if error is not None:
+        snapshot['error'] = {
+            'type': type(error).__name__,
+            'message': str(error),
+        }
+
+    return snapshot
+
+
+def _persist_context_snapshot(
+    *,
+    stage: str,
+    context: DeployContext,
+    snapshot: dict[str, Any],
+    log_context: bool,
+) -> None:
+    """Write and optionally log a hook context snapshot."""
+
+    snapshot_dir = os.path.join(context.work_dir, 'hooks')
+    snapshot_path = os.path.join(snapshot_dir, f'{stage}_context.json')
+
+    try:
+        os.makedirs(snapshot_dir, exist_ok=True)
+        with open(snapshot_path, 'w', encoding='utf-8') as handle:
+            json.dump(snapshot, handle, indent=2, sort_keys=True)
+            handle.write('\n')
+    except OSError as exc:  # pragma: no cover - unlikely filesystem error
+        context.logger.warning(
+            'Failed to write hook context snapshot stage=%s path=%s: %s',
+            stage,
+            snapshot_path,
+            exc,
+        )
+        return
+
+    context.logger.info(
+        'Wrote hook context snapshot stage=%s path=%s',
+        stage,
+        snapshot_path,
+    )
+    if log_context:
+        context.logger.info(
+            'Hook context snapshot stage=%s\n%s',
+            stage,
+            json.dumps(snapshot, indent=2, sort_keys=True),
+        )
+
+
+def _json_ready(value: Any) -> Any:
+    """Convert a value into a JSON-friendly structure."""
+
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
+    if isinstance(value, os.PathLike):
+        return os.fspath(value)
+    if isinstance(value, dict):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, set):
+        return [_json_ready(item) for item in sorted(value, key=repr)]
+    return repr(value)

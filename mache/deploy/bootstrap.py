@@ -80,7 +80,81 @@ def check_call(
         The result of the command. When ``capture_output`` is True, the
         combined output is available as ``result.stdout``.
     """
+    _validate_check_call_kwargs(
+        capture_output=capture_output,
+        quiet=quiet,
+        popen_kwargs=popen_kwargs,
+    )
 
+    # Determine whether stdout is text or bytes (match subprocess defaults,
+    # but keep this wrapper text-friendly by default).
+    text, popen_kwargs = _normalize_popen_text_kwargs(popen_kwargs)
+    bufsize = popen_kwargs.get('bufsize', 1 if text else 0)
+    print_command = _format_check_call_message(
+        commands=commands, popen_kwargs=popen_kwargs
+    )
+
+    os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
+
+    log_mode = 'a' if text else 'ab'
+    log_encoding = 'utf-8' if text else None
+
+    _write_check_call_message(
+        log_filename=log_filename,
+        text=text,
+        log_mode=log_mode,
+        log_encoding=log_encoding,
+        print_command=print_command,
+    )
+
+    if not quiet:
+        print(print_command)
+
+    base_popen_kwargs = _build_check_call_popen_kwargs(
+        commands=commands,
+        text=text,
+        bufsize=bufsize,
+        popen_kwargs=popen_kwargs,
+    )
+
+    if capture_output or not quiet:
+        process, stdout_data = _run_check_call_with_streaming(
+            commands=commands,
+            log_filename=log_filename,
+            log_mode=log_mode,
+            log_encoding=log_encoding,
+            quiet=quiet,
+            capture_output=capture_output,
+            text=text,
+            base_popen_kwargs=base_popen_kwargs,
+        )
+    else:
+        process = _run_check_call_with_log_only(
+            commands=commands,
+            log_filename=log_filename,
+            log_mode=log_mode,
+            log_encoding=log_encoding,
+            base_popen_kwargs=base_popen_kwargs,
+        )
+        stdout_data = None
+
+    result = subprocess.CompletedProcess(
+        args=commands,
+        returncode=process.returncode,
+        stdout=stdout_data,
+        stderr=None,
+    )
+
+    if check and process.returncode != 0:
+        raise subprocess.CalledProcessError(
+            process.returncode, commands, output=stdout_data
+        )
+
+    return result
+
+
+def _validate_check_call_kwargs(*, capture_output, quiet, popen_kwargs):
+    """Validate combinations of wrapper and subprocess kwargs."""
     if capture_output and (
         'stdout' in popen_kwargs
         or 'stderr' in popen_kwargs
@@ -100,41 +174,45 @@ def check_call(
             'logging/tee behavior.'
         )
 
-    # Determine whether stdout is text or bytes (match subprocess defaults,
-    # but keep this wrapper text-friendly by default).
-    text, popen_kwargs = _normalize_popen_text_kwargs(popen_kwargs)
-    bufsize = popen_kwargs.get('bufsize', 1 if text else 0)
 
-    # Echo the commands being run (like a lightweight trace) so the log is
-    # self-contained and debuggable.
-    # Keep nested quoted commands intact (e.g. bash -c '... && ...').
+def _format_check_call_message(*, commands, popen_kwargs):
+    """Format the command banner logged before subprocess execution."""
+    working_dir = popen_kwargs.get('cwd')
+    if working_dir is None:
+        working_dir = os.getcwd()
+    else:
+        working_dir = os.fspath(working_dir)
+
+    print_command = _format_check_call_command(commands)
+    return (
+        f'\n Running from:\n   {working_dir}\n Running:\n   {print_command}\n'
+    )
+
+
+def _format_check_call_command(commands):
+    """Render commands for readable logging without changing execution."""
     if isinstance(commands, str):
         command_list = _split_shell_on_andand(commands)
         if command_list:
-            print_command = '\n   '.join(command_list)
-        else:
-            print_command = commands
-    else:
-        print_command = ' '.join(shlex.quote(str(arg)) for arg in commands)
-    print_command = f'\n Running:\n   {print_command}\n'
+            return '\n   '.join(command_list)
+        return commands
 
-    os.makedirs(os.path.dirname(os.path.abspath(log_filename)), exist_ok=True)
+    return ' '.join(shlex.quote(str(arg)) for arg in commands)
 
-    log_mode = 'a' if text else 'ab'
-    log_encoding = 'utf-8' if text else None
 
-    # append to log file
+def _write_check_call_message(
+    *, log_filename, text, log_mode, log_encoding, print_command
+):
+    """Write the command banner to the log file."""
     with open(log_filename, log_mode, encoding=log_encoding) as log_file:
         if text:
             log_file.write(print_command + '\n')
         else:
             log_file.write((print_command + '\n').encode('utf-8'))
 
-    if not quiet:
-        print(print_command)
 
-    stdout_data = None
-
+def _build_check_call_popen_kwargs(*, commands, text, bufsize, popen_kwargs):
+    """Build the Popen kwargs used by check_call()."""
     base_popen_kwargs = {
         'universal_newlines': text,
         'bufsize': bufsize,
@@ -148,82 +226,115 @@ def check_call(
         )
     else:
         base_popen_kwargs.setdefault('shell', False)
-    # Allow callers to override defaults.
+
     base_popen_kwargs.update(popen_kwargs)
+    return base_popen_kwargs
 
-    if capture_output or not quiet:
-        # We'll stream stdout ourselves so we can tee to the log and terminal
-        # and optionally capture output.
-        base_popen_kwargs.setdefault('stdout', subprocess.PIPE)
-        base_popen_kwargs.setdefault('stderr', subprocess.STDOUT)
 
-        with open(log_filename, log_mode, encoding=log_encoding) as log_file:
-            process = subprocess.Popen(commands, **base_popen_kwargs)
+def _run_check_call_with_streaming(
+    *,
+    commands,
+    log_filename,
+    log_mode,
+    log_encoding,
+    quiet,
+    capture_output,
+    text,
+    base_popen_kwargs,
+):
+    """Run a subprocess while teeing output to the log and terminal."""
+    popen_kwargs = base_popen_kwargs.copy()
+    popen_kwargs.setdefault('stdout', subprocess.PIPE)
+    popen_kwargs.setdefault('stderr', subprocess.STDOUT)
 
-            assert process.stdout is not None
-            captured_chunks = []
+    with open(log_filename, log_mode, encoding=log_encoding) as log_file:
+        process = subprocess.Popen(commands, **popen_kwargs)
+        stdout_data = _stream_check_call_output(
+            process=process,
+            log_file=log_file,
+            quiet=quiet,
+            capture_output=capture_output,
+            text=text,
+        )
+        process.wait()
 
-            for chunk in process.stdout:
-                # chunk is str (text=True) or bytes (text=False)
-                if capture_output:
-                    captured_chunks.append(chunk)
+    return process, stdout_data
 
-                if text:
-                    log_file.write(chunk)
-                    log_file.flush()
-                    if not quiet:
-                        sys.stdout.write(chunk)
-                        sys.stdout.flush()
-                else:
-                    if isinstance(chunk, str):
-                        chunk_bytes = chunk.encode('utf-8')
-                    else:
-                        chunk_bytes = chunk
 
-                    log_file.write(chunk_bytes)
-                    log_file.flush()
-                    if not quiet:
-                        sys.stdout.buffer.write(chunk_bytes)
-                        sys.stdout.buffer.flush()
+def _run_check_call_with_log_only(
+    *, commands, log_filename, log_mode, log_encoding, base_popen_kwargs
+):
+    """Run a subprocess with stdout directed only to the log file."""
+    popen_kwargs = base_popen_kwargs.copy()
+    popen_kwargs.setdefault('stdout', None)
+    popen_kwargs.setdefault('stderr', subprocess.STDOUT)
 
-            process.wait()
+    with open(log_filename, log_mode, encoding=log_encoding) as log_file:
+        popen_kwargs['stdout'] = log_file
+        process = subprocess.Popen(commands, **popen_kwargs)
+        process.wait()
 
+    return process
+
+
+def _stream_check_call_output(
+    *, process, log_file, quiet, capture_output, text
+):
+    """Stream subprocess output to the log and optionally capture it."""
+    assert process.stdout is not None
+
+    captured_chunks = []
+    for chunk in process.stdout:
         if capture_output:
-            if text:
-                stdout_data = ''.join(
-                    chunk if isinstance(chunk, str) else chunk.decode('utf-8')
-                    for chunk in captured_chunks
-                )
-            else:
-                stdout_bytes = b''.join(
-                    chunk.encode('utf-8') if isinstance(chunk, str) else chunk
-                    for chunk in captured_chunks
-                )
-                # Keep this wrapper text-friendly: even when text=False, decode
-                # captured output so stdout_data remains str.
-                stdout_data = stdout_bytes.decode('utf-8', errors='replace')
-    else:
-        # Fast path: let the subprocess write directly to the log.
-        base_popen_kwargs.setdefault('stdout', None)
-        base_popen_kwargs.setdefault('stderr', subprocess.STDOUT)
-        with open(log_filename, log_mode, encoding=log_encoding) as log_file:
-            base_popen_kwargs['stdout'] = log_file
-            process = subprocess.Popen(commands, **base_popen_kwargs)
-            process.wait()
-
-    result = subprocess.CompletedProcess(
-        args=commands,
-        returncode=process.returncode,
-        stdout=stdout_data,
-        stderr=None,
-    )
-
-    if check and process.returncode != 0:
-        raise subprocess.CalledProcessError(
-            process.returncode, commands, output=stdout_data
+            captured_chunks.append(chunk)
+        _write_streamed_output(
+            chunk=chunk,
+            log_file=log_file,
+            quiet=quiet,
+            text=text,
         )
 
-    return result
+    if not capture_output:
+        return None
+
+    return _decode_captured_chunks(captured_chunks, text=text)
+
+
+def _write_streamed_output(*, chunk, log_file, quiet, text):
+    """Write one streamed subprocess chunk to the log and terminal."""
+    if text:
+        log_file.write(chunk)
+        log_file.flush()
+        if not quiet:
+            sys.stdout.write(chunk)
+            sys.stdout.flush()
+        return
+
+    chunk_bytes = _to_bytes(chunk)
+    log_file.write(chunk_bytes)
+    log_file.flush()
+    if not quiet:
+        sys.stdout.buffer.write(chunk_bytes)
+        sys.stdout.buffer.flush()
+
+
+def _decode_captured_chunks(captured_chunks, *, text):
+    """Normalize captured subprocess output to str."""
+    if text:
+        return ''.join(
+            chunk if isinstance(chunk, str) else chunk.decode('utf-8')
+            for chunk in captured_chunks
+        )
+
+    stdout_bytes = b''.join(_to_bytes(chunk) for chunk in captured_chunks)
+    return stdout_bytes.decode('utf-8', errors='replace')
+
+
+def _to_bytes(chunk):
+    """Normalize a subprocess output chunk to bytes."""
+    if isinstance(chunk, str):
+        return chunk.encode('utf-8')
+    return chunk
 
 
 def check_call_with_retries(
