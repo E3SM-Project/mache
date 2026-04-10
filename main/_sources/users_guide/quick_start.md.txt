@@ -72,11 +72,13 @@ you don't need to provide the machine name. It can be discovered automatically:
 
 - andes
 - aurora
+- bebop
 - chrysalis
 - chicoma-cpu
 - compy
 - dane
 - frontier
+- improv
 - pm-cpu
 - polaris
 
