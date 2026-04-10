@@ -152,7 +152,9 @@
 <dt class="sig sig-object py" id="mache.deploy.hooks.HookRegistry.run_hook">
 <span class="sig-prename descclassname"><span class="pre">HookRegistry.</span></span><span class="sig-name descname"><span class="pre">run_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mache.deploy.hooks.DeployContext.html#mache.deploy.hooks.DeployContext" title="mache.deploy.hooks.DeployContext"><span class="pre">DeployContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../../_modules/mache/deploy/hooks.html#HookRegistry.run_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.deploy.hooks.HookRegistry.run_hook" title="Link to this definition"></a></dt>
 <dd><p>Run a hook stage if it is defined.</p>
-<p>If a hook returns a mapping, it is merged into <code class="docutils literal notranslate"><span class="pre">context.runtime</span></code>.</p>
+<p>If a hook returns a mapping, it is merged into <code class="docutils literal notranslate"><span class="pre">context.runtime</span></code>.
+After the hook finishes, a JSON snapshot of the context is written
+under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/hooks</span></code> to aid debugging.</p>
 </dd></dl>
 
 </section>

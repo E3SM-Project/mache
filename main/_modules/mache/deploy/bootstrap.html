@@ -177,7 +177,82 @@
 <span class="sd">        The result of the command. When ``capture_output`` is True, the</span>
 <span class="sd">        combined output is available as ``result.stdout``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_validate_check_call_kwargs</span><span class="p">(</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="n">capture_output</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="n">popen_kwargs</span><span class="o">=</span><span class="n">popen_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
 
+    <span class="c1"># Determine whether stdout is text or bytes (match subprocess defaults,</span>
+    <span class="c1"># but keep this wrapper text-friendly by default).</span>
+    <span class="n">text</span><span class="p">,</span> <span class="n">popen_kwargs</span> <span class="o">=</span> <span class="n">_normalize_popen_text_kwargs</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
+    <span class="n">bufsize</span> <span class="o">=</span> <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bufsize&#39;</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">print_command</span> <span class="o">=</span> <span class="n">_format_check_call_message</span><span class="p">(</span>
+        <span class="n">commands</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span> <span class="n">popen_kwargs</span><span class="o">=</span><span class="n">popen_kwargs</span>
+    <span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">log_mode</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="s1">&#39;ab&#39;</span>
+    <span class="n">log_encoding</span> <span class="o">=</span> <span class="s1">&#39;utf-8&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="n">_write_check_call_message</span><span class="p">(</span>
+        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">log_mode</span><span class="o">=</span><span class="n">log_mode</span><span class="p">,</span>
+        <span class="n">log_encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">,</span>
+        <span class="n">print_command</span><span class="o">=</span><span class="n">print_command</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">print_command</span><span class="p">)</span>
+
+    <span class="n">base_popen_kwargs</span> <span class="o">=</span> <span class="n">_build_check_call_popen_kwargs</span><span class="p">(</span>
+        <span class="n">commands</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">bufsize</span><span class="o">=</span><span class="n">bufsize</span><span class="p">,</span>
+        <span class="n">popen_kwargs</span><span class="o">=</span><span class="n">popen_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">capture_output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="n">process</span><span class="p">,</span> <span class="n">stdout_data</span> <span class="o">=</span> <span class="n">_run_check_call_with_streaming</span><span class="p">(</span>
+            <span class="n">commands</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">log_mode</span><span class="o">=</span><span class="n">log_mode</span><span class="p">,</span>
+            <span class="n">log_encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="n">capture_output</span><span class="o">=</span><span class="n">capture_output</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+            <span class="n">base_popen_kwargs</span><span class="o">=</span><span class="n">base_popen_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">_run_check_call_with_log_only</span><span class="p">(</span>
+            <span class="n">commands</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">log_mode</span><span class="o">=</span><span class="n">log_mode</span><span class="p">,</span>
+            <span class="n">log_encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">,</span>
+            <span class="n">base_popen_kwargs</span><span class="o">=</span><span class="n">base_popen_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">stdout_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
+        <span class="n">returncode</span><span class="o">=</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span>
+        <span class="n">stdout</span><span class="o">=</span><span class="n">stdout_data</span><span class="p">,</span>
+        <span class="n">stderr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">(</span>
+            <span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">stdout_data</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_check_call_kwargs</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">capture_output</span><span class="p">,</span> <span class="n">quiet</span><span class="p">,</span> <span class="n">popen_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate combinations of wrapper and subprocess kwargs.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">capture_output</span> <span class="ow">and</span> <span class="p">(</span>
         <span class="s1">&#39;stdout&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
         <span class="ow">or</span> <span class="s1">&#39;stderr&#39;</span> <span class="ow">in</span> <span class="n">popen_kwargs</span>
@@ -197,41 +272,45 @@
             <span class="s1">&#39;logging/tee behavior.&#39;</span>
         <span class="p">)</span>
 
-    <span class="c1"># Determine whether stdout is text or bytes (match subprocess defaults,</span>
-    <span class="c1"># but keep this wrapper text-friendly by default).</span>
-    <span class="n">text</span><span class="p">,</span> <span class="n">popen_kwargs</span> <span class="o">=</span> <span class="n">_normalize_popen_text_kwargs</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
-    <span class="n">bufsize</span> <span class="o">=</span> <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bufsize&#39;</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
 
-    <span class="c1"># Echo the commands being run (like a lightweight trace) so the log is</span>
-    <span class="c1"># self-contained and debuggable.</span>
-    <span class="c1"># Keep nested quoted commands intact (e.g. bash -c &#39;... &amp;&amp; ...&#39;).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_check_call_message</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">popen_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format the command banner logged before subprocess execution.&quot;&quot;&quot;</span>
+    <span class="n">working_dir</span> <span class="o">=</span> <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cwd&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">working_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">working_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">working_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">working_dir</span><span class="p">)</span>
+
+    <span class="n">print_command</span> <span class="o">=</span> <span class="n">_format_check_call_command</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> Running from:</span><span class="se">\n</span><span class="s1">   </span><span class="si">{</span><span class="n">working_dir</span><span class="si">}</span><span class="se">\n</span><span class="s1"> Running:</span><span class="se">\n</span><span class="s1">   </span><span class="si">{</span><span class="n">print_command</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_check_call_command</span><span class="p">(</span><span class="n">commands</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render commands for readable logging without changing execution.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">command_list</span> <span class="o">=</span> <span class="n">_split_shell_on_andand</span><span class="p">(</span><span class="n">commands</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">command_list</span><span class="p">:</span>
-            <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command_list</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">print_command</span> <span class="o">=</span> <span class="n">commands</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">print_command</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">commands</span><span class="p">)</span>
-    <span class="n">print_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> Running:</span><span class="se">\n</span><span class="s1">   </span><span class="si">{</span><span class="n">print_command</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command_list</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">commands</span>
 
-    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_filename</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">commands</span><span class="p">)</span>
 
-    <span class="n">log_mode</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="s1">&#39;ab&#39;</span>
-    <span class="n">log_encoding</span> <span class="o">=</span> <span class="s1">&#39;utf-8&#39;</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="c1"># append to log file</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_check_call_message</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">log_encoding</span><span class="p">,</span> <span class="n">print_command</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the command banner to the log file.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
             <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">print_command</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">print_command</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">print_command</span><span class="p">)</span>
 
-    <span class="n">stdout_data</span> <span class="o">=</span> <span class="kc">None</span>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_check_call_popen_kwargs</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">,</span> <span class="n">popen_kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Popen kwargs used by check_call().&quot;&quot;&quot;</span>
     <span class="n">base_popen_kwargs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;universal_newlines&#39;</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
         <span class="s1">&#39;bufsize&#39;</span><span class="p">:</span> <span class="n">bufsize</span><span class="p">,</span>
@@ -245,83 +324,115 @@
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;shell&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># Allow callers to override defaults.</span>
+
     <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">popen_kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base_popen_kwargs</span>
 
-    <span class="k">if</span> <span class="n">capture_output</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-        <span class="c1"># We&#39;ll stream stdout ourselves so we can tee to the log and terminal</span>
-        <span class="c1"># and optionally capture output.</span>
-        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
 
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
-            <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">base_popen_kwargs</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_check_call_with_streaming</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">commands</span><span class="p">,</span>
+    <span class="n">log_filename</span><span class="p">,</span>
+    <span class="n">log_mode</span><span class="p">,</span>
+    <span class="n">log_encoding</span><span class="p">,</span>
+    <span class="n">quiet</span><span class="p">,</span>
+    <span class="n">capture_output</span><span class="p">,</span>
+    <span class="n">text</span><span class="p">,</span>
+    <span class="n">base_popen_kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a subprocess while teeing output to the log and terminal.&quot;&quot;&quot;</span>
+    <span class="n">popen_kwargs</span> <span class="o">=</span> <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+    <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
 
-            <span class="k">assert</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">captured_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">)</span>
+        <span class="n">stdout_data</span> <span class="o">=</span> <span class="n">_stream_check_call_output</span><span class="p">(</span>
+            <span class="n">process</span><span class="o">=</span><span class="n">process</span><span class="p">,</span>
+            <span class="n">log_file</span><span class="o">=</span><span class="n">log_file</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="n">capture_output</span><span class="o">=</span><span class="n">capture_output</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 
-            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
-                <span class="c1"># chunk is str (text=True) or bytes (text=False)</span>
-                <span class="k">if</span> <span class="n">capture_output</span><span class="p">:</span>
-                    <span class="n">captured_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">process</span><span class="p">,</span> <span class="n">stdout_data</span>
 
-                <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
-                    <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                    <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                        <span class="n">chunk_bytes</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">chunk_bytes</span> <span class="o">=</span> <span class="n">chunk</span>
 
-                    <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
-                    <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
-                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_check_call_with_log_only</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">log_encoding</span><span class="p">,</span> <span class="n">base_popen_kwargs</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a subprocess with stdout directed only to the log file.&quot;&quot;&quot;</span>
+    <span class="n">popen_kwargs</span> <span class="o">=</span> <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
 
-            <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="n">popen_kwargs</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_file</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">)</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 
+    <span class="k">return</span> <span class="n">process</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_stream_check_call_output</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">process</span><span class="p">,</span> <span class="n">log_file</span><span class="p">,</span> <span class="n">quiet</span><span class="p">,</span> <span class="n">capture_output</span><span class="p">,</span> <span class="n">text</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream subprocess output to the log and optionally capture it.&quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="n">captured_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">capture_output</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
-                <span class="n">stdout_data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="n">chunk</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">chunk</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">stdout_bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">chunk</span>
-                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span>
-                <span class="p">)</span>
-                <span class="c1"># Keep this wrapper text-friendly: even when text=False, decode</span>
-                <span class="c1"># captured output so stdout_data remains str.</span>
-                <span class="n">stdout_data</span> <span class="o">=</span> <span class="n">stdout_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Fast path: let the subprocess write directly to the log.</span>
-        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">base_popen_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">log_mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">log_encoding</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
-            <span class="n">base_popen_kwargs</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_file</span>
-            <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="o">**</span><span class="n">base_popen_kwargs</span><span class="p">)</span>
-            <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-
-    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">(</span>
-        <span class="n">args</span><span class="o">=</span><span class="n">commands</span><span class="p">,</span>
-        <span class="n">returncode</span><span class="o">=</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span>
-        <span class="n">stdout</span><span class="o">=</span><span class="n">stdout_data</span><span class="p">,</span>
-        <span class="n">stderr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">check</span> <span class="ow">and</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">(</span>
-            <span class="n">process</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span> <span class="n">commands</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">stdout_data</span>
+            <span class="n">captured_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="n">_write_streamed_output</span><span class="p">(</span>
+            <span class="n">chunk</span><span class="o">=</span><span class="n">chunk</span><span class="p">,</span>
+            <span class="n">log_file</span><span class="o">=</span><span class="n">log_file</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">result</span></div>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">capture_output</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
+    <span class="k">return</span> <span class="n">_decode_captured_chunks</span><span class="p">(</span><span class="n">captured_chunks</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_streamed_output</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">log_file</span><span class="p">,</span> <span class="n">quiet</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write one streamed subprocess chunk to the log and terminal.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+        <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="n">chunk_bytes</span> <span class="o">=</span> <span class="n">_to_bytes</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
+    <span class="n">log_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_bytes</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decode_captured_chunks</span><span class="p">(</span><span class="n">captured_chunks</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize captured subprocess output to str.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">chunk</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">chunk</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span>
+        <span class="p">)</span>
+
+    <span class="n">stdout_bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_to_bytes</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">captured_chunks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stdout_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_bytes</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a subprocess output chunk to bytes.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">chunk</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">chunk</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">check_call_with_retries</span><span class="p">(</span>
