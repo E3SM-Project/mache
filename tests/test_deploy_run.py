@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -463,6 +464,54 @@ def test_write_load_script_uses_user_pixi_when_configured_for_path_lookup(
     )
     assert 'command -v pixi' in script_text
     assert 'Set PIXI to a pixi executable path' in script_text
+    assert '"${PIXI}" shell-hook --as-is -s bash -m' in script_text
+    assert '"${PIXI}" run --as-is -m' in script_text
+
+
+def test_load_script_fails_before_calling_pixi_when_env_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+
+    marker = tmp_path / 'pixi-called.txt'
+    pixi_exe = tmp_path / 'bin' / 'pixi'
+    pixi_exe.parent.mkdir(parents=True, exist_ok=True)
+    pixi_exe.write_text(
+        f'#!/bin/sh\nprintf called > {marker}\nexit 99\n',
+        encoding='utf-8',
+    )
+    pixi_exe.chmod(0o755)
+
+    compute_prefix = tmp_path / 'compute'
+    compute_prefix.mkdir()
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(compute_prefix),
+        login_env=None,
+        pixi_exe=str(pixi_exe),
+        branch_path=str(tmp_path),
+        load_script_pixi_exe=_explicit_load_script_pixi(str(pixi_exe)),
+        software='e3sm-unified',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine=None,
+        compute_pixi_mpi='nompi',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+
+    result = subprocess.run(
+        ['bash', '-lc', f'source {script_path!s}'],
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 1
+    assert 'deployed pixi environment not found' in result.stderr
+    assert str(compute_prefix / '.pixi' / 'envs' / 'default') in result.stderr
+    assert not marker.exists()
 
 
 def test_write_load_script_without_login_env_skips_compute_detection(
