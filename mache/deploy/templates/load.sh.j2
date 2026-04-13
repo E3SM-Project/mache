@@ -114,6 +114,32 @@ export PIXI_TOML="${MACHE_DEPLOY_ACTIVE_PIXI_TOML}"
 export MACHE_DEPLOY_TARGET_LOAD_SNIPPET="${MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET}"
 export {{ software_upper }}_PIXI_MPI="${MACHE_DEPLOY_ACTIVE_PIXI_MPI}"
 
+_mache_deploy_active_env_prefix() {
+  printf '%s\n' "${MACHE_DEPLOY_ACTIVE_PIXI_PREFIX}/.pixi/envs/default"
+}
+
+_mache_deploy_require_active_env() {
+  local active_env_prefix
+  local pixi_metadata
+
+  active_env_prefix="$(_mache_deploy_active_env_prefix)"
+  pixi_metadata="${active_env_prefix}/conda-meta/pixi"
+
+  if [[ ! -d "${active_env_prefix}" ]]; then
+    echo "ERROR: deployed pixi environment not found." >&2
+    echo "  Expected: ${active_env_prefix}" >&2
+    return 1
+  fi
+
+  if [[ ! -f "${pixi_metadata}" ]]; then
+    echo "ERROR: deployed pixi environment metadata not found." >&2
+    echo "  Expected: ${pixi_metadata}" >&2
+    return 1
+  fi
+}
+
+_mache_deploy_require_active_env || return 1
+
 # Optional: verify the deployed software version matches the runtime version.
 #
 # The probe command (if set) is executed in the target pixi environment via
@@ -131,7 +157,7 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
   probe_output="$(
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
       -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
-      "${PIXI}" run -m "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}" -- \
+      "${PIXI}" run --as-is -m "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}" -- \
       bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
   )"
   status=$?
@@ -167,9 +193,12 @@ fi
 
 echo "loading ${MACHE_DEPLOY_ACTIVE_ENV_KIND} pixi env..."
 # Use `shell-hook` (not `pixi run`) so activation applies to this shell.
+# Shared deployments can be read-only for downstream users, so avoid any
+# lockfile or environment writes during activation.
 eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
   -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
-  "${PIXI}" shell-hook -s bash -m "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}")"
+  "${PIXI}" shell-hook --as-is -s bash -m \
+  "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}")"
 echo "   pixi env loaded."
 
 # Spack activation (optional)
