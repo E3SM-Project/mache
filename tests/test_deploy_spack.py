@@ -158,6 +158,21 @@ def test_load_existing_spack_envs_respects_runtime_disable(tmp_path: Path):
     assert deploy_spack.load_existing_spack_software_env(ctx=ctx) is None
 
 
+def test_resolve_software_toolchain_error_mentions_machine_and_key():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('deploy')
+
+    with pytest.raises(ValueError) as excinfo:
+        deploy_spack._resolve_software_toolchain(
+            machine_config=machine_config, machine='chrysalis'
+        )
+
+    message = str(excinfo.value)
+    assert "machine 'chrysalis'" in message
+    assert '[deploy] software_compiler' in message
+    assert '[deploy] mpi_<software_compiler>' in message
+
+
 def test_get_excluded_spack_packages_supports_bundle_aliases():
     excluded = deploy_spack._get_excluded_spack_packages(
         {'exclude_packages': 'cmake, e3sm_hdf5_netcdf'}

@@ -1211,6 +1211,64 @@ def _sanitize_script_tag(value: str) -> str:
     return tag.strip('_') or 'unknown'
 
 
+def _format_token_list(tokens: list[str]) -> str:
+    """Format tokens for human-readable error messages."""
+
+    return ', '.join(f"'{token}'" for token in tokens)
+
+
+def _derive_machine_default_mpis(
+    *,
+    compilers: list[str],
+    machine: str | None,
+    machine_config: ConfigParser,
+) -> tuple[list[str] | None, list[str]]:
+    """Derive per-compiler MPI defaults from machine config."""
+
+    derived: list[str] = []
+    missing_mpi_details: list[str] = []
+
+    for compiler in compilers:
+        compiler_underscore = compiler.replace('-', '_')
+        mpi_key = f'mpi_{compiler_underscore}'
+        if machine is None:
+            missing_mpi_details.append(
+                f'{compiler} (no machine selected to read [deploy] defaults)'
+            )
+            continue
+
+        if machine_config.has_option('deploy', mpi_key):
+            mpi_val = _normalize_optional_token(
+                machine_config.get('deploy', mpi_key)
+            )
+            if mpi_val is None:
+                missing_mpi_details.append(
+                    f'{compiler} ([deploy] {mpi_key} is empty)'
+                )
+                continue
+        elif machine_config.has_option('deploy', 'mpi'):
+            mpi_val = _normalize_optional_token(
+                machine_config.get('deploy', 'mpi')
+            )
+            if mpi_val is None:
+                missing_mpi_details.append(
+                    f'{compiler} ([deploy] mpi is empty)'
+                )
+                continue
+        else:
+            missing_mpi_details.append(
+                f'{compiler} (missing [deploy] {mpi_key} and [deploy] mpi)'
+            )
+            continue
+
+        derived.append(mpi_val)
+
+    if missing_mpi_details:
+        return None, missing_mpi_details
+
+    return derived or None, []
+
+
 def _resolve_toolchain_pairs(
     *,
     config: dict[str, Any],
@@ -1278,36 +1336,33 @@ def _resolve_toolchain_pairs(
         # pixi-only deployments can legitimately skip toolchain
         return []
 
+    missing_mpi_details: list[str] = []
     if mpis is None:
-        # Derive an MPI per compiler when possible.
-        derived: list[str] = []
-        for compiler in compilers:
-            compiler_underscore = compiler.replace('-', '_')
-            mpi_key = f'mpi_{compiler_underscore}'
-            mpi_val = None
-            if machine is not None and machine_config.has_option(
-                'deploy', mpi_key
-            ):
-                mpi_val = _normalize_optional_token(
-                    machine_config.get('deploy', mpi_key)
-                )
-            elif machine is not None and machine_config.has_option(
-                'deploy', 'mpi'
-            ):
-                mpi_val = _normalize_optional_token(
-                    machine_config.get('deploy', 'mpi')
-                )
-            if mpi_val is None:
-                derived = []
-                break
-            derived.append(mpi_val)
-        mpis = derived or None
+        mpis, missing_mpi_details = _derive_machine_default_mpis(
+            compilers=compilers,
+            machine=machine,
+            machine_config=machine_config,
+        )
 
     if not mpis:
+        requested_compilers = _format_token_list(compilers)
+        msg = 'Toolchain MPI library is not set.'
+        if missing_mpi_details:
+            machine_msg = (
+                f" Machine: '{machine}'."
+                if machine is not None
+                else ' No machine was selected.'
+            )
+            unresolved = '; '.join(missing_mpi_details)
+            msg = (
+                'Toolchain MPI library is not set for all requested '
+                f'compilers. Requested compiler(s): {requested_compilers}.'
+                f'{machine_msg} Unresolved compiler/MPI settings: '
+                f'{unresolved}.'
+            )
         msg = (
-            'Toolchain MPI library is not set. Provide --mpi (or set '
-            'toolchain.mpi), or set [deploy] mpi_<compiler> (or mpi) in '
-            'machine config.'
+            f'{msg} Provide --mpi (or set toolchain.mpi), or set [deploy] '
+            'mpi_<compiler> (or mpi) in machine config.'
         )
         if compiler_from_cli and cli_mpis is None:
             raise ValueError(msg)
