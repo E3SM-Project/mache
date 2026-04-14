@@ -743,6 +743,31 @@ def test_resolve_toolchain_pairs_uses_machine_config_with_machine():
     assert pairs == [('gnu', 'mpich')]
 
 
+def test_resolve_toolchain_pairs_error_names_missing_compiler():
+    machine_config = configparser.ConfigParser()
+    machine_config.add_section('deploy')
+    machine_config.set('deploy', 'mpi_gnu', 'mpich')
+    machine_config.set('deploy', 'mpi_intel', 'impi')
+
+    with pytest.raises(ValueError) as excinfo:
+        deploy_run._resolve_toolchain_pairs(
+            config={},
+            runtime={},
+            machine='anvil',
+            machine_config=machine_config,
+            args=argparse.Namespace(
+                compiler=['gnu', 'intel', 'oneapi-typo'], mpi=None
+            ),
+            quiet=True,
+        )
+
+    message = str(excinfo.value)
+    assert "'gnu', 'intel', 'oneapi-typo'" in message
+    assert 'oneapi-typo' in message
+    assert '[deploy] mpi_oneapi_typo' in message
+    assert "Machine: 'anvil'." in message
+
+
 def test_run_deploy_runs_post_publish_after_publish_steps(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

@@ -141,7 +141,7 @@ def deploy_spack_software_env(
         )
 
     compiler, mpi = _resolve_software_toolchain(
-        machine_config=ctx.machine_config
+        machine_config=ctx.machine_config, machine=ctx.machine
     )
 
     e3sm_hdf5_netcdf = _get_machine_bool(
@@ -548,7 +548,7 @@ def load_existing_spack_software_env(
     )
 
     compiler, mpi = _resolve_software_toolchain(
-        machine_config=ctx.machine_config
+        machine_config=ctx.machine_config, machine=ctx.machine
     )
 
     env_name = str(software_cfg.get('env_name') or '').strip()
@@ -670,35 +670,45 @@ def _ensure_spack_env_exists(*, spack_path: str, env_name: str) -> str:
 def _resolve_software_toolchain(
     *,
     machine_config: ConfigParser,
+    machine: str,
 ) -> tuple[str, str]:
     """Resolve the single (compiler, mpi) used for the software environment."""
 
     if not machine_config.has_section('deploy'):
         raise ValueError(
-            'Spack software environment is enabled but machine config has no '
+            'Spack software environment is enabled for '
+            f"machine '{machine}' but merged machine config has no "
             '[deploy] section.'
         )
 
     if not machine_config.has_option('deploy', 'software_compiler'):
         raise ValueError(
-            'Spack software environment is enabled but [deploy] '
-            'software_compiler is not set in merged machine config.'
+            'Spack software environment is enabled for '
+            f"machine '{machine}' but [deploy] software_compiler is not "
+            'set in merged machine config. Set [deploy] '
+            'software_compiler and the matching [deploy] '
+            'mpi_<software_compiler>.'
         )
 
     compiler = machine_config.get('deploy', 'software_compiler').strip()
     if not compiler:
-        raise ValueError('[deploy] software_compiler is empty')
+        raise ValueError(
+            f"[deploy] software_compiler is empty for machine '{machine}'"
+        )
 
     mpi_option = f'mpi_{compiler.replace("-", "_")}'
     if not machine_config.has_option('deploy', mpi_option):
         raise ValueError(
-            f'Spack software environment is enabled but machine config is '
-            f'missing [deploy] {mpi_option} (MPI for '
+            f"Spack software environment is enabled for machine '{machine}' "
+            f'but merged machine config is missing [deploy] {mpi_option} '
+            f'(MPI for '
             f'software_compiler={compiler}).'
         )
     mpi = machine_config.get('deploy', mpi_option).strip()
     if not mpi:
-        raise ValueError(f'[deploy] {mpi_option} is empty')
+        raise ValueError(
+            f"[deploy] {mpi_option} is empty for machine '{machine}'"
+        )
 
     return compiler, mpi
 
