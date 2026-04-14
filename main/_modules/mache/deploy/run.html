@@ -1309,6 +1309,64 @@
     <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;unknown&#39;</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_token_list</span><span class="p">(</span><span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format tokens for human-readable error messages.&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_derive_machine_default_mpis</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">compilers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">machine_config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive per-compiler MPI defaults from machine config.&quot;&quot;&quot;</span>
+
+    <span class="n">derived</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">missing_mpi_details</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">compiler</span> <span class="ow">in</span> <span class="n">compilers</span><span class="p">:</span>
+        <span class="n">compiler_underscore</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">mpi_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">compiler_underscore</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">missing_mpi_details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1"> (no machine selected to read [deploy] defaults)&#39;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span><span class="p">):</span>
+            <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
+                <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">mpi_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">missing_mpi_details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1"> ([deploy] </span><span class="si">{</span><span class="n">mpi_key</span><span class="si">}</span><span class="s1"> is empty)&#39;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">):</span>
+            <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
+                <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">mpi_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">missing_mpi_details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1"> ([deploy] mpi is empty)&#39;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">missing_mpi_details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1"> (missing [deploy] </span><span class="si">{</span><span class="n">mpi_key</span><span class="si">}</span><span class="s1"> and [deploy] mpi)&#39;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">derived</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpi_val</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">missing_mpi_details</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">missing_mpi_details</span>
+
+    <span class="k">return</span> <span class="n">derived</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_toolchain_pairs</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
@@ -1376,36 +1434,33 @@
         <span class="c1"># pixi-only deployments can legitimately skip toolchain</span>
         <span class="k">return</span> <span class="p">[]</span>
 
+    <span class="n">missing_mpi_details</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">mpis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Derive an MPI per compiler when possible.</span>
-        <span class="n">derived</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">compiler</span> <span class="ow">in</span> <span class="n">compilers</span><span class="p">:</span>
-            <span class="n">compiler_underscore</span> <span class="o">=</span> <span class="n">compiler</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
-            <span class="n">mpi_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">compiler_underscore</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">mpi_val</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
-                <span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span>
-            <span class="p">):</span>
-                <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
-                    <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_key</span><span class="p">)</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="n">machine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
-                <span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span>
-            <span class="p">):</span>
-                <span class="n">mpi_val</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span>
-                    <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi&#39;</span><span class="p">)</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">mpi_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">derived</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">break</span>
-            <span class="n">derived</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpi_val</span><span class="p">)</span>
-        <span class="n">mpis</span> <span class="o">=</span> <span class="n">derived</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="n">mpis</span><span class="p">,</span> <span class="n">missing_mpi_details</span> <span class="o">=</span> <span class="n">_derive_machine_default_mpis</span><span class="p">(</span>
+            <span class="n">compilers</span><span class="o">=</span><span class="n">compilers</span><span class="p">,</span>
+            <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+            <span class="n">machine_config</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">mpis</span><span class="p">:</span>
+        <span class="n">requested_compilers</span> <span class="o">=</span> <span class="n">_format_token_list</span><span class="p">(</span><span class="n">compilers</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Toolchain MPI library is not set.&#39;</span>
+        <span class="k">if</span> <span class="n">missing_mpi_details</span><span class="p">:</span>
+            <span class="n">machine_msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot; Machine: &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+                <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="s1">&#39; No machine was selected.&#39;</span>
+            <span class="p">)</span>
+            <span class="n">unresolved</span> <span class="o">=</span> <span class="s1">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_mpi_details</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s1">&#39;Toolchain MPI library is not set for all requested &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;compilers. Requested compiler(s): </span><span class="si">{</span><span class="n">requested_compilers</span><span class="si">}</span><span class="s1">.&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">machine_msg</span><span class="si">}</span><span class="s1"> Unresolved compiler/MPI settings: &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">unresolved</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s1">&#39;Toolchain MPI library is not set. Provide --mpi (or set &#39;</span>
-            <span class="s1">&#39;toolchain.mpi), or set [deploy] mpi_&lt;compiler&gt; (or mpi) in &#39;</span>
-            <span class="s1">&#39;machine config.&#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s1"> Provide --mpi (or set toolchain.mpi), or set [deploy] &#39;</span>
+            <span class="s1">&#39;mpi_&lt;compiler&gt; (or mpi) in machine config.&#39;</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">compiler_from_cli</span> <span class="ow">and</span> <span class="n">cli_mpis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>

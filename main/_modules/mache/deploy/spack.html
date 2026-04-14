@@ -244,7 +244,7 @@
         <span class="p">)</span>
 
     <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span> <span class="o">=</span> <span class="n">_resolve_software_toolchain</span><span class="p">(</span>
-        <span class="n">machine_config</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span>
+        <span class="n">machine_config</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine</span>
     <span class="p">)</span>
 
     <span class="n">e3sm_hdf5_netcdf</span> <span class="o">=</span> <span class="n">_get_machine_bool</span><span class="p">(</span>
@@ -660,7 +660,7 @@
     <span class="p">)</span>
 
     <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span> <span class="o">=</span> <span class="n">_resolve_software_toolchain</span><span class="p">(</span>
-        <span class="n">machine_config</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span>
+        <span class="n">machine_config</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine</span>
     <span class="p">)</span>
 
     <span class="n">env_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">software_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;env_name&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -783,35 +783,45 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_software_toolchain</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">machine_config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+    <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the single (compiler, mpi) used for the software environment.&quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s1">&#39;Spack software environment is enabled but machine config has no &#39;</span>
+            <span class="s1">&#39;Spack software environment is enabled for &#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;machine &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39; but merged machine config has no &quot;</span>
             <span class="s1">&#39;[deploy] section.&#39;</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;software_compiler&#39;</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s1">&#39;Spack software environment is enabled but [deploy] &#39;</span>
-            <span class="s1">&#39;software_compiler is not set in merged machine config.&#39;</span>
+            <span class="s1">&#39;Spack software environment is enabled for &#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;machine &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39; but [deploy] software_compiler is not &quot;</span>
+            <span class="s1">&#39;set in merged machine config. Set [deploy] &#39;</span>
+            <span class="s1">&#39;software_compiler and the matching [deploy] &#39;</span>
+            <span class="s1">&#39;mpi_&lt;software_compiler&gt;.&#39;</span>
         <span class="p">)</span>
 
     <span class="n">compiler</span> <span class="o">=</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="s1">&#39;software_compiler&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">compiler</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;[deploy] software_compiler is empty&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[deploy] software_compiler is empty for machine &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="p">)</span>
 
     <span class="n">mpi_option</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mpi_</span><span class="si">{</span><span class="n">compiler</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_option</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Spack software environment is enabled but machine config is &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;missing [deploy] </span><span class="si">{</span><span class="n">mpi_option</span><span class="si">}</span><span class="s1"> (MPI for &#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;Spack software environment is enabled for machine &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+            <span class="sa">f</span><span class="s1">&#39;but merged machine config is missing [deploy] </span><span class="si">{</span><span class="n">mpi_option</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;(MPI for &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;software_compiler=</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1">).&#39;</span>
         <span class="p">)</span>
     <span class="n">mpi</span> <span class="o">=</span> <span class="n">machine_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">mpi_option</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">mpi</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[deploy] </span><span class="si">{</span><span class="n">mpi_option</span><span class="si">}</span><span class="s1"> is empty&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[deploy] </span><span class="si">{</span><span class="n">mpi_option</span><span class="si">}</span><span class="s2"> is empty for machine &#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span>
 
