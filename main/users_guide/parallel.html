@@ -55,6 +55,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#gpu-per-task-flags">GPU-per-task flags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hyperthreading">Hyperthreading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-this-in-generated-job-scripts">Using this in generated job scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#slurm-distribution-options">Slurm distribution options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#selecting-scheduler-options-by-node-count">Selecting scheduler options by node count</a></li>
 </ul>
 </li>
@@ -158,7 +159,8 @@ config before a GPU-per-task argument is added.</p></li>
 <code class="docutils literal notranslate"><span class="pre">hyperthreading</span> <span class="pre">=</span> <span class="pre">true/false</span></code> switch. Instead, hyperthreading behavior is
 controlled through the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config and the resource values
 passed to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>. The most important config knobs are
-<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code>, and <code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, and any
+launcher-specific arguments included in <code class="docutils literal notranslate"><span class="pre">parallel_executable</span></code>.</p>
 <p>The default convention in mache’s machine configs is to describe CPU resources
 in terms of physical cores, not hardware threads. For E3SM itself, and for
 most downstream software, this means:</p>
@@ -166,7 +168,9 @@ most downstream software, this means:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> should usually be the number of physical CPU cores per node</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code> should usually reflect the intended non-hyperthreaded
 MPI rank count per node</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> is the recommended default when the launcher supports it</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> is often a good default when the launcher and machine
+topology support it, but some systems such as Frontier prefer
+<code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">threads</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> should usually be sized assuming physical cores</p></li>
 </ul>
 <p>This is why several shipped machine configs explicitly document
@@ -203,6 +207,19 @@ metadata (<code class="docutils literal notranslate"><span class="pre">min_nodes
 </ul>
 <p>This keeps scheduler policy in your tool while reusing machine-specific launch
 behavior from <code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
+</section>
+<section id="slurm-distribution-options">
+<h2>Slurm distribution options<a class="headerlink" href="#slurm-distribution-options" title="Link to this heading"></a></h2>
+<p>For <code class="docutils literal notranslate"><span class="pre">slurm</span></code> systems, mache supports two ways to control <code class="docutils literal notranslate"><span class="pre">srun</span> <span class="pre">-m</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">distribution</span> <span class="pre">=</span> <span class="pre">&lt;value&gt;</span></code> passes a raw Slurm distribution string directly as
+<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;value&gt;</span></code>, for example <code class="docutils literal notranslate"><span class="pre">block:cyclic</span></code> or <code class="docutils literal notranslate"><span class="pre">block:block</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">placement</span> <span class="pre">=</span> <span class="pre">&lt;value&gt;</span></code> preserves mache’s legacy behavior and expands to
+<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;value&gt;=&lt;max_mpi_tasks_per_node&gt;</span></code>, for example <code class="docutils literal notranslate"><span class="pre">plane=56</span></code></p></li>
+</ul>
+<p>If both are present, <code class="docutils literal notranslate"><span class="pre">distribution</span></code> takes precedence. Prefer <code class="docutils literal notranslate"><span class="pre">distribution</span></code>
+for machines whose documented Slurm usage relies on explicit values like
+<code class="docutils literal notranslate"><span class="pre">block:cyclic</span></code> rather than the older <code class="docutils literal notranslate"><span class="pre">plane=&lt;tasks&gt;</span></code> form.</p>
 </section>
 <section id="selecting-scheduler-options-by-node-count">
 <h2>Selecting scheduler options by node count<a class="headerlink" href="#selecting-scheduler-options-by-node-count" title="Link to this heading"></a></h2>
