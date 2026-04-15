@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.parallel.slurm</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=52b624fa"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../parallel.html">mache.parallel</a></li>
+      <li class="breadcrumb-item active">mache.parallel.slurm</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.parallel.slurm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParallelSystem</span><span class="p">,</span>
+    <span class="n">_ceil_division</span><span class="p">,</span>
+    <span class="n">_get_subprocess_int</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="SlurmSystem">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlurmSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SLURM resource manager for parallel jobs.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SlurmSystem.__init__">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;SLURM_JOB_ID&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;SLURM_JOB_ID environment variable not found but system is &#39;</span>
+                <span class="s1">&#39;set to &quot;slurm&quot;.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SLURM_JOB_ID&#39;</span><span class="p">]</span>
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;cores_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;cores_per_node must be set in the config for the slurm &#39;</span>
+                <span class="s1">&#39;system.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;squeue&#39;</span><span class="p">,</span> <span class="s1">&#39;--noheader&#39;</span><span class="p">,</span> <span class="s1">&#39;-j&#39;</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;%D&#39;</span><span class="p">]</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">_get_subprocess_int</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">cores</span> <span class="o">=</span> <span class="n">cores_per_node</span> <span class="o">*</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">cores</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;gpus_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="SlurmSystem.get_slurm_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_slurm_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Slurm submission options for a requested node count.&quot;&quot;&quot;</span>
+        <span class="n">partition_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;partition&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">partition</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
+
+        <span class="n">qos_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;qos&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">qos</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">target</span>
+
+        <span class="n">constraint</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span>
+            <span class="n">config</span>
+        <span class="p">)</span>
+
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_max_wallclock</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;partition&#39;</span><span class="p">,</span> <span class="n">partition</span><span class="p">),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">,</span> <span class="n">qos</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">partition</span><span class="p">,</span>
+            <span class="n">qos</span><span class="p">,</span>
+            <span class="n">constraint</span><span class="p">,</span>
+            <span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the parallel command-line arguments related to resources.&quot;&quot;&quot;</span>
+        <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;max_mpi_tasks_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_mpi_tasks_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;max_mpi_tasks_per_node must be set in the config for the &#39;</span>
+                <span class="s1">&#39;slurm system.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Node count is not set for the slurm system.&#39;</span><span class="p">)</span>
+
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tasks_per_node</span> <span class="o">&gt;</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Calculated tasks_per_node (</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">) exceeds the &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;likely need to allocate more nodes.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">launch_nodes</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
+
+        <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;-c&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-N&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">launch_nodes</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-n&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">gpus_per_task</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">gpus_per_task_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;gpus_per_task_flag&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">gpus_per_task_flag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gpus_per_task_flag</span> <span class="o">=</span> <span class="s1">&#39;--gpus-per-task&#39;</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">gpus_per_task_flag</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">gpus_per_task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span>
+
+        <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;cpu_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--cpu-bind&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;gpu_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--gpu-bind&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;mem_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--mem-bind&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">option</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">flag</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;distribution&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">distribution</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="n">distribution</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">parallel_args</span>
+
+        <span class="n">placement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;placement&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">placement</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">placement</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">parallel_args</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.5.2">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,147 @@
+(users-parallel)=
+
+# Parallel execution with `mache.parallel`
+
+`mache.parallel` provides a machine-aware interface for launching parallel
+workloads based on each machine's config file.
+
+## Typical downstream workflow
+
+Downstream software (for example, Polaris software) can:
+
+1. Load machine config with `MachineInfo`.
+2. Build a parallel-system object with `get_parallel_system()`.
+3. Query available resources (`cores`, `nodes`, `gpus`, and `mpi_allowed`).
+4. Build a machine-correct launcher command with `get_parallel_command()`.
+5. Use the command for either generated job scripts or direct subprocess calls.
+
+## Example: build a launcher command
+
+```python
+from mache import MachineInfo
+from mache.parallel import get_parallel_system
+
+machine_info = MachineInfo()
+parallel_system = get_parallel_system(machine_info.config)
+
+args = ["python", "-m", "your_package.run_task", "--case", "smoke"]
+command = parallel_system.get_parallel_command(
+    args=args,
+    ntasks=4,
+    cpus_per_task=2,
+    gpus_per_task=0,
+)
+
+print(" ".join(command))
+```
+
+On a batch allocation, this returns an `srun`/`mpiexec` command using the
+machine's configured launcher and resource flags. On login nodes for `slurm`
+or `pbs` systems, `get_parallel_system()` falls back to `login`, where MPI is
+intentionally disabled.
+
+## GPU-per-task flags
+
+When `gpus_per_task > 0` is passed to `get_parallel_command()`:
+
+- `slurm` systems add `--gpus-per-task <N>` by default. This can be overridden
+    with `gpus_per_task_flag` in the machine's `[parallel]` config.
+- `pbs` systems require a machine-specific `gpus_per_task_flag` to be set in
+    config before a GPU-per-task argument is added.
+
+## Hyperthreading
+
+`mache.parallel` does not currently have a dedicated
+`hyperthreading = true/false` switch. Instead, hyperthreading behavior is
+controlled through the machine's `[parallel]` config and the resource values
+passed to `get_parallel_command()`. The most important config knobs are
+`cores_per_node`, `max_mpi_tasks_per_node`, `cpu_bind`, and any
+launcher-specific arguments included in `parallel_executable`.
+
+The default convention in mache's machine configs is to describe CPU resources
+in terms of physical cores, not hardware threads. For E3SM itself, and for
+most downstream software, this means:
+
+- `cores_per_node` should usually be the number of physical CPU cores per node
+- `max_mpi_tasks_per_node` should usually reflect the intended non-hyperthreaded
+    MPI rank count per node
+- `cpu_bind = cores` is often a good default when the launcher and machine
+    topology support it, but some systems such as Frontier prefer
+    `cpu_bind = threads`
+- `cpus_per_task` should usually be sized assuming physical cores
+
+This is why several shipped machine configs explicitly document
+`cores_per_node` as the count "without hyperthreading".
+
+If a downstream application wants to take advantage of hyperthreading, it
+should opt in by overriding the relevant parallel config values for that use
+case. In practice, that usually means switching from physical-core counts to
+hardware-thread counts and adjusting binding accordingly. For example, on a
+machine with 64 physical cores and 2 hardware threads per core:
+
+```ini
+[parallel]
+cores_per_node = 128
+max_mpi_tasks_per_node = 128
+cpu_bind = threads
+```
+
+Then, calls to `get_parallel_command()` should use `cpus_per_task` and
+`ntasks` values that match that threaded layout.
+
+The important point is that hyperthreading is opt-in. Mache's default machine
+configs should generally preserve the physical-core layout that is appropriate
+for E3SM and most downstream tools, while still allowing downstream users to
+provide a config override when they intentionally want thread-level placement.
+
+## Using this in generated job scripts
+
+A common pattern is to generate scheduler directives separately, then use
+`mache.parallel` only for launch lines. For example:
+
+- Use `MachineInfo.get_account_defaults()` to populate account/partition/QOS.
+- Use `MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()` or
+    `MachineInfo.get_qos_specs()` for optional scheduler-target policy
+    metadata (`min_nodes`, `max_nodes`, `max_wallclock`) when available.
+- Render scheduler headers (`#SBATCH` or `#PBS`) in your template logic.
+- Use `get_parallel_command()` to build the executable line.
+
+This keeps scheduler policy in your tool while reusing machine-specific launch
+behavior from `mache`.
+
+## Slurm distribution options
+
+For `slurm` systems, mache supports two ways to control `srun -m`:
+
+- `distribution = <value>` passes a raw Slurm distribution string directly as
+    `-m <value>`, for example `block:cyclic` or `block:block`
+- `placement = <value>` preserves mache's legacy behavior and expands to
+    `-m <value>=<max_mpi_tasks_per_node>`, for example `plane=56`
+
+If both are present, `distribution` takes precedence. Prefer `distribution`
+for machines whose documented Slurm usage relies on explicit values like
+`block:cyclic` rather than the older `plane=<tasks>` form.
+
+## Selecting scheduler options by node count
+
+`mache.parallel` also provides helpers for selecting queue/partition/QOS from
+machine metadata:
+
+- `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
+    one of `queue`, `partition`, or `qos`.
+- `ParallelSystem.resolve_submission(config, nodes, target_type,
+    min_nodes_allowed=None)` returns a `SubmissionResolution` with fields
+    `target`, `requested_nodes`, `effective_nodes`, and `adjustment`
+    (`exact`, `decrease`, or `increase`).
+- `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
+    returns `(partition, qos, constraint, gpus_per_node, max_wallclock,
+    effective_nodes)`.
+- `PbsSystem.get_pbs_options(config, nodes, min_nodes_allowed=None)` returns
+    `(queue, constraint, gpus_per_node, max_wallclock, filesystems,
+    effective_nodes)`.
+
+For invalid gaps between scheduler ranges, node count is adjusted to the
+nearest valid value, preferring lower adjustments when feasible. If
+`min_nodes_allowed` disallows lower adjustments, resolution moves to the next
+valid higher range. If no feasible target exists, these functions raise
+`ValueError`.
