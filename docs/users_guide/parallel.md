@@ -55,7 +55,8 @@ When `gpus_per_task > 0` is passed to `get_parallel_command()`:
 `hyperthreading = true/false` switch. Instead, hyperthreading behavior is
 controlled through the machine's `[parallel]` config and the resource values
 passed to `get_parallel_command()`. The most important config knobs are
-`cores_per_node`, `max_mpi_tasks_per_node`, and `cpu_bind`.
+`cores_per_node`, `max_mpi_tasks_per_node`, `cpu_bind`, and any
+launcher-specific arguments included in `parallel_executable`.
 
 The default convention in mache's machine configs is to describe CPU resources
 in terms of physical cores, not hardware threads. For E3SM itself, and for
@@ -64,7 +65,9 @@ most downstream software, this means:
 - `cores_per_node` should usually be the number of physical CPU cores per node
 - `max_mpi_tasks_per_node` should usually reflect the intended non-hyperthreaded
     MPI rank count per node
-- `cpu_bind = cores` is the recommended default when the launcher supports it
+- `cpu_bind = cores` is often a good default when the launcher and machine
+    topology support it, but some systems such as Frontier prefer
+    `cpu_bind = threads`
 - `cpus_per_task` should usually be sized assuming physical cores
 
 This is why several shipped machine configs explicitly document
@@ -105,6 +108,19 @@ A common pattern is to generate scheduler directives separately, then use
 
 This keeps scheduler policy in your tool while reusing machine-specific launch
 behavior from `mache`.
+
+## Slurm distribution options
+
+For `slurm` systems, mache supports two ways to control `srun -m`:
+
+- `distribution = <value>` passes a raw Slurm distribution string directly as
+    `-m <value>`, for example `block:cyclic` or `block:block`
+- `placement = <value>` preserves mache's legacy behavior and expands to
+    `-m <value>=<max_mpi_tasks_per_node>`, for example `plane=56`
+
+If both are present, `distribution` takes precedence. Prefer `distribution`
+for machines whose documented Slurm usage relies on explicit values like
+`block:cyclic` rather than the older `plane=<tasks>` form.
 
 ## Selecting scheduler options by node count
 
