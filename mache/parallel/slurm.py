@@ -131,6 +131,11 @@ class SlurmSystem(ParallelSystem):
             if value is not None and value != '':
                 parallel_args.append(f'{flag}={value}')
 
+        distribution = self.get_config('distribution')
+        if distribution is not None and distribution != '':
+            parallel_args.extend(['-m', distribution])
+            return parallel_args
+
         placement = self.get_config('placement')
         if placement is not None and placement != '':
             parallel_args.extend(
