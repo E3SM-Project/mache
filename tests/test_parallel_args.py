@@ -109,6 +109,80 @@ def test_slurm_uses_minimum_nodes_for_task_count(monkeypatch):
     assert args[index + 1] == '5'
 
 
+def test_slurm_supports_explicit_distribution(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '16',
+            'distribution': 'block:cyclic',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 2
+    )
+
+    system = SlurmSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=4
+    )
+
+    index = args.index('-m')
+    assert args[index + 1] == 'block:cyclic'
+
+
+def test_slurm_distribution_overrides_legacy_placement(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '16',
+            'distribution': 'block:block',
+            'placement': 'plane',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 2
+    )
+
+    system = SlurmSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=4
+    )
+
+    index = args.index('-m')
+    assert args[index + 1] == 'block:block'
+    assert 'plane=16' not in args
+
+
+def test_slurm_legacy_placement_is_still_supported(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'max_mpi_tasks_per_node': '16',
+            'placement': 'plane',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 2
+    )
+
+    system = SlurmSystem(config)
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=4
+    )
+
+    index = args.index('-m')
+    assert args[index + 1] == 'plane=16'
+
+
 def test_pbs_skips_gpu_flag_when_not_configured(monkeypatch):
     config = _get_config(
         {

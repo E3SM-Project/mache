@@ -156,14 +156,37 @@ def test_get_queue_specs_polaris():
 
 
 @pytest.mark.parametrize(
-    'compiler, expected_gpus_per_node, expected_max_mpi_tasks_per_node',
+    (
+        'compiler, expected_gpus_per_node, '
+        'expected_max_mpi_tasks_per_node, expected_cpu_bind, '
+        'expected_parallel_executable, expected_distribution'
+    ),
     [
-        ('craygnu', '0', '56'),
-        ('craygnu-mphipcc', '8', '8'),
+        (
+            'craygnu',
+            '0',
+            '56',
+            'threads',
+            'srun -l -K --threads-per-core=1',
+            'block:cyclic',
+        ),
+        (
+            'craygnu-mphipcc',
+            '8',
+            '8',
+            'threads',
+            'srun -l -K --threads-per-core=1',
+            'block:cyclic',
+        ),
     ],
 )
 def test_frontier_parallel_compiler_overrides(
-    compiler, expected_gpus_per_node, expected_max_mpi_tasks_per_node
+    compiler,
+    expected_gpus_per_node,
+    expected_max_mpi_tasks_per_node,
+    expected_cpu_bind,
+    expected_parallel_executable,
+    expected_distribution,
 ):
     machinfo = MachineInfo(machine='frontier')
     machinfo.config.add_section('build')
@@ -176,6 +199,11 @@ def test_frontier_parallel_compiler_overrides(
         parallel_config['max_mpi_tasks_per_node']
         == expected_max_mpi_tasks_per_node
     )
+    assert parallel_config['cpu_bind'] == expected_cpu_bind
+    assert (
+        parallel_config['parallel_executable'] == expected_parallel_executable
+    )
+    assert parallel_config['distribution'] == expected_distribution
 
 
 def test_get_scheduler_specs_invalid_target_type():
