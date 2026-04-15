@@ -4,6 +4,7 @@ import pytest
 from lxml import etree
 
 from mache import MachineInfo, discover_machine
+from mache.parallel.system import _get_parallel_configs
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MACHINES_DIR = REPO_ROOT / 'mache' / 'machines'
@@ -152,6 +153,29 @@ def test_get_queue_specs_polaris():
         'max_nodes': 512,
         'max_wallclock': '24:00:00',
     }
+
+
+@pytest.mark.parametrize(
+    'compiler, expected_gpus_per_node, expected_max_mpi_tasks_per_node',
+    [
+        ('craygnu', '0', '56'),
+        ('craygnu-mphipcc', '8', '8'),
+    ],
+)
+def test_frontier_parallel_compiler_overrides(
+    compiler, expected_gpus_per_node, expected_max_mpi_tasks_per_node
+):
+    machinfo = MachineInfo(machine='frontier')
+    machinfo.config.add_section('build')
+    machinfo.config.set('build', 'compiler', compiler)
+
+    parallel_config = _get_parallel_configs(machinfo.config)
+
+    assert parallel_config['gpus_per_node'] == expected_gpus_per_node
+    assert (
+        parallel_config['max_mpi_tasks_per_node']
+        == expected_max_mpi_tasks_per_node
+    )
 
 
 def test_get_scheduler_specs_invalid_target_type():
