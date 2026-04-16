@@ -1,0 +1,74 @@
+name: Daily config_machines update check
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+env:
+  PIXI_ENV: py314
+  ISSUE_TITLE: Daily config_machines drift detected
+  PRIMARY_ASSIGNEE: xylar
+  REPORT_JSON: cime_machine_config_report.json
+  REPORT_MARKDOWN: cime_machine_config_report.md
+
+jobs:
+  check-config-machines:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.9.5
+        with:
+          pixi-version: v0.62.2
+          cache: ${{ hashFiles('pixi.lock') != '' }}
+          environments: ${{ env.PIXI_ENV }}
+
+      - name: Install mache from main
+        run: |
+          pixi run -e ${PIXI_ENV} python -m pip install --no-deps \
+            --no-build-isolation -e .
+
+      - name: Generate machine update report
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          pixi run -e ${PIXI_ENV} python utils/update_cime_machine_config.py \
+            --json-output ${REPORT_JSON} \
+            --markdown-output ${REPORT_MARKDOWN} \
+            --run-url ${RUN_URL}
+
+      - name: Upload machine update report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cime-machine-config-report
+          path: |
+            ${{ env.REPORT_JSON }}
+            ${{ env.REPORT_MARKDOWN }}
+
+      - name: Synchronize automation issue
+        env:
+          COPILOT_ISSUE_TOKEN: ${{ secrets.COPILOT_ISSUE_TOKEN }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ -z "${COPILOT_ISSUE_TOKEN}" ]; then
+            echo "COPILOT_ISSUE_TOKEN is not configured; report generated" \
+              " but no issue was synchronized."
+            exit 0
+          fi
+
+          pixi run -e ${PIXI_ENV} python \
+            utils/manage_cime_machine_config_issue.py \
+            --report-json ${REPORT_JSON} \
+            --report-markdown ${REPORT_MARKDOWN} \
+            --repository ${GITHUB_REPOSITORY} \
+            --token ${COPILOT_ISSUE_TOKEN} \
+            --issue-title "${ISSUE_TITLE}" \
+            --base-branch ${DEFAULT_BRANCH} \
+            --primary-assignee ${PRIMARY_ASSIGNEE}
