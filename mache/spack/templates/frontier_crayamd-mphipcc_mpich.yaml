@@ -96,9 +96,9 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.11.5
+      - spec: python@3.9.13.1
         modules:
-        - cray-python/3.11.5
+        - cray-python/3.9.13.1
       buildable: false
     tar:
       externals:

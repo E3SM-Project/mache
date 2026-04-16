@@ -98,9 +98,9 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.11.5
+      - spec: python@3.9.13.1
         modules:
-        - cray-python/3.11.5
+        - cray-python/3.9.13.1
       buildable: false
     tar:
       externals:
@@ -117,14 +117,14 @@ spack:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
         - libunwind/1.5.0
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
         - cray-mpich/8.1.26
       buildable: false
     libfabric:
       externals:
-      - spec: libfabric@1.15.2.0
+      - spec: libfabric@1.20.1
         modules:
-        - libfabric/1.15.2.0
+        - libfabric/1.20.1
       buildable: false
 {%- if e3sm_lapack %}
     cray-libsci:
@@ -168,8 +168,7 @@ spack:
       modules:
       - Core/24.00
       - cpe/22.12
-      - PrgEnv-cray/8.3.3
       - cce/15.0.1
       - craype/2.7.20
       - libunwind/1.5.0
-      - libfabric/1.15.2.0
+      - libfabric/1.20.1
