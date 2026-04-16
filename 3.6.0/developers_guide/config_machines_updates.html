@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automated config_machines.xml updates</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5349f462"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Adding a New Machine to Mache" href="adding_new_machine.html" />
+    <link rel="prev" title="mache.deploy developer guide" href="deploy.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#goal">Goal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pieces-of-the-automation">Pieces of the automation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#daily-workflow">Daily workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#copilot-environment-workflow">Copilot environment workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#drift-report-builder">Drift report builder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issue-synchronization">Issue synchronization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-config-machines-xml-gets-updated">How <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> gets updated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-copilot-is-told-to-do">What Copilot is told to do</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fixed-api-level-instructions">Fixed API-level instructions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generated-issue-body-instructions">Generated issue-body instructions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#why-this-does-not-create-a-new-issue-every-day">Why this does not create a new issue every day</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reviewer-workflow">Reviewer workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#config-machines-xml-changes">1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#related-spack-updates">2. Related Spack updates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ambiguous-path-or-prefix-changes">3. Ambiguous path or prefix changes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validation">4. Validation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#manual-dry-run-for-maintainers">Manual dry run for maintainers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operational-notes">Operational notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/config_machines_updates.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="automated-config-machines-xml-updates">
+<h1>Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates<a class="headerlink" href="#automated-config-machines-xml-updates" title="Link to this heading"></a></h1>
+<p>This page describes the automation that watches for upstream changes to
+E3SM’s <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, opens or refreshes a Copilot task when drift is
+detected, and explains how maintainers are expected to review the resulting
+pull request.</p>
+<section id="goal">
+<h2>Goal<a class="headerlink" href="#goal" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> keeps a repository-local copy of the upstream E3SM machine list in
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>.</p>
+<p>The automation added here does <strong>not</strong> edit that file directly. Instead, it:</p>
+<ol class="arabic simple">
+<li><p>Compares the copy in <code class="docutils literal notranslate"><span class="pre">mache</span></code> against the current upstream E3SM source.</p></li>
+<li><p>Produces a structured report describing any drift for supported machines.</p></li>
+<li><p>Creates or updates one GitHub issue that assigns the work to Copilot.</p></li>
+<li><p>Lets Copilot open a PR that updates <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> and any related
+Spack configuration.</p></li>
+</ol>
+<p>This keeps the source-of-truth update in a reviewed pull request rather than a
+silent CI-side commit.</p>
+</section>
+<section id="pieces-of-the-automation">
+<h2>Pieces of the automation<a class="headerlink" href="#pieces-of-the-automation" title="Link to this heading"></a></h2>
+<section id="daily-workflow">
+<h3>Daily workflow<a class="headerlink" href="#daily-workflow" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">.github/workflows/cime_machine_config_update.yml</span></code></dt><dd><p>Runs once a day at <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">8</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*</span></code> and can also be started manually with
+<code class="docutils literal notranslate"><span class="pre">workflow_dispatch</span></code>.</p>
+</dd>
+</dl>
+<p>The job:</p>
+<ol class="arabic simple">
+<li><p>Checks out <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p></li>
+<li><p>Sets up the <code class="docutils literal notranslate"><span class="pre">py314</span></code> Pixi environment.</p></li>
+<li><p>Installs <code class="docutils literal notranslate"><span class="pre">mache</span></code> from the checked-out repository.</p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">utils/update_cime_machine_config.py</span></code>.</p></li>
+<li><p>Uploads the generated JSON and Markdown report artifacts.</p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">utils/manage_cime_machine_config_issue.py</span></code> when <code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> is
+configured.</p></li>
+</ol>
+</section>
+<section id="copilot-environment-workflow">
+<h3>Copilot environment workflow<a class="headerlink" href="#copilot-environment-workflow" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">.github/workflows/copilot-setup-steps.yml</span></code></dt><dd><p>Defines the setup steps the Copilot cloud agent can use on the default
+branch so it starts from a working Pixi environment with <code class="docutils literal notranslate"><span class="pre">mache</span></code> installed.</p>
+</dd>
+</dl>
+</section>
+<section id="drift-report-builder">
+<h3>Drift report builder<a class="headerlink" href="#drift-report-builder" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">utils/update_cime_machine_config.py</span></code></dt><dd><p>Downloads the current upstream E3SM <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, compares it with
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>, prints a short console
+summary, and optionally writes:</p>
+<ul class="simple">
+<li><p>a JSON report for machine-readable automation,</p></li>
+<li><p>a Markdown issue body for Copilot and human reviewers.</p></li>
+</ul>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/report.py</span></code></dt><dd><p>Contains the structured comparison logic. It determines which supported
+machines changed, identifies module and environment-variable drift, infers
+related package groups, and lists candidate Spack template files to review.</p>
+</dd>
+</dl>
+</section>
+<section id="issue-synchronization">
+<h3>Issue synchronization<a class="headerlink" href="#issue-synchronization" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">utils/manage_cime_machine_config_issue.py</span></code></dt><dd><p>Owns the GitHub-side lifecycle for the automation issue.</p>
+</dd>
+</dl>
+<p>If drift exists, it creates or updates the issue.</p>
+<p>If no drift exists, it closes the existing issue.</p>
+<p>If Copilot assignment fails, it falls back to creating or updating the same
+issue without Copilot assignment so the report is still visible.</p>
+</section>
+<section id="tests">
+<h3>Tests<a class="headerlink" href="#tests" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">tests/test_cime_machine_config_report.py</span></code></dt><dd><p>Verifies that the report builder detects relevant drift and that the rendered
+issue body contains the required maintainer instructions.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="how-config-machines-xml-gets-updated">
+<h2>How <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> gets updated<a class="headerlink" href="#how-config-machines-xml-gets-updated" title="Link to this heading"></a></h2>
+<p>The important point is that the scheduled workflow never edits
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> itself.</p>
+<p>The update path is:</p>
+<ol class="arabic simple">
+<li><p>The workflow detects drift between the <code class="docutils literal notranslate"><span class="pre">mache</span></code> copy and upstream E3SM.</p></li>
+<li><p>The workflow creates or refreshes a GitHub issue.</p></li>
+<li><p>Copilot is assigned to that issue.</p></li>
+<li><p>Copilot opens a pull request against <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p></li>
+<li><p>That PR replaces <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the
+latest version from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, then updates any related Spack
+templates or version strings that the report indicates should be reviewed.</p></li>
+<li><p>A maintainer reviews and merges the PR.</p></li>
+<li><p>The next daily run compares the merged repository state against upstream
+again.</p></li>
+</ol>
+<p>If the PR fully resolved the drift, the issue is closed automatically on the
+next run.</p>
+<p>If only part of the drift was resolved, the issue stays open and its body is
+updated to reflect the remaining work.</p>
+</section>
+<section id="what-copilot-is-told-to-do">
+<h2>What Copilot is told to do<a class="headerlink" href="#what-copilot-is-told-to-do" title="Link to this heading"></a></h2>
+<p>Copilot receives instructions from two places.</p>
+<section id="fixed-api-level-instructions">
+<h3>Fixed API-level instructions<a class="headerlink" href="#fixed-api-level-instructions" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">utils/manage_cime_machine_config_issue.py</span></code> adds the following guidance in the
+<code class="docutils literal notranslate"><span class="pre">agent_assignment</span></code> payload:</p>
+<ul class="simple">
+<li><p>Use the issue body as the task definition.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>.</p></li>
+<li><p>Replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
+<code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>, then remove that temporary file before
+committing.</p></li>
+<li><p>State the upstream E3SM commit hash in the PR summary.</p></li>
+<li><p>Then update related Spack templates and version strings under
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.yaml</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.sh</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.csh</span></code>.</p></li>
+<li><p>Add TODO comments in the PR when prefix or path changes need reviewer
+confirmation.</p></li>
+</ul>
+</section>
+<section id="generated-issue-body-instructions">
+<h3>Generated issue-body instructions<a class="headerlink" href="#generated-issue-body-instructions" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/report.py</span></code> renders the issue body for the current
+drift and includes:</p>
+<ul class="simple">
+<li><p>the timestamp and upstream source URL,</p></li>
+<li><p>the upstream revision when it could be resolved from GitHub,</p></li>
+<li><p>the workflow run URL,</p></li>
+<li><p>the list of affected supported machines,</p></li>
+<li><p>the required work list,</p></li>
+<li><p>per-machine details such as package groups, prefix or path variables, and
+candidate Spack templates to inspect.</p></li>
+</ul>
+<p>The required work section tells Copilot to:</p>
+<ul class="simple">
+<li><p>run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>,</p></li>
+<li><p>if GitHub API access is unavailable, rerun the command with
+<code class="docutils literal notranslate"><span class="pre">--upstream-revision</span> <span class="pre">&lt;sha&gt;</span></code> when the upstream E3SM commit is already known,
+or provide <code class="docutils literal notranslate"><span class="pre">GITHUB_TOKEN</span></code>/<code class="docutils literal notranslate"><span class="pre">GH_TOKEN</span></code> in the environment,</p></li>
+<li><p>replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
+<code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>,</p></li>
+<li><p>remove <code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code> before committing,</p></li>
+<li><p>state the upstream E3SM commit hash in the PR summary,</p></li>
+<li><p>update Spack templates and version strings in
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.yaml</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.sh</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.csh</span></code> when module or environment drift
+implies different package versions,</p></li>
+<li><p>keep the PR focused when the change is only version or module drift,</p></li>
+<li><p>add a TODO in the PR instead of guessing when a new prefix or path is not
+obvious.</p></li>
+</ul>
+</section>
+</section>
+<section id="why-this-does-not-create-a-new-issue-every-day">
+<h2>Why this does not create a new issue every day<a class="headerlink" href="#why-this-does-not-create-a-new-issue-every-day" title="Link to this heading"></a></h2>
+<p>The workflow is designed to reuse one open issue rather than create a new one
+for every scheduled run.</p>
+<p><code class="docutils literal notranslate"><span class="pre">utils/manage_cime_machine_config_issue.py</span></code> looks for an existing open issue
+with the fixed title stored in the workflow environment:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ISSUE_TITLE:</span> <span class="pre">Daily</span> <span class="pre">config_machines</span> <span class="pre">drift</span> <span class="pre">detected</span></code></p></li>
+</ul>
+<p>The lifecycle is:</p>
+<ol class="arabic simple">
+<li><p>If no matching open issue exists and drift is detected, create one.</p></li>
+<li><p>If a matching open issue already exists and drift is still present, update
+that same issue.</p></li>
+<li><p>If no drift remains and the issue exists, close it.</p></li>
+</ol>
+<p>That means an unresolved drift while you are away does <strong>not</strong> produce a fresh
+issue every day. The same issue remains open and is refreshed in place.</p>
+<p>A new issue would only be created if one of these is true:</p>
+<ul class="simple">
+<li><p>the existing automation issue was manually closed while drift still exists,</p></li>
+<li><p>the issue title configured in the workflow was changed,</p></li>
+<li><p>the existing issue was deleted or otherwise no longer appears as an open
+issue in the repository.</p></li>
+</ul>
+</section>
+<section id="reviewer-workflow">
+<h2>Reviewer workflow<a class="headerlink" href="#reviewer-workflow" title="Link to this heading"></a></h2>
+<p>When Copilot opens a PR from this issue, the reviewer should check the changes
+in this order.</p>
+<section id="config-machines-xml-changes">
+<h3>1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes<a class="headerlink" href="#config-machines-xml-changes" title="Link to this heading"></a></h3>
+<p>Verify that the PR replaces
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the current upstream file
+from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, rather than hand-editing only selected machine
+blocks.</p>
+<p>The supported-machine report from the workflow tells you which machine entries
+caused the drift and which sections deserve the closest review.</p>
+<p>In practice, the easiest cross-check is to compare the PR against the report
+artifact and the upstream XML source from the workflow run that opened or
+refreshed the issue.</p>
+</section>
+<section id="related-spack-updates">
+<h3>2. Related Spack updates<a class="headerlink" href="#related-spack-updates" title="Link to this heading"></a></h3>
+<p>If the report lists package groups or candidate Spack templates, check that the
+PR updated the relevant <code class="docutils literal notranslate"><span class="pre">mache/spack/*.yaml</span></code> inputs and any version strings
+that should track the new module or environment values.</p>
+<p>If the report does not indicate Spack-relevant drift, the PR should usually be
+limited to <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>.</p>
+</section>
+<section id="ambiguous-path-or-prefix-changes">
+<h3>3. Ambiguous path or prefix changes<a class="headerlink" href="#ambiguous-path-or-prefix-changes" title="Link to this heading"></a></h3>
+<p>When upstream changes a path-like variable such as <code class="docutils literal notranslate"><span class="pre">NETCDF_PATH</span></code>, the correct
+replacement in <code class="docutils literal notranslate"><span class="pre">mache</span></code> may not be obvious from the XML alone.</p>
+<p>In that case, the expected behavior is <strong>not</strong> to guess. The PR should leave a
+TODO note for the reviewer and explain what needs confirmation.</p>
+</section>
+<section id="validation">
+<h3>4. Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h3>
+<p>At minimum, reviewers or PR authors should run the same local checks used by
+development in this repository.</p>
+<p>Generate the current report locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>py314<span class="w"> </span>python<span class="w"> </span>utils/update_cime_machine_config.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--json-output<span class="w"> </span>/tmp/cime_machine_config_report.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--markdown-output<span class="w"> </span>/tmp/cime_machine_config_report.md
+</pre></div>
+</div>
+<p>If GitHub API access is rate-limited or forbidden in your environment,
+rerun with <code class="docutils literal notranslate"><span class="pre">GITHUB_TOKEN</span></code> or <code class="docutils literal notranslate"><span class="pre">GH_TOKEN</span></code> set, or provide
+<code class="docutils literal notranslate"><span class="pre">--upstream-revision</span> <span class="pre">&lt;sha&gt;</span></code> when the upstream commit hash is already known.</p>
+<p>Run the focused tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>py314<span class="w"> </span>pytest<span class="w"> </span>tests/test_cime_machine_config_report.py
+</pre></div>
+</div>
+<p>Run pre-commit on changed files before merging:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>py314<span class="w"> </span>pre-commit<span class="w"> </span>run<span class="w"> </span>--files<span class="w"> </span>&lt;changed<span class="w"> </span>files&gt;
+</pre></div>
+</div>
+</section>
+</section>
+<section id="manual-dry-run-for-maintainers">
+<h2>Manual dry run for maintainers<a class="headerlink" href="#manual-dry-run-for-maintainers" title="Link to this heading"></a></h2>
+<p>To exercise the detection path without waiting for the cron schedule:</p>
+<ol class="arabic simple">
+<li><p>Trigger the workflow manually with <code class="docutils literal notranslate"><span class="pre">workflow_dispatch</span></code>, or</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">utils/update_cime_machine_config.py</span></code> locally in the Pixi environment.</p></li>
+</ol>
+<p>If <code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> is not configured, the workflow still generates and uploads
+the report artifacts but skips issue synchronization.</p>
+<p>That is a safe way to validate the comparison and report rendering logic
+without asking Copilot to act on the result.</p>
+</section>
+<section id="operational-notes">
+<h2>Operational notes<a class="headerlink" href="#operational-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> should be a user token with access to create and update
+issues in the repository. A classic PAT with <code class="docutils literal notranslate"><span class="pre">repo</span></code> scope is sufficient.</p></li>
+<li><p>Copilot assignment additionally depends on Copilot cloud agent being enabled
+for the repository.</p></li>
+<li><p>The workflow uses the repository’s current <code class="docutils literal notranslate"><span class="pre">main</span></code> branch as the comparison
+baseline and as the branch Copilot is asked to target.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="deploy.html" class="btn btn-neutral float-left" title="mache.deploy developer guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="adding_new_machine.html" class="btn btn-neutral float-right" title="Adding a New Machine to Mache" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.6.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

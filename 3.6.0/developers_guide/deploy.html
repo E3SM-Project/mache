@@ -1,0 +1,417 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.deploy developer guide</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5349f462"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Automated config_machines.xml updates" href="config_machines_updates.html" />
+    <link rel="prev" title="Contributing to mache" href="contributing.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#goals-and-boundaries">Goals and boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-layout">Module layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#template-lifecycle">Template lifecycle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rendered-during-mache-deploy-init-and-mache-deploy-update">Rendered during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code> and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rendered-only-during-mache-deploy-init">Rendered only during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#used-at-deployment-time-by-mache-deploy-run">Used at deployment time by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#why-the-double-template-files-exist">Why the double-template files exist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#which-files-are-target-owned-versus-generated">Which files are target-owned versus generated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-command-line-contract-from-the-maintainer-side">The command-line contract from the maintainer side</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changing-starter-kit-generation">Changing starter-kit generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changing-runtime-deployment-behavior">Changing runtime deployment behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#public-api-surface-to-keep-documented">Public API surface to keep documented</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recommended-checklist-for-mache-deploy-changes">Recommended checklist for <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> changes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developers_guide/deploy.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="mache-deploy-developer-guide">
+<h1><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide<a class="headerlink" href="#mache-deploy-developer-guide" title="Link to this heading"></a></h1>
+<p>This page is for maintainers of <code class="docutils literal notranslate"><span class="pre">mache</span></code> itself.</p>
+<p>For downstream target-software developers, see the user’s guide page on
+<a class="reference internal" href="../users_guide/deploy.html"><span class="doc">deploy</span></a>.</p>
+<section id="goals-and-boundaries">
+<h2>Goals and boundaries<a class="headerlink" href="#goals-and-boundaries" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> exists to let a downstream repository keep a small,
+repository-owned deployment description while delegating the orchestration to
+<code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
+<p>The implementation is intentionally split between:</p>
+<ol class="arabic simple">
+<li><p>Files rendered once into the target repository by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code> or
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>.</p></li>
+<li><p>Files rendered or consumed later at deployment time by <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>.</p></li>
+</ol>
+<p>That separation is the main thing to preserve when changing the design.</p>
+</section>
+<section id="module-layout">
+<h2>Module layout<a class="headerlink" href="#module-layout" title="Link to this heading"></a></h2>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/cli.py</span></code></dt><dd><p>Top-level <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code> subcommand wiring for <code class="docutils literal notranslate"><span class="pre">init</span></code>, <code class="docutils literal notranslate"><span class="pre">update</span></code>, and <code class="docutils literal notranslate"><span class="pre">run</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/init_update.py</span></code></dt><dd><p>Starter-kit generation. Renders repository files into the target repo and
+defines which files are refreshed during <code class="docutils literal notranslate"><span class="pre">init</span></code> versus <code class="docutils literal notranslate"><span class="pre">update</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/bootstrap.py</span></code></dt><dd><p>Bootstrap script executed by generated target-side <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>. Creates the
+temporary pixi environment used to run <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/run.py</span></code></dt><dd><p>Runtime deployment orchestration. Reads target-repo config, installs pixi,
+optionally installs JIGSAW and Spack environments, and writes load scripts.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/cli_spec.py</span></code></dt><dd><p>Shared parser utilities for the structured CLI spec format.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/hooks.py</span></code></dt><dd><p>Hook discovery, hook execution, and the <code class="docutils literal notranslate"><span class="pre">DeployContext</span></code> data model.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/shared.py</span></code></dt><dd><p>Shared-deployment artifact helpers for copied load scripts, symlinks, and
+extra permission-managed paths outside the deployed prefix.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/machine.py</span></code></dt><dd><p>Machine selection and merged machine-config loading from both
+<code class="docutils literal notranslate"><span class="pre">mache.machines</span></code> and target-owned config files.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/spack.py</span></code></dt><dd><p>Spack deployment helpers and result models.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/conda.py</span></code></dt><dd><p>Conda platform detection helpers.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/deploy/jinja.py</span></code></dt><dd><p>Alternate square-bracket Jinja environment used for double-rendered target
+templates.</p>
+</dd>
+</dl>
+<p>The auto-generated API for these modules is on
+<a class="reference internal" href="api.html#dev-api"><span class="std std-ref">API reference</span></a>.</p>
+</section>
+<section id="template-lifecycle">
+<h2>Template lifecycle<a class="headerlink" href="#template-lifecycle" title="Link to this heading"></a></h2>
+<p>The package template directory is <code class="docutils literal notranslate"><span class="pre">mache/deploy/templates/</span></code>.</p>
+<p>Each template has an intended render phase.</p>
+<section id="rendered-during-mache-deploy-init-and-mache-deploy-update">
+<h3>Rendered during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code> and <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code><a class="headerlink" href="#rendered-during-mache-deploy-init-and-mache-deploy-update" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">deploy.py.j2</span></code></dt><dd><p>Rendered into the target repository root as <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cli_spec.json.j2</span></code></dt><dd><p>Rendered into <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>.</p>
+</dd>
+</dl>
+<p>These are the only files currently refreshed by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>.</p>
+</section>
+<section id="rendered-only-during-mache-deploy-init">
+<h3>Rendered only during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code><a class="headerlink" href="#rendered-only-during-mache-deploy-init" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">custom_cli_spec.json</span></code></dt><dd><p>Rendered into <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> as a downstream-owned extension
+point for extra CLI flags.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pins.cfg.j2</span></code></dt><dd><p>Rendered into <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">config.yaml.j2.j2</span></code></dt><dd><p>Rendered once with square-bracket delimiters into <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>.
+The remaining curly-brace Jinja expressions are preserved for deploy time.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pixi.toml.j2.j2</span></code></dt><dd><p>Rendered once with square-bracket delimiters into <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">spack.yaml.j2</span></code></dt><dd><p>Copied into the target repo as a deploy-time template owned by the target
+project.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">hooks.py.j2</span></code></dt><dd><p>Copied into the target repo as an example hook module.</p>
+</dd>
+</dl>
+<p>Additionally, <code class="docutils literal notranslate"><span class="pre">init_update.py</span></code> creates a plain <code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code> placeholder.
+That file is target-owned and is not generated from a package template.</p>
+</section>
+<section id="used-at-deployment-time-by-mache-deploy-run">
+<h3>Used at deployment time by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code><a class="headerlink" href="#used-at-deployment-time-by-mache-deploy-run" title="Link to this heading"></a></h3>
+<dl class="simple myst">
+<dt><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></dt><dd><p>Rendered from the target repository into an in-memory config mapping.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code></dt><dd><p>Rendered from the target repository into <code class="docutils literal notranslate"><span class="pre">&lt;prefix&gt;/pixi.toml</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code></dt><dd><p>Rendered from the target repository into the list of Spack specs to install.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">load.sh.j2</span></code></dt><dd><p>Package-owned template used by <code class="docutils literal notranslate"><span class="pre">run.py</span></code> to create final
+<code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;*.sh</span></code> scripts in the target repo
+(toolchain-specific form:
+<code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code></dt><dd><p>Package-owned template used by <code class="docutils literal notranslate"><span class="pre">spack.py</span></code> to create a temporary Spack build
+script under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/spack/</span></code>.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="why-the-double-template-files-exist">
+<h2>Why the double-template files exist<a class="headerlink" href="#why-the-double-template-files-exist" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">config.yaml.j2.j2</span></code> and <code class="docutils literal notranslate"><span class="pre">pixi.toml.j2.j2</span></code> are rendered twice on purpose.</p>
+<p>The first render happens during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code> using square-bracket Jinja
+delimiters such as <code class="docutils literal notranslate"><span class="pre">[[</span> <span class="pre">software</span> <span class="pre">]]</span></code>.</p>
+<p>The second render happens later during <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> using ordinary
+curly-brace Jinja variables such as <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">python</span> <span class="pre">}}</span></code> and <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">platform</span> <span class="pre">}}</span></code>.</p>
+<p>This split lets <code class="docutils literal notranslate"><span class="pre">mache</span></code> stamp repository identity into the generated starter
+kit once, while still letting the target repository own the deploy-time
+template logic.</p>
+</section>
+<section id="which-files-are-target-owned-versus-generated">
+<h2>Which files are target-owned versus generated<a class="headerlink" href="#which-files-are-target-owned-versus-generated" title="Link to this heading"></a></h2>
+<p>This distinction matters when changing <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>.</p>
+<p>Generated and expected to track <code class="docutils literal notranslate"><span class="pre">mache</span></code> closely:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code></p></li>
+</ul>
+<p>Target-owned after <code class="docutils literal notranslate"><span class="pre">init</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code></p></li>
+<li><p>optional <code class="docutils literal notranslate"><span class="pre">deploy/machines/*.cfg</span></code></p></li>
+<li><p>optional <code class="docutils literal notranslate"><span class="pre">deploy/spack/*.yaml</span></code></p></li>
+</ul>
+<p>If you expand the set of files refreshed by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>, do so very
+carefully. Overwriting target-owned files is likely to destroy downstream
+customization.</p>
+<p>This also means version-bump documentation must be explicit: downstream users
+should bootstrap the new release with
+<code class="docutils literal notranslate"><span class="pre">./deploy.py</span> <span class="pre">--bootstrap-only</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code>, run
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span> <span class="pre">--mache-version</span> <span class="pre">&lt;new_version&gt;</span></code> inside that bootstrap
+environment, and then update <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> manually. Today, preserving
+target ownership of <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> is more important than auto-rewriting it.</p>
+</section>
+<section id="the-command-line-contract-from-the-maintainer-side">
+<h2>The command-line contract from the maintainer side<a class="headerlink" href="#the-command-line-contract-from-the-maintainer-side" title="Link to this heading"></a></h2>
+<p>The runtime CLI surface is defined by <code class="docutils literal notranslate"><span class="pre">mache/deploy/templates/cli_spec.json.j2</span></code>
+plus an optional downstream-owned <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, and consumed
+in three places:</p>
+<ol class="arabic simple">
+<li><p>Target-side <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> reads the rendered JSON and exposes the user-facing
+arguments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.bootstrap</span></code> accepts the subset routed to <code class="docutils literal notranslate"><span class="pre">bootstrap</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.cli</span></code> plus <code class="docutils literal notranslate"><span class="pre">mache.deploy.run</span></code> accept the subset routed to
+<code class="docutils literal notranslate"><span class="pre">run</span></code>.</p></li>
+</ol>
+<p>When changing the CLI contract:</p>
+<ol class="arabic simple">
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">cli_spec.json.j2</span></code>.</p></li>
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> if any bootstrap-routed arguments change.</p></li>
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">run.py</span></code> and <code class="docutils literal notranslate"><span class="pre">cli.py</span></code> if any run-routed arguments change.</p></li>
+<li><p>Update the target-side documentation in the user’s guide.</p></li>
+<li><p>Update or add tests.</p></li>
+</ol>
+<p>One important subtlety is that <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> builds its parser from the
+package template plus optional <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code>, while target
+repositories use their rendered <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> plus the same optional
+custom file. A downstream repo therefore remains safe only when its rendered
+JSON stays compatible with the pinned <code class="docutils literal notranslate"><span class="pre">mache</span></code> version and its custom entries
+avoid duplicate <code class="docutils literal notranslate"><span class="pre">flags</span></code> and <code class="docutils literal notranslate"><span class="pre">dest</span></code> values.</p>
+</section>
+<section id="changing-starter-kit-generation">
+<h2>Changing starter-kit generation<a class="headerlink" href="#changing-starter-kit-generation" title="Link to this heading"></a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">mache/deploy/init_update.py</span></code> for any change to the generated starter kit.</p>
+<p>Typical changes include:</p>
+<ul class="simple">
+<li><p>adding a new starter file,</p></li>
+<li><p>changing overwrite rules,</p></li>
+<li><p>changing which files <code class="docutils literal notranslate"><span class="pre">update</span></code> refreshes,</p></li>
+<li><p>adding new repository identity placeholders.</p></li>
+</ul>
+<p>If the change affects repository-owned files, document whether it is <code class="docutils literal notranslate"><span class="pre">init</span></code>
+only or whether existing repos must make a manual migration.</p>
+</section>
+<section id="changing-runtime-deployment-behavior">
+<h2>Changing runtime deployment behavior<a class="headerlink" href="#changing-runtime-deployment-behavior" title="Link to this heading"></a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">mache/deploy/run.py</span></code> when the change affects deployment-time behavior,
+including:</p>
+<ul class="simple">
+<li><p>config rendering,</p></li>
+<li><p>machine resolution,</p></li>
+<li><p>toolchain pairing,</p></li>
+<li><p>pixi installation,</p></li>
+<li><p>load-script generation,</p></li>
+<li><p>shared load-script aliases and shared permission-managed artifacts,</p></li>
+<li><p>JIGSAW wiring.</p></li>
+</ul>
+<p>Before adding a new package-specific branch in <code class="docutils literal notranslate"><span class="pre">run.py</span></code>, prefer checking
+whether the target repository can solve the problem with hook-driven template
+inputs instead. In particular, downstream hooks can already provide generic
+<code class="docutils literal notranslate"><span class="pre">runtime[&quot;pixi&quot;][&quot;extra_dependencies&quot;]</span></code> and
+<code class="docutils literal notranslate"><span class="pre">runtime[&quot;pixi&quot;][&quot;omit_dependencies&quot;]</span></code> lists, which <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code> can
+use to customize optional tools on a per-machine basis.</p>
+<p>Use the companion modules for narrower changes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hooks.py</span></code> for hook semantics and runtime overrides,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">machine.py</span></code> for machine discovery and config merge behavior,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.py</span></code> for Spack environment logic,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bootstrap.py</span></code> for bootstrap environment creation.</p></li>
+</ul>
+</section>
+<section id="public-api-surface-to-keep-documented">
+<h2>Public API surface to keep documented<a class="headerlink" href="#public-api-surface-to-keep-documented" title="Link to this heading"></a></h2>
+<p>The deploy API is not just internal glue. Several pieces are already intended
+for reuse or external understanding:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.init_update.init_or_update_repo()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.run.run_deploy()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.hooks.DeployContext</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.hooks.HookRegistry</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.hooks.load_hooks()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.machine.get_machine()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.machine.get_machine_config()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.spack.SpackDeployResult</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.spack.SpackSoftwareEnvResult</span></code></p></li>
+</ul>
+<p>Whenever you add or remove a public class or function in <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code>, add
+it to the auto-generated API page and update this guide if its role affects
+template ownership or downstream behavior.</p>
+</section>
+<section id="recommended-checklist-for-mache-deploy-changes">
+<h2>Recommended checklist for <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> changes<a class="headerlink" href="#recommended-checklist-for-mache-deploy-changes" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Identify whether the change is init/update time, runtime, or both.</p></li>
+<li><p>Confirm which files are generated versus target-owned.</p></li>
+<li><p>Update code, templates, and parser contracts together.</p></li>
+<li><p>Update the user’s guide for downstream developers.</p></li>
+<li><p>Update this page and the <a class="reference internal" href="api.html#dev-api"><span class="std std-ref">API reference</span></a>.</p></li>
+<li><p>Add or update tests for the changed behavior.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contributing.html" class="btn btn-neutral float-left" title="Contributing to mache" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="config_machines_updates.html" class="btn btn-neutral float-right" title="Automated config_machines.xml updates" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.6.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
