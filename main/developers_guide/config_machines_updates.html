@@ -269,6 +269,9 @@ candidate Spack templates to inspect.</p></li>
 <p>The required work section tells Copilot to:</p>
 <ul class="simple">
 <li><p>run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>,</p></li>
+<li><p>if GitHub API access is unavailable, rerun the command with
+<code class="docutils literal notranslate"><span class="pre">--upstream-revision</span> <span class="pre">&lt;sha&gt;</span></code> when the upstream E3SM commit is already known,
+or provide <code class="docutils literal notranslate"><span class="pre">GITHUB_TOKEN</span></code>/<code class="docutils literal notranslate"><span class="pre">GH_TOKEN</span></code> in the environment,</p></li>
 <li><p>replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
 <code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>,</p></li>
 <li><p>remove <code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code> before committing,</p></li>
@@ -351,6 +354,9 @@ development in this repository.</p>
 <span class="w">  </span>--markdown-output<span class="w"> </span>/tmp/cime_machine_config_report.md
 </pre></div>
 </div>
+<p>If GitHub API access is rate-limited or forbidden in your environment,
+rerun with <code class="docutils literal notranslate"><span class="pre">GITHUB_TOKEN</span></code> or <code class="docutils literal notranslate"><span class="pre">GH_TOKEN</span></code> set, or provide
+<code class="docutils literal notranslate"><span class="pre">--upstream-revision</span> <span class="pre">&lt;sha&gt;</span></code> when the upstream commit hash is already known.</p>
 <p>Run the focused tests:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>py314<span class="w"> </span>pytest<span class="w"> </span>tests/test_cime_machine_config_report.py
 </pre></div>

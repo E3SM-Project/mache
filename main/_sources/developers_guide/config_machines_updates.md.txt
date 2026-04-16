@@ -142,6 +142,9 @@ The required work section tells Copilot to:
 
 - run `pixi run -e py314 python utils/update_cime_machine_config.py
   --work-dir .`,
+- if GitHub API access is unavailable, rerun the command with
+  `--upstream-revision <sha>` when the upstream E3SM commit is already known,
+  or provide `GITHUB_TOKEN`/`GH_TOKEN` in the environment,
 - replace `mache/cime_machine_config/config_machines.xml` with the generated
   `upstream_config_machines.xml`,
 - remove `upstream_config_machines.xml` before committing,
@@ -230,6 +233,10 @@ pixi run -e py314 python utils/update_cime_machine_config.py \
   --json-output /tmp/cime_machine_config_report.json \
   --markdown-output /tmp/cime_machine_config_report.md
 ```
+
+If GitHub API access is rate-limited or forbidden in your environment,
+rerun with `GITHUB_TOKEN` or `GH_TOKEN` set, or provide
+`--upstream-revision <sha>` when the upstream commit hash is already known.
 
 Run the focused tests:
 
