@@ -43,6 +43,8 @@ These instructions apply to the whole repository unless a deeper
 - Run tests and linting through Pixi unless the task explicitly requires a
   different environment.
 - Prefer `pixi run -e py314 pytest` for tests.
+- Do not run `workflow_tests/test_deploy_workflow.py` during routine
+  validation unless the user explicitly requests that workflow test.
 - pre-commit on changed files is required before finishing; if sandboxed
   execution fails, request escalation and do not close the task until it has
   run or the user declines.
