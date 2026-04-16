@@ -6,14 +6,17 @@ mache package.
 ## update CIME machine config
 
 The `update_cime_machine_config.py` script can be used to download the latest
-version of the `config_machines.xml` file from E3SM's `master` branch, then
-compare it from the previous version stored in `mache` and show changes related
-to supported machines.
+version of the `config_machines.xml` file from `E3SM-Project/E3SM`, compare it
+with the copy stored in `mache`, and show changes related to supported
+machines.
 
-A developer can then copy `new_config_machines.xml` into
-`mache/cime_machine_config/config_machines.xml` as part of a PR that makes
-relevant updates. They should also make the changes associated with the
-differences that this utility displays in the appropriate `mache/spack/templates` files.
+When drift is detected, the follow-up PR should replace
+`mache/cime_machine_config/config_machines.xml` with the latest upstream file
+from `E3SM-Project/E3SM`. This utility helps confirm the drift and review the
+affected supported machines; it does not rewrite the repository copy in place.
+
+The PR should also make the changes associated with the differences that this
+utility displays in the appropriate `mache/spack/templates` files.
 
 ## extract spack shell scripts from CIME machine config
 

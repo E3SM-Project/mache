@@ -38,4 +38,6 @@ jobs:
       - name: Verify the agent environment
         run: |
           pixi run -e py314 python --version
+          pixi run -e py314 pytest --version
+          pixi run -e py314 pre-commit --version
           pixi run -e py314 mache --help

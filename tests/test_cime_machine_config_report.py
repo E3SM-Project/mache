@@ -50,6 +50,7 @@ def test_build_update_report_detects_spack_related_drift(
         new_xml=new_xml,
         supported_machines=['test-machine'],
         upstream_url='https://example.invalid/config_machines.xml',
+        upstream_revision='deadbeef1234',
     )
 
     assert report.has_updates is True
@@ -97,13 +98,22 @@ def test_render_update_issue_includes_required_instructions(
         new_xml=new_xml,
         supported_machines=['test-machine'],
         upstream_url='https://example.invalid/config_machines.xml',
+        upstream_revision='deadbeef1234',
     )
     markdown = render_update_issue(
         report,
         run_url='https://github.example/actions/runs/1',
     )
 
-    assert 'Update mache/cime_machine_config/config_machines.xml' in markdown
+    assert (
+        'pixi run -e py314 python utils/update_cime_machine_config.py'
+        in markdown
+    )
+    assert 'upstream_config_machines.xml' in markdown
+    assert 'deadbeef1234' in markdown
+    assert 'state which upstream E3SM commit hash was' in markdown
+    assert 'mache/spack/templates/<machine>*.yaml' in markdown
+    assert 'mache/spack/templates/test-machine*.sh' in markdown
     assert 'TODO comment in the PR for the reviewer' in markdown
     assert 'test-machine_gnu_mpich.yaml' in markdown
     assert 'https://github.example/actions/runs/1' in markdown

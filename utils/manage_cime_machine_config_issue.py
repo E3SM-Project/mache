@@ -197,10 +197,19 @@ def build_issue_payload(
             'target_repo': f'{owner}/{repo}',
             'base_branch': base_branch,
             'custom_instructions': (
-                'Use the issue body as the task definition. Update '
-                'config_machines.xml first, then the related Spack '
-                'templates and version strings. Add TODO comments in the '
-                'PR when prefix or path changes need reviewer confirmation.'
+                'Use the issue body as the task definition. Run `pixi run '
+                '-e py314 python utils/update_cime_machine_config.py '
+                '--work-dir .`, replace '
+                'mache/cime_machine_config/config_machines.xml with '
+                'upstream_config_machines.xml, remove '
+                'upstream_config_machines.xml before committing, and state '
+                'the upstream E3SM commit hash in the PR summary. Then '
+                'update the related Spack templates and version strings in '
+                'mache/spack/templates/<machine>*.yaml, '
+                'mache/spack/templates/<machine>*.sh, and '
+                'mache/spack/templates/<machine>*.csh. '
+                'Add TODO comments in the PR when prefix or path changes '
+                'need reviewer confirmation.'
             ),
             'custom_agent': '',
             'model': '',

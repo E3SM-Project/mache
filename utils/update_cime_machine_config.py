@@ -3,6 +3,9 @@
 import argparse
 import os
 import tempfile
+from urllib.parse import urlparse
+
+import requests
 
 import mache.version
 from mache.cime_machine_config.report import (
@@ -12,6 +15,12 @@ from mache.cime_machine_config.report import (
 )
 from mache.io import download_file
 from mache.machines import get_supported_machines
+
+DEFAULT_UPSTREAM_URL = (
+    'https://raw.githubusercontent.com/E3SM-Project/E3SM/'
+    'refs/heads/master/cime_config/machines/config_machines.xml'
+)
+GITHUB_API_URL = 'https://api.github.com'
 
 
 def main():
@@ -33,10 +42,7 @@ def main():
     )
     parser.add_argument(
         '--upstream-url',
-        default=(
-            'https://raw.githubusercontent.com/E3SM-Project/E3SM/'
-            'refs/heads/master/cime_config/machines/config_machines.xml'
-        ),
+        default=DEFAULT_UPSTREAM_URL,
         help='The upstream config_machines.xml URL to compare against.',
     )
     parser.add_argument(
@@ -77,15 +83,19 @@ def main():
 def build_report(*, upstream_url, work_dir=None):
     """Download upstream config and return a structured drift report."""
 
+    upstream_revision = _resolve_upstream_revision(upstream_url)
+
     if work_dir is not None:
         return _build_report_in_dir(
             upstream_url=upstream_url,
+            upstream_revision=upstream_revision,
             work_dir=work_dir,
         )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         return _build_report_in_dir(
             upstream_url=upstream_url,
+            upstream_revision=upstream_revision,
             work_dir=temp_dir,
         )
 
@@ -111,7 +121,7 @@ def print_console_report(report):
             print(f'  spack templates: {templates}')
 
 
-def _build_report_in_dir(*, upstream_url, work_dir):
+def _build_report_in_dir(*, upstream_url, upstream_revision, work_dir):
     machines = get_supported_machines()
     upstream_filename = os.path.join(work_dir, 'upstream_config_machines.xml')
     old_filename = 'mache/cime_machine_config/config_machines.xml'
@@ -122,7 +132,66 @@ def _build_report_in_dir(*, upstream_url, work_dir):
         new_xml=upstream_filename,
         supported_machines=machines,
         upstream_url=upstream_url,
+        upstream_revision=upstream_revision,
     )
+
+
+def _resolve_upstream_revision(upstream_url):
+    github_source = _parse_github_raw_url(upstream_url)
+    if github_source is None:
+        return None
+
+    owner, repo, ref, path = github_source
+    return _get_latest_commit_sha(
+        owner=owner,
+        repo=repo,
+        ref=ref,
+        path=path,
+    )
+
+
+def _parse_github_raw_url(upstream_url):
+    parsed = urlparse(upstream_url)
+    if parsed.netloc != 'raw.githubusercontent.com':
+        return None
+
+    parts = [part for part in parsed.path.split('/') if part != '']
+    if len(parts) < 7:
+        return None
+
+    owner, repo = parts[0], parts[1]
+    if parts[2:4] != ['refs', 'heads']:
+        return None
+
+    ref = parts[4]
+    path = '/'.join(parts[5:])
+    if path == '':
+        return None
+
+    return owner, repo, ref, path
+
+
+def _get_latest_commit_sha(*, owner, repo, ref, path):
+    response = requests.get(
+        f'{GITHUB_API_URL}/repos/{owner}/{repo}/commits',
+        params={
+            'sha': ref,
+            'path': path,
+            'per_page': 1,
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+
+    payload = response.json()
+    if not isinstance(payload, list) or len(payload) == 0:
+        return None
+
+    sha = payload[0].get('sha')
+    if not isinstance(sha, str) or sha == '':
+        return None
+
+    return sha
 
 
 if __name__ == '__main__':
