@@ -13,6 +13,10 @@ can be added to mache. This list is a *copy* of the
 which we try to keep up-to-date. If you wish to add a machine that is not
 included in this list, you must contact the E3SM-Project developers to add your
 machine.
+
+For details on the automated workflow that detects upstream drift in this file
+and assigns follow-up work to Copilot, see
+{doc}`config_machines_updates`.
 :::
 
 (dev-new-config-file)=
