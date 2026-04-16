@@ -219,9 +219,9 @@ issue body contains the required maintainer instructions.</p>
 <li><p>The workflow creates or refreshes a GitHub issue.</p></li>
 <li><p>Copilot is assigned to that issue.</p></li>
 <li><p>Copilot opens a pull request against <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p></li>
-<li><p>That PR updates <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> first, then
-any related Spack templates or version strings that the report indicates
-should be reviewed.</p></li>
+<li><p>That PR replaces <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the
+latest version from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, then updates any related Spack
+templates or version strings that the report indicates should be reviewed.</p></li>
 <li><p>A maintainer reviews and merges the PR.</p></li>
 <li><p>The next daily run compares the merged repository state against upstream
 again.</p></li>
@@ -240,8 +240,15 @@ updated to reflect the remaining work.</p>
 <code class="docutils literal notranslate"><span class="pre">agent_assignment</span></code> payload:</p>
 <ul class="simple">
 <li><p>Use the issue body as the task definition.</p></li>
-<li><p>Update <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> first.</p></li>
-<li><p>Then update related Spack templates and version strings.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>.</p></li>
+<li><p>Replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
+<code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>, then remove that temporary file before
+committing.</p></li>
+<li><p>State the upstream E3SM commit hash in the PR summary.</p></li>
+<li><p>Then update related Spack templates and version strings under
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.yaml</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.sh</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.csh</span></code>.</p></li>
 <li><p>Add TODO comments in the PR when prefix or path changes need reviewer
 confirmation.</p></li>
 </ul>
@@ -252,6 +259,7 @@ confirmation.</p></li>
 drift and includes:</p>
 <ul class="simple">
 <li><p>the timestamp and upstream source URL,</p></li>
+<li><p>the upstream revision when it could be resolved from GitHub,</p></li>
 <li><p>the workflow run URL,</p></li>
 <li><p>the list of affected supported machines,</p></li>
 <li><p>the required work list,</p></li>
@@ -260,9 +268,15 @@ candidate Spack templates to inspect.</p></li>
 </ul>
 <p>The required work section tells Copilot to:</p>
 <ul class="simple">
-<li><p>update <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> for the affected
-supported machines,</p></li>
-<li><p>update Spack templates and version strings when module or environment drift
+<li><p>run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>,</p></li>
+<li><p>replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
+<code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>,</p></li>
+<li><p>remove <code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code> before committing,</p></li>
+<li><p>state the upstream E3SM commit hash in the PR summary,</p></li>
+<li><p>update Spack templates and version strings in
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.yaml</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.sh</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.csh</span></code> when module or environment drift
 implies different package versions,</p></li>
 <li><p>keep the PR focused when the change is only version or module drift,</p></li>
 <li><p>add a TODO in the PR instead of guessing when a new prefix or path is not
@@ -302,12 +316,15 @@ issue in the repository.</p></li>
 in this order.</p>
 <section id="config-machines-xml-changes">
 <h3>1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes<a class="headerlink" href="#config-machines-xml-changes" title="Link to this heading"></a></h3>
-<p>Verify that the PR updates
-<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> only for supported machines
-reported by the workflow, and that those changes match the current upstream
-E3SM machine definitions.</p>
+<p>Verify that the PR replaces
+<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the current upstream file
+from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, rather than hand-editing only selected machine
+blocks.</p>
+<p>The supported-machine report from the workflow tells you which machine entries
+caused the drift and which sections deserve the closest review.</p>
 <p>In practice, the easiest cross-check is to compare the PR against the report
-artifact from the workflow run that opened or refreshed the issue.</p>
+artifact and the upstream XML source from the workflow run that opened or
+refreshed the issue.</p>
 </section>
 <section id="related-spack-updates">
 <h3>2. Related Spack updates<a class="headerlink" href="#related-spack-updates" title="Link to this heading"></a></h3>

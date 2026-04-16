@@ -89,9 +89,9 @@ The update path is:
 2. The workflow creates or refreshes a GitHub issue.
 3. Copilot is assigned to that issue.
 4. Copilot opens a pull request against `main`.
-5. That PR updates `mache/cime_machine_config/config_machines.xml` first, then
-   any related Spack templates or version strings that the report indicates
-   should be reviewed.
+5. That PR replaces `mache/cime_machine_config/config_machines.xml` with the
+  latest version from `E3SM-Project/E3SM`, then updates any related Spack
+  templates or version strings that the report indicates should be reviewed.
 6. A maintainer reviews and merges the PR.
 7. The next daily run compares the merged repository state against upstream
    again.
@@ -112,8 +112,16 @@ Copilot receives instructions from two places.
 `agent_assignment` payload:
 
 - Use the issue body as the task definition.
-- Update `config_machines.xml` first.
-- Then update related Spack templates and version strings.
+- Run `pixi run -e py314 python utils/update_cime_machine_config.py
+  --work-dir .`.
+- Replace `mache/cime_machine_config/config_machines.xml` with the generated
+  `upstream_config_machines.xml`, then remove that temporary file before
+  committing.
+- State the upstream E3SM commit hash in the PR summary.
+- Then update related Spack templates and version strings under
+  `mache/spack/templates/<machine>*.yaml`,
+  `mache/spack/templates/<machine>*.sh`, and
+  `mache/spack/templates/<machine>*.csh`.
 - Add TODO comments in the PR when prefix or path changes need reviewer
   confirmation.
 
@@ -123,6 +131,7 @@ Copilot receives instructions from two places.
 drift and includes:
 
 - the timestamp and upstream source URL,
+- the upstream revision when it could be resolved from GitHub,
 - the workflow run URL,
 - the list of affected supported machines,
 - the required work list,
@@ -131,9 +140,16 @@ drift and includes:
 
 The required work section tells Copilot to:
 
-- update `mache/cime_machine_config/config_machines.xml` for the affected
-  supported machines,
-- update Spack templates and version strings when module or environment drift
+- run `pixi run -e py314 python utils/update_cime_machine_config.py
+  --work-dir .`,
+- replace `mache/cime_machine_config/config_machines.xml` with the generated
+  `upstream_config_machines.xml`,
+- remove `upstream_config_machines.xml` before committing,
+- state the upstream E3SM commit hash in the PR summary,
+- update Spack templates and version strings in
+  `mache/spack/templates/<machine>*.yaml`,
+  `mache/spack/templates/<machine>*.sh`, and
+  `mache/spack/templates/<machine>*.csh` when module or environment drift
   implies different package versions,
 - keep the PR focused when the change is only version or module drift,
 - add a TODO in the PR instead of guessing when a new prefix or path is not
@@ -173,13 +189,17 @@ in this order.
 
 ### 1. `config_machines.xml` changes
 
-Verify that the PR updates
-`mache/cime_machine_config/config_machines.xml` only for supported machines
-reported by the workflow, and that those changes match the current upstream
-E3SM machine definitions.
+Verify that the PR replaces
+`mache/cime_machine_config/config_machines.xml` with the current upstream file
+from `E3SM-Project/E3SM`, rather than hand-editing only selected machine
+blocks.
+
+The supported-machine report from the workflow tells you which machine entries
+caused the drift and which sections deserve the closest review.
 
 In practice, the easiest cross-check is to compare the PR against the report
-artifact from the workflow run that opened or refreshed the issue.
+artifact and the upstream XML source from the workflow run that opened or
+refreshed the issue.
 
 ### 2. Related Spack updates
 
