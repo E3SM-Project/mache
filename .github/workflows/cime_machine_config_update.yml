@@ -54,11 +54,11 @@ jobs:
 
       - name: Synchronize automation issue
         env:
-          COPILOT_ISSUE_TOKEN: ${{ secrets.COPILOT_ISSUE_TOKEN }}
+          GH_CLI_TOKEN: ${{ secrets.GH_CLI_TOKEN }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          if [ -z "${COPILOT_ISSUE_TOKEN}" ]; then
-            echo "COPILOT_ISSUE_TOKEN is not configured; report generated" \
+          if [ -z "${GH_CLI_TOKEN}" ]; then
+            echo "GH_CLI_TOKEN is not configured; report generated" \
               " but no issue was synchronized."
             exit 0
           fi
@@ -68,7 +68,7 @@ jobs:
             --report-json ${REPORT_JSON} \
             --report-markdown ${REPORT_MARKDOWN} \
             --repository ${GITHUB_REPOSITORY} \
-            --token ${COPILOT_ISSUE_TOKEN} \
+            --token ${GH_CLI_TOKEN} \
             --issue-title "${ISSUE_TITLE}" \
             --base-branch ${DEFAULT_BRANCH} \
             --primary-assignee ${PRIMARY_ASSIGNEE}
