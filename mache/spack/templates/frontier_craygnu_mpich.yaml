@@ -169,12 +169,12 @@ spack:
     netcdf-c:
       externals:
       - spec: netcdf-c@4.9.0.15+mpi~parallel-netcdf
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.15
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.15/gnu/12.3
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.5.3
-        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.15
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.0.15/gnu/12.3
       buildable: false
   compilers:
   - compiler:
