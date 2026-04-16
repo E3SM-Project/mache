@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 import tempfile
 from urllib.parse import urlparse
 
@@ -61,11 +62,17 @@ def main():
         '--work-dir',
         help='Optional directory for temporary XML comparison files.',
     )
+    parser.add_argument(
+        '--upstream-revision',
+        help='Optional upstream revision to record in the report. If omitted, '
+        'the script tries to resolve it from the GitHub API.',
+    )
 
     args = parser.parse_args()
 
     report = build_report(
         upstream_url=args.upstream_url,
+        upstream_revision=args.upstream_revision,
         work_dir=args.work_dir,
     )
     print_console_report(report)
@@ -80,10 +87,11 @@ def main():
             handle.write('\n')
 
 
-def build_report(*, upstream_url, work_dir=None):
+def build_report(*, upstream_url, upstream_revision=None, work_dir=None):
     """Download upstream config and return a structured drift report."""
 
-    upstream_revision = _resolve_upstream_revision(upstream_url)
+    if upstream_revision is None:
+        upstream_revision = _resolve_upstream_revision(upstream_url)
 
     if work_dir is not None:
         return _build_report_in_dir(
@@ -142,12 +150,16 @@ def _resolve_upstream_revision(upstream_url):
         return None
 
     owner, repo, ref, path = github_source
-    return _get_latest_commit_sha(
-        owner=owner,
-        repo=repo,
-        ref=ref,
-        path=path,
-    )
+    try:
+        return _get_latest_commit_sha(
+            owner=owner,
+            repo=repo,
+            ref=ref,
+            path=path,
+        )
+    except requests.RequestException as exc:
+        _warn_revision_resolution_failure(exc)
+        return None
 
 
 def _parse_github_raw_url(upstream_url):
@@ -179,6 +191,7 @@ def _get_latest_commit_sha(*, owner, repo, ref, path):
             'path': path,
             'per_page': 1,
         },
+        headers=_build_github_api_headers(),
         timeout=60,
     )
     response.raise_for_status()
@@ -192,6 +205,32 @@ def _get_latest_commit_sha(*, owner, repo, ref, path):
         return None
 
     return sha
+
+
+def _build_github_api_headers():
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'mache/update_cime_machine_config',
+    }
+
+    token = os.getenv('GITHUB_TOKEN') or os.getenv('GH_TOKEN')
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+
+    return headers
+
+
+def _warn_revision_resolution_failure(error):
+    response = getattr(error, 'response', None)
+    status_code = getattr(response, 'status_code', None)
+    status = '' if status_code is None else f' (HTTP {status_code})'
+    print(
+        'Warning: could not resolve upstream revision from the GitHub API'
+        f'{status}; continuing without revision metadata. Set '
+        'GITHUB_TOKEN or GH_TOKEN, or rerun with --upstream-revision <sha> '
+        'to record a specific upstream commit.',
+        file=sys.stderr,
+    )
 
 
 if __name__ == '__main__':

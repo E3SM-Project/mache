@@ -37,6 +37,7 @@ jobs:
 
       - name: Generate machine update report
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           pixi run -e ${PIXI_ENV} python utils/update_cime_machine_config.py \

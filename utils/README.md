@@ -15,6 +15,10 @@ When drift is detected, the follow-up PR should replace
 from `E3SM-Project/E3SM`. This utility helps confirm the drift and review the
 affected supported machines; it does not rewrite the repository copy in place.
 
+If the script cannot resolve the upstream commit from the GitHub API,
+provide `GITHUB_TOKEN` or `GH_TOKEN` in the environment, or rerun it with
+`--upstream-revision <sha>` when the upstream commit is already known.
+
 The PR should also make the changes associated with the differences that this
 utility displays in the appropriate `mache/spack/templates` files.
 
