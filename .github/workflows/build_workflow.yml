@@ -16,6 +16,47 @@ env:
   PYTHON_VERSION: "3.14"
 
 jobs:
+  workflow-test-changes:
+    name: detect workflow test changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.detect.outputs.should-run }}
+    steps:
+      - if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: actions/checkout@v6
+
+      - if: ${{ github.event_name != 'workflow_dispatch' }}
+        id: file_changes
+        uses: trilom/file-changes-action@1.2.4
+        with:
+          output: ' '
+
+      - id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CHANGED_FILES: ${{ steps.file_changes.outputs.files }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+            echo "Running workflow tests for manual dispatch."
+            exit 0
+          fi
+
+          # These tests exercise the deploy and jigsaw flows plus the
+          # supporting mache modules they execute directly.
+          for file in $CHANGED_FILES; do
+            case "$file" in
+              .github/workflows/build_workflow.yml|mache/__main__.py|mache/deploy/*|mache/discover.py|mache/jigsaw/*|mache/machines/*|mache/permissions.py|mache/spack/*|mache/version.py|pixi.toml|pyproject.toml|workflow_tests/*)
+                echo "should-run=true" >> "$GITHUB_OUTPUT"
+                echo "Workflow tests enabled by $file"
+                exit 0
+                ;;
+            esac
+          done
+
+          echo "should-run=false" >> "$GITHUB_OUTPUT"
+          echo "No workflow-test-relevant files changed."
+
   python36-compat:
     name: python 3.6 compatibility (deploy/bootstrap)
     runs-on: ubuntu-latest
@@ -133,6 +174,8 @@ jobs:
 
   workflow-tests:
     name: workflow tests - python ${{ matrix.python-version }}
+    needs: workflow-test-changes
+    if: ${{ needs.workflow-test-changes.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
