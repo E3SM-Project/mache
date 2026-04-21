@@ -139,9 +139,12 @@ activate it in your current shell. To use tools from the environment (like
 <li><p><strong>Set up an isolated environment:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>install
 pixi<span class="w"> </span>shell
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-deps<span class="w"> </span>--no-build-isolation<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
+<p>The default Pixi environment includes <code class="docutils literal notranslate"><span class="pre">mache</span></code> in editable mode for local
+development. The versioned CI environments (<code class="docutils literal notranslate"><span class="pre">py310</span></code>-<code class="docutils literal notranslate"><span class="pre">py314</span></code>) deliberately
+omit that editable dependency and install it explicitly with
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code> after <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code>.</p>
 </li>
 <li><p><strong>Install pre-commit hooks:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install

@@ -36,8 +36,12 @@ activate it in your current shell. To use tools from the environment (like
     ```bash
     pixi install
     pixi shell
-    python -m pip install --no-deps --no-build-isolation -e .
     ```
+
+    The default Pixi environment includes `mache` in editable mode for local
+    development. The versioned CI environments (`py310`-`py314`) deliberately
+    omit that editable dependency and install it explicitly with
+    `pip install -e .` after `pixi install`.
 
 2. **Install pre-commit hooks:**
     ```bash

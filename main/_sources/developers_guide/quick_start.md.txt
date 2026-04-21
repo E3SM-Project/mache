@@ -22,16 +22,17 @@ activate it in your current shell. To use tools from the environment (like
 `python`), either run commands with `pixi run ...` or start a subshell with
 `pixi shell`.
 
-To work on `mache`, you should install the development version in an isolated environment:
+To work on `mache`, you should install the development version in an isolated
+environment:
 
 ```bash
-pixi install
 pixi shell
-python -m pip install --no-deps --no-build-isolation -e .
 ```
 
-This creates a Pixi environment based on the root `pixi.toml` and then installs
-`mache` in editable mode.
+This creates the default Pixi environment from the root `pixi.toml` and
+includes `mache` in editable mode for local development. The versioned CI
+environments (`py310`-`py314`) intentionally skip this editable install and add
+it explicitly with `pip install -e .` in CI after `pixi install`.
 
 (dev-code-styling)=
 
@@ -97,4 +98,3 @@ Make sure all tests pass before submitting a pull request.
 - Document public functions and classes.
 
 For more details, see the [contributing guide](contributing.md).
-
