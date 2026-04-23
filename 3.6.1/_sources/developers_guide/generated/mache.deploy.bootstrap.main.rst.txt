@@ -1,0 +1,6 @@
+﻿mache.deploy.bootstrap.main
+===========================
+
+.. currentmodule:: mache.deploy.bootstrap
+
+.. autofunction:: main
