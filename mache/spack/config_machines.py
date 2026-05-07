@@ -168,7 +168,13 @@ def extract_spack_from_config_machines(
 
 
 def _matches_selector(pattern, value):
-    """Return whether a selector regex matches the whole value."""
+    """Return whether a selector regex matches the whole value.
+
+    If the pattern begins with ``!``, the remaining pattern must *not*
+    match ``value`` (CIME negation syntax, e.g. ``compiler="!nvidia"``).
+    """
+    if pattern.startswith('!'):
+        return re.fullmatch(pattern[1:], value) is None
     return re.fullmatch(pattern, value) is not None
 
 

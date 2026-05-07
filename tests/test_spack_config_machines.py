@@ -70,3 +70,49 @@ def test_extract_machine_config_requires_full_compiler_match(tmp_path: Path):
     assert "{{ render_env_var('BOTH_REGEX', '1', 'sh') }}" in cpu_script
     assert "{{ render_env_var('CPU_ONLY', '1', 'sh') }}" in cpu_script
     assert "{{ render_env_var('GPU_ONLY', '1', 'sh') }}" not in cpu_script
+
+
+def test_extract_machine_config_negation_selector(tmp_path: Path):
+    xml_file = tmp_path / 'config_machines.xml'
+    xml_file.write_text(
+        '<config_machines>\n'
+        '  <machine MACH="test-machine">\n'
+        '    <module_system type="module">\n'
+        '      <modules compiler="nvidia">\n'
+        '        <command name="load">nvidia-only-module</command>\n'
+        '      </modules>\n'
+        '      <modules compiler="!nvidia">\n'
+        '        <command name="load">non-nvidia-module</command>\n'
+        '      </modules>\n'
+        '      <modules>\n'
+        '        <command name="load">common-module</command>\n'
+        '      </modules>\n'
+        '    </module_system>\n'
+        '  </machine>\n'
+        '</config_machines>\n',
+        encoding='utf-8',
+    )
+
+    nvidia_config = extract_machine_config(
+        xml_file=xml_file,
+        machine='test-machine',
+        compiler='nvidia',
+        mpilib='mpich',
+    )
+    nvidia_script = config_to_shell_script(nvidia_config, 'sh')
+
+    assert 'nvidia-only-module' in nvidia_script
+    assert 'non-nvidia-module' not in nvidia_script
+    assert 'common-module' in nvidia_script
+
+    intel_config = extract_machine_config(
+        xml_file=xml_file,
+        machine='test-machine',
+        compiler='intel',
+        mpilib='mpich',
+    )
+    intel_script = config_to_shell_script(intel_config, 'sh')
+
+    assert 'nvidia-only-module' not in intel_script
+    assert 'non-nvidia-module' in intel_script
+    assert 'common-module' in intel_script
