@@ -150,7 +150,6 @@ spack:
       - PrgEnv-nvidia
       - nvidia/25.9
       - cray-libsci/25.09.0
-      - craype-accel-host
       - craype/2.7.35
       - libfabric/1.20
       environment:
