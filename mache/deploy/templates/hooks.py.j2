@@ -94,7 +94,9 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # - runtime["shared"]["base_path"]: shared base directory to update
     #     permissions on recursively before path-specific updates
     # - runtime["shared"]["managed_directories"]: extra shared directories to
-    #     include in the permission update step
+    #     include in the permission update step. Entries may be strings or
+    #     mappings like:
+    #       {"path": "/shared/latest", "root_group_writable": True}
     # - runtime["shared"]["managed_files"]: extra shared files to include in
     #     the permission update step
     #
@@ -113,6 +115,12 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # updates.setdefault("shared", {})["base_path"] = "/shared/my-software"
     # updates.setdefault("shared", {})["load_script_copies"] = [
     #     "/shared/load_my_software.sh",
+    # ]
+    # updates.setdefault("shared", {})["managed_directories"] = [
+    #     {
+    #         "path": "/shared/latest",
+    #         "root_group_writable": True,
+    #     },
     # ]
 
     return updates
