@@ -2,6 +2,19 @@
 
 {{ env_lines }}
 
+# Spack 0.23.x uses ast.Str, removed in Python 3.12+.  If the default
+# python3 is too new, find an older compatible interpreter for spack.
+if ! python3 -c 'import sys; exit(0 if sys.version_info < (3, 12) else 1)' \
+        2>/dev/null; then
+  for _spack_py in python3.11 python3.10 python3.9 python3.8; do
+    if _spack_py_path=$(command -v "$_spack_py" 2>/dev/null); then
+      export SPACK_PYTHON="$_spack_py_path"
+      break
+    fi
+  done
+  unset _spack_py _spack_py_path
+fi
+
 set -e
 
 if [ -d {{ spack_path_q }} ]; then
