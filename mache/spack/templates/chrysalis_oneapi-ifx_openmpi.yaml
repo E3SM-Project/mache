@@ -18,7 +18,7 @@ spack:
     unify: true
   packages:
     all:
-      compiler: [{{ compiler }}]
+      compiler: [{{ compiler }}, gcc@11.3.0]
       providers:
         mpi: [{{ mpi }}%{{ compiler }}]
 {%- if e3sm_lapack %}
@@ -110,13 +110,12 @@ spack:
     gcc-runtime:
       externals:
       - spec: gcc-runtime@11.3.0%gcc@11.3.0
-        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-11.3.0/gcc-runtime-11.3.0-dxemrvv
       buildable: false
     openmpi:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
-        modules:
-        - openmpi/4.1.8-nygtpa3
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/openmpi-4.1.8-nygtpa3
       buildable: false
     intel-oneapi-mkl:
       externals:
@@ -127,26 +126,22 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.14.6+cxx+fortran+hl+mpi
-        modules:
-        - hdf5/1.14.6-5cgownf
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/hdf5-1.14.6-5cgownf
       buildable: false
     netcdf-c:
       externals:
       - spec: netcdf-c@4.9.3+mpi~parallel-netcdf
-        modules:
-        - netcdf-c/4.9.3-mekqsor
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/netcdf-c-4.9.3-mekqsor
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.6.2
-        modules:
-        - netcdf-fortran/4.6.2-cjqpiwp
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/netcdf-fortran-4.6.2-cjqpiwp
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
-        modules:
-        - parallel-netcdf/1.14.1-f2fwvr2
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/parallel-netcdf-1.14.1-f2fwvr2
       buildable: false
   compilers:
   - compiler:
@@ -156,6 +151,19 @@ spack:
         cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/icpx
         f77: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/ifx
         fc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/ifx
+      flags: {}
+      operating_system: rhel8
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
+  - compiler:
+      spec: gcc@11.3.0
+      paths:
+        cc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gcc
+        cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/g++
+        f77: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gfortran
+        fc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gfortran
       flags: {}
       operating_system: rhel8
       target: x86_64
