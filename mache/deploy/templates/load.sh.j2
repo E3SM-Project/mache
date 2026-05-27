@@ -201,6 +201,13 @@ eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
   "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}")"
 echo "   pixi env loaded."
 
+# Unload python/conda modules so that compiler module switches in the
+# spack or target load snippet cannot prepend a system python ahead of pixi.
+if command -v module >/dev/null 2>&1; then
+  module unload python >/dev/null 2>&1 || true
+  module unload conda >/dev/null 2>&1 || true
+fi
+
 # Spack activation (optional)
 {% if spack_activation -%}
 if [[ "${MACHE_DEPLOY_ACTIVE_ENV_KIND}" == "compute" ]]; then
