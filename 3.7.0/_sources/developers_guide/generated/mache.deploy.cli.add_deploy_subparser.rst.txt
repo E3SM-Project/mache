@@ -1,0 +1,6 @@
+﻿mache.deploy.cli.add\_deploy\_subparser
+=======================================
+
+.. currentmodule:: mache.deploy.cli
+
+.. autofunction:: add_deploy_subparser

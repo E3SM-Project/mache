@@ -1,0 +1,6 @@
+﻿mache.deploy.bootstrap.check\_call
+==================================
+
+.. currentmodule:: mache.deploy.bootstrap
+
+.. autofunction:: check_call
