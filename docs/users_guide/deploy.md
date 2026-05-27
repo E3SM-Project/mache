@@ -216,7 +216,17 @@ Important settings:
 - `shared.base_path`: optional shared base directory whose permissions mache
   updates recursively before any path-specific permission updates. Hooks may
   override this through `ctx.runtime["shared"]["base_path"]`, and `"dynamic"`
-  is useful when the path depends on machine-specific logic in `deploy/hooks.py`.
+  is useful when the path depends on machine-specific logic in
+  `deploy/hooks.py`.
+- `shared.managed_directories`: optional extra directories to include in
+  permission management. Entries may be strings, or mappings with `path` and
+  `root_group_writable`. Mache updates each managed directory recursively
+  without group-write permission; with `root_group_writable: true`, it then
+  makes only that directory path itself group-writable. This is useful for
+  shared "latest" directories or symlink roots that maintainers need to update
+  without making the deployed environment contents group-writable.
+- `shared.managed_files`: optional extra files to include in permission
+  management.
 - `spack.spack_path`: required when Spack support is enabled and no hook or
   CLI override provides it, unless the user disables Spack for that run with
   `--no-spack`.
@@ -444,6 +454,27 @@ Combined with a matching `deploy/pixi.toml.j2`, this gives downstream projects
 an escape hatch for optional tools without needing a new hard-coded helper in
 `mache.deploy.run`.
 
+Hooks can also declare additional shared artifacts for permission management.
+For example, a `pre_publish` hook that creates or updates a shared alias
+directory can ask mache to keep the directory itself writable by the deployment
+group while leaving its contents non-group-writable:
+
+```python
+def pre_publish(ctx: DeployContext) -> dict[str, Any] | None:
+    latest_path = "/path/to/shared/latest"
+
+    return {
+        "shared": {
+            "managed_directories": [
+                {
+                    "path": latest_path,
+                    "root_group_writable": True,
+                },
+            ],
+        },
+    }
+```
+
 ### `deploy/load.sh`
 
 Required: no
@@ -636,6 +667,7 @@ created.
 10. Optionally deploys or loads Spack environments.
 11. Optionally installs the target software in editable mode.
 12. Writes one or more `load_<software>*.sh` scripts.
+13. Applies shared-deployment permission updates when a group is configured.
 
 When a toolchain pair is selected, script names include machine, compiler,
 and MPI tags, for example:

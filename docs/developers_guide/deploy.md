@@ -45,7 +45,9 @@ That separation is the main thing to preserve when changing the design.
 
 `mache/deploy/shared.py`
 : Shared-deployment artifact helpers for copied load scripts, symlinks, and
-  extra permission-managed paths outside the deployed prefix.
+  extra permission-managed paths outside the deployed prefix. This module also
+  normalizes `shared.managed_directories`, including entries whose root should
+  remain group-writable after recursive permission updates.
 
 `mache/deploy/machine.py`
 : Machine selection and merged machine-config loading from both
@@ -225,6 +227,7 @@ including:
 - pixi installation,
 - load-script generation,
 - shared load-script aliases and shared permission-managed artifacts,
+  including group-writable managed-directory roots,
 - JIGSAW wiring.
 
 Before adding a new package-specific branch in `run.py`, prefer checking
