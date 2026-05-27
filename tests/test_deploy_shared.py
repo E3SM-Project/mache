@@ -59,12 +59,14 @@ def test_create_shared_deploy_artifacts_copies_load_scripts_and_links(
     assert artifacts == SharedDeployArtifacts(
         base_path=None,
         managed_dirs=[
-            str(extra_dir),
             str(copied_script.parent),
         ],
         managed_files=[
             str(extra_file),
             str(copied_script),
+        ],
+        managed_recursive_dirs=[
+            str(extra_dir),
         ],
     )
 
@@ -88,6 +90,135 @@ def test_create_shared_deploy_artifacts_resolves_runtime_base_path(
         managed_dirs=[],
         managed_files=[],
     )
+
+
+def test_create_shared_deploy_artifacts_marks_writable_roots(
+    tmp_path: Path,
+):
+    repo_root = tmp_path / 'repo'
+    repo_root.mkdir()
+
+    readonly_dir = repo_root / 'shared' / 'readonly'
+    writable_dir = repo_root / 'shared' / 'writable'
+    duplicate_dir = repo_root / 'shared' / 'duplicate'
+    runtime_dir = repo_root / 'shared' / 'runtime'
+    for path in [
+        readonly_dir,
+        writable_dir,
+        duplicate_dir,
+        runtime_dir,
+    ]:
+        path.mkdir(parents=True)
+
+    artifacts = create_shared_deploy_artifacts(
+        config={
+            'shared': {
+                'managed_directories': [
+                    'shared/readonly',
+                    'shared/duplicate',
+                    {
+                        'path': 'shared/duplicate',
+                        'root_group_writable': True,
+                    },
+                    {
+                        'path': 'shared/writable',
+                        'root_group_writable': 'true',
+                    },
+                ],
+            }
+        },
+        runtime={},
+        repo_root=str(repo_root),
+        load_script_paths=[],
+        logger=_logger(),
+    )
+
+    assert artifacts == SharedDeployArtifacts(
+        managed_recursive_dirs=[
+            str(readonly_dir),
+            str(duplicate_dir),
+            str(writable_dir),
+        ],
+        root_group_writable_dirs=[
+            str(duplicate_dir),
+            str(writable_dir),
+        ],
+    )
+
+    runtime_artifacts = create_shared_deploy_artifacts(
+        config={
+            'shared': {
+                'managed_directories': ['shared/readonly'],
+            }
+        },
+        runtime={
+            'shared': {
+                'managed_directories': [
+                    {
+                        'path': 'shared/runtime',
+                        'root_group_writable': True,
+                    }
+                ],
+            }
+        },
+        repo_root=str(repo_root),
+        load_script_paths=[],
+        logger=_logger(),
+    )
+
+    assert runtime_artifacts == SharedDeployArtifacts(
+        managed_recursive_dirs=[str(runtime_dir)],
+        root_group_writable_dirs=[str(runtime_dir)],
+    )
+
+
+def test_create_shared_deploy_artifacts_validates_managed_directory_entries(
+    tmp_path: Path,
+):
+    with pytest.raises(
+        ValueError,
+        match='shared.managed_directories\\[0\\] must be a string',
+    ):
+        create_shared_deploy_artifacts(
+            config={'shared': {'managed_directories': [42]}},
+            runtime={},
+            repo_root=str(tmp_path),
+            load_script_paths=[],
+            logger=_logger(),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match='shared.managed_directories\\[0\\].path must not be null',
+    ):
+        create_shared_deploy_artifacts(
+            config={'shared': {'managed_directories': [{}]}},
+            runtime={},
+            repo_root=str(tmp_path),
+            load_script_paths=[],
+            logger=_logger(),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match='shared.managed_directories\\[0\\].root_group_writable',
+    ):
+        create_shared_deploy_artifacts(
+            config={
+                'shared': {
+                    'managed_directories': [
+                        {
+                            'path': 'shared/writable',
+                            'root_group_writable': 'maybe',
+                        }
+                    ]
+                }
+            },
+            runtime={},
+            repo_root=str(tmp_path),
+            load_script_paths=[],
+            logger=_logger(),
+        )
 
 
 def test_create_shared_deploy_artifacts_requires_single_load_script(

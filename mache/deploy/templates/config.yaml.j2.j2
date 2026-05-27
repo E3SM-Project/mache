@@ -194,6 +194,13 @@ shared:
   # post-deploy permission update step. This is helpful when a downstream
   # pre_publish hook creates additional shared artifacts that mache itself
   # does not create.
+  # `managed_directories` entries may be either:
+  #   - "/absolute/or/relative/path/to/directory"
+  #   - {path: "/path/to/directory", root_group_writable: true}
+  #
+  # All managed directories are updated recursively without group-write
+  # permission. Use `root_group_writable: true` to apply group write only to
+  # that directory path itself after other permission updates.
   managed_directories: []
   managed_files: []
 

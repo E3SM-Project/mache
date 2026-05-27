@@ -1195,6 +1195,124 @@ def test_apply_deploy_permissions_includes_shared_managed_paths(
     assert third_kwargs['recursive'] is True
 
 
+def test_apply_deploy_permissions_applies_recursive_dir_and_writable_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    managed_dir = tmp_path / 'shared' / 'latest'
+    managed_dir.mkdir(parents=True)
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-recursive-writable-root'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[],
+        spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            managed_recursive_dirs=[str(managed_dir)],
+            root_group_writable_dirs=[str(managed_dir)],
+        ),
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 3
+
+    first_args, first_kwargs = calls[0]
+    assert first_args == (str(prefix), 'e3sm')
+    assert first_kwargs['group_writable'] is False
+    assert first_kwargs['recursive'] is False
+
+    second_args, second_kwargs = calls[1]
+    assert second_args == ([str(managed_dir)], 'e3sm')
+    assert second_kwargs['group_writable'] is False
+    assert second_kwargs['recursive'] is True
+
+    third_args, third_kwargs = calls[2]
+    assert third_args == ([str(managed_dir)], 'e3sm')
+    assert third_kwargs['group_writable'] is True
+    assert third_kwargs['other_readable'] is True
+    assert third_kwargs['recursive'] is False
+
+
+def test_apply_deploy_permissions_applies_writable_root_under_shared_base(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    prefix = tmp_path / 'prefix'
+    prefix.mkdir()
+
+    shared_base = tmp_path / 'shared'
+    shared_base.mkdir()
+    writable_dir = shared_base / 'latest'
+    writable_dir.mkdir()
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-group-writable'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[],
+        spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(
+            base_path=str(shared_base),
+            managed_recursive_dirs=[str(writable_dir)],
+            root_group_writable_dirs=[str(writable_dir)],
+            managed_files=[],
+        ),
+        group='e3sm',
+        world_readable=True,
+        logger=logger,
+    )
+
+    assert len(calls) == 3
+
+    first_args, first_kwargs = calls[0]
+    assert first_args == (str(shared_base), 'e3sm')
+    assert first_kwargs['group_writable'] is False
+    assert first_kwargs['recursive'] is True
+
+    second_args, second_kwargs = calls[1]
+    assert second_args == (str(prefix), 'e3sm')
+    assert second_kwargs['group_writable'] is False
+    assert second_kwargs['recursive'] is False
+
+    third_args, third_kwargs = calls[2]
+    assert third_args == ([str(writable_dir)], 'e3sm')
+    assert third_kwargs['group_writable'] is True
+    assert third_kwargs['other_readable'] is True
+    assert third_kwargs['recursive'] is False
+
+
 def test_apply_deploy_permissions_updates_shared_base_first(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

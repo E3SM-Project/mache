@@ -1060,6 +1060,10 @@ def _apply_deploy_permissions(
     )
     managed_paths.extend(
         _normalize_permission_path(path)
+        for path in shared_artifacts.managed_recursive_dirs
+    )
+    managed_paths.extend(
+        _normalize_permission_path(path)
         for path in shared_artifacts.managed_files
     )
 
@@ -1072,17 +1076,35 @@ def _apply_deploy_permissions(
 
     managed_paths = list(dict.fromkeys(managed_paths))
 
-    if not managed_paths:
-        return
+    if managed_paths:
+        update_permissions(
+            managed_paths,
+            group,
+            show_progress=True,
+            group_writable=False,
+            other_readable=world_readable,
+            recursive=True,
+        )
 
-    update_permissions(
-        managed_paths,
-        group,
-        show_progress=True,
-        group_writable=False,
-        other_readable=world_readable,
-        recursive=True,
-    )
+    root_group_writable_dirs = [
+        path
+        for path in (
+            _normalize_permission_path(path)
+            for path in shared_artifacts.root_group_writable_dirs
+        )
+        if path is not None
+    ]
+    root_group_writable_dirs = list(dict.fromkeys(root_group_writable_dirs))
+
+    if root_group_writable_dirs:
+        update_permissions(
+            root_group_writable_dirs,
+            group,
+            show_progress=True,
+            group_writable=True,
+            other_readable=world_readable,
+            recursive=False,
+        )
 
 
 def _normalize_permission_path(path: str | None) -> str | None:

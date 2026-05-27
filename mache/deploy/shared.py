@@ -12,6 +12,8 @@ class SharedDeployArtifacts:
     base_path: str | None = None
     managed_dirs: list[str] = field(default_factory=list)
     managed_files: list[str] = field(default_factory=list)
+    managed_recursive_dirs: list[str] = field(default_factory=list)
+    root_group_writable_dirs: list[str] = field(default_factory=list)
 
 
 def create_shared_deploy_artifacts(
@@ -29,11 +31,15 @@ def create_shared_deploy_artifacts(
         repo_root=repo_root,
         field_name='shared.base_path',
     )
-    managed_dirs = _normalize_path_entries(
+    (
+        managed_recursive_dirs,
+        root_group_writable_dirs,
+    ) = _normalize_managed_directory_entries(
         shared_cfg.get('managed_directories'),
         repo_root=repo_root,
         field_name='shared.managed_directories',
     )
+    managed_dirs: list[str] = []
     managed_files = _normalize_path_entries(
         shared_cfg.get('managed_files'),
         repo_root=repo_root,
@@ -81,10 +87,16 @@ def create_shared_deploy_artifacts(
         dest_link.symlink_to(target_path)
         managed_dirs.append(str(dest_link.parent))
 
+    managed_dirs = _dedupe_existing_paths(managed_dirs)
+
     return SharedDeployArtifacts(
         base_path=base_path,
-        managed_dirs=_dedupe_existing_paths(managed_dirs),
+        managed_dirs=managed_dirs,
         managed_files=_dedupe_existing_paths(managed_files),
+        managed_recursive_dirs=_dedupe_existing_paths(managed_recursive_dirs),
+        root_group_writable_dirs=_dedupe_existing_paths(
+            root_group_writable_dirs
+        ),
     )
 
 
@@ -131,6 +143,54 @@ def _normalize_path_entries(
             )
         )
     return entries
+
+
+def _normalize_managed_directory_entries(
+    value: Any,
+    *,
+    repo_root: str,
+    field_name: str,
+) -> tuple[list[str], list[str]]:
+    if value is None:
+        return [], []
+    if not isinstance(value, list):
+        raise ValueError(f'{field_name} must be a list if provided')
+
+    managed_entries: list[str] = []
+    root_group_writable_entries: list[str] = []
+    for index, item in enumerate(value):
+        item_field_name = f'{field_name}[{index}]'
+        path_value: Any
+        root_group_writable: bool
+        if isinstance(item, str):
+            path_value = item
+            root_group_writable = False
+        elif isinstance(item, dict):
+            path_value = item.get('path')
+            raw_root_group_writable = _coerce_optional_bool(
+                item.get('root_group_writable'),
+                field_name=f'{item_field_name}.root_group_writable',
+            )
+            root_group_writable = (
+                False
+                if raw_root_group_writable is None
+                else raw_root_group_writable
+            )
+        else:
+            raise ValueError(
+                f'{item_field_name} must be a string or mapping with a path'
+            )
+
+        path = _resolve_path(
+            value=path_value,
+            repo_root=repo_root,
+            field_name=f'{item_field_name}.path',
+        )
+        managed_entries.append(path)
+        if root_group_writable:
+            root_group_writable_entries.append(path)
+
+    return managed_entries, root_group_writable_entries
 
 
 def _normalize_load_script_copy_entries(
@@ -213,6 +273,26 @@ def _normalize_load_script_symlink_entries(
     for path, target in symlinks:
         deduped[str(path)] = (path, target)
     return list(deduped.values())
+
+
+def _coerce_optional_bool(
+    value: Any,
+    *,
+    field_name: str,
+) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+        if candidate in ('true', 'yes', 'on', '1'):
+            return True
+        if candidate in ('false', 'no', 'off', '0'):
+            return False
+        if candidate in ('', 'none', 'null', 'dynamic'):
+            return None
+    raise ValueError(f'{field_name} must be a boolean if provided')
 
 
 def _resolve_path(
