@@ -342,7 +342,17 @@ through <code class="docutils literal notranslate"><span class="pre">ctx.runtime
 <li><p><code class="docutils literal notranslate"><span class="pre">shared.base_path</span></code>: optional shared base directory whose permissions mache
 updates recursively before any path-specific permission updates. Hooks may
 override this through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;shared&quot;][&quot;base_path&quot;]</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;dynamic&quot;</span></code>
-is useful when the path depends on machine-specific logic in <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
+is useful when the path depends on machine-specific logic in
+<code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shared.managed_directories</span></code>: optional extra directories to include in
+permission management. Entries may be strings, or mappings with <code class="docutils literal notranslate"><span class="pre">path</span></code> and
+<code class="docutils literal notranslate"><span class="pre">root_group_writable</span></code>. Mache updates each managed directory recursively
+without group-write permission; with <code class="docutils literal notranslate"><span class="pre">root_group_writable:</span> <span class="pre">true</span></code>, it then
+makes only that directory path itself group-writable. This is useful for
+shared “latest” directories or symlink roots that maintainers need to update
+without making the deployed environment contents group-writable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shared.managed_files</span></code>: optional extra files to include in permission
+management.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
 CLI override provides it, unless the user disables Spack for that run with
 <code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
@@ -541,6 +551,25 @@ the current conda-forge <code class="docutils literal notranslate"><span class="
 <p>Combined with a matching <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, this gives downstream projects
 an escape hatch for optional tools without needing a new hard-coded helper in
 <code class="docutils literal notranslate"><span class="pre">mache.deploy.run</span></code>.</p>
+<p>Hooks can also declare additional shared artifacts for permission management.
+For example, a <code class="docutils literal notranslate"><span class="pre">pre_publish</span></code> hook that creates or updates a shared alias
+directory can ask mache to keep the directory itself writable by the deployment
+group while leaving its contents non-group-writable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">pre_publish</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">latest_path</span> <span class="o">=</span> <span class="s2">&quot;/path/to/shared/latest&quot;</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;shared&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;managed_directories&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">latest_path</span><span class="p">,</span>
+                    <span class="s2">&quot;root_group_writable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
 </section>
 <section id="deploy-load-sh">
 <h3><code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code><a class="headerlink" href="#deploy-load-sh" title="Link to this heading"></a></h3>
@@ -716,6 +745,7 @@ requested.</p></li>
 <li><p>Optionally deploys or loads Spack environments.</p></li>
 <li><p>Optionally installs the target software in editable mode.</p></li>
 <li><p>Writes one or more <code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;*.sh</span></code> scripts.</p></li>
+<li><p>Applies shared-deployment permission updates when a group is configured.</p></li>
 </ol>
 <p>When a toolchain pair is selected, script names include machine, compiler,
 and MPI tags, for example:</p>

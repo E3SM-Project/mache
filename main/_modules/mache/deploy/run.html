@@ -1159,6 +1159,10 @@
     <span class="p">)</span>
     <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_recursive_dirs</span>
+    <span class="p">)</span>
+    <span class="n">managed_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">managed_files</span>
     <span class="p">)</span>
 
@@ -1171,17 +1175,35 @@
 
     <span class="n">managed_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">managed_paths</span><span class="p">))</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">managed_paths</span><span class="p">:</span>
-        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">managed_paths</span><span class="p">:</span>
+        <span class="n">update_permissions</span><span class="p">(</span>
+            <span class="n">managed_paths</span><span class="p">,</span>
+            <span class="n">group</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">group_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
+            <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="n">update_permissions</span><span class="p">(</span>
-        <span class="n">managed_paths</span><span class="p">,</span>
-        <span class="n">group</span><span class="p">,</span>
-        <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">group_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
-        <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">root_group_writable_dirs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">path</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">shared_artifacts</span><span class="o">.</span><span class="n">root_group_writable_dirs</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="n">root_group_writable_dirs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">root_group_writable_dirs</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">root_group_writable_dirs</span><span class="p">:</span>
+        <span class="n">update_permissions</span><span class="p">(</span>
+            <span class="n">root_group_writable_dirs</span><span class="p">,</span>
+            <span class="n">group</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">group_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">other_readable</span><span class="o">=</span><span class="n">world_readable</span><span class="p">,</span>
+            <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_permission_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
