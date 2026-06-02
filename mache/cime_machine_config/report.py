@@ -155,6 +155,9 @@ def render_update_issue(report, run_url=None):
             '  replacement',
             '  is not obvious, add a TODO comment in the PR for the reviewer',
             '  instead of guessing.',
+            '- Run `pixi run -e py314 pre-commit run --files '
+            'mache/cime_machine_config/config_machines.xml` and fix any',
+            '  issues before committing.',
             '',
             'Affected machines: '
             f'{", ".join(update.machine for update in report.machines)}',
