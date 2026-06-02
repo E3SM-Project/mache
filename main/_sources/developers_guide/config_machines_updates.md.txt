@@ -124,6 +124,9 @@ Copilot receives instructions from two places.
   `mache/spack/templates/<machine>*.csh`.
 - Add TODO comments in the PR when prefix or path changes need reviewer
   confirmation.
+- Run `pixi run -e py314 pre-commit run --files
+  mache/cime_machine_config/config_machines.xml` and fix any issues before
+  committing.
 
 ### Generated issue-body instructions
 
@@ -156,7 +159,10 @@ The required work section tells Copilot to:
   implies different package versions,
 - keep the PR focused when the change is only version or module drift,
 - add a TODO in the PR instead of guessing when a new prefix or path is not
-  obvious.
+  obvious,
+- run `pixi run -e py314 pre-commit run --files
+  mache/cime_machine_config/config_machines.xml` and fix any issues before
+  committing.
 
 ## Why this does not create a new issue every day
 
