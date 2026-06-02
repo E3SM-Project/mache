@@ -209,7 +209,10 @@ def build_issue_payload(
                 'mache/spack/templates/<machine>*.sh, and '
                 'mache/spack/templates/<machine>*.csh. '
                 'Add TODO comments in the PR when prefix or path changes '
-                'need reviewer confirmation.'
+                'need reviewer confirmation. '
+                'Run `pixi run -e py314 pre-commit run --files '
+                'mache/cime_machine_config/config_machines.xml` and fix '
+                'any issues before committing.'
             ),
             'custom_agent': '',
             'model': '',
