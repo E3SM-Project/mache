@@ -390,6 +390,11 @@ def build_pixi_env(base_env=None):
     env = dict(os.environ if base_env is None else base_env)
     for var in PIXI_ENV_VARS_TO_UNSET:
         env.pop(var, None)
+    # Default PIXI_CACHE_DIR to /tmp to avoid noisy warnings when the home
+    # directory is on a network/parallel filesystem (common on HPC).
+    if 'PIXI_CACHE_DIR' not in env:
+        user = env.get('USER') or env.get('LOGNAME') or 'pixi'
+        env['PIXI_CACHE_DIR'] = f'/tmp/pixi-cache-{user}'
     return env
 
 

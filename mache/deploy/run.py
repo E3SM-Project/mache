@@ -1772,10 +1772,9 @@ def _pixi_install(
 
     _write_bootstrap_pixi_config(bootstrap_dir=Path(project_dir))
 
-    # Do not force cache/home locations here.
-    # - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /
-    #   PIXI_CACHE_DIR in shell startup or modulefiles.
-    # - Otherwise pixi uses its own defaults (typically under $HOME).
+    # build_pixi_env() sets PIXI_CACHE_DIR=/tmp/pixi-cache-<user> by default
+    # to suppress parallel-filesystem warnings on HPC. Users/admins can
+    # override it by setting PIXI_CACHE_DIR before invoking the deploy script.
     cmd = [pixi_exe, 'install']
     check_call(
         cmd,
@@ -1849,4 +1848,5 @@ def _install_software_in_dev_mode(
         cmd_install_software,
         log_filename=log_filename,
         quiet=quiet,
+        env=build_pixi_env(),
     )
