@@ -114,6 +114,12 @@ export PIXI_TOML="${MACHE_DEPLOY_ACTIVE_PIXI_TOML}"
 export MACHE_DEPLOY_TARGET_LOAD_SNIPPET="${MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET}"
 export {{ software_upper }}_PIXI_MPI="${MACHE_DEPLOY_ACTIVE_PIXI_MPI}"
 
+# Default PIXI_CACHE_DIR to /tmp to suppress warnings when the home directory
+# is on a network/parallel filesystem (common on HPC machines).
+if [[ -z "${PIXI_CACHE_DIR:-}" ]]; then
+  export PIXI_CACHE_DIR="/tmp/pixi-cache-${USER}"
+fi
+
 _mache_deploy_active_env_prefix() {
   printf '%s\n' "${MACHE_DEPLOY_ACTIVE_PIXI_PREFIX}/.pixi/envs/default"
 }
@@ -158,7 +164,7 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
       -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
       "${PIXI}" run --as-is -m "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}" -- \
-      bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
+      bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>/dev/null
   )"
   status=$?
 
