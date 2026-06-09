@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   name: mache
-  version: "3.7.0"
+  version: "3.7.1"
 
 package:
   name: ${{ name|lower }}
@@ -51,7 +51,7 @@ tests:
 about:
   license: BSD-3-Clause
   license_file: LICENSE
-  summary: A package for providing configuration data relate to E3SM supported machines
+  summary: A package for providing configuration data related to E3SM supported machines
   homepage: https://github.com/E3SM-Project/mache
   repository: https://github.com/E3SM-Project/mache
   documentation: https://docs.e3sm.org/mache/
