@@ -1,0 +1,6 @@
+﻿mache.deploy.run.run\_deploy
+============================
+
+.. currentmodule:: mache.deploy.run
+
+.. autofunction:: run_deploy

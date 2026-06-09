@@ -1,0 +1,6 @@
+﻿mache.deploy.cli\_spec.load\_repo\_cli\_spec\_file
+==================================================
+
+.. currentmodule:: mache.deploy.cli_spec
+
+.. autofunction:: load_repo_cli_spec_file

@@ -1,0 +1,33 @@
+﻿mache.deploy.spack.SpackDeployResult
+====================================
+
+.. currentmodule:: mache.deploy.spack
+
+.. autoclass:: SpackDeployResult
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SpackDeployResult.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SpackDeployResult.compiler
+      ~SpackDeployResult.mpi
+      ~SpackDeployResult.env_name
+      ~SpackDeployResult.spack_path
+      ~SpackDeployResult.view_path
+      ~SpackDeployResult.activation
+   
+   
