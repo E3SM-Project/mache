@@ -158,7 +158,7 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
     env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
       -u PIXI_ENVIRONMENT_NAME -u PIXI_IN_SHELL \
       "${PIXI}" run --as-is -m "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}" -- \
-      bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>&1
+      bash -c "${MACHE_DEPLOY_RUNTIME_VERSION_CMD}" 2>/dev/null
   )"
   status=$?
 
