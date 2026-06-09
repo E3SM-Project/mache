@@ -1871,10 +1871,9 @@
 
     <span class="n">_write_bootstrap_pixi_config</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">project_dir</span><span class="p">))</span>
 
-    <span class="c1"># Do not force cache/home locations here.</span>
-    <span class="c1"># - Users/site admins can set PIXI_HOME / RATTLER_CACHE_DIR /</span>
-    <span class="c1">#   PIXI_CACHE_DIR in shell startup or modulefiles.</span>
-    <span class="c1"># - Otherwise pixi uses its own defaults (typically under $HOME).</span>
+    <span class="c1"># build_pixi_env() sets PIXI_CACHE_DIR=/tmp/pixi-cache-&lt;user&gt; by default</span>
+    <span class="c1"># to suppress parallel-filesystem warnings on HPC. Users/admins can</span>
+    <span class="c1"># override it by setting PIXI_CACHE_DIR before invoking the deploy script.</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">]</span>
     <span class="n">check_call</span><span class="p">(</span>
         <span class="n">cmd</span><span class="p">,</span>
@@ -1948,6 +1947,7 @@
         <span class="n">cmd_install_software</span><span class="p">,</span>
         <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
     <span class="p">)</span>
 </pre></div>
 
