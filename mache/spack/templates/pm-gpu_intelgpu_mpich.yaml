@@ -1,0 +1,188 @@
+{%- set compiler = "intel@2025.3" %}
+{%- set mpi = "cray-mpich@9.0.1" %}
+spack:
+  specs:
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+  - cray-libsci
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
+  concretizer:
+    unify: when_possible
+  packages:
+    all:
+      compiler: [{{ compiler }}]
+      providers:
+        mpi: [{{ mpi }}%{{ compiler }}]
+        lapack: [cray-libsci@25.09.0]
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.66.0
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.30.2
+        prefix: /global/common/software/nersc9/cmake/3.30.2
+      buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.8.0
+        prefix: /usr
+      buildable: false
+    gettext:
+      externals:
+      - spec: gettext@0.20.2
+        prefix: /usr
+      buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr
+      buildable: false
+    libuv:
+      externals:
+      - spec: libuv@1.44.2
+        prefix: /usr
+      buildable: false
+    libxml2:
+      externals:
+      - spec: libxml2@2.9.7
+        prefix: /usr
+      buildable: false
+    m4:
+      externals:
+      - spec: m4@1.4.18
+        prefix: /usr
+      buildable: false
+    ncurses:
+      externals:
+      - spec: ncurses@6.1.20180317
+        prefix: /usr
+      buildable: false
+    ninja:
+      externals:
+      - spec: ninja@1.10.0
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.1.1d
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.26.1
+        prefix: /usr
+      buildable: false
+    python:
+      externals:
+      - spec: python@3.9.7
+        prefix: /global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11
+        modules:
+        - python/3.9-anaconda-2021.11
+      buildable: false
+    tar:
+      externals:
+      - spec: tar@1.34
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.3
+        prefix: /usr
+      buildable: false
+    intel:
+      externals:
+      - spec: {{ compiler }}
+        modules:
+        - PrgEnv-intel/8.6.0
+        - intel/2025.3
+        - craype-accel-nvidia80
+        - cray-libsci/25.09.0
+        - libfabric/1.22.0
+        - craype/2.7.35
+        - cudatoolkit/12.9
+        extra_attributes:
+          compilers:
+            c: cc
+            cxx: CC
+            fortran: ftn
+      buildable: false
+    cuda:
+      externals:
+      - spec: cuda@12.9
+        modules:
+        - PrgEnv-intel/8.6.0
+        - intel/2025.3
+        - craype-accel-nvidia80
+        - cray-libsci/25.09.0
+        - libfabric/1.22.0
+        - craype/2.7.35
+        - cudatoolkit/12.9
+      buildable: false
+    cray-mpich:
+      externals:
+      - spec: {{ mpi }}%{{ compiler }}
+        modules:
+        - libfabric/1.22.0
+        - cray-mpich/9.0.1
+      buildable: false
+    cray-libsci:
+      externals:
+      - spec: cray-libsci@25.09.0
+        modules:
+        - cray-libsci/25.09.0
+      buildable: false
+    hdf5:
+      externals:
+      - spec: hdf5@1.14.3.7~cxx+fortran+hl~java+mpi+shared
+        prefix: /opt/cray/pe/hdf5-parallel/1.14.3.7/intel/2023.2
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.12.3.19+cxx+fortran+pic+shared
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.19/intel/2023.2
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.9.2+mpi~parallel-netcdf
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.1/intel/2023.2
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.6.1
+        prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.1/intel/2023.2
+      buildable: false
+  compilers:
+  - compiler:
+      spec: {{ compiler }}
+      paths:
+        cc: cc
+        cxx: CC
+        f77: ftn
+        fc: ftn
+      flags: {}
+      operating_system: sles15
+      target: any
+      modules:
+      - PrgEnv-intel/8.6.0
+      - intel/2025.3
+      - craype-accel-nvidia80
+      - cray-libsci/25.09.0
+      - libfabric/1.22.0
+      - craype/2.7.35
+      - cudatoolkit/12.9
+      environment:
+        prepend_path:
+          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
