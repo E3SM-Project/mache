@@ -346,7 +346,10 @@
     <environment_variables compiler="gnu">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/gnu; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
-    <environment_variables compiler="nvidia">
+    <environment_variables compiler="nvidia" DEBUG="TRUE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia-debug; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="nvidia" DEBUG="FALSE">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
     <resource_limits>
@@ -756,11 +759,20 @@
       <env name="SZ_ROOT">$SHELL{if [ -z "$SZ_ROOT" ]; then echo /global/cfs/cdirs/e3sm/3rdparty/sz/2.1.12.5/aocc-4.1.0; else echo "$SZ_ROOT"; fi}</env>
       <env name="ZFP_ROOT">$SHELL{if [ -z "$ZFP_ROOT" ]; then echo /global/cfs/cdirs/e3sm/3rdparty/zfp/1.0.1/aocc-4.1.0; else echo "$ZFP_ROOT"; fi}</env>
     </environment_variables>
-    <environment_variables compiler="intel">
+    <environment_variables compiler="intel" DEBUG="TRUE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/intel-debug; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="intel" DEBUG="FALSE">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/intel; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
     <environment_variables compiler="gnu">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/gnu; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="nvidia" DEBUG="TRUE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia-debug; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="nvidia" DEBUG="FALSE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
     <resource_limits>
       <resource name="RLIMIT_STACK">-1</resource>
@@ -1166,11 +1178,20 @@
       <env name="SZ_ROOT">$SHELL{if [ -z "$SZ_ROOT" ]; then echo /global/cfs/cdirs/e3sm/3rdparty/sz/2.1.12.5/aocc-4.1.0; else echo "$SZ_ROOT"; fi}</env>
       <env name="ZFP_ROOT">$SHELL{if [ -z "$ZFP_ROOT" ]; then echo /global/cfs/cdirs/e3sm/3rdparty/zfp/1.0.1/aocc-4.1.0; else echo "$ZFP_ROOT"; fi}</env>
     </environment_variables>
-    <environment_variables compiler="intel">
+    <environment_variables compiler="intel" DEBUG="TRUE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/intel-debug; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="intel" DEBUG="FALSE">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/intel; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
     <environment_variables compiler="gnu">
       <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/gnu; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="nvidia" DEBUG="TRUE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia-debug; else echo "$MOAB_ROOT"; fi}</env>
+    </environment_variables>
+    <environment_variables compiler="nvidia" DEBUG="FALSE">
+      <env name="MOAB_ROOT">$SHELL{if [ -z "$MOAB_ROOT" ]; then echo /global/cfs/cdirs/e3sm/software/moab/nvidia; else echo "$MOAB_ROOT"; fi}</env>
     </environment_variables>
     <resource_limits>
       <resource name="RLIMIT_STACK">-1</resource>
@@ -1581,7 +1602,7 @@
       <env name="MPICH_CXX">$SHELL{which hipcc}</env>
       <env name="GPUS_PER_NODE">--gpus-per-node=8</env>
       <env name="NTASKS_PER_GPU">--ntasks-per-gpu=$SHELL{echo "`./xmlquery --value MAX_MPITASKS_PER_NODE`/8"|bc}</env>
-      <env name="GPU_BIND_ARGS">--gpu-bind=closest</env>
+      <env name="GPU_BIND_ARGS">--gpu-bind=closest --distribution=*:block</env>
     </environment_variables>
 
     <environment_variables BUILD_THREADED="TRUE">
@@ -1916,7 +1937,7 @@
     </resource_limits>
   </machine>
 
-  <machine MACH="ghci-snl-cpu">
+  <machine MACH="ghci-snl">
     <DESC>Huge Linux workstation for Sandia climate scientists</DESC>
     <NODENAME_REGEX>^[a-fA-F0-9]{12}$</NODENAME_REGEX>
     <OS>LINUX</OS>
@@ -1927,7 +1948,7 @@
     <DIN_LOC_ROOT>/projects/e3sm/inputdata</DIN_LOC_ROOT>
     <DIN_LOC_ROOT_CLMFORC>/projects/e3sm/inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
     <DOUT_S_ROOT>$CIME_OUTPUT_ROOT/archive/$CASE</DOUT_S_ROOT>
-    <BASELINE_ROOT>/projects/e3sm/baselines/ghci-snl-cpu/$COMPILER</BASELINE_ROOT>
+    <BASELINE_ROOT>/projects/e3sm/baselines/ghci-snl/$COMPILER</BASELINE_ROOT>
     <CCSM_CPRNC>/projects/e3sm/cprnc/cprnc</CCSM_CPRNC>
     <GMAKE_J>32</GMAKE_J>
     <TESTS>e3sm_developer</TESTS>
@@ -4579,7 +4600,7 @@
 
       <modules compiler="gnu">
         <command name="load">PrgEnv-gnu/8.5.0</command>
-        <command name="load">gcc-native/12.3</command>
+        <command name="load">gcc/12.3</command>
         <command name="load">cray-libsci/23.12.5</command>
       </modules>
 
@@ -4602,7 +4623,6 @@
       </modules>
 
       <modules>
-        <command name="load">craype-accel-host</command>
         <command name="load">craype/2.7.30</command>
         <command name="load">cray-mpich/8.1.28</command>
         <command name="load">cray-hdf5-parallel/1.12.2.9</command>
