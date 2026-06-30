@@ -1,5 +1,4 @@
-# TODO: update compiler version for cpe/26.03 on frontier
-{%- set compiler = "cce@15.0.1" %}
+{%- set compiler = "cce@21.0.0" %}
 {%- set mpi = "cray-mpich@9.1.0" %}
 spack:
   specs:
