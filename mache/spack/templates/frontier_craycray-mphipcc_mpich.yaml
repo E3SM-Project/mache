@@ -1,6 +1,6 @@
-# TODO: update compiler and mpi versions for cpe/26.03 on frontier
+# TODO: update compiler version for cpe/26.03 on frontier
 {%- set compiler = "cce@15.0.1" %}
-{%- set mpi = "cray-mpich@8.1.26" %}
+{%- set mpi = "cray-mpich@9.1.0" %}
 spack:
   specs:
   - {{ mpi }}%{{ compiler }}
@@ -115,18 +115,17 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      # TODO: verify cray-mpich and libfabric versions for cpe/26.03
       - spec: {{ mpi }}%{{ compiler }}
         modules:
-        - libfabric/1.22.0
-        - libunwind
-        - cray-mpich/8.1.31
+        - libfabric/2.3.1
+        - libunwind/1.8.3
+        - cray-mpich/9.1.0
       buildable: false
     libfabric:
       externals:
-      - spec: libfabric@1.22.0
+      - spec: libfabric@2.3.1
         modules:
-        - libfabric/1.22.0
+        - libfabric/2.3.1
       buildable: false
 {%- if e3sm_lapack %}
     cray-libsci:
@@ -176,15 +175,15 @@ spack:
       - Core/25.03
       - PrgEnv-cray/8.7.0
       - cpe/26.03
-      - libunwind
-      - libfabric/1.22.0
+      - libunwind/1.8.3
+      - libfabric/2.3.1
       - craype-accel-amd-gfx90a
       - rocm/7.2.0
       # we need to include mpich because an incompatible version of
       # libmpi_gtl_hsa.so.0 is loaded otherwise and we need to use the mpich
       # verison (see below)
-      - cray-mpich/8.1.31
+      - cray-mpich/9.1.0
       environment:
         prepend_path:
           # needed to prevent loading /opt/cray/pe/lib64/libmpi_gtl_hsa.so.0
-          LD_LIBRARY_PATH: /opt/cray/pe/mpich/8.1.31/gtl/lib
+          LD_LIBRARY_PATH: /opt/cray/pe/mpich/9.1.0/gtl/lib
