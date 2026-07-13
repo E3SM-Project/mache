@@ -22,7 +22,7 @@ tqdm = "*"
 # Building
 setuptools = ">=60"
 wheel = "*"
-rattler-build = "*"
+rattler-build = "*":wheel
 
 # Linting and testing
 pytest = "*"
@@ -33,6 +33,7 @@ ruff = "*"
 
 # Documentation
 sphinx = ">=7.0.0"
+sphinx-jinja = "*"
 sphinx_rtd_theme = "*"
 myst-parser = "*"
 
