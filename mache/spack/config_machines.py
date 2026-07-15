@@ -188,7 +188,7 @@ def _matches_selector(pattern, value):
 
 
 def _matches_compiler_selector(machine, pattern, compiler):
-    """Return whether a compiler selector matches the compiler or its aliases."""
+    """Return whether a compiler selector matches compiler aliases too."""
 
     aliases = COMPILER_SELECTOR_ALIASES.get(machine, {}).get(
         compiler, (compiler,)
