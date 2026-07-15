@@ -6,6 +6,7 @@ from jinja2 import Template
 from mache.machine_info import discover_machine
 from mache.spack.config_machines import extract_spack_from_config_machines
 from mache.spack.shared import (
+    get_template_compiler,
     render_env_var,
     resolve_e3sm_hdf5_netcdf,
     use_system_package,
@@ -133,7 +134,7 @@ def get_spack_script(
 
     for shell_filename in [
         f'{machine}.{shell}',
-        f'{machine}_{compiler}_{mpi}.{shell}',
+        f'{machine}_{get_template_compiler(machine, compiler)}_{mpi}.{shell}',
     ]:
         # load modules, etc. for this machine
         path = (

@@ -9,6 +9,12 @@ E3SM_HDF5_NETCDF_PACKAGES = frozenset(
     {'hdf5', 'netcdf-c', 'netcdf-fortran', 'parallel-netcdf'}
 )
 E3SM_HDF5_NETCDF_ALIASES = frozenset({'e3sm_hdf5_netcdf', 'hdf5_netcdf'})
+SPACK_TEMPLATE_COMPILER_OVERRIDES = {
+    'chrysalis': {
+        'intel': 'oneapi-ifx',
+        'intel-classic': 'intel',
+    }
+}
 SHELL_GROUP_RULES = (
     (
         'cmake',
@@ -310,6 +316,14 @@ def _filter_yaml_data(yaml_data, exclude_packages):
     return filtered
 
 
+def get_template_compiler(machine, compiler):
+    """Get the compiler name used for Spack template lookup."""
+
+    return SPACK_TEMPLATE_COMPILER_OVERRIDES.get(machine, {}).get(
+        compiler, compiler
+    )
+
+
 def _get_yaml_data(
     machine,
     compiler,
@@ -322,7 +336,8 @@ def _get_yaml_data(
 ):
     """Get the data from the jinja-templated yaml file based on settings"""
     if yaml_template is None:
-        template_filename = f'{machine}_{compiler}_{mpi}.yaml'
+        template_compiler = get_template_compiler(machine, compiler)
+        template_filename = f'{machine}_{template_compiler}_{mpi}.yaml'
         path = (
             importlib_resources.files('mache.spack.templates')
             / template_filename
