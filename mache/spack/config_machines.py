@@ -9,10 +9,6 @@ from mache.spack.shared import (
     shell_group_condition,
 )
 
-COMPILER_SELECTOR_ALIASES = {
-    'dane': {'oneapi-ifx': ('oneapi-ifx', 'intel')},
-}
-
 
 def extract_machine_config(xml_file, machine, compiler, mpilib):
     """
@@ -42,18 +38,14 @@ def extract_machine_config(xml_file, machine, compiler, mpilib):
             for mod_sys in mach.findall('module_system'):
                 for mod in mod_sys.findall('modules'):
                     if not (
-                        _matches_compiler_selector(
-                            machine, mod.get('compiler', '.*'), compiler
-                        )
+                        _matches_selector(mod.get('compiler', '.*'), compiler)
                         and _matches_selector(mod.get('mpilib', '.*'), mpilib)
                         and _matches_selector(mod.get('DEBUG', '.*'), 'FALSE')
                     ):
                         mod_sys.remove(mod)
             for env_vars in mach.findall('environment_variables'):
                 if not (
-                    _matches_compiler_selector(
-                        machine, env_vars.get('compiler', '.*'), compiler
-                    )
+                    _matches_selector(env_vars.get('compiler', '.*'), compiler)
                     and _matches_selector(env_vars.get('mpilib', '.*'), mpilib)
                     and _matches_selector(env_vars.get('DEBUG', '.*'), 'FALSE')
                 ):
@@ -184,15 +176,6 @@ def _matches_selector(pattern, value):
     if pattern.startswith('!'):
         return re.fullmatch(pattern[1:], value) is None
     return re.fullmatch(pattern, value) is not None
-
-
-def _matches_compiler_selector(machine, pattern, compiler):
-    """Return whether a compiler selector matches the compiler or aliases."""
-
-    aliases = COMPILER_SELECTOR_ALIASES.get(machine, {}).get(
-        compiler, (compiler,)
-    )
-    return any(_matches_selector(pattern, alias) for alias in aliases)
 
 
 def _convert_module_commands_to_script_lines(module_commands, shell_type):
