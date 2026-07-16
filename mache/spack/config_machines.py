@@ -10,7 +10,6 @@ from mache.spack.shared import (
 )
 
 COMPILER_SELECTOR_ALIASES = {
-    'chrysalis': {'intel': ('intel', 'oneapi-ifx')},
     'dane': {'oneapi-ifx': ('oneapi-ifx', 'intel')},
 }
 
@@ -188,7 +187,7 @@ def _matches_selector(pattern, value):
 
 
 def _matches_compiler_selector(machine, pattern, compiler):
-    """Return whether a compiler selector matches compiler aliases too."""
+    """Return whether a compiler selector matches the compiler or aliases."""
 
     aliases = COMPILER_SELECTOR_ALIASES.get(machine, {}).get(
         compiler, (compiler,)
