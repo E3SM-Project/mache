@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import os
 import platform
@@ -8,6 +9,9 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
@@ -37,6 +41,12 @@ PYTHON_VARIANTS = {
     '3.13': '3.13.* *_cp313',
     '3.14': '3.14.* *_cp314',
 }
+
+# How long to wait for another process to finish building before giving up,
+# and how often to re-check while waiting, in seconds. A build takes a
+# couple of minutes; the timeout only needs to be comfortably longer.
+JIGSAW_LOCK_TIMEOUT = 3600.0
+JIGSAW_LOCK_POLL = 2.0
 
 
 @dataclass(frozen=True)
@@ -409,20 +419,31 @@ def build_jigsawpy_package(
     else:
         selected_backend = detect_install_backend(backend=backend)
 
-        _build_external_jigsaw(
-            backend=selected_backend,
-            pixi_exe=pixi_exe,
-            conda_exe=conda_exe,
-            jigsaw_python_dir=jigsaw_python_dir,
-            python_version=python_version,
-            jigsaw_version=jigsaw_version,
-            log_filename=log_filename,
-            quiet=quiet,
-            slot_dir=slot_dir,
-            tools_dir=_jigsaw_tools_dir(shared_root=shared_root),
-        )
+        with _jigsaw_cache_lock(shared_root=shared_root, quiet=quiet):
+            # Another worktree may have built this while we waited.
+            cache_hit = _is_cached_jigsaw_build_valid(
+                slot_dir=slot_dir, cache_key=cache_key
+            )
+            if cache_hit:
+                if not quiet:
+                    print(f'Using cached JIGSAW build: {slot_dir}')
+            else:
+                _build_external_jigsaw(
+                    backend=selected_backend,
+                    pixi_exe=pixi_exe,
+                    conda_exe=conda_exe,
+                    jigsaw_python_dir=jigsaw_python_dir,
+                    python_version=python_version,
+                    jigsaw_version=jigsaw_version,
+                    log_filename=log_filename,
+                    quiet=quiet,
+                    slot_dir=slot_dir,
+                    tools_dir=_jigsaw_tools_dir(shared_root=shared_root),
+                )
 
-        _write_jigsaw_cache_key(slot_dir=slot_dir, cache_key=cache_key)
+                # Written last: the sentinel is what marks the slot usable,
+                # so a slot mid-build never reads as a cache hit.
+                _write_jigsaw_cache_key(slot_dir=slot_dir, cache_key=cache_key)
 
     return JigsawBuildResult(
         channel_uri=_get_local_channel_uri(output_dir=slot_dir),
@@ -592,6 +613,58 @@ def _jigsaw_tools_dir(*, shared_root: Path) -> Path:
     most of the benefit of sharing it.
     """
     return shared_root / 'tools'
+
+
+@contextmanager
+def _jigsaw_cache_lock(*, shared_root: Path, quiet: bool) -> Iterator[bool]:
+    """
+    Serialize builds that share a cache, yielding whether the lock is held.
+
+    Worktrees of one clone share a cache directory, so two deploys running
+    at once would otherwise write the same build tree. On a filesystem
+    without working ``flock`` we warn and proceed anyway: that is no worse
+    than the unlocked behavior this replaces, and failing the deploy
+    outright would be.
+    """
+    lock_path = shared_root / '.lock'
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o644)
+    held = False
+    try:
+        deadline = time.monotonic() + JIGSAW_LOCK_TIMEOUT
+        announced = False
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                held = True
+                break
+            except BlockingIOError:
+                if not announced:
+                    if not quiet:
+                        print(
+                            'Waiting for another mache JIGSAW build to '
+                            f'finish (lock: {lock_path})'
+                        )
+                    announced = True
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        f'Timed out after {JIGSAW_LOCK_TIMEOUT:.0f}s waiting '
+                        f'for the JIGSAW build lock at {lock_path}. If no '
+                        'build is running, it is safe to delete that file.'
+                    ) from None
+                time.sleep(JIGSAW_LOCK_POLL)
+            except OSError as e:
+                # e.g. NFS without lockd, or a mount with -o nolock
+                print(
+                    f'Warning: could not lock {lock_path} ({e.strerror}); '
+                    'proceeding without a build lock.'
+                )
+                break
+
+        yield held
+    finally:
+        # Closing the descriptor releases the lock, if we hold it.
+        os.close(fd)
 
 
 def _read_jigsaw_cache_key(*, slot_dir: Path) -> str | None:

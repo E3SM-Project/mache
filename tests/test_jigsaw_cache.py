@@ -8,8 +8,10 @@ tests build real (tiny) git repositories in ``tmp_path``.
 
 from __future__ import annotations
 
+import errno
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -294,3 +296,108 @@ def test_tools_dir_is_shared_across_keys(monkeypatch, tmp_path: Path):
     assert tools_dirs == [shared / 'tools', shared / 'tools']
     slot_dirs = [build['slot_dir'] for build in builds]
     assert slot_dirs == [shared / ('a' * 64), shared / ('b' * 64)]
+
+
+def test_build_rechecks_cache_after_taking_lock(monkeypatch, tmp_path: Path):
+    """
+    A deploy that waits on the lock should find the build the process it
+    waited for produced, rather than redo it.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    builds = _fake_out_build(monkeypatch)
+
+    slot = clone / '.mache_cache' / 'jigsaw' / ('a' * 64)
+    answers = iter([False, True])
+
+    def _valid_once_locked(**_):
+        valid = next(answers)
+        if valid:
+            # Stand in for the build the process we waited on finished.
+            channel = slot / _platform_name()
+            channel.mkdir(parents=True, exist_ok=True)
+            (channel / 'repodata.json').write_text('{}\n', encoding='utf-8')
+        return valid
+
+    monkeypatch.setattr(
+        jigsaw, '_is_cached_jigsaw_build_valid', _valid_once_locked
+    )
+
+    result = _build(clone)
+
+    assert result.cache_hit is True
+    assert result.channel_dir == slot
+    assert builds == []
+
+
+def test_cache_lock_is_exclusive_across_processes(tmp_path: Path):
+    shared = tmp_path / 'cache'
+    script = (
+        'import fcntl, sys\n'
+        f'fd = open({str(shared / ".lock")!r}, "r+")\n'
+        'try:\n'
+        '    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)\n'
+        'except BlockingIOError:\n'
+        '    print("blocked")\n'
+        '    sys.exit(0)\n'
+        'print("acquired")\n'
+    )
+
+    with jigsaw._jigsaw_cache_lock(shared_root=shared, quiet=True) as held:
+        assert held is True
+        other = subprocess.run(
+            [sys.executable, '-c', script],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+    assert other.stdout.strip() == 'blocked'
+
+    # Released on exit, so a later process can take it.
+    after = subprocess.run(
+        [sys.executable, '-c', script],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert after.stdout.strip() == 'acquired'
+
+
+def test_build_proceeds_when_locking_unsupported(
+    monkeypatch, capsys, tmp_path: Path
+):
+    """
+    Some filesystems cannot flock. Warn, but never fail the deploy over
+    it: unlocked is how this worked before the cache was shared.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    _fake_out_build(monkeypatch)
+
+    def _no_flock(*_args, **_kwargs):
+        raise OSError(errno.ENOLCK, 'no locks available')
+
+    monkeypatch.setattr(jigsaw.fcntl, 'flock', _no_flock)
+
+    result = _build(clone)
+
+    assert result.cache_hit is False
+    assert (clone / '.mache_cache' / 'jigsaw' / ('a' * 64)).is_dir()
+    assert 'proceeding without a build lock' in capsys.readouterr().out
+
+
+def test_cache_lock_times_out(monkeypatch, tmp_path: Path):
+    """
+    A build that never releases the lock must not hang a deploy forever.
+    """
+    shared = tmp_path / 'cache'
+    monkeypatch.setattr(jigsaw, 'JIGSAW_LOCK_TIMEOUT', 0.0)
+    monkeypatch.setattr(jigsaw, 'JIGSAW_LOCK_POLL', 0.0)
+
+    def _always_contended(*_args, **_kwargs):
+        raise BlockingIOError()
+
+    monkeypatch.setattr(jigsaw.fcntl, 'flock', _always_contended)
+
+    with pytest.raises(RuntimeError, match='Timed out'):
+        with jigsaw._jigsaw_cache_lock(shared_root=shared, quiet=True):
+            pass
