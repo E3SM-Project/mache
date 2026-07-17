@@ -108,7 +108,9 @@ def test_deploy_jigsawpy_in_conda_environment(monkeypatch, tmp_path: Path):
     assert command.endswith('jigsawpy=0.0.1')
 
 
-def test_build_jigsawpy_package_conda_backend_without_pixi(monkeypatch):
+def test_build_jigsawpy_package_conda_backend_without_pixi(
+    monkeypatch, tmp_path: Path
+):
     """Verify conda build backend works without a pixi executable."""
 
     recorded = {}
@@ -142,7 +144,7 @@ def test_build_jigsawpy_package_conda_backend_without_pixi(monkeypatch):
     result = jigsaw.build_jigsawpy_package(
         python_version='3.14',
         jigsaw_python_path='jigsaw-python',
-        repo_root='.',
+        repo_root=str(tmp_path),
         log_filename='test.log',
         quiet=True,
         backend='conda',
@@ -315,10 +317,11 @@ def test_deploy_jigsawpy_pixi_local_manifest_copy(monkeypatch, tmp_path: Path):
         backend='pixi',
         pixi_manifest=str(source_manifest),
         pixi_local=True,
+        repo_root=str(tmp_path),
     )
 
     local_manifest = (
-        jigsaw._get_jigsaw_cache_dir() / 'pixi-local' / 'pixi.toml'
+        tmp_path / '.mache_cache' / 'jigsaw' / 'pixi-local' / 'pixi.toml'
     ).resolve()
     assert local_manifest.is_file()
     assert local_manifest.read_text(
@@ -369,10 +372,11 @@ def test_deploy_jigsawpy_pixi_local_adds_isolated_jigsaw_environment(
         backend='pixi',
         pixi_manifest=str(source_manifest),
         pixi_local=True,
+        repo_root=str(tmp_path),
     )
 
     local_manifest = (
-        jigsaw._get_jigsaw_cache_dir() / 'pixi-local' / 'pixi.toml'
+        tmp_path / '.mache_cache' / 'jigsaw' / 'pixi-local' / 'pixi.toml'
     ).resolve()
     local_text = local_manifest.read_text(encoding='utf-8')
     assert '[feature.jigsaw.dependencies]' in local_text

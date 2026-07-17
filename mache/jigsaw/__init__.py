@@ -46,6 +46,7 @@ class JigsawBuildResult:
     cache_key: str
     cache_hit: bool
     jigsaw_version: str
+    cache_root: Path | None = None
 
 
 def deploy_jigsawpy(
@@ -103,8 +104,9 @@ def deploy_jigsawpy(
         used when possible.
     pixi_local : bool, optional
         If ``True`` and backend resolves to ``"pixi"``, install into a
-        local copied manifest under ``.mache_cache/jigsaw/pixi-local``
-        instead of mutating the source manifest directly.
+        local copied manifest under
+        ``<repo_root>/.mache_cache/jigsaw/pixi-local`` instead of mutating
+        the source manifest directly.
     conda_exe : str, optional
         Conda executable used when installing with backend ``"conda"``.
     conda_prefix : str, optional
@@ -155,6 +157,7 @@ def deploy_jigsawpy(
         pixi_manifest=pixi_manifest,
         pixi_feature=pixi_feature,
         pixi_local=pixi_local,
+        repo_root=repo_root,
         conda_exe=resolved_conda_exe,
         conda_prefix=conda_prefix,
     )
@@ -224,6 +227,7 @@ def install_jigsawpy_package(
     pixi_manifest: str | None = None,
     pixi_feature: str | None = None,
     pixi_local: bool = False,
+    repo_root: str = '.',
     conda_exe: str | None = None,
     conda_prefix: str | None = None,
 ) -> str:
@@ -252,8 +256,12 @@ def install_jigsawpy_package(
         Explicit pixi feature to target when using backend ``"pixi"``.
     pixi_local : bool, optional
         If ``True`` and backend resolves to ``"pixi"``, install into a
-        local copied manifest under ``.mache_cache/jigsaw/pixi-local``
-        instead of mutating the source manifest directly.
+        local copied manifest under
+        ``<repo_root>/.mache_cache/jigsaw/pixi-local`` instead of mutating
+        the source manifest directly.
+    repo_root : str
+        Root directory containing the target source tree, used to locate
+        the ``pixi-local`` manifest copy. Defaults to ``"."``.
     conda_exe : str, optional
         Conda executable used when backend resolves to ``"conda"``.
     conda_prefix : str, optional
@@ -285,6 +293,9 @@ def install_jigsawpy_package(
                 inferred_local_feature,
             ) = _prepare_local_pixi_manifest_copy(
                 pixi_manifest=pixi_manifest,
+                workspace_root=_get_jigsaw_workspace_dir(
+                    repo_root=Path(repo_root).resolve()
+                ),
             )
             if resolved_feature is None:
                 resolved_feature = inferred_local_feature
@@ -329,6 +340,10 @@ def build_jigsawpy_package(
     The function ensures the ``jigsaw-python`` source is available,
     computes a cache key, reuses cached output when valid, and otherwise
     runs ``rattler-build`` using the resolved backend.
+
+    The cache lives in the clone that ``repo_root`` belongs to, so every
+    git worktree of that clone shares one build. See
+    ``_get_jigsaw_shared_cache_dir``.
 
     Parameters
     ----------
@@ -381,40 +396,41 @@ def build_jigsawpy_package(
     )
 
     jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
-    output_dir = _get_jigsaw_cache_dir()
 
-    if _is_cached_jigsaw_build_valid(cache_key=cache_key):
+    shared_root = _get_jigsaw_shared_cache_dir(repo_root=repo_root_path)
+    slot_dir = _jigsaw_slot_dir(shared_root=shared_root, cache_key=cache_key)
+
+    cache_hit = _is_cached_jigsaw_build_valid(
+        slot_dir=slot_dir, cache_key=cache_key
+    )
+    if cache_hit:
         if not quiet:
-            print('Using cached JIGSAW build')
-        return JigsawBuildResult(
-            channel_uri=_get_local_channel_uri(output_dir=output_dir),
-            channel_dir=output_dir,
-            cache_key=cache_key,
-            cache_hit=True,
+            print(f'Using cached JIGSAW build: {slot_dir}')
+    else:
+        selected_backend = detect_install_backend(backend=backend)
+
+        _build_external_jigsaw(
+            backend=selected_backend,
+            pixi_exe=pixi_exe,
+            conda_exe=conda_exe,
+            jigsaw_python_dir=jigsaw_python_dir,
+            python_version=python_version,
             jigsaw_version=jigsaw_version,
+            log_filename=log_filename,
+            quiet=quiet,
+            slot_dir=slot_dir,
+            tools_dir=_jigsaw_tools_dir(shared_root=shared_root),
         )
 
-    selected_backend = detect_install_backend(backend=backend)
-
-    _build_external_jigsaw(
-        backend=selected_backend,
-        pixi_exe=pixi_exe,
-        conda_exe=conda_exe,
-        jigsaw_python_dir=jigsaw_python_dir,
-        python_version=python_version,
-        jigsaw_version=jigsaw_version,
-        log_filename=log_filename,
-        quiet=quiet,
-    )
-
-    _write_jigsaw_cache_key(cache_key=cache_key)
+        _write_jigsaw_cache_key(slot_dir=slot_dir, cache_key=cache_key)
 
     return JigsawBuildResult(
-        channel_uri=_get_local_channel_uri(output_dir=output_dir),
-        channel_dir=output_dir,
+        channel_uri=_get_local_channel_uri(output_dir=slot_dir),
+        channel_dir=slot_dir,
         cache_key=cache_key,
-        cache_hit=False,
+        cache_hit=cache_hit,
         jigsaw_version=jigsaw_version,
+        cache_root=shared_root,
     )
 
 
@@ -512,8 +528,8 @@ def _compute_jigsaw_cache_key(
     return digest.hexdigest()
 
 
-def _cache_key_path() -> Path:
-    return _get_jigsaw_cache_dir() / '.jigsaw_cache_key'
+def _cache_key_path(*, slot_dir: Path) -> Path:
+    return slot_dir / '.jigsaw_cache_key'
 
 
 def _find_git_clone_root(repo_root: Path) -> Path | None:
@@ -567,37 +583,40 @@ def _jigsaw_slot_dir(*, shared_root: Path, cache_key: str) -> Path:
 
 
 def _jigsaw_tools_dir(*, shared_root: Path) -> Path:
+    """
+    Tool environments that every build shares.
+
+    These depend on the platform rather than on the cache key, so they are
+    deliberately kept outside the per-key slots: they are by far the
+    largest thing in the cache, and duplicating them per key would undo
+    most of the benefit of sharing it.
+    """
     return shared_root / 'tools'
 
 
-def _get_jigsaw_cache_dir() -> Path:
-    return Path('.mache_cache/jigsaw').resolve()
-
-
-def _read_jigsaw_cache_key() -> str | None:
-    cache_path = _cache_key_path()
+def _read_jigsaw_cache_key(*, slot_dir: Path) -> str | None:
+    cache_path = _cache_key_path(slot_dir=slot_dir)
     if not cache_path.is_file():
         return None
     return cache_path.read_text(encoding='utf-8').strip() or None
 
 
-def _write_jigsaw_cache_key(*, cache_key: str) -> None:
-    cache_path = _cache_key_path()
+def _write_jigsaw_cache_key(*, slot_dir: Path, cache_key: str) -> None:
+    cache_path = _cache_key_path(slot_dir=slot_dir)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(f'{cache_key}\n', encoding='utf-8')
 
 
-def _is_cached_jigsaw_build_valid(*, cache_key: str) -> bool:
-    cached_key = _read_jigsaw_cache_key()
+def _is_cached_jigsaw_build_valid(*, slot_dir: Path, cache_key: str) -> bool:
+    cached_key = _read_jigsaw_cache_key(slot_dir=slot_dir)
     if cached_key != cache_key:
         return False
 
-    output_dir = _get_jigsaw_cache_dir()
-    if not output_dir.is_dir():
+    if not slot_dir.is_dir():
         return False
 
     platform_name, _ = _get_conda_platform_and_system()
-    repodata = output_dir / platform_name / 'repodata.json'
+    repodata = slot_dir / platform_name / 'repodata.json'
     return repodata.is_file()
 
 
@@ -698,6 +717,8 @@ def _build_external_jigsaw(
     jigsaw_python_dir: Path,
     log_filename: str,
     quiet: bool,
+    slot_dir: Path,
+    tools_dir: Path,
 ) -> None:
     print('Building JIGSAW')
 
@@ -705,7 +726,7 @@ def _build_external_jigsaw(
         raise ValueError(f'Unsupported python version: {python_version}')
 
     python_variant = PYTHON_VARIANTS.get(python_version)
-    build_root = (_get_jigsaw_cache_dir() / 'build').resolve()
+    build_root = (slot_dir / 'build').resolve()
     recipe_dir = build_root / 'recipe'
     variant_dir = build_root / 'variant'
     recipe_dir.mkdir(parents=True, exist_ok=True)
@@ -749,14 +770,14 @@ def _build_external_jigsaw(
     with open(variant_file, 'w', encoding='utf-8') as file_handle:
         file_handle.write(variant)
 
-    output_dir = _get_jigsaw_cache_dir()
+    output_dir = slot_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if backend == 'pixi':
         if not pixi_exe:
             raise ValueError('pixi_exe is required when backend="pixi".')
         pixi_toml = _write_build_manifest(
-            build_root=build_root,
+            build_root=tools_dir,
             platform_name=platform_name,
         )
         command = (
@@ -772,6 +793,7 @@ def _build_external_jigsaw(
             conda_exe=conda_exe,
             log_filename=log_filename,
             quiet=quiet,
+            tools_dir=tools_dir,
         )
         command = (
             f'{conda_runner} rattler-build build '
@@ -792,9 +814,10 @@ def _ensure_conda_rattler_build_env(
     conda_exe: str | None,
     log_filename: str,
     quiet: bool,
+    tools_dir: Path,
 ) -> str:
     conda = _resolve_conda_executable(conda_exe)
-    tool_prefix = _get_jigsaw_cache_dir() / 'build' / 'conda-rattler-build'
+    tool_prefix = tools_dir / 'conda-rattler-build'
     if not (tool_prefix / 'conda-meta').is_dir():
         tool_prefix.parent.mkdir(parents=True, exist_ok=True)
         command = (
@@ -843,12 +866,14 @@ def _resolve_pixi_manifest(pixi_manifest: str | None) -> str:
 
 
 def _prepare_local_pixi_manifest_copy(
-    *, pixi_manifest: str | None
+    *, pixi_manifest: str | None, workspace_root: Path
 ) -> tuple[str, str | None]:
     source_manifest = _resolve_pixi_manifest(pixi_manifest)
     source_path = Path(source_manifest)
 
-    local_dir = _get_jigsaw_cache_dir() / 'pixi-local'
+    # This copy derives from the source manifest, which is per-worktree,
+    # rather than from the cache key, so it stays out of the shared cache.
+    local_dir = workspace_root / 'pixi-local'
     local_dir.mkdir(parents=True, exist_ok=True)
 
     # pixi recognizes these manifest basenames.

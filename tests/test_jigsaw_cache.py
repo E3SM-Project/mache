@@ -52,6 +52,59 @@ def _add_worktree(clone: Path, path: Path, branch: str) -> Path:
     return path
 
 
+def _platform_name() -> str:
+    platform_name, _ = jigsaw._get_conda_platform_and_system()
+    return platform_name
+
+
+def _fake_out_build(
+    monkeypatch,
+    cache_key: str = 'a' * 64,
+    builds: list[dict] | None = None,
+) -> list[dict]:
+    """
+    Stub out everything that would touch the network or run rattler-build,
+    leaving the cache layout itself under test. Returns a list that
+    records the kwargs of each _build_external_jigsaw call; pass ``builds``
+    to keep recording across a change of cache key.
+    """
+    if builds is None:
+        builds = []
+
+    def _fake_build_external_jigsaw(**kwargs):
+        builds.append(kwargs)
+        slot_dir = kwargs['slot_dir']
+        channel = slot_dir / _platform_name()
+        channel.mkdir(parents=True, exist_ok=True)
+        (channel / 'repodata.json').write_text('{}\n', encoding='utf-8')
+        # rattler-build also leaves scratch behind in its output dir
+        (slot_dir / 'bld').mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(
+        jigsaw, '_ensure_jigsaw_python_source', lambda **_: None
+    )
+    monkeypatch.setattr(
+        jigsaw, '_compute_jigsaw_cache_key', lambda **_: cache_key
+    )
+    monkeypatch.setattr(jigsaw, '_get_jigsaw_version', lambda *_: '0.0.1')
+    monkeypatch.setattr(
+        jigsaw, '_build_external_jigsaw', _fake_build_external_jigsaw
+    )
+    return builds
+
+
+def _build(repo_root: Path):
+    return jigsaw.build_jigsawpy_package(
+        python_version='3.14',
+        jigsaw_python_path='jigsaw-python',
+        repo_root=str(repo_root),
+        log_filename='test.log',
+        quiet=True,
+        backend='conda',
+        conda_exe='conda',
+    )
+
+
 def test_get_git_head_matches_rev_parse(tmp_path: Path):
     clone = _make_clone(tmp_path / 'clone')
     expected = _git('rev-parse', 'HEAD', cwd=clone)
@@ -151,3 +204,93 @@ def test_shared_cache_dir_falls_back_when_repo_root_is_not_toplevel(
     shared = jigsaw._get_jigsaw_shared_cache_dir(repo_root=nested)
 
     assert shared == nested / '.mache_cache' / 'jigsaw'
+
+
+def test_build_writes_slot_and_sentinel(monkeypatch, tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+    _fake_out_build(monkeypatch)
+
+    result = _build(clone)
+
+    shared = clone / '.mache_cache' / 'jigsaw'
+    slot = shared / ('a' * 64)
+    assert result.cache_hit is False
+    assert result.cache_root == shared
+    assert result.channel_dir == slot
+    assert result.channel_uri == slot.as_uri()
+    sentinel = slot / '.jigsaw_cache_key'
+    assert sentinel.read_text(encoding='utf-8').strip() == 'a' * 64
+
+
+def test_second_worktree_hits_cache_built_by_first(
+    monkeypatch, tmp_path: Path
+):
+    """
+    The point of the whole change: a fresh worktree reuses the build that
+    another worktree of the same clone already paid for.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    worktree_a = _add_worktree(clone, tmp_path / 'wt_a', 'branch_a')
+    worktree_b = _add_worktree(clone, tmp_path / 'wt_b', 'branch_b')
+    builds = _fake_out_build(monkeypatch)
+
+    first = _build(worktree_a)
+    second = _build(worktree_b)
+
+    assert first.cache_hit is False
+    assert second.cache_hit is True
+    assert len(builds) == 1
+    assert second.channel_dir == first.channel_dir
+    assert first.channel_dir == clone / '.mache_cache' / 'jigsaw' / ('a' * 64)
+    # Nothing was written into either worktree.
+    assert not (worktree_a / '.mache_cache').exists()
+    assert not (worktree_b / '.mache_cache').exists()
+
+
+def test_second_build_in_same_clone_hits_cache(monkeypatch, tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+    builds = _fake_out_build(monkeypatch)
+
+    _build(clone)
+    second = _build(clone)
+
+    assert second.cache_hit is True
+    assert len(builds) == 1
+
+
+def test_distinct_keys_get_distinct_slots(monkeypatch, tmp_path: Path):
+    """
+    Worktrees that disagree on the Python version or JIGSAW-Python commit
+    must not evict each other.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    shared = clone / '.mache_cache' / 'jigsaw'
+
+    _fake_out_build(monkeypatch, cache_key='a' * 64)
+    _build(clone)
+    _fake_out_build(monkeypatch, cache_key='b' * 64)
+    second = _build(clone)
+
+    assert second.cache_hit is False
+    assert (shared / ('a' * 64) / '.jigsaw_cache_key').is_file()
+    assert (shared / ('b' * 64) / '.jigsaw_cache_key').is_file()
+
+
+def test_tools_dir_is_shared_across_keys(monkeypatch, tmp_path: Path):
+    """
+    Tool envs are ~98% of the cache and do not depend on the cache key, so
+    they must live outside the per-key slots.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    shared = clone / '.mache_cache' / 'jigsaw'
+
+    builds = _fake_out_build(monkeypatch, cache_key='a' * 64)
+    _build(clone)
+    _fake_out_build(monkeypatch, cache_key='b' * 64, builds=builds)
+    _build(clone)
+
+    assert len(builds) == 2
+    tools_dirs = [build['tools_dir'] for build in builds]
+    assert tools_dirs == [shared / 'tools', shared / 'tools']
+    slot_dirs = [build['slot_dir'] for build in builds]
+    assert slot_dirs == [shared / ('a' * 64), shared / ('b' * 64)]
