@@ -92,3 +92,62 @@ def test_get_git_head_outside_git_checkout(tmp_path: Path):
 
     with pytest.raises(RuntimeError, match='could not read HEAD'):
         jigsaw._get_git_head(plain)
+
+
+def test_shared_cache_dir_uses_git_common_dir_parent(tmp_path: Path):
+    """
+    A worktree must resolve to its clone's cache, not to its own.
+
+    This is the whole point of sharing the cache: deploying in a new
+    worktree reuses the build that some other worktree already paid for.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    worktree = _add_worktree(clone, tmp_path / 'wt', 'feature')
+
+    shared = jigsaw._get_jigsaw_shared_cache_dir(repo_root=worktree)
+
+    assert shared == clone / '.mache_cache' / 'jigsaw'
+    assert shared == jigsaw._get_jigsaw_shared_cache_dir(repo_root=clone)
+
+
+def test_shared_cache_dir_for_original_clone_is_unchanged(tmp_path: Path):
+    """
+    In the original clone the shared cache is where the cache has always
+    been, so upgrading needs no migration.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+
+    shared = jigsaw._get_jigsaw_shared_cache_dir(repo_root=clone)
+
+    assert shared == jigsaw._get_jigsaw_workspace_dir(repo_root=clone)
+    assert shared == clone / '.mache_cache' / 'jigsaw'
+
+
+def test_shared_cache_dir_falls_back_outside_git(monkeypatch, tmp_path: Path):
+    """
+    Tarball installs have no clone to anchor to and keep today's layout.
+    """
+    plain = tmp_path / 'plain'
+    plain.mkdir()
+    # Keep git from finding a repository somewhere above tmp_path.
+    monkeypatch.setenv('GIT_CEILING_DIRECTORIES', str(tmp_path))
+
+    shared = jigsaw._get_jigsaw_shared_cache_dir(repo_root=plain)
+
+    assert shared == plain / '.mache_cache' / 'jigsaw'
+
+
+def test_shared_cache_dir_falls_back_when_repo_root_is_not_toplevel(
+    tmp_path: Path,
+):
+    """
+    A repo_root nested inside an unrelated checkout must not anchor to
+    that checkout's clone.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    nested = clone / 'subdir'
+    nested.mkdir()
+
+    shared = jigsaw._get_jigsaw_shared_cache_dir(repo_root=nested)
+
+    assert shared == nested / '.mache_cache' / 'jigsaw'

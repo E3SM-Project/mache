@@ -516,6 +516,60 @@ def _cache_key_path() -> Path:
     return _get_jigsaw_cache_dir() / '.jigsaw_cache_key'
 
 
+def _find_git_clone_root(repo_root: Path) -> Path | None:
+    """
+    Find the original clone that ``repo_root`` belongs to, or None if
+    ``repo_root`` is not itself the top of a git work tree.
+
+    For a linked worktree this is the clone the worktree was created from,
+    which is what lets every worktree share one build cache.
+    """
+    repo_root = repo_root.resolve()
+    toplevel = _run_git(['rev-parse', '--show-toplevel'], cwd=repo_root)
+    if toplevel is None or Path(toplevel).resolve() != repo_root:
+        # repo_root is not a work-tree top, so a surrounding repository is
+        # some unrelated checkout we must not anchor to.
+        return None
+
+    common_dir = _run_git(['rev-parse', '--git-common-dir'], cwd=repo_root)
+    if common_dir is None:
+        return None
+
+    # --git-common-dir is relative ('.git') for an original clone but
+    # absolute for a linked worktree.
+    common_path = Path(common_dir)
+    if not common_path.is_absolute():
+        common_path = repo_root / common_path
+
+    return common_path.resolve().parent
+
+
+def _get_jigsaw_shared_cache_dir(*, repo_root: Path) -> Path:
+    """
+    The build cache shared by every worktree of ``repo_root``'s clone.
+    """
+    clone_root = _find_git_clone_root(repo_root)
+    if clone_root is None:
+        return _get_jigsaw_workspace_dir(repo_root=repo_root)
+    return (clone_root / '.mache_cache' / 'jigsaw').resolve()
+
+
+def _get_jigsaw_workspace_dir(*, repo_root: Path) -> Path:
+    """
+    Per-worktree scratch space, for things derived from this checkout
+    rather than from the cache key.
+    """
+    return (repo_root / '.mache_cache' / 'jigsaw').resolve()
+
+
+def _jigsaw_slot_dir(*, shared_root: Path, cache_key: str) -> Path:
+    return shared_root / cache_key
+
+
+def _jigsaw_tools_dir(*, shared_root: Path) -> Path:
+    return shared_root / 'tools'
+
+
 def _get_jigsaw_cache_dir() -> Path:
     return Path('.mache_cache/jigsaw').resolve()
 
