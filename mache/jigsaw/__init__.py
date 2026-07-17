@@ -6,6 +6,7 @@ import platform
 import re
 import shlex
 import shutil
+import subprocess
 import sys
 from dataclasses import dataclass
 from importlib import resources
@@ -466,39 +467,25 @@ def _get_jigsaw_version(jigsaw_python_dir: Path) -> str:
     return version
 
 
+def _run_git(args: list[str], *, cwd: Path) -> str | None:
+    try:
+        output = subprocess.check_output(
+            ['git', '-C', str(cwd), *args],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return output.strip() or None
+
+
 def _get_git_head(repo_dir: Path) -> str:
-    git_dir = repo_dir / '.git'
-    if git_dir.is_dir():
-        git_root = git_dir
-    elif git_dir.is_file():
-        git_file = git_dir.read_text(encoding='utf-8').strip()
-        if not git_file.startswith('gitdir:'):
-            raise RuntimeError(
-                f'Unexpected .git file format in {repo_dir}: {git_file!r}'
-            )
-        gitdir_path = git_file.split(':', 1)[1].strip()
-        git_root = (repo_dir / gitdir_path).resolve()
-    else:
+    head = _run_git(['rev-parse', 'HEAD'], cwd=repo_dir)
+    if head is None:
         raise RuntimeError(
-            f'Expected git checkout at {repo_dir} but .git not found.'
+            f'Expected git checkout at {repo_dir} but could not read HEAD.'
         )
-
-    head_file = git_root / 'HEAD'
-    if not head_file.is_file():
-        raise RuntimeError(
-            f'Expected git checkout at {repo_dir} but HEAD not found in '
-            f'{git_root}.'
-        )
-
-    head_ref = head_file.read_text(encoding='utf-8').strip()
-    if head_ref.startswith('ref:'):
-        ref_path = head_ref.split(' ', 1)[1].strip()
-        ref_file = git_root / ref_path
-        if not ref_file.is_file():
-            raise RuntimeError(f'Git ref {ref_path} not found in {git_root}.')
-        return ref_file.read_text(encoding='utf-8').strip()
-
-    return head_ref
+    return head
 
 
 def _compute_jigsaw_cache_key(
