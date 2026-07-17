@@ -54,10 +54,10 @@ mache jigsaw install --pixi-local
 This keeps your source-controlled manifest unchanged.
 
 `--pixi-local` creates or refreshes a local manifest copy under
-`.mache_cache/jigsaw/pixi-local` and installs `jigsawpy` there. When the
-source manifest already defines pixi environments, `mache` also creates or
-reuses an isolated local `jigsaw` feature/environment to reduce solver
-conflicts.
+`<repo-root>/.mache_cache/jigsaw/pixi-local` and installs `jigsawpy` there.
+When the source manifest already defines pixi environments, `mache` also
+creates or reuses an isolated local `jigsaw` feature/environment to reduce
+solver conflicts.
 
 Useful pixi options are:
 
@@ -88,6 +88,54 @@ For most users, no additional options are required beyond:
 - `--repo-root`
 - `--quiet`
 
+## The build cache
+
+Building JIGSAW takes a couple of minutes, so `mache` caches the result and
+rebuilds only when something that affects the build changes: the
+`jigsaw-python` commit, its version, the Python version, or the platform.
+
+The cache belongs to the *clone*, not to the checkout you happen to be
+standing in. If you use a separate git worktree per branch — the workflow
+recommended by Polaris and Compass — every worktree of a clone shares one
+build, so only the first `./deploy.py` pays for it:
+
+```
+<clone>/.mache_cache/jigsaw/
+├── tools/         # environments used to run the build
+└── <cache_key>/   # one directory per distinct build
+```
+
+Builds that differ, for example because two branches pin different
+`jigsaw-python` commits, get their own directory and do not displace each
+other. `mache` never deletes these, so a build stays valid for as long as any
+environment you deployed from it. Each one is small (a few MB); the bulk of
+the cache is `tools/`, which is shared by every build.
+
+If two `./deploy.py` runs in different worktrees need the same build at the
+same time, they serialize on `<clone>/.mache_cache/jigsaw/.lock`. The second
+one waits, then finds the finished build and reuses it.
+
+To force a rebuild, delete the relevant `<cache_key>` directory. To reclaim
+everything, delete `<clone>/.mache_cache`, but note that this invalidates the
+local channel recorded in environments you have already deployed, which will
+need to be redeployed.
+
+### Reclaiming space after upgrading
+
+Before `mache` 3.8.0 the cache lived in each worktree, so a worktree-per-branch
+checkout accumulated a full copy — roughly 100 MB each — per branch. Those old
+caches are left in place rather than migrated, because environments deployed by
+older versions of `mache` still refer to them.
+
+Once you have redeployed a worktree, its old cache is safe to remove:
+
+```bash
+rm -rf <worktree>/.mache_cache/jigsaw/build
+```
+
+The first `./deploy.py` after upgrading rebuilds JIGSAW once per clone. Every
+worktree after that reuses it.
+
 ## Source requirements
 
 By default, `mache` looks for `jigsaw-python` under `./jigsaw-python` relative
@@ -107,6 +155,9 @@ If installation fails:
 1. Confirm you are in an active pixi or conda environment.
 2. Check that `jigsaw-python` is present at the expected path.
 3. Re-run with terminal output enabled and inspect the build logs under
-   `.mache_cache/jigsaw` or the deploy logs under `deploy_tmp/logs`.
+   `<clone>/.mache_cache/jigsaw/<cache_key>` or the deploy logs under
+   `deploy_tmp/logs`.
 4. For pixi, prefer `--pixi-local` if modifying the main manifest causes
    solver conflicts.
+5. If a deploy reports that it is waiting for the JIGSAW build lock and no
+   other build is running, remove `<clone>/.mache_cache/jigsaw/.lock`.

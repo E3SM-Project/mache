@@ -65,9 +65,51 @@ The build step:
 
 - Ensures `jigsaw-python` source is available, cloning it when necessary.
 - Computes a cache key from the source tree and selected Python/platform.
-- Reuses cached output under `.mache_cache/jigsaw` when valid.
+- Reuses cached output under the shared cache when valid.
 - Runs `rattler-build` through pixi or conda, depending on the selected
   backend.
+
+### Cache layout and invariants
+
+The cache is anchored at the clone that `repo_root` belongs to, found via
+`git rev-parse --git-common-dir`, so every git worktree of that clone shares
+one build. Outside a git checkout it falls back to `<repo_root>`, which is
+also where it lands for an original clone — so upgrading needs no migration.
+
+```
+<clone>/.mache_cache/jigsaw/     # shared: _get_jigsaw_shared_cache_dir()
+├── .lock                        # _jigsaw_cache_lock()
+├── tools/                       # _jigsaw_tools_dir()
+└── <cache_key>/                 # _jigsaw_slot_dir(), rattler-build output
+
+<repo_root>/.mache_cache/jigsaw/ # per-worktree: _get_jigsaw_workspace_dir()
+└── pixi-local/
+```
+
+Four invariants hold this together. Breaking any of them is a behavior
+change, not a refactor:
+
+1. **The cache key is worktree-agnostic.** It hashes the `jigsaw-python`
+   commit, its version, the Python version and the platform — nothing about
+   the containing checkout. Adding anything worktree-specific to it silently
+   un-shares the cache.
+2. **Slots are never deleted.** `channel_uri` names a slot, and that URI is
+   baked into the `pixi.toml` and `pixi.lock` of every environment deployed
+   from it, which outlive the deploy. Pruning slots would break those
+   environments long afterward, at their next solve. Slots are small; the
+   growth this permits is not worth that failure mode.
+3. **`tools/` is key-independent, and shared on purpose.** These environments
+   are the great majority of the cache's size and depend only on the platform.
+   Moving them inside a slot would restore most of the per-worktree
+   duplication that sharing the cache exists to remove.
+4. **`pixi-local` is per-`repo_root`, not per-clone.** It is a copy of the
+   source manifest, so it derives from the worktree rather than from the cache
+   key; sharing it would let one worktree clobber another's.
+
+Writes to the shared cache happen under an exclusive `flock`, since worktrees
+can deploy concurrently. The sentinel `<cache_key>/.jigsaw_cache_key` is
+written *after* the build finishes, so a slot mid-build never reads as a cache
+hit — that ordering is what lets the cache-hit path skip the lock entirely.
 
 The install step:
 
@@ -80,7 +122,8 @@ The install step:
 ### Pixi
 
 The pixi install path can either mutate a chosen manifest directly or work
-through a local copied manifest under `.mache_cache/jigsaw/pixi-local`.
+through a local copied manifest under
+`<repo_root>/.mache_cache/jigsaw/pixi-local`.
 
 The local-manifest path exists to avoid source-controlled manifest changes and
 to isolate JIGSAW from unrelated pixi environments when a project defines
