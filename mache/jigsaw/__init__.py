@@ -48,6 +48,10 @@ PYTHON_VARIANTS = {
 JIGSAW_LOCK_TIMEOUT = 3600.0
 JIGSAW_LOCK_POLL = 2.0
 
+# Characters of the cache key used to name a build's cache directory. See
+# _jigsaw_slot_dir for why this is truncated rather than the full key.
+JIGSAW_SLOT_KEY_LEN = 16
+
 
 @dataclass(frozen=True)
 class JigsawBuildResult:
@@ -600,7 +604,12 @@ def _get_jigsaw_workspace_dir(*, repo_root: Path) -> Path:
 
 
 def _jigsaw_slot_dir(*, shared_root: Path, cache_key: str) -> Path:
-    return shared_root / cache_key
+    # The slot name is part of the build path, and rattler-build has to fit
+    # its build prefix inside conda's 255-character limit, so keep it short.
+    # The full key still lives in the slot's sentinel for exact matching;
+    # 16 hex characters (64 bits) is far more than enough to keep the
+    # handful of builds a clone ever holds from colliding.
+    return shared_root / cache_key[:JIGSAW_SLOT_KEY_LEN]
 
 
 def _jigsaw_tools_dir(*, shared_root: Path) -> Path:

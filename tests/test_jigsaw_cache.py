@@ -59,6 +59,11 @@ def _platform_name() -> str:
     return platform_name
 
 
+def _slot(shared: Path, cache_key: str) -> Path:
+    """The slot directory for a key, whose name is a truncation of it."""
+    return shared / cache_key[: jigsaw.JIGSAW_SLOT_KEY_LEN]
+
+
 def _fake_out_build(
     monkeypatch,
     cache_key: str = 'a' * 64,
@@ -215,11 +220,14 @@ def test_build_writes_slot_and_sentinel(monkeypatch, tmp_path: Path):
     result = _build(clone)
 
     shared = clone / '.mache_cache' / 'jigsaw'
-    slot = shared / ('a' * 64)
+    slot = _slot(shared, 'a' * 64)
     assert result.cache_hit is False
     assert result.cache_root == shared
     assert result.channel_dir == slot
     assert result.channel_uri == slot.as_uri()
+    # The slot is named by a truncation of the key, but the sentinel holds
+    # the full key so validation stays exact.
+    assert slot.name == 'a' * jigsaw.JIGSAW_SLOT_KEY_LEN
     sentinel = slot / '.jigsaw_cache_key'
     assert sentinel.read_text(encoding='utf-8').strip() == 'a' * 64
 
@@ -243,7 +251,9 @@ def test_second_worktree_hits_cache_built_by_first(
     assert second.cache_hit is True
     assert len(builds) == 1
     assert second.channel_dir == first.channel_dir
-    assert first.channel_dir == clone / '.mache_cache' / 'jigsaw' / ('a' * 64)
+    assert first.channel_dir == _slot(
+        clone / '.mache_cache' / 'jigsaw', 'a' * 64
+    )
     # Nothing was written into either worktree.
     assert not (worktree_a / '.mache_cache').exists()
     assert not (worktree_b / '.mache_cache').exists()
@@ -274,8 +284,8 @@ def test_distinct_keys_get_distinct_slots(monkeypatch, tmp_path: Path):
     second = _build(clone)
 
     assert second.cache_hit is False
-    assert (shared / ('a' * 64) / '.jigsaw_cache_key').is_file()
-    assert (shared / ('b' * 64) / '.jigsaw_cache_key').is_file()
+    assert (_slot(shared, 'a' * 64) / '.jigsaw_cache_key').is_file()
+    assert (_slot(shared, 'b' * 64) / '.jigsaw_cache_key').is_file()
 
 
 def test_tools_dir_is_shared_across_keys(monkeypatch, tmp_path: Path):
@@ -295,7 +305,7 @@ def test_tools_dir_is_shared_across_keys(monkeypatch, tmp_path: Path):
     tools_dirs = [build['tools_dir'] for build in builds]
     assert tools_dirs == [shared / 'tools', shared / 'tools']
     slot_dirs = [build['slot_dir'] for build in builds]
-    assert slot_dirs == [shared / ('a' * 64), shared / ('b' * 64)]
+    assert slot_dirs == [_slot(shared, 'a' * 64), _slot(shared, 'b' * 64)]
 
 
 def test_build_rechecks_cache_after_taking_lock(monkeypatch, tmp_path: Path):
@@ -306,7 +316,7 @@ def test_build_rechecks_cache_after_taking_lock(monkeypatch, tmp_path: Path):
     clone = _make_clone(tmp_path / 'clone')
     builds = _fake_out_build(monkeypatch)
 
-    slot = clone / '.mache_cache' / 'jigsaw' / ('a' * 64)
+    slot = _slot(clone / '.mache_cache' / 'jigsaw', 'a' * 64)
     answers = iter([False, True])
 
     def _valid_once_locked(**_):
@@ -381,7 +391,7 @@ def test_build_proceeds_when_locking_unsupported(
     result = _build(clone)
 
     assert result.cache_hit is False
-    assert (clone / '.mache_cache' / 'jigsaw' / ('a' * 64)).is_dir()
+    assert _slot(clone / '.mache_cache' / 'jigsaw', 'a' * 64).is_dir()
     assert 'proceeding without a build lock' in capsys.readouterr().out
 
 
