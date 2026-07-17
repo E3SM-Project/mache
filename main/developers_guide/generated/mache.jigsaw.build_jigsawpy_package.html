@@ -127,6 +127,9 @@
 <p>The function ensures the <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> source is available,
 computes a cache key, reuses cached output when valid, and otherwise
 runs <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code> using the resolved backend.</p>
+<p>The cache lives in the clone that <code class="docutils literal notranslate"><span class="pre">repo_root</span></code> belongs to, so every
+git worktree of that clone shares one build. See
+<code class="docutils literal notranslate"><span class="pre">_get_jigsaw_shared_cache_dir</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

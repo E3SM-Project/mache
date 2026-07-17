@@ -53,6 +53,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#installing-jigsaw-into-an-existing-environment">Installing JIGSAW into an existing environment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pixi-workflow">Pixi workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#conda-workflow">Conda workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-build-cache">The build cache</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reclaiming-space-after-upgrading">Reclaiming space after upgrading</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#source-requirements">Source requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 </ul>
@@ -152,10 +156,10 @@ from an active pixi or conda environment.</p>
 </div>
 <p>This keeps your source-controlled manifest unchanged.</p>
 <p><code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code> creates or refreshes a local manifest copy under
-<code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw/pixi-local</span></code> and installs <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> there. When the
-source manifest already defines pixi environments, <code class="docutils literal notranslate"><span class="pre">mache</span></code> also creates or
-reuses an isolated local <code class="docutils literal notranslate"><span class="pre">jigsaw</span></code> feature/environment to reduce solver
-conflicts.</p>
+<code class="docutils literal notranslate"><span class="pre">&lt;repo-root&gt;/.mache_cache/jigsaw/pixi-local</span></code> and installs <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> there.
+When the source manifest already defines pixi environments, <code class="docutils literal notranslate"><span class="pre">mache</span></code> also
+creates or reuses an isolated local <code class="docutils literal notranslate"><span class="pre">jigsaw</span></code> feature/environment to reduce
+solver conflicts.</p>
 <p>Useful pixi options are:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code></p></li>
@@ -183,6 +187,46 @@ different prefix programmatically.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">--quiet</span></code></p></li>
 </ul>
 </section>
+<section id="the-build-cache">
+<h2>The build cache<a class="headerlink" href="#the-build-cache" title="Link to this heading"></a></h2>
+<p>Building JIGSAW takes a couple of minutes, so <code class="docutils literal notranslate"><span class="pre">mache</span></code> caches the result and
+rebuilds only when something that affects the build changes: the
+<code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> commit, its version, the Python version, or the platform.</p>
+<p>The cache belongs to the <em>clone</em>, not to the checkout you happen to be
+standing in. If you use a separate git worktree per branch — the workflow
+recommended by Polaris and Compass — every worktree of a clone shares one
+build, so only the first <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> pays for it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;clone&gt;/.mache_cache/jigsaw/
+├── tools/         # environments used to run the build
+└── &lt;cache_key&gt;/   # one directory per distinct build
+</pre></div>
+</div>
+<p>Builds that differ, for example because two branches pin different
+<code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> commits, get their own directory and do not displace each
+other. <code class="docutils literal notranslate"><span class="pre">mache</span></code> never deletes these, so a build stays valid for as long as any
+environment you deployed from it. Each one is small (a few MB); the bulk of
+the cache is <code class="docutils literal notranslate"><span class="pre">tools/</span></code>, which is shared by every build.</p>
+<p>If two <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> runs in different worktrees need the same build at the
+same time, they serialize on <code class="docutils literal notranslate"><span class="pre">&lt;clone&gt;/.mache_cache/jigsaw/.lock</span></code>. The second
+one waits, then finds the finished build and reuses it.</p>
+<p>To force a rebuild, delete the relevant <code class="docutils literal notranslate"><span class="pre">&lt;cache_key&gt;</span></code> directory. To reclaim
+everything, delete <code class="docutils literal notranslate"><span class="pre">&lt;clone&gt;/.mache_cache</span></code>, but note that this invalidates the
+local channel recorded in environments you have already deployed, which will
+need to be redeployed.</p>
+<section id="reclaiming-space-after-upgrading">
+<h3>Reclaiming space after upgrading<a class="headerlink" href="#reclaiming-space-after-upgrading" title="Link to this heading"></a></h3>
+<p>Before <code class="docutils literal notranslate"><span class="pre">mache</span></code> 3.8.0 the cache lived in each worktree, so a worktree-per-branch
+checkout accumulated a full copy — roughly 100 MB each — per branch. Those old
+caches are left in place rather than migrated, because environments deployed by
+older versions of <code class="docutils literal notranslate"><span class="pre">mache</span></code> still refer to them.</p>
+<p>Once you have redeployed a worktree, its old cache is safe to remove:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rm<span class="w"> </span>-rf<span class="w"> </span>&lt;worktree&gt;/.mache_cache/jigsaw/build
+</pre></div>
+</div>
+<p>The first <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> after upgrading rebuilds JIGSAW once per clone. Every
+worktree after that reuses it.</p>
+</section>
+</section>
 <section id="source-requirements">
 <h2>Source requirements<a class="headerlink" href="#source-requirements" title="Link to this heading"></a></h2>
 <p>By default, <code class="docutils literal notranslate"><span class="pre">mache</span></code> looks for <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> under <code class="docutils literal notranslate"><span class="pre">./jigsaw-python</span></code> relative
@@ -202,9 +246,12 @@ the source available before building.</p></li>
 <li><p>Confirm you are in an active pixi or conda environment.</p></li>
 <li><p>Check that <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> is present at the expected path.</p></li>
 <li><p>Re-run with terminal output enabled and inspect the build logs under
-<code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw</span></code> or the deploy logs under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/logs</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">&lt;clone&gt;/.mache_cache/jigsaw/&lt;cache_key&gt;</span></code> or the deploy logs under
+<code class="docutils literal notranslate"><span class="pre">deploy_tmp/logs</span></code>.</p></li>
 <li><p>For pixi, prefer <code class="docutils literal notranslate"><span class="pre">--pixi-local</span></code> if modifying the main manifest causes
 solver conflicts.</p></li>
+<li><p>If a deploy reports that it is waiting for the JIGSAW build lock and no
+other build is running, remove <code class="docutils literal notranslate"><span class="pre">&lt;clone&gt;/.mache_cache/jigsaw/.lock</span></code>.</p></li>
 </ol>
 </section>
 </section>

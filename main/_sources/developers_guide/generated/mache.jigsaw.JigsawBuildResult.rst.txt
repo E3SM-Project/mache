@@ -23,6 +23,7 @@
 
    .. autosummary::
    
+      ~JigsawBuildResult.cache_root
       ~JigsawBuildResult.channel_uri
       ~JigsawBuildResult.channel_dir
       ~JigsawBuildResult.cache_key

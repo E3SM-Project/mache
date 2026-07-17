@@ -151,8 +151,9 @@ If omitted, <code class="docutils literal notranslate"><span class="pre">PIXI_PR
 <code class="docutils literal notranslate"><span class="pre">&quot;pixi&quot;</span></code>. If omitted, a matching active pixi environment name is
 used when possible.</p></li>
 <li><p><strong>pixi_local</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> and backend resolves to <code class="docutils literal notranslate"><span class="pre">&quot;pixi&quot;</span></code>, install into a
-local copied manifest under <code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw/pixi-local</span></code>
-instead of mutating the source manifest directly.</p></li>
+local copied manifest under
+<code class="docutils literal notranslate"><span class="pre">&lt;repo_root&gt;/.mache_cache/jigsaw/pixi-local</span></code> instead of mutating
+the source manifest directly.</p></li>
 <li><p><strong>conda_exe</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Conda executable used when installing with backend <code class="docutils literal notranslate"><span class="pre">&quot;conda&quot;</span></code>.</p></li>
 <li><p><strong>conda_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Target conda prefix used when backend is <code class="docutils literal notranslate"><span class="pre">&quot;conda&quot;</span></code>. If omitted,
 <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> is used.</p></li>

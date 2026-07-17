@@ -65,7 +65,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#responsibilities">Responsibilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#relationship-to-mache-deploy">Relationship to <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-layout">Module layout</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-and-install-pipeline">Build and install pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-and-install-pipeline">Build and install pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cache-layout-and-invariants">Cache layout and invariants</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#backend-specific-notes">Backend-specific notes</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pixi">Pixi</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#conda">Conda</a></li>
@@ -171,10 +174,49 @@ logic.</p>
 <ul class="simple">
 <li><p>Ensures <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> source is available, cloning it when necessary.</p></li>
 <li><p>Computes a cache key from the source tree and selected Python/platform.</p></li>
-<li><p>Reuses cached output under <code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw</span></code> when valid.</p></li>
+<li><p>Reuses cached output under the shared cache when valid.</p></li>
 <li><p>Runs <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code> through pixi or conda, depending on the selected
 backend.</p></li>
 </ul>
+<section id="cache-layout-and-invariants">
+<h3>Cache layout and invariants<a class="headerlink" href="#cache-layout-and-invariants" title="Link to this heading"></a></h3>
+<p>The cache is anchored at the clone that <code class="docutils literal notranslate"><span class="pre">repo_root</span></code> belongs to, found via
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rev-parse</span> <span class="pre">--git-common-dir</span></code>, so every git worktree of that clone shares
+one build. Outside a git checkout it falls back to <code class="docutils literal notranslate"><span class="pre">&lt;repo_root&gt;</span></code>, which is
+also where it lands for an original clone — so upgrading needs no migration.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;clone&gt;/.mache_cache/jigsaw/     # shared: _get_jigsaw_shared_cache_dir()
+├── .lock                        # _jigsaw_cache_lock()
+├── tools/                       # _jigsaw_tools_dir()
+└── &lt;cache_key&gt;/                 # _jigsaw_slot_dir(), rattler-build output
+
+&lt;repo_root&gt;/.mache_cache/jigsaw/ # per-worktree: _get_jigsaw_workspace_dir()
+└── pixi-local/
+</pre></div>
+</div>
+<p>Four invariants hold this together. Breaking any of them is a behavior
+change, not a refactor:</p>
+<ol class="arabic simple">
+<li><p><strong>The cache key is worktree-agnostic.</strong> It hashes the <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code>
+commit, its version, the Python version and the platform — nothing about
+the containing checkout. Adding anything worktree-specific to it silently
+un-shares the cache.</p></li>
+<li><p><strong>Slots are never deleted.</strong> <code class="docutils literal notranslate"><span class="pre">channel_uri</span></code> names a slot, and that URI is
+baked into the <code class="docutils literal notranslate"><span class="pre">pixi.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">pixi.lock</span></code> of every environment deployed
+from it, which outlive the deploy. Pruning slots would break those
+environments long afterward, at their next solve. Slots are small; the
+growth this permits is not worth that failure mode.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">tools/</span></code> is key-independent, and shared on purpose.</strong> These environments
+are the great majority of the cache’s size and depend only on the platform.
+Moving them inside a slot would restore most of the per-worktree
+duplication that sharing the cache exists to remove.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">pixi-local</span></code> is per-<code class="docutils literal notranslate"><span class="pre">repo_root</span></code>, not per-clone.</strong> It is a copy of the
+source manifest, so it derives from the worktree rather than from the cache
+key; sharing it would let one worktree clobber another’s.</p></li>
+</ol>
+<p>Writes to the shared cache happen under an exclusive <code class="docutils literal notranslate"><span class="pre">flock</span></code>, since worktrees
+can deploy concurrently. The sentinel <code class="docutils literal notranslate"><span class="pre">&lt;cache_key&gt;/.jigsaw_cache_key</span></code> is
+written <em>after</em> the build finishes, so a slot mid-build never reads as a cache
+hit — that ordering is what lets the cache-hit path skip the lock entirely.</p>
 <p>The install step:</p>
 <ul class="simple">
 <li><p>Uses pixi when the backend resolves to <code class="docutils literal notranslate"><span class="pre">pixi</span></code>.</p></li>
@@ -182,12 +224,14 @@ backend.</p></li>
 <li><p>Accepts explicit backend selection or <code class="docutils literal notranslate"><span class="pre">auto</span></code> detection.</p></li>
 </ul>
 </section>
+</section>
 <section id="backend-specific-notes">
 <h2>Backend-specific notes<a class="headerlink" href="#backend-specific-notes" title="Link to this heading"></a></h2>
 <section id="pixi">
 <h3>Pixi<a class="headerlink" href="#pixi" title="Link to this heading"></a></h3>
 <p>The pixi install path can either mutate a chosen manifest directly or work
-through a local copied manifest under <code class="docutils literal notranslate"><span class="pre">.mache_cache/jigsaw/pixi-local</span></code>.</p>
+through a local copied manifest under
+<code class="docutils literal notranslate"><span class="pre">&lt;repo_root&gt;/.mache_cache/jigsaw/pixi-local</span></code>.</p>
 <p>The local-manifest path exists to avoid source-controlled manifest changes and
 to isolate JIGSAW from unrelated pixi environments when a project defines
 multiple features or Python variants.</p>

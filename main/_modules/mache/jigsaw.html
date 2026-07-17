@@ -96,13 +96,18 @@
   <h1>Source code for mache.jigsaw</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">fcntl</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -133,6 +138,16 @@
     <span class="s1">&#39;3.14&#39;</span><span class="p">:</span> <span class="s1">&#39;3.14.* *_cp314&#39;</span><span class="p">,</span>
 <span class="p">}</span>
 
+<span class="c1"># How long to wait for another process to finish building before giving up,</span>
+<span class="c1"># and how often to re-check while waiting, in seconds. A build takes a</span>
+<span class="c1"># couple of minutes; the timeout only needs to be comfortably longer.</span>
+<span class="n">JIGSAW_LOCK_TIMEOUT</span> <span class="o">=</span> <span class="mf">3600.0</span>
+<span class="n">JIGSAW_LOCK_POLL</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+<span class="c1"># Characters of the cache key used to name a build&#39;s cache directory. See</span>
+<span class="c1"># _jigsaw_slot_dir for why this is truncated rather than the full key.</span>
+<span class="n">JIGSAW_SLOT_KEY_LEN</span> <span class="o">=</span> <span class="mi">16</span>
+
 
 <div class="viewcode-block" id="JigsawBuildResult">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.jigsaw.JigsawBuildResult.html#mache.jigsaw.JigsawBuildResult">[docs]</a>
@@ -142,7 +157,8 @@
     <span class="n">channel_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">cache_hit</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">jigsaw_version</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">jigsaw_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">cache_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -203,8 +219,9 @@
 <span class="sd">        used when possible.</span>
 <span class="sd">    pixi_local : bool, optional</span>
 <span class="sd">        If ``True`` and backend resolves to ``&quot;pixi&quot;``, install into a</span>
-<span class="sd">        local copied manifest under ``.mache_cache/jigsaw/pixi-local``</span>
-<span class="sd">        instead of mutating the source manifest directly.</span>
+<span class="sd">        local copied manifest under</span>
+<span class="sd">        ``&lt;repo_root&gt;/.mache_cache/jigsaw/pixi-local`` instead of mutating</span>
+<span class="sd">        the source manifest directly.</span>
 <span class="sd">    conda_exe : str, optional</span>
 <span class="sd">        Conda executable used when installing with backend ``&quot;conda&quot;``.</span>
 <span class="sd">    conda_prefix : str, optional</span>
@@ -255,6 +272,7 @@
         <span class="n">pixi_manifest</span><span class="o">=</span><span class="n">pixi_manifest</span><span class="p">,</span>
         <span class="n">pixi_feature</span><span class="o">=</span><span class="n">pixi_feature</span><span class="p">,</span>
         <span class="n">pixi_local</span><span class="o">=</span><span class="n">pixi_local</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
         <span class="n">conda_exe</span><span class="o">=</span><span class="n">resolved_conda_exe</span><span class="p">,</span>
         <span class="n">conda_prefix</span><span class="o">=</span><span class="n">conda_prefix</span><span class="p">,</span>
     <span class="p">)</span>
@@ -330,6 +348,7 @@
     <span class="n">pixi_manifest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixi_feature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixi_local</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
     <span class="n">conda_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">conda_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -358,8 +377,12 @@
 <span class="sd">        Explicit pixi feature to target when using backend ``&quot;pixi&quot;``.</span>
 <span class="sd">    pixi_local : bool, optional</span>
 <span class="sd">        If ``True`` and backend resolves to ``&quot;pixi&quot;``, install into a</span>
-<span class="sd">        local copied manifest under ``.mache_cache/jigsaw/pixi-local``</span>
-<span class="sd">        instead of mutating the source manifest directly.</span>
+<span class="sd">        local copied manifest under</span>
+<span class="sd">        ``&lt;repo_root&gt;/.mache_cache/jigsaw/pixi-local`` instead of mutating</span>
+<span class="sd">        the source manifest directly.</span>
+<span class="sd">    repo_root : str</span>
+<span class="sd">        Root directory containing the target source tree, used to locate</span>
+<span class="sd">        the ``pixi-local`` manifest copy. Defaults to ``&quot;.&quot;``.</span>
 <span class="sd">    conda_exe : str, optional</span>
 <span class="sd">        Conda executable used when backend resolves to ``&quot;conda&quot;``.</span>
 <span class="sd">    conda_prefix : str, optional</span>
@@ -391,6 +414,9 @@
                 <span class="n">inferred_local_feature</span><span class="p">,</span>
             <span class="p">)</span> <span class="o">=</span> <span class="n">_prepare_local_pixi_manifest_copy</span><span class="p">(</span>
                 <span class="n">pixi_manifest</span><span class="o">=</span><span class="n">pixi_manifest</span><span class="p">,</span>
+                <span class="n">workspace_root</span><span class="o">=</span><span class="n">_get_jigsaw_workspace_dir</span><span class="p">(</span>
+                    <span class="n">repo_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+                <span class="p">),</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">resolved_feature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">resolved_feature</span> <span class="o">=</span> <span class="n">inferred_local_feature</span>
@@ -438,6 +464,10 @@
 <span class="sd">    The function ensures the ``jigsaw-python`` source is available,</span>
 <span class="sd">    computes a cache key, reuses cached output when valid, and otherwise</span>
 <span class="sd">    runs ``rattler-build`` using the resolved backend.</span>
+
+<span class="sd">    The cache lives in the clone that ``repo_root`` belongs to, so every</span>
+<span class="sd">    git worktree of that clone shares one build. See</span>
+<span class="sd">    ``_get_jigsaw_shared_cache_dir``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -490,40 +520,52 @@
     <span class="p">)</span>
 
     <span class="n">jigsaw_version</span> <span class="o">=</span> <span class="n">_get_jigsaw_version</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="p">)</span>
-    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">_is_cached_jigsaw_build_valid</span><span class="p">(</span><span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Using cached JIGSAW build&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">JigsawBuildResult</span><span class="p">(</span>
-            <span class="n">channel_uri</span><span class="o">=</span><span class="n">_get_local_channel_uri</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">),</span>
-            <span class="n">channel_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
-            <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">,</span>
-            <span class="n">cache_hit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">jigsaw_version</span><span class="o">=</span><span class="n">jigsaw_version</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">shared_root</span> <span class="o">=</span> <span class="n">_get_jigsaw_shared_cache_dir</span><span class="p">(</span><span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root_path</span><span class="p">)</span>
+    <span class="n">slot_dir</span> <span class="o">=</span> <span class="n">_jigsaw_slot_dir</span><span class="p">(</span><span class="n">shared_root</span><span class="o">=</span><span class="n">shared_root</span><span class="p">,</span> <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">)</span>
 
-    <span class="n">selected_backend</span> <span class="o">=</span> <span class="n">detect_install_backend</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
-
-    <span class="n">_build_external_jigsaw</span><span class="p">(</span>
-        <span class="n">backend</span><span class="o">=</span><span class="n">selected_backend</span><span class="p">,</span>
-        <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
-        <span class="n">conda_exe</span><span class="o">=</span><span class="n">conda_exe</span><span class="p">,</span>
-        <span class="n">jigsaw_python_dir</span><span class="o">=</span><span class="n">jigsaw_python_dir</span><span class="p">,</span>
-        <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
-        <span class="n">jigsaw_version</span><span class="o">=</span><span class="n">jigsaw_version</span><span class="p">,</span>
-        <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
-        <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+    <span class="n">cache_hit</span> <span class="o">=</span> <span class="n">_is_cached_jigsaw_build_valid</span><span class="p">(</span>
+        <span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">,</span> <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">cache_hit</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Using cached JIGSAW build: </span><span class="si">{</span><span class="n">slot_dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">selected_backend</span> <span class="o">=</span> <span class="n">detect_install_backend</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
 
-    <span class="n">_write_jigsaw_cache_key</span><span class="p">(</span><span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">_jigsaw_cache_lock</span><span class="p">(</span><span class="n">shared_root</span><span class="o">=</span><span class="n">shared_root</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">):</span>
+            <span class="c1"># Another worktree may have built this while we waited.</span>
+            <span class="n">cache_hit</span> <span class="o">=</span> <span class="n">_is_cached_jigsaw_build_valid</span><span class="p">(</span>
+                <span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">,</span> <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">cache_hit</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Using cached JIGSAW build: </span><span class="si">{</span><span class="n">slot_dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_build_external_jigsaw</span><span class="p">(</span>
+                    <span class="n">backend</span><span class="o">=</span><span class="n">selected_backend</span><span class="p">,</span>
+                    <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                    <span class="n">conda_exe</span><span class="o">=</span><span class="n">conda_exe</span><span class="p">,</span>
+                    <span class="n">jigsaw_python_dir</span><span class="o">=</span><span class="n">jigsaw_python_dir</span><span class="p">,</span>
+                    <span class="n">python_version</span><span class="o">=</span><span class="n">python_version</span><span class="p">,</span>
+                    <span class="n">jigsaw_version</span><span class="o">=</span><span class="n">jigsaw_version</span><span class="p">,</span>
+                    <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+                    <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+                    <span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">,</span>
+                    <span class="n">tools_dir</span><span class="o">=</span><span class="n">_jigsaw_tools_dir</span><span class="p">(</span><span class="n">shared_root</span><span class="o">=</span><span class="n">shared_root</span><span class="p">),</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Written last: the sentinel is what marks the slot usable,</span>
+                <span class="c1"># so a slot mid-build never reads as a cache hit.</span>
+                <span class="n">_write_jigsaw_cache_key</span><span class="p">(</span><span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">,</span> <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">JigsawBuildResult</span><span class="p">(</span>
-        <span class="n">channel_uri</span><span class="o">=</span><span class="n">_get_local_channel_uri</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">),</span>
-        <span class="n">channel_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+        <span class="n">channel_uri</span><span class="o">=</span><span class="n">_get_local_channel_uri</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">),</span>
+        <span class="n">channel_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">,</span>
         <span class="n">cache_key</span><span class="o">=</span><span class="n">cache_key</span><span class="p">,</span>
-        <span class="n">cache_hit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">cache_hit</span><span class="o">=</span><span class="n">cache_hit</span><span class="p">,</span>
         <span class="n">jigsaw_version</span><span class="o">=</span><span class="n">jigsaw_version</span><span class="p">,</span>
+        <span class="n">cache_root</span><span class="o">=</span><span class="n">shared_root</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -577,39 +619,25 @@
     <span class="k">return</span> <span class="n">version</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_git</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">cwd</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;-C&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">cwd</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">],</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_git_head</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">git_dir</span> <span class="o">=</span> <span class="n">repo_dir</span> <span class="o">/</span> <span class="s1">&#39;.git&#39;</span>
-    <span class="k">if</span> <span class="n">git_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="n">git_root</span> <span class="o">=</span> <span class="n">git_dir</span>
-    <span class="k">elif</span> <span class="n">git_dir</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="n">git_file</span> <span class="o">=</span> <span class="n">git_dir</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">git_file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gitdir:&#39;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Unexpected .git file format in </span><span class="si">{</span><span class="n">repo_dir</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">git_file</span><span class="si">!r}</span><span class="s1">&#39;</span>
-            <span class="p">)</span>
-        <span class="n">gitdir_path</span> <span class="o">=</span> <span class="n">git_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">git_root</span> <span class="o">=</span> <span class="p">(</span><span class="n">repo_dir</span> <span class="o">/</span> <span class="n">gitdir_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s1">&#39;rev-parse&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">],</span> <span class="n">cwd</span><span class="o">=</span><span class="n">repo_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">head</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Expected git checkout at </span><span class="si">{</span><span class="n">repo_dir</span><span class="si">}</span><span class="s1"> but .git not found.&#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;Expected git checkout at </span><span class="si">{</span><span class="n">repo_dir</span><span class="si">}</span><span class="s1"> but could not read HEAD.&#39;</span>
         <span class="p">)</span>
-
-    <span class="n">head_file</span> <span class="o">=</span> <span class="n">git_root</span> <span class="o">/</span> <span class="s1">&#39;HEAD&#39;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">head_file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Expected git checkout at </span><span class="si">{</span><span class="n">repo_dir</span><span class="si">}</span><span class="s1"> but HEAD not found in &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">git_root</span><span class="si">}</span><span class="s1">.&#39;</span>
-        <span class="p">)</span>
-
-    <span class="n">head_ref</span> <span class="o">=</span> <span class="n">head_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">head_ref</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ref:&#39;</span><span class="p">):</span>
-        <span class="n">ref_path</span> <span class="o">=</span> <span class="n">head_ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">ref_file</span> <span class="o">=</span> <span class="n">git_root</span> <span class="o">/</span> <span class="n">ref_path</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ref_file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Git ref </span><span class="si">{</span><span class="n">ref_path</span><span class="si">}</span><span class="s1"> not found in </span><span class="si">{</span><span class="n">git_root</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ref_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">head_ref</span>
+    <span class="k">return</span> <span class="n">head</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_jigsaw_cache_key</span><span class="p">(</span>
@@ -636,38 +664,152 @@
     <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_cache_key_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;.jigsaw_cache_key&#39;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_cache_key_path</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">slot_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">slot_dir</span> <span class="o">/</span> <span class="s1">&#39;.jigsaw_cache_key&#39;</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_jigsaw_cache_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;.mache_cache/jigsaw&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_git_clone_root</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the original clone that ``repo_root`` belongs to, or None if</span>
+<span class="sd">    ``repo_root`` is not itself the top of a git work tree.</span>
+
+<span class="sd">    For a linked worktree this is the clone the worktree was created from,</span>
+<span class="sd">    which is what lets every worktree share one build cache.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">repo_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">toplevel</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s1">&#39;rev-parse&#39;</span><span class="p">,</span> <span class="s1">&#39;--show-toplevel&#39;</span><span class="p">],</span> <span class="n">cwd</span><span class="o">=</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">toplevel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="n">toplevel</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">repo_root</span><span class="p">:</span>
+        <span class="c1"># repo_root is not a work-tree top, so a surrounding repository is</span>
+        <span class="c1"># some unrelated checkout we must not anchor to.</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">common_dir</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s1">&#39;rev-parse&#39;</span><span class="p">,</span> <span class="s1">&#39;--git-common-dir&#39;</span><span class="p">],</span> <span class="n">cwd</span><span class="o">=</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">common_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># --git-common-dir is relative (&#39;.git&#39;) for an original clone but</span>
+    <span class="c1"># absolute for a linked worktree.</span>
+    <span class="n">common_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">common_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">common_path</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+        <span class="n">common_path</span> <span class="o">=</span> <span class="n">repo_root</span> <span class="o">/</span> <span class="n">common_path</span>
+
+    <span class="k">return</span> <span class="n">common_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_read_jigsaw_cache_key</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">_cache_key_path</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_jigsaw_shared_cache_dir</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The build cache shared by every worktree of ``repo_root``&#39;s clone.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">clone_root</span> <span class="o">=</span> <span class="n">_find_git_clone_root</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">clone_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_get_jigsaw_workspace_dir</span><span class="p">(</span><span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">clone_root</span> <span class="o">/</span> <span class="s1">&#39;.mache_cache&#39;</span> <span class="o">/</span> <span class="s1">&#39;jigsaw&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_jigsaw_workspace_dir</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Per-worktree scratch space, for things derived from this checkout</span>
+<span class="sd">    rather than from the cache key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">repo_root</span> <span class="o">/</span> <span class="s1">&#39;.mache_cache&#39;</span> <span class="o">/</span> <span class="s1">&#39;jigsaw&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jigsaw_slot_dir</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">shared_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="c1"># The slot name is part of the build path, and rattler-build has to fit</span>
+    <span class="c1"># its build prefix inside conda&#39;s 255-character limit, so keep it short.</span>
+    <span class="c1"># The full key still lives in the slot&#39;s sentinel for exact matching;</span>
+    <span class="c1"># 16 hex characters (64 bits) is far more than enough to keep the</span>
+    <span class="c1"># handful of builds a clone ever holds from colliding.</span>
+    <span class="k">return</span> <span class="n">shared_root</span> <span class="o">/</span> <span class="n">cache_key</span><span class="p">[:</span><span class="n">JIGSAW_SLOT_KEY_LEN</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jigsaw_tools_dir</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">shared_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tool environments that every build shares.</span>
+
+<span class="sd">    These depend on the platform rather than on the cache key, so they are</span>
+<span class="sd">    deliberately kept outside the per-key slots: they are by far the</span>
+<span class="sd">    largest thing in the cache, and duplicating them per key would undo</span>
+<span class="sd">    most of the benefit of sharing it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">shared_root</span> <span class="o">/</span> <span class="s1">&#39;tools&#39;</span>
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_jigsaw_cache_lock</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">shared_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Serialize builds that share a cache, yielding whether the lock is held.</span>
+
+<span class="sd">    Worktrees of one clone share a cache directory, so two deploys running</span>
+<span class="sd">    at once would otherwise write the same build tree. On a filesystem</span>
+<span class="sd">    without working ``flock`` we warn and proceed anyway: that is no worse</span>
+<span class="sd">    than the unlocked behavior this replaces, and failing the deploy</span>
+<span class="sd">    outright would be.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lock_path</span> <span class="o">=</span> <span class="n">shared_root</span> <span class="o">/</span> <span class="s1">&#39;.lock&#39;</span>
+    <span class="n">lock_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">lock_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_RDWR</span><span class="p">,</span> <span class="mo">0o644</span><span class="p">)</span>
+    <span class="n">held</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">JIGSAW_LOCK_TIMEOUT</span>
+        <span class="n">announced</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">fcntl</span><span class="o">.</span><span class="n">flock</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">fcntl</span><span class="o">.</span><span class="n">LOCK_EX</span> <span class="o">|</span> <span class="n">fcntl</span><span class="o">.</span><span class="n">LOCK_NB</span><span class="p">)</span>
+                <span class="n">held</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">BlockingIOError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">announced</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s1">&#39;Waiting for another mache JIGSAW build to &#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39;finish (lock: </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s1">)&#39;</span>
+                        <span class="p">)</span>
+                    <span class="n">announced</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">deadline</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;Timed out after </span><span class="si">{</span><span class="n">JIGSAW_LOCK_TIMEOUT</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">s waiting &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;for the JIGSAW build lock at </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s1">. If no &#39;</span>
+                        <span class="s1">&#39;build is running, it is safe to delete that file.&#39;</span>
+                    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">JIGSAW_LOCK_POLL</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># e.g. NFS without lockd, or a mount with -o nolock</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Warning: could not lock </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">); &#39;</span>
+                    <span class="s1">&#39;proceeding without a build lock.&#39;</span>
+                <span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="k">yield</span> <span class="n">held</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># Closing the descriptor releases the lock, if we hold it.</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_jigsaw_cache_key</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">slot_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">_cache_key_path</span><span class="p">(</span><span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cache_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">cache_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_write_jigsaw_cache_key</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">_cache_key_path</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_jigsaw_cache_key</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">slot_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">_cache_key_path</span><span class="p">(</span><span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">)</span>
     <span class="n">cache_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">cache_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cache_key</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_cached_jigsaw_build_valid</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="n">cached_key</span> <span class="o">=</span> <span class="n">_read_jigsaw_cache_key</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_cached_jigsaw_build_valid</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">slot_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">cached_key</span> <span class="o">=</span> <span class="n">_read_jigsaw_cache_key</span><span class="p">(</span><span class="n">slot_dir</span><span class="o">=</span><span class="n">slot_dir</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cached_key</span> <span class="o">!=</span> <span class="n">cache_key</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">output_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">slot_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="n">platform_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_get_conda_platform_and_system</span><span class="p">()</span>
-    <span class="n">repodata</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">platform_name</span> <span class="o">/</span> <span class="s1">&#39;repodata.json&#39;</span>
+    <span class="n">repodata</span> <span class="o">=</span> <span class="n">slot_dir</span> <span class="o">/</span> <span class="n">platform_name</span> <span class="o">/</span> <span class="s1">&#39;repodata.json&#39;</span>
     <span class="k">return</span> <span class="n">repodata</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
 
 
@@ -768,6 +910,8 @@
     <span class="n">jigsaw_python_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">slot_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">tools_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Building JIGSAW&#39;</span><span class="p">)</span>
 
@@ -775,7 +919,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unsupported python version: </span><span class="si">{</span><span class="n">python_version</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="n">python_variant</span> <span class="o">=</span> <span class="n">PYTHON_VARIANTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">python_version</span><span class="p">)</span>
-    <span class="n">build_root</span> <span class="o">=</span> <span class="p">(</span><span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;build&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">build_root</span> <span class="o">=</span> <span class="p">(</span><span class="n">slot_dir</span> <span class="o">/</span> <span class="s1">&#39;build&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">recipe_dir</span> <span class="o">=</span> <span class="n">build_root</span> <span class="o">/</span> <span class="s1">&#39;recipe&#39;</span>
     <span class="n">variant_dir</span> <span class="o">=</span> <span class="n">build_root</span> <span class="o">/</span> <span class="s1">&#39;variant&#39;</span>
     <span class="n">recipe_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -819,14 +963,14 @@
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">variant_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
         <span class="n">file_handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">variant</span><span class="p">)</span>
 
-    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">slot_dir</span>
     <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;pixi&#39;</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">pixi_exe</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;pixi_exe is required when backend=&quot;pixi&quot;.&#39;</span><span class="p">)</span>
         <span class="n">pixi_toml</span> <span class="o">=</span> <span class="n">_write_build_manifest</span><span class="p">(</span>
-            <span class="n">build_root</span><span class="o">=</span><span class="n">build_root</span><span class="p">,</span>
+            <span class="n">build_root</span><span class="o">=</span><span class="n">tools_dir</span><span class="p">,</span>
             <span class="n">platform_name</span><span class="o">=</span><span class="n">platform_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">command</span> <span class="o">=</span> <span class="p">(</span>
@@ -842,6 +986,7 @@
             <span class="n">conda_exe</span><span class="o">=</span><span class="n">conda_exe</span><span class="p">,</span>
             <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
             <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="n">tools_dir</span><span class="o">=</span><span class="n">tools_dir</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">command</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">conda_runner</span><span class="si">}</span><span class="s1"> rattler-build build &#39;</span>
@@ -862,9 +1007,10 @@
     <span class="n">conda_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">tools_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">conda</span> <span class="o">=</span> <span class="n">_resolve_conda_executable</span><span class="p">(</span><span class="n">conda_exe</span><span class="p">)</span>
-    <span class="n">tool_prefix</span> <span class="o">=</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;build&#39;</span> <span class="o">/</span> <span class="s1">&#39;conda-rattler-build&#39;</span>
+    <span class="n">tool_prefix</span> <span class="o">=</span> <span class="n">tools_dir</span> <span class="o">/</span> <span class="s1">&#39;conda-rattler-build&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">tool_prefix</span> <span class="o">/</span> <span class="s1">&#39;conda-meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="n">tool_prefix</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">command</span> <span class="o">=</span> <span class="p">(</span>
@@ -913,12 +1059,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_local_pixi_manifest_copy</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">pixi_manifest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">pixi_manifest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">workspace_root</span><span class="p">:</span> <span class="n">Path</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="n">source_manifest</span> <span class="o">=</span> <span class="n">_resolve_pixi_manifest</span><span class="p">(</span><span class="n">pixi_manifest</span><span class="p">)</span>
     <span class="n">source_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_manifest</span><span class="p">)</span>
 
-    <span class="n">local_dir</span> <span class="o">=</span> <span class="n">_get_jigsaw_cache_dir</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;pixi-local&#39;</span>
+    <span class="c1"># This copy derives from the source manifest, which is per-worktree,</span>
+    <span class="c1"># rather than from the cache key, so it stays out of the shared cache.</span>
+    <span class="n">local_dir</span> <span class="o">=</span> <span class="n">workspace_root</span> <span class="o">/</span> <span class="s1">&#39;pixi-local&#39;</span>
     <span class="n">local_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># pixi recognizes these manifest basenames.</span>
