@@ -15,10 +15,18 @@ These instructions apply to the whole repository unless a deeper
 - This repository uses Pixi as the primary development environment manager.
 - Check the root `.pixi/` and `pixi.toml` before creating or selecting any
   other Python environment.
-- Prefer `pixi run -e py314 <command>` for Python tools such as `python`,
-  `pytest`, `pre-commit`, `ruff`, and `mypy`.
-- If you need an interactive shell, use `pixi shell -e py314` from the repo
-  root instead of creating a new virtual environment.
+- Prefer the `default` environment for Python tools such as `python`,
+  `pytest`, `pre-commit`, `ruff`, and `mypy`: run `pixi run <command>` (or
+  `pixi shell` for an interactive shell) from the repo root. This is the
+  environment `pixi shell` creates, so it is usually the one already
+  installed under `.pixi/envs/`.
+- If the `default` environment is not available, fall back to an explicit
+  Python environment such as `pixi run -e py314 <command>` (`py310`
+  through `py314` are defined in `pixi.toml`). Note that selecting an
+  environment that is not yet installed will make Pixi solve and install
+  it, which can be slow.
+- If no Pixi environment is installed at all, ask the user to create one
+  (e.g. `pixi shell`) rather than building a separate virtual environment.
 - Do not treat `pytest: command not found` in a plain shell as a missing
   dependency until you have tried the command through Pixi.
 
@@ -42,12 +50,12 @@ These instructions apply to the whole repository unless a deeper
 
 - Run tests and linting through Pixi unless the task explicitly requires a
   different environment.
-- Prefer `pixi run -e py314 pytest` for tests.
+- Prefer `pixi run pytest` for tests (the `default` environment; see the
+  "Python environment" section for fallbacks).
 - Do not run `workflow_tests/test_deploy_workflow.py` during routine
   validation unless the user explicitly requests that workflow test.
 - pre-commit on changed files is required before finishing; if sandboxed
   execution fails, request escalation and do not close the task until it has
   run or the user declines.
-- Prefer `pixi run -e py314 pre-commit run --files ...` for required
-  validation.
+- Prefer `pixi run pre-commit run --files ...` for required validation.
 - Prefer fixing lint and formatting issues rather than suppressing them.
