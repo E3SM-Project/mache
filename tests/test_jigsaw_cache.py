@@ -154,6 +154,62 @@ def test_get_git_head_outside_git_checkout(tmp_path: Path):
         jigsaw._get_git_head(plain)
 
 
+def test_worktree_hash_is_stable_when_clean(tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+
+    first = jigsaw._get_git_worktree_hash(clone)
+
+    assert first is not None
+    assert first == jigsaw._get_git_worktree_hash(clone)
+
+
+def test_worktree_hash_changes_with_uncommitted_edit(tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+    before = jigsaw._get_git_worktree_hash(clone)
+
+    # An in-place edit that is never committed must change the hash.
+    (clone / 'README.md').write_text('changed\n', encoding='utf-8')
+    modified = jigsaw._get_git_worktree_hash(clone)
+
+    # A brand-new, untracked file must change it too.
+    (clone / 'extra.txt').write_text('new\n', encoding='utf-8')
+    added = jigsaw._get_git_worktree_hash(clone)
+
+    assert before != modified
+    assert modified != added
+
+
+def test_worktree_hash_leaves_real_index_untouched(tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+    (clone / 'README.md').write_text('changed\n', encoding='utf-8')
+
+    jigsaw._get_git_worktree_hash(clone)
+
+    # The developer's own index must not have been staged behind their back:
+    # the edit stays a working-tree change (porcelain ' M'), not staged
+    # ('M '). _git strips the output, collapsing the leading space.
+    assert _git('status', '--porcelain', cwd=clone) == 'M README.md'
+
+
+def test_worktree_hash_outside_git_checkout(tmp_path: Path):
+    plain = tmp_path / 'plain'
+    plain.mkdir()
+
+    assert jigsaw._get_git_worktree_hash(plain) is None
+
+
+def test_source_id_reflects_uncommitted_changes(tmp_path: Path):
+    clone = _make_clone(tmp_path / 'clone')
+    clean = jigsaw._get_jigsaw_source_id(clone)
+
+    (clone / 'README.md').write_text('changed\n', encoding='utf-8')
+    dirty = jigsaw._get_jigsaw_source_id(clone)
+
+    head = _git('rev-parse', 'HEAD', cwd=clone)
+    assert clean.startswith(head)
+    assert clean != dirty
+
+
 def test_build_recipe_id_tracks_dependency_files(monkeypatch):
     platform_name = _platform_name()
     baseline = jigsaw._get_build_recipe_id(platform_name)

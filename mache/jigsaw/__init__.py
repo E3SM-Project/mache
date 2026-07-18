@@ -9,6 +9,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -529,6 +530,52 @@ def _get_git_head(repo_dir: Path) -> str:
     return head
 
 
+def _get_git_worktree_hash(repo_dir: Path) -> str | None:
+    """
+    Content hash of the working tree at ``repo_dir``, including any
+    uncommitted changes, or None if it cannot be computed.
+
+    Committing must not be a prerequisite for rebuilding JIGSAW: a developer
+    who edits the JIGSAW source in place has to get a fresh build, so the
+    cache key has to reflect the working tree and not just HEAD. We stage the
+    whole tree into a throwaway index -- leaving the developer's real index
+    untouched -- and let ``git write-tree`` hash it. Ignored paths such as
+    the build cache itself are excluded, exactly as they are from a commit.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        env = dict(os.environ, GIT_INDEX_FILE=os.path.join(tmp_dir, 'index'))
+        try:
+            subprocess.check_call(
+                ['git', '-C', str(repo_dir), 'add', '-A'],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            tree = subprocess.check_output(
+                ['git', '-C', str(repo_dir), 'write-tree'],
+                env=env,
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return None
+    return tree.strip() or None
+
+
+def _get_jigsaw_source_id(repo_dir: Path) -> str:
+    """
+    Identify the JIGSAW source to build: its committed HEAD plus a hash of
+    the working tree, so that uncommitted edits trigger a rebuild instead of
+    reusing a stale cached build. On a clean checkout the working-tree hash
+    is a stable function of HEAD, so the id does not churn between builds.
+    """
+    head = _get_git_head(repo_dir)
+    worktree = _get_git_worktree_hash(repo_dir)
+    if worktree is None:
+        return head
+    return f'{head}:{worktree}'
+
+
 def _get_build_recipe_id(platform_name: str) -> str:
     """
     Hash of the mache-owned files that define how JIGSAW is built: the
@@ -556,11 +603,11 @@ def _compute_jigsaw_cache_key(
 ) -> str:
     platform_name, _ = _get_conda_platform_and_system()
     jigsaw_version = _get_jigsaw_version(jigsaw_python_dir)
-    git_head = _get_git_head(jigsaw_python_dir)
+    jigsaw_source = _get_jigsaw_source_id(jigsaw_python_dir)
     python_variant = PYTHON_VARIANTS.get(python_version, '')
 
     payload = {
-        'git_head': git_head,
+        'jigsaw_source': jigsaw_source,
         'jigsaw_version': jigsaw_version,
         'python_version': python_version,
         'python_variant': python_variant,
