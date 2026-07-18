@@ -1,0 +1,6 @@
+﻿mache.deploy.jinja.define\_square\_bracket\_environment
+=======================================================
+
+.. currentmodule:: mache.deploy.jinja
+
+.. autofunction:: define_square_bracket_environment

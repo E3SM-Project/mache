@@ -1,0 +1,38 @@
+﻿mache.deploy.hooks.DeployContext
+================================
+
+.. currentmodule:: mache.deploy.hooks
+
+.. autoclass:: DeployContext
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DeployContext.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DeployContext.software
+      ~DeployContext.machine
+      ~DeployContext.repo_root
+      ~DeployContext.deploy_dir
+      ~DeployContext.work_dir
+      ~DeployContext.config
+      ~DeployContext.pins
+      ~DeployContext.machine_config
+      ~DeployContext.args
+      ~DeployContext.logger
+      ~DeployContext.runtime
+   
+   

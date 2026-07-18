@@ -1,0 +1,29 @@
+﻿mache.deploy.cli\_spec.CliSpec
+==============================
+
+.. currentmodule:: mache.deploy.cli_spec
+
+.. autoclass:: CliSpec
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CliSpec.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CliSpec.meta
+      ~CliSpec.args
+   
+   
