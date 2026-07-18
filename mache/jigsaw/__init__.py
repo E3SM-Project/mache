@@ -529,6 +529,26 @@ def _get_git_head(repo_dir: Path) -> str:
     return head
 
 
+def _get_build_recipe_id(platform_name: str) -> str:
+    """
+    Hash of the mache-owned files that define how JIGSAW is built: the
+    recipe, the build script, and the platform's dependency pins. These are
+    not part of the JIGSAW source, so changing them (e.g. bumping a
+    dependency) would otherwise leave the cache key unchanged and reuse a
+    stale build.
+    """
+    digest = hashlib.sha256()
+    for name in ('recipe.yaml.j2', 'build.sh', f'{platform_name}.yaml.j2'):
+        try:
+            contents = resources.read_text('mache.jigsaw', name)
+        except FileNotFoundError:
+            contents = ''
+        digest.update(f'{name}\0'.encode('utf-8'))
+        digest.update(contents.encode('utf-8'))
+        digest.update(b'\0')
+    return digest.hexdigest()
+
+
 def _compute_jigsaw_cache_key(
     *,
     jigsaw_python_dir: Path,
@@ -545,6 +565,7 @@ def _compute_jigsaw_cache_key(
         'python_version': python_version,
         'python_variant': python_variant,
         'platform': platform_name,
+        'build_recipe': _get_build_recipe_id(platform_name),
     }
 
     digest = hashlib.sha256()

@@ -154,6 +154,23 @@ def test_get_git_head_outside_git_checkout(tmp_path: Path):
         jigsaw._get_git_head(plain)
 
 
+def test_build_recipe_id_tracks_dependency_files(monkeypatch):
+    platform_name = _platform_name()
+    baseline = jigsaw._get_build_recipe_id(platform_name)
+
+    real_read_text = jigsaw.resources.read_text
+
+    def _bump_variant(package, name, *args, **kwargs):
+        text = real_read_text(package, name, *args, **kwargs)
+        if name == f'{platform_name}.yaml.j2':
+            text += '\n# a changed dependency pin\n'
+        return text
+
+    monkeypatch.setattr(jigsaw.resources, 'read_text', _bump_variant)
+
+    assert jigsaw._get_build_recipe_id(platform_name) != baseline
+
+
 def test_shared_cache_dir_uses_git_common_dir_parent(tmp_path: Path):
     """
     A worktree must resolve to its clone's cache, not to its own.
