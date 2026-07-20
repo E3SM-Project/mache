@@ -125,7 +125,7 @@ spack:
         - libunwind
         - gcc-native/14.2
         - craype/2.7.33
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         extra_attributes:
           # this needs to be here for gcc because the gcc pacakge looks here
           # rather than below in the compilers section
@@ -138,7 +138,7 @@ spack:
       externals:
       - spec: {{ mpi }}%{{ compiler }}
         modules:
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         - libunwind
         - cray-mpich/8.1.31
       buildable: false
@@ -146,7 +146,7 @@ spack:
       externals:
       - spec: libfabric@1.22.0
         modules:
-        - libfabric/1.22.0
+        - libfabric/2.3.1
       buildable: false
 {%- if e3sm_lapack %}
     cray-libsci:
@@ -194,4 +194,4 @@ spack:
       - libunwind
       - gcc-native/14.2
       - craype/2.7.33
-      - libfabric/1.22.0
+      - libfabric/2.3.1
