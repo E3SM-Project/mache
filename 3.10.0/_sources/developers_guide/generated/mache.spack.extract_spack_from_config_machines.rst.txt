@@ -1,0 +1,6 @@
+﻿mache.spack.extract\_spack\_from\_config\_machines
+==================================================
+
+.. currentmodule:: mache.spack
+
+.. autofunction:: extract_spack_from_config_machines

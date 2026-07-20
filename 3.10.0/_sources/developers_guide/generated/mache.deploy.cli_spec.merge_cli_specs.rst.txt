@@ -1,0 +1,6 @@
+﻿mache.deploy.cli\_spec.merge\_cli\_specs
+========================================
+
+.. currentmodule:: mache.deploy.cli_spec
+
+.. autofunction:: merge_cli_specs
