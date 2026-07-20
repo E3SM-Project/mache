@@ -105,6 +105,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
@@ -640,6 +641,72 @@
     <span class="k">return</span> <span class="n">head</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_git_worktree_hash</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Content hash of the working tree at ``repo_dir``, including any</span>
+<span class="sd">    uncommitted changes, or None if it cannot be computed.</span>
+
+<span class="sd">    Committing must not be a prerequisite for rebuilding JIGSAW: a developer</span>
+<span class="sd">    who edits the JIGSAW source in place has to get a fresh build, so the</span>
+<span class="sd">    cache key has to reflect the working tree and not just HEAD. We stage the</span>
+<span class="sd">    whole tree into a throwaway index -- leaving the developer&#39;s real index</span>
+<span class="sd">    untouched -- and let ``git write-tree`` hash it. Ignored paths such as</span>
+<span class="sd">    the build cache itself are excluded, exactly as they are from a commit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp_dir</span><span class="p">:</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">GIT_INDEX_FILE</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="s1">&#39;index&#39;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span>
+                <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;-C&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">),</span> <span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;-A&#39;</span><span class="p">],</span>
+                <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span>
+                <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+                <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+                <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;-C&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">),</span> <span class="s1">&#39;write-tree&#39;</span><span class="p">],</span>
+                <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">tree</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_jigsaw_source_id</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Identify the JIGSAW source to build: its committed HEAD plus a hash of</span>
+<span class="sd">    the working tree, so that uncommitted edits trigger a rebuild instead of</span>
+<span class="sd">    reusing a stale cached build. On a clean checkout the working-tree hash</span>
+<span class="sd">    is a stable function of HEAD, so the id does not churn between builds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">_get_git_head</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">)</span>
+    <span class="n">worktree</span> <span class="o">=</span> <span class="n">_get_git_worktree_hash</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">worktree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">head</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">worktree</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_build_recipe_id</span><span class="p">(</span><span class="n">platform_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Hash of the mache-owned files that define how JIGSAW is built: the</span>
+<span class="sd">    recipe, the build script, and the platform&#39;s dependency pins. These are</span>
+<span class="sd">    not part of the JIGSAW source, so changing them (e.g. bumping a</span>
+<span class="sd">    dependency) would otherwise leave the cache key unchanged and reuse a</span>
+<span class="sd">    stale build.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;recipe.yaml.j2&#39;</span><span class="p">,</span> <span class="s1">&#39;build.sh&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">platform_name</span><span class="si">}</span><span class="s1">.yaml.j2&#39;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">contents</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="s1">&#39;mache.jigsaw&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">contents</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\0</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_jigsaw_cache_key</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">jigsaw_python_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
@@ -647,15 +714,16 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">platform_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_get_conda_platform_and_system</span><span class="p">()</span>
     <span class="n">jigsaw_version</span> <span class="o">=</span> <span class="n">_get_jigsaw_version</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="p">)</span>
-    <span class="n">git_head</span> <span class="o">=</span> <span class="n">_get_git_head</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="p">)</span>
+    <span class="n">jigsaw_source</span> <span class="o">=</span> <span class="n">_get_jigsaw_source_id</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="p">)</span>
     <span class="n">python_variant</span> <span class="o">=</span> <span class="n">PYTHON_VARIANTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">python_version</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
 
     <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;git_head&#39;</span><span class="p">:</span> <span class="n">git_head</span><span class="p">,</span>
+        <span class="s1">&#39;jigsaw_source&#39;</span><span class="p">:</span> <span class="n">jigsaw_source</span><span class="p">,</span>
         <span class="s1">&#39;jigsaw_version&#39;</span><span class="p">:</span> <span class="n">jigsaw_version</span><span class="p">,</span>
         <span class="s1">&#39;python_version&#39;</span><span class="p">:</span> <span class="n">python_version</span><span class="p">,</span>
         <span class="s1">&#39;python_variant&#39;</span><span class="p">:</span> <span class="n">python_variant</span><span class="p">,</span>
         <span class="s1">&#39;platform&#39;</span><span class="p">:</span> <span class="n">platform_name</span><span class="p">,</span>
+        <span class="s1">&#39;build_recipe&#39;</span><span class="p">:</span> <span class="n">_get_build_recipe_id</span><span class="p">(</span><span class="n">platform_name</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
