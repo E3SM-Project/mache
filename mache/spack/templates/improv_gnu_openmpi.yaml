@@ -1,0 +1,149 @@
+{%- set compiler = "gcc@12.3.0" %}
+{%- set mpi = "openmpi@4.1.6" %}
+spack:
+  specs:
+  - {{ compiler }}
+  - {{ mpi }}%{{ compiler }}
+{%- if e3sm_lapack %}
+  - netlib-lapack
+{%- endif %}
+  - "hdf5%{{ compiler }}"
+  - "netcdf-c%{{ compiler }}"
+  - "netcdf-fortran%{{ compiler }}"
+  - "parallel-netcdf%{{ compiler }}"
+{%- for spec in specs %}
+  - "{{ spec }}%{{ compiler }}"
+{%- endfor %}
+  concretizer:
+    unify: true
+  packages:
+    all:
+      compiler: [{{ compiler }}]
+      providers:
+        mpi: [{{ mpi }}%{{ compiler }}]
+{%- if e3sm_lapack %}
+        lapack: [netlib-lapack@3.12.0]
+{%- endif %}
+    bison:
+      externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+      buildable: false
+    bzip2:
+      externals:
+      - spec: bzip2@1.0.6
+        prefix: /usr
+      buildable: false
+    cmake:
+      externals:
+      - spec: cmake@3.30.5
+        prefix: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-zen3/gcc-12.3.0/cmake-3.30.5-jap5fza
+        modules:
+        - cmake/3.30.5-gcc-12.3.0
+      buildable: false
+    curl:
+      externals:
+      - spec: curl@7.61.1
+        prefix: /usr
+      buildable: false
+    diffutils:
+      externals:
+      - spec: diffutils@3.6
+        prefix: /usr
+      buildable: false
+    findutils:
+      externals:
+      - spec: findutils@4.6.0
+        prefix: /usr
+      buildable: false
+    gmake:
+      externals:
+      - spec: gmake@4.2.1
+        prefix: /usr
+      buildable: false
+    libiconv:
+      externals:
+      - spec: libiconv@2.28
+        prefix: /usr
+      buildable: false
+    libxml2:
+      externals:
+      - spec: libxml2@2.9.7
+        prefix: /usr
+      buildable: false
+    openssl:
+      externals:
+      - spec: openssl@1.1.1k
+        prefix: /usr
+      buildable: false
+    xz:
+      externals:
+      - spec: xz@5.2.4
+        prefix: /usr
+      buildable: false
+    zlib:
+      externals:
+      - spec: zlib@1.2.11
+        prefix: /usr
+      buildable: false
+    perl:
+      externals:
+      - spec: perl@5.26.3
+        prefix: /usr
+      buildable: false
+    gcc:
+      externals:
+      - spec: {{ compiler }}
+        prefix: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l
+        modules:
+        - gcc/12.3.0
+        extra_attributes:
+          compilers:
+            c: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gcc
+            cxx: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/g++
+            fortran: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
+      buildable: false
+    openmpi:
+      externals:
+      - spec: {{ mpi }}%{{ compiler }}
+        prefix: /lcrc/group/e3sm/soft/improv/openmpi/4.1.6/gcc-12.3.0
+      buildable: false
+    netlib-lapack:
+      externals:
+      - spec: netlib-lapack@3.12.0
+        prefix: /lcrc/group/e3sm/soft/improv/netlib-lapack/3.12.0/gcc-12.3.0
+      buildable: false
+    hdf5:
+      externals:
+      - spec: hdf5@1.14.3+cxx+fortran+hl+mpi
+        prefix: /lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0
+      buildable: false
+    netcdf-c:
+      externals:
+      - spec: netcdf-c@4.9.2+mpi~parallel-netcdf
+        prefix: /lcrc/group/e3sm/soft/improv/netcdf-c/4.9.2b/gcc-12.3.0/openmpi-4.1.6
+      buildable: false
+    netcdf-fortran:
+      externals:
+      - spec: netcdf-fortran@4.6.1
+        prefix: /lcrc/group/e3sm/soft/improv/netcdf-fortran/4.6.1b/gcc-12.3.0/openmpi-4.1.6
+      buildable: false
+    parallel-netcdf:
+      externals:
+      - spec: parallel-netcdf@1.14.1+cxx+fortran
+        prefix: /lcrc/group/e3sm/soft/improv/pnetcdf/1.14.1/gcc-12.3.0/openmpi-4.1.6
+      buildable: false
+  compilers:
+  - compiler:
+      spec: {{ compiler }}
+      paths:
+        cc: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gcc
+        cxx: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/g++
+        f77: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
+        fc: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
+      flags: {}
+      operating_system: rhel8
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
