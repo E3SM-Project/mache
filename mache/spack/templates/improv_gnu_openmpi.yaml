@@ -16,6 +16,9 @@ spack:
 {%- endfor %}
   concretizer:
     unify: true
+  config:
+    build_stage:
+      - /tmp/$user/spack-stage
   packages:
     all:
       compiler: [{{ compiler }}]
@@ -91,6 +94,8 @@ spack:
       - spec: perl@5.26.3
         prefix: /usr
       buildable: false
+    autoconf:
+      require: "@:2.69"
     gcc:
       externals:
       - spec: {{ compiler }}
@@ -115,8 +120,8 @@ spack:
       buildable: false
     hdf5:
       externals:
-      - spec: hdf5@1.14.3+cxx+fortran+hl+mpi
-        prefix: /lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0
+      - spec: hdf5@1.14.3+cxx+fortran+hl+mpi~shared
+        prefix: /lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0/openmpi-4.1.6
       buildable: false
     netcdf-c:
       externals:
@@ -145,5 +150,8 @@ spack:
       operating_system: rhel8
       target: x86_64
       modules: []
-      environment: {}
+      environment:
+        prepend_path:
+          LIBRARY_PATH: "/lcrc/group/e3sm/soft/improv/szip/2.1.1/gcc-12.3.0/lib:/lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0/openmpi-4.1.6/lib"
+          LD_LIBRARY_PATH: "/opt/pbs/lib"
       extra_rpaths: []
