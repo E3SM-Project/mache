@@ -1,10 +1,68 @@
 import os
 import re
 import subprocess
+import warnings
 from configparser import ConfigParser
+from dataclasses import dataclass
 from typing import List
 
-from mache.parallel.system import ParallelSystem, _ceil_division
+from mache.parallel.system import (
+    ParallelSystem,
+    _ceil_division,
+    cap_wall_time,
+)
+
+
+@dataclass(frozen=True)
+class PbsOptions:
+    """
+    PBS submission options resolved from a machine's config.
+
+    Attributes
+    ----------
+    queue : str
+        The PBS queue, or an empty string if the machine defines none.
+
+    constraint : str
+        The constraint, or an empty string if the machine defines none.
+
+    gpus_per_node : str
+        The number of GPUs per node, or an empty string if not configured.
+
+    max_wallclock : str
+        The maximum wall clock (``HH:MM:SS``) of the selected queue, or an
+        empty string if the queue does not set one.
+
+    filesystems : str
+        The filesystems used for batch jobs, or an empty string if not
+        configured.
+
+    effective_nodes : int
+        The node count after clamping to the selected queue's limits.
+
+    wall_time : str
+        The requested wall time capped at ``max_wallclock``, or an empty
+        string if no wall time was requested.
+
+    honored : bool
+        Whether the requested queue was used. ``True`` when no queue was
+        requested.
+
+    reason : str or None
+        A human-readable explanation of why a requested queue could not be
+        honored, suitable for printing verbatim. ``None`` when ``honored``
+        is ``True``.
+    """
+
+    queue: str
+    constraint: str
+    gpus_per_node: str
+    max_wallclock: str
+    filesystems: str
+    effective_nodes: int
+    wall_time: str = ''
+    honored: bool = True
+    reason: str | None = None
 
 
 class PbsSystem(ParallelSystem):
@@ -42,34 +100,111 @@ class PbsSystem(ParallelSystem):
             self.gpus = gpus_per_node * nodes
 
     @classmethod
+    def resolve_pbs_options(
+        cls,
+        config: ConfigParser,
+        nodes: int,
+        min_nodes_allowed: int | None = None,
+        queue: str | None = None,
+        desired_wall_time: str | None = None,
+    ) -> PbsOptions:
+        """
+        Get PBS submission options for a requested node count.
+
+        A requested queue is honored when the machine's metadata allows it;
+        otherwise the default queue is used and the returned options explain
+        why.
+
+        Parameters
+        ----------
+        config : ConfigParser
+            Machine configuration parser.
+
+        nodes : int
+            Requested node count.
+
+        min_nodes_allowed : int, optional
+            Optional lower bound for adjusted node counts.
+
+        queue : str, optional
+            A specific queue the caller would like to use.
+
+        desired_wall_time : str, optional
+            The wall time (``HH:MM:SS``) the caller intends to request. A
+            requested queue that does not allow it is not honored, and the
+            returned ``wall_time`` is capped at ``max_wallclock``.
+
+        Returns
+        -------
+        PbsOptions
+            The resolved PBS submission options.
+        """
+        queue_resolution = cls.resolve_submission(
+            config=config,
+            nodes=nodes,
+            target_type='queue',
+            min_nodes_allowed=min_nodes_allowed,
+            requested=queue,
+            desired_wall_time=desired_wall_time,
+        )
+        queue_name = queue_resolution.target
+        effective_nodes = queue_resolution.effective_nodes
+
+        constraint, gpus_per_node, filesystems = (
+            cls._get_common_submission_options(config)
+        )
+        max_wallclock = cls._get_max_wallclock(config, 'queue', queue_name)
+
+        wall_time = ''
+        if desired_wall_time is not None:
+            wall_time = cap_wall_time(desired_wall_time, max_wallclock)
+
+        return PbsOptions(
+            queue=queue_name,
+            constraint=constraint,
+            gpus_per_node=gpus_per_node,
+            max_wallclock=max_wallclock,
+            filesystems=filesystems,
+            effective_nodes=effective_nodes,
+            wall_time=wall_time,
+            honored=queue_resolution.honored,
+            reason=queue_resolution.reason,
+        )
+
+    @classmethod
     def get_pbs_options(
         cls,
         config: ConfigParser,
         nodes: int,
         min_nodes_allowed: int | None = None,
     ) -> tuple[str, str, str, str, str, int]:
-        """Get PBS submission options for a requested node count."""
-        queue_resolution = cls.resolve_submission(
+        """
+        Get PBS submission options for a requested node count.
+
+        .. deprecated:: 3.11.0
+            Use :py:meth:`resolve_pbs_options` instead, which returns a
+            :py:class:`PbsOptions` object and supports requesting a specific
+            queue.
+        """
+        warnings.warn(
+            'PbsSystem.get_pbs_options() is deprecated and will be removed '
+            'in a future release. Use PbsSystem.resolve_pbs_options(), '
+            'which returns a PbsOptions object.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        options = cls.resolve_pbs_options(
             config=config,
             nodes=nodes,
-            target_type='queue',
             min_nodes_allowed=min_nodes_allowed,
         )
-        queue = queue_resolution.target
-        effective_nodes = queue_resolution.effective_nodes
-
-        constraint, gpus_per_node, filesystems = (
-            cls._get_common_submission_options(config)
-        )
-        max_wallclock = cls._get_max_wallclock(config, 'queue', queue)
-
         return (
-            queue,
-            constraint,
-            gpus_per_node,
-            max_wallclock,
-            filesystems,
-            effective_nodes,
+            options.queue,
+            options.constraint,
+            options.gpus_per_node,
+            options.max_wallclock,
+            options.filesystems,
+            options.effective_nodes,
         )
 
     def _get_parallel_args(

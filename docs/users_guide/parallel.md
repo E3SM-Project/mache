@@ -130,18 +130,85 @@ machine metadata:
 - `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
     one of `queue`, `partition`, or `qos`.
 - `ParallelSystem.resolve_submission(config, nodes, target_type,
-    min_nodes_allowed=None)` returns a `SubmissionResolution` with fields
-    `target`, `requested_nodes`, `effective_nodes`, and `adjustment`
-    (`exact`, `decrease`, or `increase`).
-- `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
-    returns `(partition, qos, constraint, gpus_per_node, max_wallclock,
-    effective_nodes)`.
-- `PbsSystem.get_pbs_options(config, nodes, min_nodes_allowed=None)` returns
-    `(queue, constraint, gpus_per_node, max_wallclock, filesystems,
-    effective_nodes)`.
+    min_nodes_allowed=None, requested=None, desired_wall_time=None)` returns a
+    `SubmissionResolution` with fields `target`, `requested_nodes`,
+    `effective_nodes`, `adjustment` (`exact`, `decrease`, or `increase`),
+    `honored`, and `reason`.
+- `SlurmSystem.resolve_slurm_options(config, nodes, min_nodes_allowed=None,
+    partition=None, qos=None, desired_wall_time=None)` returns a
+    `SlurmOptions` object with fields `partition`, `qos`, `constraint`,
+    `gpus_per_node`, `max_wallclock`, `effective_nodes`, `wall_time`,
+    `honored`, and `reason`.
+- `PbsSystem.resolve_pbs_options(config, nodes, min_nodes_allowed=None,
+    queue=None, desired_wall_time=None)` returns a `PbsOptions` object with
+    fields `queue`, `constraint`, `gpus_per_node`, `max_wallclock`,
+    `filesystems`, `effective_nodes`, `wall_time`, `honored`, and `reason`.
 
 For invalid gaps between scheduler ranges, node count is adjusted to the
 nearest valid value, preferring lower adjustments when feasible. If
 `min_nodes_allowed` disallows lower adjustments, resolution moves to the next
 valid higher range. If no feasible target exists, these functions raise
 `ValueError`.
+
+```{note}
+`SlurmSystem.get_slurm_options()` and `PbsSystem.get_pbs_options()` return the
+same values as tuples. They are deprecated as of v3.11.0 in favor of
+`resolve_slurm_options()` and `resolve_pbs_options()`, which can be extended
+with new fields without breaking positional unpacking.
+```
+
+## Requesting a specific queue, partition or QOS
+
+Callers that want a particular scheduler target -- for example a test suite
+that should run in the `debug` QOS -- can ask for one directly instead of
+rewriting the machine's config:
+
+```python
+from mache import MachineInfo
+from mache.parallel.slurm import SlurmSystem
+
+config = MachineInfo(machine="pm-cpu").config
+options = SlurmSystem.resolve_slurm_options(
+    config=config,
+    nodes=4,
+    qos="debug",
+    desired_wall_time="02:00:00",
+)
+
+if not options.honored:
+    print(f"Falling back to the {options.qos} qos: {options.reason}")
+```
+
+A requested target is a preference, not an assertion. mache honors it when the
+machine's metadata allows it and otherwise resolves the default target,
+setting `honored = False` and putting a printable explanation in `reason`. A
+request is not honored when:
+
+- the target is not in the machine's `[parallel]` `queues` / `partitions` /
+    `qos` list,
+- clamping the node count to the target's `min_nodes`/`max_nodes` would fall
+    below `min_nodes_allowed`, or
+- `desired_wall_time` is longer than the target's `max_wallclock`.
+
+Clamping the node count on its own does *not* prevent a target from being
+honored. The clamp is reported through `effective_nodes` and `adjustment`, and
+`min_nodes_allowed` is the guard for a clamp the caller cannot live with.
+
+`requested` values of `None`, an empty string, and placeholders of the form
+`<<<default>>>` all mean "no target was requested", so config-driven callers
+can pass their raw config value through without guarding against unset
+placeholders.
+
+When `desired_wall_time` is given, the returned `wall_time` is that value
+capped at the selected target's `max_wallclock`. The same capping is available
+on its own:
+
+```python
+from mache.parallel.system import cap_wall_time
+
+cap_wall_time("04:00:00", "00:30:00")  # "00:30:00"
+```
+
+Note that mache resolves the partition and the QOS independently and has no
+concept of one being valid only with the other. A caller that requests both is
+responsible for asking for a combination its machine accepts.

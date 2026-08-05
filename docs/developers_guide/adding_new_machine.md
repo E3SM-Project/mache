@@ -88,6 +88,14 @@ Downstream software can query these values with
 `MachineInfo.get_qos_specs()` or
 `MachineInfo.get_scheduler_specs()`.
 
+A scheduler target can only be requested by name (see
+{ref}`users-parallel`) if it is listed in `parallel.queues`,
+`parallel.partitions` or `parallel.qos`. The matching `[queue.<name>]`,
+`[partition.<name>]` or `[qos.<name>]` section is what supplies the limits
+mache uses to decide whether such a request can be honored, so a target with
+no section can always be requested but never rejected. The first entry in each
+list is the machine's default.
+
 These options are used to:
 
 - detect available resources on the current allocation,
