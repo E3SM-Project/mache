@@ -101,6 +101,7 @@ class SlurmSystem(ParallelSystem):
         min_nodes_allowed: int | None = None,
         partition: str | None = None,
         qos: str | None = None,
+        constraint: str | None = None,
         desired_wall_time: str | None = None,
     ) -> SlurmOptions:
         """
@@ -127,6 +128,9 @@ class SlurmSystem(ParallelSystem):
 
         qos : str, optional
             A specific quality of service the caller would like to use.
+
+        constraint : str, optional
+            A specific constraint the caller would like to use.
 
         desired_wall_time : str, optional
             The wall time (``HH:MM:SS``) the caller intends to request. A
@@ -159,8 +163,9 @@ class SlurmSystem(ParallelSystem):
         qos_name = qos_resolution.target
         effective_nodes = qos_resolution.effective_nodes
 
-        constraint, gpus_per_node, _ = cls._get_common_submission_options(
-            config
+        _, gpus_per_node, _ = cls._get_common_submission_options(config)
+        constraint_name, constraint_reason = cls._resolve_constraint(
+            config, constraint
         )
 
         max_wallclock = cls._select_max_wallclock(
@@ -177,14 +182,20 @@ class SlurmSystem(ParallelSystem):
         return SlurmOptions(
             partition=partition_name,
             qos=qos_name,
-            constraint=constraint,
+            constraint=constraint_name,
             gpus_per_node=gpus_per_node,
             max_wallclock=max_wallclock,
             effective_nodes=effective_nodes,
             wall_time=wall_time,
-            honored=(partition_resolution.honored and qos_resolution.honored),
+            honored=(
+                partition_resolution.honored
+                and qos_resolution.honored
+                and constraint_reason is None
+            ),
             reason=_combine_reasons(
-                partition_resolution.reason, qos_resolution.reason
+                partition_resolution.reason,
+                qos_resolution.reason,
+                constraint_reason,
             ),
         )
 

@@ -9,6 +9,7 @@ from typing import List
 from mache.parallel.system import (
     ParallelSystem,
     _ceil_division,
+    _combine_reasons,
     cap_wall_time,
 )
 
@@ -106,6 +107,7 @@ class PbsSystem(ParallelSystem):
         nodes: int,
         min_nodes_allowed: int | None = None,
         queue: str | None = None,
+        constraint: str | None = None,
         desired_wall_time: str | None = None,
     ) -> PbsOptions:
         """
@@ -129,6 +131,9 @@ class PbsSystem(ParallelSystem):
         queue : str, optional
             A specific queue the caller would like to use.
 
+        constraint : str, optional
+            A specific constraint the caller would like to use.
+
         desired_wall_time : str, optional
             The wall time (``HH:MM:SS``) the caller intends to request. A
             requested queue that does not allow it is not honored, and the
@@ -150,8 +155,11 @@ class PbsSystem(ParallelSystem):
         queue_name = queue_resolution.target
         effective_nodes = queue_resolution.effective_nodes
 
-        constraint, gpus_per_node, filesystems = (
-            cls._get_common_submission_options(config)
+        _, gpus_per_node, filesystems = cls._get_common_submission_options(
+            config
+        )
+        constraint_name, constraint_reason = cls._resolve_constraint(
+            config, constraint
         )
         max_wallclock = cls._get_max_wallclock(
             config, 'queue', queue_name, effective_nodes
@@ -163,14 +171,16 @@ class PbsSystem(ParallelSystem):
 
         return PbsOptions(
             queue=queue_name,
-            constraint=constraint,
+            constraint=constraint_name,
             gpus_per_node=gpus_per_node,
             max_wallclock=max_wallclock,
             filesystems=filesystems,
             effective_nodes=effective_nodes,
             wall_time=wall_time,
-            honored=queue_resolution.honored,
-            reason=queue_resolution.reason,
+            honored=(queue_resolution.honored and constraint_reason is None),
+            reason=_combine_reasons(
+                queue_resolution.reason, constraint_reason
+            ),
         )
 
     @classmethod

@@ -315,6 +315,94 @@ def test_requested_target_on_machine_without_targets():
     assert 'no partitions' in options.reason
 
 
+def test_requested_constraint_honored_pm_gpu():
+    config = MachineInfo(machine='pm-gpu').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, constraint='gpu'
+    )
+
+    assert options.constraint == 'gpu'
+    assert options.honored
+    assert options.reason is None
+
+
+def test_requested_constraint_not_available_pm_gpu():
+    config = MachineInfo(machine='pm-gpu').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, constraint='cpu'
+    )
+
+    assert options.constraint == 'gpu'
+    assert not options.honored
+    assert options.reason is not None
+    assert 'not an available constraint' in options.reason
+    assert 'available: gpu' in options.reason
+
+
+@pytest.mark.parametrize('requested', [None, '', '   ', '<<<default>>>'])
+def test_requested_constraint_placeholders_mean_no_request(requested):
+    config = MachineInfo(machine='pm-cpu').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=4, constraint=requested
+    )
+
+    assert options.constraint == 'cpu'
+    assert options.honored
+    assert options.reason is None
+
+
+def test_requested_constraint_on_machine_without_constraints():
+    config = MachineInfo(machine='chrysalis').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=4, constraint='anything'
+    )
+
+    assert options.constraint == ''
+    assert not options.honored
+    assert options.reason is not None
+    assert 'no constraints' in options.reason
+
+
+def test_requested_constraint_pbs():
+    config = MachineInfo(machine='aurora').config
+    options = PbsSystem.resolve_pbs_options(
+        config=config, nodes=8, constraint='anything'
+    )
+
+    assert options.queue == 'capacity'
+    assert options.constraint == ''
+    assert not options.honored
+    assert options.reason is not None
+    assert 'no constraints' in options.reason
+
+
+def test_honored_constraint_with_unhonored_qos():
+    config = MachineInfo(machine='pm-gpu').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, constraint='gpu', qos='nonexistent'
+    )
+
+    assert options.constraint == 'gpu'
+    assert options.qos == 'regular'
+    assert not options.honored
+    assert options.reason is not None
+    assert 'nonexistent' in options.reason
+
+
+def test_unhonored_constraint_and_qos_report_both_reasons():
+    config = MachineInfo(machine='pm-gpu').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, constraint='cpu', qos='nonexistent'
+    )
+
+    assert options.constraint == 'gpu'
+    assert options.qos == 'regular'
+    assert not options.honored
+    assert options.reason is not None
+    assert 'nonexistent' in options.reason
+    assert 'not an available constraint' in options.reason
+
+
 def test_resolve_submission_still_raises_when_infeasible():
     config = MachineInfo(machine='aurora').config
     with pytest.raises(ValueError, match='No queue matches'):

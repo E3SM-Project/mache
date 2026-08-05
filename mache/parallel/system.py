@@ -450,6 +450,40 @@ class ParallelSystem:
         return constraint, gpus_per_node_str, filesystems
 
     @classmethod
+    def _resolve_constraint(
+        cls, config: ConfigParser, requested: str | None
+    ) -> tuple[str, str | None]:
+        """
+        Resolve a constraint, honoring a requested one when it is available.
+
+        Unlike queues, partitions and QOS, a constraint has no node-count or
+        wall-clock metadata, so it is only checked against the machine's
+        ``[parallel] constraints`` list.
+
+        Returns the constraint and either ``None`` (nothing was requested or
+        the request was honored) or a reason why the request could not be.
+        """
+        parallel_configs = _get_parallel_configs(config)
+        constraints = _parse_list(parallel_configs.get('constraints'))
+        default = constraints[0] if len(constraints) > 0 else ''
+
+        requested_constraint = _normalize_requested(requested)
+        if requested_constraint is None:
+            return default, None
+
+        if requested_constraint in constraints:
+            return requested_constraint, None
+
+        if len(constraints) == 0:
+            available = 'this machine defines no constraints'
+        else:
+            available = f'available: {", ".join(constraints)}'
+        return default, (
+            f'"{requested_constraint}" is not an available constraint on '
+            f'this machine ({available})'
+        )
+
+    @classmethod
     def _get_max_wallclock(
         cls,
         config: ConfigParser,

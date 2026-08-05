@@ -117,6 +117,11 @@ mache uses to decide whether such a request can be honored, so a target with
 no section can always be requested but never rejected. The first entry in each
 list is the machine's default.
 
+`parallel.constraints` is an availability list in the same sense -- the first
+entry is the default and a constraint can only be requested if it appears
+there -- but it takes no `[constraint.<name>]` section, since a constraint has
+no node-count or wall-clock limits to record.
+
 These options are used to:
 
 - detect available resources on the current allocation,

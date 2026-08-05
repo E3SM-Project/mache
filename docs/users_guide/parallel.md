@@ -136,14 +136,15 @@ machine metadata:
     `effective_nodes`, `adjustment` (`exact`, `decrease`, or `increase`),
     `honored`, and `reason`.
 - `SlurmSystem.resolve_slurm_options(config, nodes, min_nodes_allowed=None,
-    partition=None, qos=None, desired_wall_time=None)` returns a
-    `SlurmOptions` object with fields `partition`, `qos`, `constraint`,
-    `gpus_per_node`, `max_wallclock`, `effective_nodes`, `wall_time`,
-    `honored`, and `reason`.
+    partition=None, qos=None, constraint=None, desired_wall_time=None)`
+    returns a `SlurmOptions` object with fields `partition`, `qos`,
+    `constraint`, `gpus_per_node`, `max_wallclock`, `effective_nodes`,
+    `wall_time`, `honored`, and `reason`.
 - `PbsSystem.resolve_pbs_options(config, nodes, min_nodes_allowed=None,
-    queue=None, desired_wall_time=None)` returns a `PbsOptions` object with
-    fields `queue`, `constraint`, `gpus_per_node`, `max_wallclock`,
-    `filesystems`, `effective_nodes`, `wall_time`, `honored`, and `reason`.
+    queue=None, constraint=None, desired_wall_time=None)` returns a
+    `PbsOptions` object with fields `queue`, `constraint`, `gpus_per_node`,
+    `max_wallclock`, `filesystems`, `effective_nodes`, `wall_time`,
+    `honored`, and `reason`.
 
 For invalid gaps between scheduler ranges, node count is adjusted to the
 nearest valid value, preferring lower adjustments when feasible. If
@@ -190,6 +191,12 @@ request is not honored when:
 - clamping the node count to the target's `min_nodes`/`max_nodes` would fall
     below `min_nodes_allowed`, or
 - `desired_wall_time` is longer than the target's `max_wallclock`.
+
+A constraint can be requested the same way. Unlike a queue, partition or QOS,
+it has no node-count or wall-clock metadata and no `[constraint.*]` section, so
+it is validated only against the machine's `[parallel] constraints` list: a
+constraint that is not on that list falls back to the machine's default with a
+`reason`, exactly as the other targets do.
 
 Clamping the node count on its own does *not* prevent a target from being
 honored. The clamp is reported through `effective_nodes` and `adjustment`, and
