@@ -1,0 +1,6 @@
+﻿mache.deploy.machine.get\_machine
+=================================
+
+.. currentmodule:: mache.deploy.machine
+
+.. autofunction:: get_machine

@@ -1,0 +1,6 @@
+﻿mache.MachineInfo.get\_qos\_specs
+=================================
+
+.. currentmodule:: mache
+
+.. automethod:: MachineInfo.get_qos_specs

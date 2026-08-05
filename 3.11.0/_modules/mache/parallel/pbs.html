@@ -1,0 +1,513 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.parallel.pbs</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8905d4f5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../parallel.html">mache.parallel</a></li>
+      <li class="breadcrumb-item active">mache.parallel.pbs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.parallel.pbs</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParallelSystem</span><span class="p">,</span>
+    <span class="n">_ceil_division</span><span class="p">,</span>
+    <span class="n">_combine_reasons</span><span class="p">,</span>
+    <span class="n">_normalize_requested</span><span class="p">,</span>
+    <span class="n">cap_wall_time</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="PbsOptions">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsOptions.html#mache.parallel.pbs.PbsOptions">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PbsOptions</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PBS submission options resolved from a machine&#39;s config.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    queue : str</span>
+<span class="sd">        The PBS queue, or an empty string if the machine defines none.</span>
+
+<span class="sd">    constraint : str</span>
+<span class="sd">        The constraint, or an empty string if the machine defines none.</span>
+
+<span class="sd">    gpus_per_node : str</span>
+<span class="sd">        The number of GPUs per node, or an empty string if not configured.</span>
+
+<span class="sd">    max_wallclock : str</span>
+<span class="sd">        The maximum wall clock (``HH:MM:SS``) of the selected queue, or an</span>
+<span class="sd">        empty string if the queue does not set one.</span>
+
+<span class="sd">    filesystems : str</span>
+<span class="sd">        The filesystems used for batch jobs, or an empty string if not</span>
+<span class="sd">        configured.</span>
+
+<span class="sd">    effective_nodes : int</span>
+<span class="sd">        The node count after clamping to the selected queue&#39;s limits.</span>
+
+<span class="sd">    wall_time : str</span>
+<span class="sd">        The requested wall time capped at ``max_wallclock``, or an empty</span>
+<span class="sd">        string if no wall time was requested.</span>
+
+<span class="sd">    honored : bool</span>
+<span class="sd">        Whether every requested target -- queue, constraint and</span>
+<span class="sd">        ``scheduler_target`` -- was used. ``True`` when none was requested.</span>
+
+<span class="sd">    reason : str or None</span>
+<span class="sd">        A human-readable explanation of why a requested target could not be</span>
+<span class="sd">        honored, suitable for printing verbatim. ``None`` when ``honored``</span>
+<span class="sd">        is ``True``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">queue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">max_wallclock</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">filesystems</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">effective_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">honored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="PbsSystem">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PbsSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;PBS resource manager for parallel jobs.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PbsSystem.__init__">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;PBS_JOBID&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;PBS_JOBID environment variable not found but system is set &#39;</span>
+                <span class="s1">&#39;to &quot;pbs&quot;.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;cores_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;cores_per_node must be set in the config for the pbs system.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># First, try to get nodes and cores_per_node from qstat</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node_count_from_qstat</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">nodes</span> <span class="o">*</span> <span class="n">cores_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;gpus_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">gpus_per_node</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="PbsSystem.resolve_pbs_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_pbs_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">queue</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">desired_wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scheduler_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PbsOptions</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get PBS submission options for a requested node count.</span>
+
+<span class="sd">        A requested queue is honored when the machine&#39;s metadata allows it;</span>
+<span class="sd">        otherwise the default queue is used and the returned options explain</span>
+<span class="sd">        why.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            Machine configuration parser.</span>
+
+<span class="sd">        nodes : int</span>
+<span class="sd">            Requested node count.</span>
+
+<span class="sd">        min_nodes_allowed : int, optional</span>
+<span class="sd">            Optional lower bound for adjusted node counts.</span>
+
+<span class="sd">        queue : str, optional</span>
+<span class="sd">            A specific queue the caller would like to use.</span>
+
+<span class="sd">        constraint : str, optional</span>
+<span class="sd">            A specific constraint the caller would like to use.</span>
+
+<span class="sd">        desired_wall_time : str, optional</span>
+<span class="sd">            The wall time (``HH:MM:SS``) the caller intends to request. A</span>
+<span class="sd">            requested queue that does not allow it is not honored, and the</span>
+<span class="sd">            returned ``wall_time`` is capped at ``max_wallclock``.</span>
+
+<span class="sd">        scheduler_target : str, optional</span>
+<span class="sd">            A target named without saying which axis it is on, for callers</span>
+<span class="sd">            with one machine-independent intent such as &quot;use the debug</span>
+<span class="sd">            target&quot;. PBS machines schedule by queue, so it is used as the</span>
+<span class="sd">            queue when this machine lists it as one. ``queue`` takes</span>
+<span class="sd">            precedence.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PbsOptions</span>
+<span class="sd">            The resolved PBS submission options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target_type</span><span class="p">,</span> <span class="n">target_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_find_scheduler_target</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">scheduler_target</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;queue&#39;</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">target_type</span> <span class="o">==</span> <span class="s1">&#39;queue&#39;</span> <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">queue</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+
+        <span class="n">queue_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;queue&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">queue</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">queue_name</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">filesystems</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span>
+            <span class="n">config</span>
+        <span class="p">)</span>
+        <span class="n">constraint_name</span><span class="p">,</span> <span class="n">constraint_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_constraint</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">constraint</span>
+        <span class="p">)</span>
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="s1">&#39;queue&#39;</span><span class="p">,</span> <span class="n">queue_name</span><span class="p">,</span> <span class="n">effective_nodes</span>
+        <span class="p">)</span>
+
+        <span class="n">wall_time</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">desired_wall_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wall_time</span> <span class="o">=</span> <span class="n">cap_wall_time</span><span class="p">(</span><span class="n">desired_wall_time</span><span class="p">,</span> <span class="n">max_wallclock</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">PbsOptions</span><span class="p">(</span>
+            <span class="n">queue</span><span class="o">=</span><span class="n">queue_name</span><span class="p">,</span>
+            <span class="n">constraint</span><span class="o">=</span><span class="n">constraint_name</span><span class="p">,</span>
+            <span class="n">gpus_per_node</span><span class="o">=</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">max_wallclock</span><span class="o">=</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">filesystems</span><span class="o">=</span><span class="n">filesystems</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">wall_time</span><span class="o">=</span><span class="n">wall_time</span><span class="p">,</span>
+            <span class="n">honored</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">queue_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">constraint_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">target_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">_combine_reasons</span><span class="p">(</span>
+                <span class="n">target_reason</span><span class="p">,</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span> <span class="n">constraint_reason</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PbsSystem.get_pbs_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pbs_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get PBS submission options for a requested node count.</span>
+
+<span class="sd">        .. deprecated:: 3.11.0</span>
+<span class="sd">            Use :py:meth:`resolve_pbs_options` instead, which returns a</span>
+<span class="sd">            :py:class:`PbsOptions` object and supports requesting a specific</span>
+<span class="sd">            queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;PbsSystem.get_pbs_options() is deprecated and will be removed &#39;</span>
+            <span class="s1">&#39;in a future release. Use PbsSystem.resolve_pbs_options(), &#39;</span>
+            <span class="s1">&#39;which returns a PbsOptions object.&#39;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_pbs_options</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">queue</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">constraint</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">filesystems</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the parallel command-line arguments related to resources.&quot;&quot;&quot;</span>
+        <span class="c1"># PBS mpiexec/mpirun options are launcher&#39;s responsibility, so the</span>
+        <span class="c1"># flag used for CPUs per task is configurable per machine</span>
+        <span class="n">cpus_per_task_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;cpus_per_task_flag&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cpus_per_task_flag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cpus_per_task_flag</span> <span class="o">=</span> <span class="s1">&#39;-c&#39;</span>
+
+        <span class="n">gpus_per_task_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">&#39;gpus_per_task_flag&#39;</span><span class="p">)</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Node count is not set for the pbs system.&#39;</span><span class="p">)</span>
+
+        <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;max_mpi_tasks_per_node&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_mpi_tasks_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;max_mpi_tasks_per_node must be set in the config for the pbs &#39;</span>
+                <span class="s1">&#39;system.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tasks_per_node</span> <span class="o">&gt;</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Calculated tasks_per_node (</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">) exceeds the &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;likely need to allocate more nodes.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
+
+        <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;-n&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;--ppn&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">cpus_per_task_flag</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">gpus_per_task</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="n">gpus_per_task_flag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">gpus_per_task_flag</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span>
+        <span class="p">):</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">gpus_per_task_flag</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">gpus_per_task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span>
+
+        <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;cpu_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--cpu-bind&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;gpu_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--gpu-bind&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;mem_bind&#39;</span><span class="p">:</span> <span class="s1">&#39;--mem-bind&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">option</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">flag</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_node_count_from_qstat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Try to determine node count from qstat output.&quot;&quot;&quot;</span>
+
+        <span class="n">jobid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PBS_JOBID&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jobid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;PBS_JOBID environment variable not found but system is set &#39;</span>
+                <span class="s1">&#39;to &quot;pbs&quot;.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;qstat&#39;</span><span class="p">,</span> <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="n">jobid</span><span class="p">],</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Try to infer nodes and cores_per_node from various Resource_List</span>
+        <span class="c1"># fields. Different PBS installations format these differently.</span>
+
+        <span class="c1"># Case 1: Aurora style (current ALCF Aurora machine): separate</span>
+        <span class="c1"># ncpus and nodect, and select</span>
+        <span class="c1">#   Resource_List.ncpus = total_cores_for_job</span>
+        <span class="c1">#   Resource_List.nodect = number_of_nodes</span>
+        <span class="c1">#   Resource_List.select = number_of_nodes (or chunks)</span>
+        <span class="n">nodect_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Resource_List\.nodect\s*=\s*(\d+)&#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+        <span class="n">simple_select_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;Resource_List\.select\s*=\s*(\d+)&#39;</span><span class="p">,</span> <span class="n">output</span>
+        <span class="p">)</span>
+
+        <span class="n">nodect</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nodect_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">nodect_match</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">simple_select</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">simple_select_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">simple_select_match</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nodect</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nodect</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nodect</span>
+
+        <span class="k">if</span> <span class="n">simple_select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">simple_select</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">simple_select</span>
+
+        <span class="c1"># Case 2: PBS Pro style &quot;select=N:ncpus=M&quot; on a single line</span>
+        <span class="n">select_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;Resource_List\.select\s*=\s*(\d+)[^\n]*?:ncpus=(\d+)&#39;</span><span class="p">,</span>
+            <span class="n">output</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">select_match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">select_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Case 3: older PBS/Torque style: &quot;nodes=N:ppn=M&quot;</span>
+        <span class="n">nodes_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;Resource_List\.nodes\s*=\s*(\d+)[^\n]*?:ppn=(\d+)&#39;</span><span class="p">,</span>
+            <span class="n">output</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">nodes_match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">nodes_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Unable to determine node count from qstat output: </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.11.0">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel execution with mache.parallel</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8905d4f5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building and Using Spack Environments with mache.spack" href="spack/build.html" />
+    <link rel="prev" title="JIGSAW" href="jigsaw.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#typical-downstream-workflow">Typical downstream workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-build-a-launcher-command">Example: build a launcher command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpu-per-task-flags">GPU-per-task flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hyperthreading">Hyperthreading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-this-in-generated-job-scripts">Using this in generated job scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#slurm-distribution-options">Slurm distribution options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#selecting-scheduler-options-by-node-count">Selecting scheduler options by node count</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requesting-a-specific-queue-partition-or-qos">Requesting a specific queue, partition or QOS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requesting-a-target-without-naming-its-axis">Requesting a target without naming its axis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wall-clock-limits-that-depend-on-job-size">Wall-clock limits that depend on job size</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/users_guide/parallel.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="parallel-execution-with-mache-parallel">
+<span id="users-parallel"></span><h1>Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code><a class="headerlink" href="#parallel-execution-with-mache-parallel" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> provides a machine-aware interface for launching parallel
+workloads based on each machine’s config file.</p>
+<section id="typical-downstream-workflow">
+<h2>Typical downstream workflow<a class="headerlink" href="#typical-downstream-workflow" title="Link to this heading"></a></h2>
+<p>Downstream software (for example, Polaris software) can:</p>
+<ol class="arabic simple">
+<li><p>Load machine config with <code class="docutils literal notranslate"><span class="pre">MachineInfo</span></code>.</p></li>
+<li><p>Build a parallel-system object with <code class="docutils literal notranslate"><span class="pre">get_parallel_system()</span></code>.</p></li>
+<li><p>Query available resources (<code class="docutils literal notranslate"><span class="pre">cores</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus</span></code>, and <code class="docutils literal notranslate"><span class="pre">mpi_allowed</span></code>).</p></li>
+<li><p>Build a machine-correct launcher command with <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>.</p></li>
+<li><p>Use the command for either generated job scripts or direct subprocess calls.</p></li>
+</ol>
+</section>
+<section id="example-build-a-launcher-command">
+<h2>Example: build a launcher command<a class="headerlink" href="#example-build-a-launcher-command" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_parallel_system</span>
+
+<span class="n">machine_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">()</span>
+<span class="n">parallel_system</span> <span class="o">=</span> <span class="n">get_parallel_system</span><span class="p">(</span><span class="n">machine_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+<span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;your_package.run_task&quot;</span><span class="p">,</span> <span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="s2">&quot;smoke&quot;</span><span class="p">]</span>
+<span class="n">command</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">get_parallel_command</span><span class="p">(</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">ntasks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">cpus_per_task</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">gpus_per_task</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>On a batch allocation, this returns an <code class="docutils literal notranslate"><span class="pre">srun</span></code>/<code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> command using the
+machine’s configured launcher and resource flags. On login nodes for <code class="docutils literal notranslate"><span class="pre">slurm</span></code>
+or <code class="docutils literal notranslate"><span class="pre">pbs</span></code> systems, <code class="docutils literal notranslate"><span class="pre">get_parallel_system()</span></code> falls back to <code class="docutils literal notranslate"><span class="pre">login</span></code>, where MPI is
+intentionally disabled.</p>
+</section>
+<section id="gpu-per-task-flags">
+<h2>GPU-per-task flags<a class="headerlink" href="#gpu-per-task-flags" title="Link to this heading"></a></h2>
+<p>When <code class="docutils literal notranslate"><span class="pre">gpus_per_task</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> is passed to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm</span></code> systems add <code class="docutils literal notranslate"><span class="pre">--gpus-per-task</span> <span class="pre">&lt;N&gt;</span></code> by default. This can be overridden
+with <code class="docutils literal notranslate"><span class="pre">gpus_per_task_flag</span></code> in the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pbs</span></code> systems require a machine-specific <code class="docutils literal notranslate"><span class="pre">gpus_per_task_flag</span></code> to be set in
+config before a GPU-per-task argument is added.</p></li>
+</ul>
+</section>
+<section id="hyperthreading">
+<h2>Hyperthreading<a class="headerlink" href="#hyperthreading" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> does not currently have a dedicated
+<code class="docutils literal notranslate"><span class="pre">hyperthreading</span> <span class="pre">=</span> <span class="pre">true/false</span></code> switch. Instead, hyperthreading behavior is
+controlled through the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config and the resource values
+passed to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>. The most important config knobs are
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, and any
+launcher-specific arguments included in <code class="docutils literal notranslate"><span class="pre">parallel_executable</span></code>.</p>
+<p>The default convention in mache’s machine configs is to describe CPU resources
+in terms of physical cores, not hardware threads. For E3SM itself, and for
+most downstream software, this means:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> should usually be the number of physical CPU cores per node</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code> should usually reflect the intended non-hyperthreaded
+MPI rank count per node</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> is often a good default when the launcher and machine
+topology support it, but some systems such as Frontier prefer
+<code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">threads</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> should usually be sized assuming physical cores</p></li>
+</ul>
+<p>This is why several shipped machine configs explicitly document
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> as the count “without hyperthreading”.</p>
+<p>If a downstream application wants to take advantage of hyperthreading, it
+should opt in by overriding the relevant parallel config values for that use
+case. In practice, that usually means switching from physical-core counts to
+hardware-thread counts and adjusting binding accordingly. For example, on a
+machine with 64 physical cores and 2 hardware threads per core:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[parallel]</span>
+<span class="na">cores_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">128</span>
+<span class="na">max_mpi_tasks_per_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">128</span>
+<span class="na">cpu_bind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">threads</span>
+</pre></div>
+</div>
+<p>Then, calls to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> should use <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ntasks</span></code> values that match that threaded layout.</p>
+<p>The important point is that hyperthreading is opt-in. Mache’s default machine
+configs should generally preserve the physical-core layout that is appropriate
+for E3SM and most downstream tools, while still allowing downstream users to
+provide a config override when they intentionally want thread-level placement.</p>
+</section>
+<section id="using-this-in-generated-job-scripts">
+<h2>Using this in generated job scripts<a class="headerlink" href="#using-this-in-generated-job-scripts" title="Link to this heading"></a></h2>
+<p>A common pattern is to generate scheduler directives separately, then use
+<code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> only for launch lines. For example:</p>
+<ul class="simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_account_defaults()</span></code> to populate account/partition/QOS.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_queue_specs()</span></code>, <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_partition_specs()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MachineInfo.get_qos_specs()</span></code> for optional scheduler-target policy
+metadata (<code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max_wallclock_bins</span></code>) when available.</p></li>
+<li><p>Render scheduler headers (<code class="docutils literal notranslate"><span class="pre">#SBATCH</span></code> or <code class="docutils literal notranslate"><span class="pre">#PBS</span></code>) in your template logic.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> to build the executable line.</p></li>
+</ul>
+<p>This keeps scheduler policy in your tool while reusing machine-specific launch
+behavior from <code class="docutils literal notranslate"><span class="pre">mache</span></code>.</p>
+</section>
+<section id="slurm-distribution-options">
+<h2>Slurm distribution options<a class="headerlink" href="#slurm-distribution-options" title="Link to this heading"></a></h2>
+<p>For <code class="docutils literal notranslate"><span class="pre">slurm</span></code> systems, mache supports two ways to control <code class="docutils literal notranslate"><span class="pre">srun</span> <span class="pre">-m</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">distribution</span> <span class="pre">=</span> <span class="pre">&lt;value&gt;</span></code> passes a raw Slurm distribution string directly as
+<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;value&gt;</span></code>, for example <code class="docutils literal notranslate"><span class="pre">block:cyclic</span></code> or <code class="docutils literal notranslate"><span class="pre">block:block</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">placement</span> <span class="pre">=</span> <span class="pre">&lt;value&gt;</span></code> preserves mache’s legacy behavior and expands to
+<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;value&gt;=&lt;max_mpi_tasks_per_node&gt;</span></code>, for example <code class="docutils literal notranslate"><span class="pre">plane=56</span></code></p></li>
+</ul>
+<p>If both are present, <code class="docutils literal notranslate"><span class="pre">distribution</span></code> takes precedence. Prefer <code class="docutils literal notranslate"><span class="pre">distribution</span></code>
+for machines whose documented Slurm usage relies on explicit values like
+<code class="docutils literal notranslate"><span class="pre">block:cyclic</span></code> rather than the older <code class="docutils literal notranslate"><span class="pre">plane=&lt;tasks&gt;</span></code> form.</p>
+</section>
+<section id="selecting-scheduler-options-by-node-count">
+<h2>Selecting scheduler options by node count<a class="headerlink" href="#selecting-scheduler-options-by-node-count" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> also provides helpers for selecting queue/partition/QOS from
+machine metadata:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target(config,</span> <span class="pre">target_type,</span> <span class="pre">nodes)</span></code> selects
+one of <code class="docutils literal notranslate"><span class="pre">queue</span></code>, <code class="docutils literal notranslate"><span class="pre">partition</span></code>, or <code class="docutils literal notranslate"><span class="pre">qos</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission(config,</span> <span class="pre">nodes,</span> <span class="pre">target_type,</span>&#160;&#160; <span class="pre">min_nodes_allowed=None,</span> <span class="pre">requested=None,</span> <span class="pre">desired_wall_time=None)</span></code> returns a
+<code class="docutils literal notranslate"><span class="pre">SubmissionResolution</span></code> with fields <code class="docutils literal notranslate"><span class="pre">target</span></code>, <code class="docutils literal notranslate"><span class="pre">requested_nodes</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">adjustment</span></code> (<code class="docutils literal notranslate"><span class="pre">exact</span></code>, <code class="docutils literal notranslate"><span class="pre">decrease</span></code>, or <code class="docutils literal notranslate"><span class="pre">increase</span></code>),
+<code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SlurmSystem.resolve_slurm_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None,</span>&#160;&#160; <span class="pre">partition=None,</span> <span class="pre">qos=None,</span> <span class="pre">constraint=None,</span> <span class="pre">desired_wall_time=None,</span>&#160;&#160; <span class="pre">scheduler_target=None)</span></code> returns a <code class="docutils literal notranslate"><span class="pre">SlurmOptions</span></code> object with fields
+<code class="docutils literal notranslate"><span class="pre">partition</span></code>, <code class="docutils literal notranslate"><span class="pre">qos</span></code>, <code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">wall_time</span></code>, <code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PbsSystem.resolve_pbs_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None,</span>&#160;&#160; <span class="pre">queue=None,</span> <span class="pre">constraint=None,</span> <span class="pre">desired_wall_time=None,</span>&#160;&#160; <span class="pre">scheduler_target=None)</span></code> returns a <code class="docutils literal notranslate"><span class="pre">PbsOptions</span></code> object with fields <code class="docutils literal notranslate"><span class="pre">queue</span></code>,
+<code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>, <code class="docutils literal notranslate"><span class="pre">filesystems</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">wall_time</span></code>, <code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
+</ul>
+<p>For invalid gaps between scheduler ranges, node count is adjusted to the
+nearest valid value, preferring lower adjustments when feasible. If
+<code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code> disallows lower adjustments, resolution moves to the next
+valid higher range. If no feasible target exists, these functions raise
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options()</span></code> and <code class="docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options()</span></code> return the
+same values as tuples. They are deprecated as of v3.11.0 in favor of
+<code class="docutils literal notranslate"><span class="pre">resolve_slurm_options()</span></code> and <code class="docutils literal notranslate"><span class="pre">resolve_pbs_options()</span></code>, which can be extended
+with new fields without breaking positional unpacking.</p>
+</div>
+</section>
+<section id="requesting-a-specific-queue-partition-or-qos">
+<h2>Requesting a specific queue, partition or QOS<a class="headerlink" href="#requesting-a-specific-queue-partition-or-qos" title="Link to this heading"></a></h2>
+<p>Callers that want a particular scheduler target – for example a test suite
+that should run in the <code class="docutils literal notranslate"><span class="pre">debug</span></code> QOS – can ask for one directly instead of
+rewriting the machine’s config:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmSystem</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="s2">&quot;pm-cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">config</span>
+<span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">qos</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">honored</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Falling back to the </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="si">}</span><span class="s2"> qos: </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A requested target is a preference, not an assertion. mache honors it when the
+machine’s metadata allows it and otherwise resolves the default target,
+setting <code class="docutils literal notranslate"><span class="pre">honored</span> <span class="pre">=</span> <span class="pre">False</span></code> and putting a printable explanation in <code class="docutils literal notranslate"><span class="pre">reason</span></code>. A
+request is not honored when:</p>
+<ul class="simple">
+<li><p>the target is not in the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> <code class="docutils literal notranslate"><span class="pre">queues</span></code> / <code class="docutils literal notranslate"><span class="pre">partitions</span></code> /
+<code class="docutils literal notranslate"><span class="pre">qos</span></code> list,</p></li>
+<li><p>clamping the node count to the target’s <code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>/<code class="docutils literal notranslate"><span class="pre">max_nodes</span></code> would fall
+below <code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code>, or</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">desired_wall_time</span></code> is longer than the target’s <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>.</p></li>
+</ul>
+<p>A constraint can be requested the same way. Unlike a queue, partition or QOS,
+it has no node-count or wall-clock metadata and no <code class="docutils literal notranslate"><span class="pre">[constraint.*]</span></code> section, so
+it is validated only against the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span> <span class="pre">constraints</span></code> list: a
+constraint that is not on that list falls back to the machine’s default with a
+<code class="docutils literal notranslate"><span class="pre">reason</span></code>, exactly as the other targets do, and a machine that defines no
+constraints ignores the request entirely.</p>
+<p>Clamping the node count on its own does <em>not</em> prevent a target from being
+honored. The clamp is reported through <code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code> and <code class="docutils literal notranslate"><span class="pre">adjustment</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code> is the guard for a clamp the caller cannot live with.</p>
+<p><code class="docutils literal notranslate"><span class="pre">requested</span></code> values of <code class="docutils literal notranslate"><span class="pre">None</span></code>, an empty string, and placeholders of the form
+<code class="docutils literal notranslate"><span class="pre">&lt;&lt;&lt;default&gt;&gt;&gt;</span></code> all mean “no target was requested”, so config-driven callers
+can pass their raw config value through without guarding against unset
+placeholders.</p>
+<p>A request is also ignored, rather than denied, when the machine defines no
+targets of that type at all. Machines hang a concept like “debug” off
+different axes – a partition on Chrysalis, a QOS on Frontier and Perlmutter,
+a queue on Aurora – so a caller that asks on more than one axis should not be
+told its request was refused on the axes the machine does not use. There was
+no choice to deny, so <code class="docutils literal notranslate"><span class="pre">honored</span></code> stays <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">reason</span></code> stays <code class="docutils literal notranslate"><span class="pre">None</span></code>. A
+target missing from a list the machine <em>does</em> define is still a denied
+request.</p>
+</section>
+<section id="requesting-a-target-without-naming-its-axis">
+<h2>Requesting a target without naming its axis<a class="headerlink" href="#requesting-a-target-without-naming-its-axis" title="Link to this heading"></a></h2>
+<p>Asking on every axis is still awkward for a caller whose intent is simply
+“use this machine’s debug target”. <code class="docutils literal notranslate"><span class="pre">scheduler_target</span></code> says it once and lets
+mache work out which axis this machine uses:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">scheduler_target</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;00:20:00&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This selects the <code class="docutils literal notranslate"><span class="pre">debug</span></code> partition on Chrysalis, the <code class="docutils literal notranslate"><span class="pre">debug</span></code> QOS on Frontier
+and Perlmutter (leaving the default <code class="docutils literal notranslate"><span class="pre">batch</span></code> partition in place on Frontier),
+and the <code class="docutils literal notranslate"><span class="pre">debug</span></code> queue on Aurora, with no spurious <code class="docutils literal notranslate"><span class="pre">reason</span></code> on any of them.
+Slurm machines are searched partitions-first and then QOS; PBS machines
+schedule by queue, so only queues are searched. <code class="docutils literal notranslate"><span class="pre">partition</span></code>, <code class="docutils literal notranslate"><span class="pre">qos</span></code> and <code class="docutils literal notranslate"><span class="pre">queue</span></code>
+take precedence on the axis they name, so a caller can set a broad
+<code class="docutils literal notranslate"><span class="pre">scheduler_target</span></code> and still pin one axis explicitly.</p>
+<p>Once an axis is chosen the target is resolved exactly as if it had been
+requested there, so it is still subject to that target’s node and wall-clock
+metadata: <code class="docutils literal notranslate"><span class="pre">scheduler_target=&quot;debug&quot;</span></code> with a three-hour wall time on Frontier
+falls back to the <code class="docutils literal notranslate"><span class="pre">normal</span></code> QOS and says why. A name that appears on no axis at
+all is a genuine failed request, and the <code class="docutils literal notranslate"><span class="pre">reason</span></code> lists what each axis does
+offer.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">desired_wall_time</span></code> is given, the returned <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is that value
+capped at the selected target’s <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>. The same capping is available
+on its own:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">cap_wall_time</span>
+
+<span class="n">cap_wall_time</span><span class="p">(</span><span class="s2">&quot;04:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;00:30:00&quot;</span><span class="p">)</span>  <span class="c1"># &quot;00:30:00&quot;</span>
+</pre></div>
+</div>
+<p>Note that mache resolves the partition and the QOS independently and has no
+concept of one being valid only with the other. A caller that requests both is
+responsible for asking for a combination its machine accepts.</p>
+</section>
+<section id="wall-clock-limits-that-depend-on-job-size">
+<h2>Wall-clock limits that depend on job size<a class="headerlink" href="#wall-clock-limits-that-depend-on-job-size" title="Link to this heading"></a></h2>
+<p>On some machines, the maximum wall time depends on how many nodes a job asks
+for. Frontier’s <code class="docutils literal notranslate"><span class="pre">batch</span></code> partition allows 2 hours for 1-91 nodes, 6 hours for
+92-183 nodes, and 12 hours above that. These machines describe their policy
+with <code class="docutils literal notranslate"><span class="pre">max_wallclock_bins</span></code> rather than a single <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code> (see
+<a class="reference internal" href="../developers_guide/adding_new_machine.html#dev-new-config-file"><span class="std std-ref">Adding a new config file</span></a>), and mache selects the bin that matches the
+resolved node count:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;02:00:00&quot; on Frontier</span>
+
+<span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;12:00:00&quot; on Frontier</span>
+</pre></div>
+</div>
+<p>When both a partition and a QOS set a limit, the more restrictive of the two
+is reported, and that is also the limit <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is capped at.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jigsaw.html" class="btn btn-neutral float-left" title="JIGSAW" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spack/build.html" class="btn btn-neutral float-right" title="Building and Using Spack Environments with mache.spack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.11.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
