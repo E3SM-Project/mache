@@ -344,6 +344,154 @@ def test_cap_wall_time(desired, max_wallclock, expected):
 
 
 @pytest.mark.parametrize(
+    'nodes, expected_wallclock',
+    [
+        (8, '02:00:00'),
+        (100, '06:00:00'),
+        (200, '12:00:00'),
+        (1000, '12:00:00'),
+    ],
+)
+def test_frontier_defaults(nodes, expected_wallclock):
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(config=config, nodes=nodes)
+
+    assert options.partition == 'batch'
+    assert options.qos == 'normal'
+    assert options.max_wallclock == expected_wallclock
+    assert options.effective_nodes == nodes
+    assert options.honored
+    assert options.reason is None
+
+
+def test_frontier_debug_qos_honored():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=8,
+        qos='debug',
+        desired_wall_time='01:00:00',
+    )
+
+    assert options.partition == 'batch'
+    assert options.qos == 'debug'
+    assert options.max_wallclock == '02:00:00'
+    assert options.wall_time == '01:00:00'
+    assert options.honored
+
+
+def test_frontier_debug_qos_wall_time_too_long():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=8,
+        qos='debug',
+        desired_wall_time='03:00:00',
+    )
+
+    assert options.qos == 'normal'
+    assert not options.honored
+    assert options.reason is not None
+    assert '02:00:00' in options.reason
+
+
+def test_frontier_debug_qos_binds_before_the_partition_bin():
+    config = MachineInfo(machine='frontier').config
+    # the batch bin allows 12 hours at 200 nodes, but debug allows only two
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=200,
+        qos='debug',
+        desired_wall_time='03:00:00',
+    )
+
+    assert options.qos == 'normal'
+    assert options.max_wallclock == '12:00:00'
+    assert not options.honored
+    assert options.reason is not None
+    assert '02:00:00' in options.reason
+
+
+def test_frontier_extended_partition_honored():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=8,
+        partition='extended',
+        desired_wall_time='20:00:00',
+    )
+
+    assert options.partition == 'extended'
+    assert options.max_wallclock == '24:00:00'
+    assert options.wall_time == '20:00:00'
+    assert options.honored
+
+
+def test_frontier_extended_partition_clamps_nodes():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=100, partition='extended'
+    )
+
+    assert options.partition == 'extended'
+    assert options.effective_nodes == 64
+    assert options.honored
+
+    resolution = ParallelSystem.resolve_submission(
+        config=config,
+        nodes=100,
+        target_type='partition',
+        requested='extended',
+    )
+    assert resolution.adjustment == 'decrease'
+
+
+def test_frontier_extended_partition_below_min_nodes_allowed():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=100,
+        partition='extended',
+        min_nodes_allowed=100,
+    )
+
+    assert options.partition == 'batch'
+    assert options.effective_nodes == 100
+    assert not options.honored
+    assert options.reason is not None
+    assert '64' in options.reason
+    assert 'at least 100' in options.reason
+
+
+def test_frontier_wall_time_capped_at_the_small_job_bin():
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, desired_wall_time='04:00:00'
+    )
+
+    assert options.wall_time == '02:00:00'
+
+
+def test_frontier_partition_specs():
+    machinfo = MachineInfo(machine='frontier')
+    partition_specs = machinfo.get_partition_specs()
+
+    assert list(partition_specs.keys()) == ['batch', 'extended']
+    assert partition_specs['batch']['max_wallclock'] is None
+    assert partition_specs['batch']['max_wallclock_bins'] == [
+        (91, '02:00:00'),
+        (183, '06:00:00'),
+        (9472, '12:00:00'),
+    ]
+    assert partition_specs['extended'] == {
+        'min_nodes': 1,
+        'max_nodes': 64,
+        'max_wallclock': '24:00:00',
+        'max_wallclock_bins': None,
+    }
+
+
+@pytest.mark.parametrize(
     'nodes, expected',
     [
         (1, '02:00:00'),
