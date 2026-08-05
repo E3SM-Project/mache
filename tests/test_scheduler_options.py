@@ -304,15 +304,28 @@ def test_requested_partition_honored_chrysalis():
 
 
 def test_requested_target_on_machine_without_targets():
+    """A machine that defines no partitions has none to deny."""
     config = MachineInfo(machine='pm-cpu').config
     options = SlurmSystem.resolve_slurm_options(
         config=config, nodes=4, partition='debug'
     )
 
     assert options.partition == ''
-    assert not options.honored
-    assert options.reason is not None
-    assert 'no partitions' in options.reason
+    assert options.honored
+    assert options.reason is None
+
+
+def test_requested_qos_on_machine_without_qos():
+    """A machine that defines no QOS has none to deny."""
+    config = MachineInfo(machine='chrysalis').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=4, partition='debug', qos='debug'
+    )
+
+    assert options.partition == 'debug'
+    assert options.qos == ''
+    assert options.honored
+    assert options.reason is None
 
 
 def test_requested_constraint_honored_pm_gpu():
@@ -352,18 +365,19 @@ def test_requested_constraint_placeholders_mean_no_request(requested):
 
 
 def test_requested_constraint_on_machine_without_constraints():
+    """A machine that defines no constraints has none to deny."""
     config = MachineInfo(machine='chrysalis').config
     options = SlurmSystem.resolve_slurm_options(
         config=config, nodes=4, constraint='anything'
     )
 
     assert options.constraint == ''
-    assert not options.honored
-    assert options.reason is not None
-    assert 'no constraints' in options.reason
+    assert options.honored
+    assert options.reason is None
 
 
 def test_requested_constraint_pbs():
+    """PBS machines ignore a constraint request the same way."""
     config = MachineInfo(machine='aurora').config
     options = PbsSystem.resolve_pbs_options(
         config=config, nodes=8, constraint='anything'
@@ -371,9 +385,8 @@ def test_requested_constraint_pbs():
 
     assert options.queue == 'capacity'
     assert options.constraint == ''
-    assert not options.honored
-    assert options.reason is not None
-    assert 'no constraints' in options.reason
+    assert options.honored
+    assert options.reason is None
 
 
 def test_honored_constraint_with_unhonored_qos():

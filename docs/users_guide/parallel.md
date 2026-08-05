@@ -196,7 +196,8 @@ A constraint can be requested the same way. Unlike a queue, partition or QOS,
 it has no node-count or wall-clock metadata and no `[constraint.*]` section, so
 it is validated only against the machine's `[parallel] constraints` list: a
 constraint that is not on that list falls back to the machine's default with a
-`reason`, exactly as the other targets do.
+`reason`, exactly as the other targets do, and a machine that defines no
+constraints ignores the request entirely.
 
 Clamping the node count on its own does *not* prevent a target from being
 honored. The clamp is reported through `effective_nodes` and `adjustment`, and
@@ -206,6 +207,15 @@ honored. The clamp is reported through `effective_nodes` and `adjustment`, and
 `<<<default>>>` all mean "no target was requested", so config-driven callers
 can pass their raw config value through without guarding against unset
 placeholders.
+
+A request is also ignored, rather than denied, when the machine defines no
+targets of that type at all. Machines hang a concept like "debug" off
+different axes -- a partition on Chrysalis, a QOS on Frontier and Perlmutter,
+a queue on Aurora -- so a caller that asks on more than one axis should not be
+told its request was refused on the axes the machine does not use. There was
+no choice to deny, so `honored` stays `True` and `reason` stays `None`. A
+target missing from a list the machine *does* define is still a denied
+request.
 
 When `desired_wall_time` is given, the returned `wall_time` is that value
 capped at the selected target's `max_wallclock`. The same capping is available

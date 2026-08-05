@@ -207,7 +207,9 @@ class ParallelSystem:
         requested : str, optional
             A specific target the caller would like to use. ``None``, an
             empty string and placeholders such as ``<<<default>>>`` all mean
-            "no target was requested".
+            "no target was requested".  A request is also ignored when the
+            machine defines no targets of this type at all, since there is
+            then no choice for the request to have been denied.
 
         desired_wall_time : str, optional
             The wall time (``HH:MM:SS``) the caller intends to request. When
@@ -224,7 +226,9 @@ class ParallelSystem:
         )
 
         requested_target = _normalize_requested(requested)
-        if requested_target is None:
+        if requested_target is None or len(targets) == 0:
+            # A machine that defines no targets of this type has no notion
+            # of one, so a request is a no-op rather than a denied request.
             return cls._resolve_default(
                 config, nodes, target_type, min_nodes_allowed, targets
             )
@@ -296,14 +300,9 @@ class ParallelSystem:
         be honored) or a reason why it cannot.
         """
         if requested not in targets:
-            if len(targets) == 0:
-                plural = TARGET_TYPE_MAP[target_type]
-                available = f'this machine defines no {plural}'
-            else:
-                available = f'available: {", ".join(targets)}'
             return nodes, (
                 f'"{requested}" is not an available {target_type} on this '
-                f'machine ({available})'
+                f'machine (available: {", ".join(targets)})'
             )
 
         effective_nodes = cls._get_effective_nodes(
@@ -468,19 +467,17 @@ class ParallelSystem:
         default = constraints[0] if len(constraints) > 0 else ''
 
         requested_constraint = _normalize_requested(requested)
-        if requested_constraint is None:
+        if requested_constraint is None or len(constraints) == 0:
+            # A machine that defines no constraints has no notion of one, so
+            # a request is a no-op rather than a denied request.
             return default, None
 
         if requested_constraint in constraints:
             return requested_constraint, None
 
-        if len(constraints) == 0:
-            available = 'this machine defines no constraints'
-        else:
-            available = f'available: {", ".join(constraints)}'
         return default, (
             f'"{requested_constraint}" is not an available constraint on '
-            f'this machine ({available})'
+            f'this machine (available: {", ".join(constraints)})'
         )
 
     @classmethod
