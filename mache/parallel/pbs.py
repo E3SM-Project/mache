@@ -92,11 +92,7 @@ class PbsSystem(ParallelSystem):
         self.mpi_allowed = True
 
         gpus_per_node = self.get_config_int('gpus_per_node')
-        if (
-            gpus_per_node is not None
-            and gpus_per_node != ''
-            and gpus_per_node != '0'
-        ):
+        if gpus_per_node is not None:
             self.gpus_per_node = gpus_per_node
             self.gpus = gpus_per_node * nodes
 

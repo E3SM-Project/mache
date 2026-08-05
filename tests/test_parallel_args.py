@@ -278,3 +278,46 @@ def test_pbs_uses_minimum_nodes_for_task_count(monkeypatch):
 
     index = args.index('--ppn')
     assert args[index + 1] == '4'
+
+
+def test_pbs_detects_gpus_per_node(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+            'gpus_per_node': '4',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 2
+    )
+
+    system = PbsSystem(config)
+
+    assert system.gpus_per_node == 4
+    assert system.gpus == 8
+
+
+def test_pbs_reports_no_gpus_as_zero(monkeypatch):
+    """A machine or compiler with gpus_per_node = 0 has no GPUs."""
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+            'gpus_per_node': '0',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 2
+    )
+
+    system = PbsSystem(config)
+
+    # consistent with SlurmSystem and SingleNodeSystem, which also report a
+    # known absence of GPUs as 0 rather than as None
+    assert system.gpus_per_node == 0
+    assert system.gpus == 0
