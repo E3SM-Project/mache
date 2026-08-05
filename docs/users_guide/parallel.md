@@ -102,7 +102,8 @@ A common pattern is to generate scheduler directives separately, then use
 - Use `MachineInfo.get_account_defaults()` to populate account/partition/QOS.
 - Use `MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()` or
     `MachineInfo.get_qos_specs()` for optional scheduler-target policy
-    metadata (`min_nodes`, `max_nodes`, `max_wallclock`) when available.
+    metadata (`min_nodes`, `max_nodes`, `max_wallclock`,
+    `max_wallclock_bins`) when available.
 - Render scheduler headers (`#SBATCH` or `#PBS`) in your template logic.
 - Use `get_parallel_command()` to build the executable line.
 
@@ -212,3 +213,23 @@ cap_wall_time("04:00:00", "00:30:00")  # "00:30:00"
 Note that mache resolves the partition and the QOS independently and has no
 concept of one being valid only with the other. A caller that requests both is
 responsible for asking for a combination its machine accepts.
+
+## Wall-clock limits that depend on job size
+
+On some machines, the maximum wall time depends on how many nodes a job asks
+for. Frontier's `batch` partition allows 2 hours for 1-91 nodes, 6 hours for
+92-183 nodes, and 12 hours above that. These machines describe their policy
+with `max_wallclock_bins` rather than a single `max_wallclock` (see
+{ref}`dev-new-config-file`), and mache selects the bin that matches the
+resolved node count:
+
+```python
+options = SlurmSystem.resolve_slurm_options(config=config, nodes=8)
+options.max_wallclock  # "02:00:00" on Frontier
+
+options = SlurmSystem.resolve_slurm_options(config=config, nodes=200)
+options.max_wallclock  # "12:00:00" on Frontier
+```
+
+When both a partition and a QOS set a limit, the more restrictive of the two
+is reported, and that is also the limit `wall_time` is capped at.

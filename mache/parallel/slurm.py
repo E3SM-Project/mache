@@ -164,8 +164,10 @@ class SlurmSystem(ParallelSystem):
         )
 
         max_wallclock = cls._select_max_wallclock(
-            cls._get_max_wallclock(config, 'partition', partition_name),
-            cls._get_max_wallclock(config, 'qos', qos_name),
+            cls._get_max_wallclock(
+                config, 'partition', partition_name, effective_nodes
+            ),
+            cls._get_max_wallclock(config, 'qos', qos_name, effective_nodes),
         )
 
         wall_time = ''

@@ -1,9 +1,38 @@
+from configparser import ConfigParser
+
 import pytest
 
 from mache import MachineInfo
 from mache.parallel.pbs import PbsSystem
 from mache.parallel.slurm import SlurmSystem
 from mache.parallel.system import ParallelSystem, cap_wall_time
+
+BINNED_CONFIG = """
+[parallel]
+system = slurm
+partitions = batch
+qos = normal, debug
+
+[partition.batch]
+min_nodes = 1
+max_nodes = 1000
+max_wallclock_bins = 91: 02:00:00,
+                     183: 06:00:00,
+                     1000: 12:00:00
+
+[qos.normal]
+min_nodes = 1
+
+[qos.debug]
+min_nodes = 1
+max_wallclock = 01:00:00
+"""
+
+
+def _config_from_string(text):
+    config = ConfigParser()
+    config.read_string(text)
+    return config
 
 
 def test_get_scheduler_target_aurora_gap_errors():
@@ -312,3 +341,134 @@ def test_resolve_submission_still_raises_when_infeasible():
 )
 def test_cap_wall_time(desired, max_wallclock, expected):
     assert cap_wall_time(desired, max_wallclock) == expected
+
+
+@pytest.mark.parametrize(
+    'nodes, expected',
+    [
+        (1, '02:00:00'),
+        (90, '02:00:00'),
+        (91, '02:00:00'),
+        (92, '06:00:00'),
+        (183, '06:00:00'),
+        (184, '12:00:00'),
+        (1000, '12:00:00'),
+        (2000, '12:00:00'),
+    ],
+)
+def test_wallclock_bins_select_by_node_count(nodes, expected):
+    config = _config_from_string(BINNED_CONFIG)
+    options = SlurmSystem.resolve_slurm_options(config=config, nodes=nodes)
+
+    assert options.partition == 'batch'
+    assert options.qos == 'normal'
+    assert options.max_wallclock == expected
+
+
+def test_wallclock_bins_single_entry_acts_like_max_wallclock():
+    config = _config_from_string(
+        """
+[parallel]
+system = slurm
+partitions = batch
+
+[partition.batch]
+min_nodes = 1
+max_wallclock_bins = 1000: 04:00:00
+"""
+    )
+    for nodes in [1, 500, 5000]:
+        options = SlurmSystem.resolve_slurm_options(config=config, nodes=nodes)
+        assert options.max_wallclock == '04:00:00'
+
+
+def test_wallclock_bins_combine_with_qos_limit():
+    config = _config_from_string(BINNED_CONFIG)
+
+    # the debug qos is more restrictive than the small-job bin
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, qos='debug'
+    )
+    assert options.max_wallclock == '01:00:00'
+    assert options.honored
+
+    # the small-job bin is more restrictive than the debug qos
+    config.set('qos.debug', 'max_wallclock', '04:00:00')
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=8, qos='debug'
+    )
+    assert options.max_wallclock == '02:00:00'
+
+
+def test_wallclock_bins_used_to_reject_a_request():
+    config = _config_from_string(BINNED_CONFIG)
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=8,
+        partition='batch',
+        desired_wall_time='04:00:00',
+    )
+
+    assert not options.honored
+    assert options.reason is not None
+    assert '02:00:00' in options.reason
+
+
+def test_wallclock_bins_are_sorted():
+    config = _config_from_string(
+        """
+[parallel]
+system = slurm
+partitions = batch
+
+[partition.batch]
+min_nodes = 1
+max_wallclock_bins = 1000: 12:00:00, 91: 02:00:00, 183: 06:00:00
+"""
+    )
+    options = SlurmSystem.resolve_slurm_options(config=config, nodes=8)
+
+    assert options.max_wallclock == '02:00:00'
+
+
+def test_wallclock_bins_conflict_with_max_wallclock():
+    config = _config_from_string(
+        """
+[parallel]
+system = slurm
+partitions = batch
+
+[partition.batch]
+min_nodes = 1
+max_wallclock = 12:00:00
+max_wallclock_bins = 91: 02:00:00
+"""
+    )
+    with pytest.raises(ValueError, match='cannot both be set'):
+        SlurmSystem.resolve_slurm_options(config=config, nodes=8)
+
+
+@pytest.mark.parametrize(
+    'bins, message',
+    [
+        ('lots: 02:00:00', 'expected an integer node count'),
+        ('91: two hours', 'expected a wall clock'),
+        ('02:00:00', 'expected a wall clock'),
+        ('91', 'expected a wall clock'),
+        (',', 'no entries'),
+    ],
+)
+def test_wallclock_bins_malformed(bins, message):
+    config = _config_from_string(
+        f"""
+[parallel]
+system = slurm
+partitions = batch
+
+[partition.batch]
+min_nodes = 1
+max_wallclock_bins = {bins}
+"""
+    )
+    with pytest.raises(ValueError, match=message):
+        SlurmSystem.resolve_slurm_options(config=config, nodes=8)

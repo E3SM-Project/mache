@@ -320,7 +320,9 @@ class ParallelSystem:
                 f'are required'
             )
 
-        max_wallclock = cls._get_max_wallclock(config, target_type, requested)
+        max_wallclock = cls._get_max_wallclock(
+            config, target_type, requested, effective_nodes
+        )
         if _wall_time_exceeds(desired_wall_time, max_wallclock):
             return effective_nodes, (
                 f'the "{requested}" {target_type} allows a maximum wall '
@@ -449,13 +451,27 @@ class ParallelSystem:
 
     @classmethod
     def _get_max_wallclock(
-        cls, config: ConfigParser, target_type: str, target: str
+        cls,
+        config: ConfigParser,
+        target_type: str,
+        target: str,
+        nodes: int,
     ) -> str:
-        """Get max wall-clock metadata for a selected scheduler target."""
+        """
+        Get max wall-clock metadata for a selected scheduler target.
+
+        Targets whose limit depends on the job size supply
+        ``max_wallclock_bins`` instead of ``max_wallclock``, in which case
+        the bin containing ``nodes`` is used.
+        """
         if target == '':
             return ''
 
         section = f'{target_type}.{target}'
+        bins = _get_wallclock_bins(config, section)
+        if bins is not None:
+            return _select_wallclock_bin(bins, nodes)
+
         max_wallclock = _get_string_option(config, section, 'max_wallclock')
         if max_wallclock is None:
             return ''
@@ -504,6 +520,80 @@ def cap_wall_time(desired: str, max_wallclock: str) -> str:
     if not _wall_time_exceeds(desired, max_wallclock):
         return desired
     return max_wallclock
+
+
+def _get_wallclock_bins(
+    config: ConfigParser, section: str
+) -> list[tuple[int, str]] | None:
+    """
+    Get the parsed ``max_wallclock_bins`` for a scheduler target section.
+
+    Returns ``None`` if the section does not define job-size-dependent wall
+    clocks. Raises ``ValueError`` if the section also defines a plain
+    ``max_wallclock``, since the two would be ambiguous.
+    """
+    value = _get_string_option(config, section, 'max_wallclock_bins')
+    if value is None:
+        return None
+
+    if _get_string_option(config, section, 'max_wallclock') is not None:
+        raise ValueError(
+            f'Invalid config [{section}]: max_wallclock and '
+            f'max_wallclock_bins cannot both be set.'
+        )
+
+    return _parse_wallclock_bins(value, section)
+
+
+def _parse_wallclock_bins(value: str, section: str) -> list[tuple[int, str]]:
+    """
+    Parse ``<max nodes>: <max wallclock>`` entries into sorted bins.
+
+    Entries are comma-separated and each is split on its first colon, since
+    the wall clock itself contains colons.
+    """
+    bins: list[tuple[int, str]] = []
+    for entry in value.split(','):
+        entry = entry.strip()
+        if entry == '':
+            continue
+
+        node_bound_str, _, max_wallclock = entry.partition(':')
+        max_wallclock = max_wallclock.strip()
+        try:
+            node_bound = int(node_bound_str.strip())
+        except ValueError:
+            raise ValueError(
+                f'Invalid max_wallclock_bins entry "{entry}" in [{section}]: '
+                f'expected an integer node count before the colon.'
+            ) from None
+
+        if _max_wallclock_to_seconds(max_wallclock) is None:
+            raise ValueError(
+                f'Invalid max_wallclock_bins entry "{entry}" in [{section}]: '
+                f'expected a wall clock of the form HH:MM:SS after the '
+                f'colon.'
+            )
+
+        bins.append((node_bound, max_wallclock))
+
+    if len(bins) == 0:
+        raise ValueError(
+            f'Invalid config [{section}]: max_wallclock_bins is set but has '
+            f'no entries.'
+        )
+
+    return sorted(bins)
+
+
+def _select_wallclock_bin(bins: list[tuple[int, str]], nodes: int) -> str:
+    """Get the wall clock for the bin containing a node count."""
+    for node_bound, max_wallclock in bins:
+        if nodes <= node_bound:
+            return max_wallclock
+
+    # a node count above every bin gets the largest bin's wall clock
+    return bins[-1][1]
 
 
 def _normalize_requested(requested: str | None) -> str | None:

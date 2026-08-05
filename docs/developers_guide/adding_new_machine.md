@@ -82,6 +82,27 @@ Supported keys are:
     no upper bound)
 - `max_wallclock`: maximum allowed wall-clock time (for example,
     `01:00:00`)
+- `max_wallclock_bins`: maximum allowed wall-clock time as a function of job
+    size, for machines whose policy varies with node count
+
+Some machines allow longer jobs the more nodes they use. Frontier's `batch`
+partition, for example, allows 2 hours for 1-91 nodes, 6 hours for 92-183
+nodes and 12 hours above that. Describe this with `max_wallclock_bins`
+instead of `max_wallclock`:
+
+```ini
+[partition.batch]
+min_nodes = 1
+max_nodes = 9472
+max_wallclock_bins = 91: 02:00:00,
+                     183: 06:00:00,
+                     9472: 12:00:00
+```
+
+Each entry is `<max nodes>: <max wallclock>` and the bin that applies is the
+first one, in increasing order of node count, whose node bound is at least the
+job's node count. Continuation lines must be indented. A section may set
+`max_wallclock` or `max_wallclock_bins` but not both.
 
 Downstream software can query these values with
 `MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()`,
