@@ -136,15 +136,15 @@ machine metadata:
     `effective_nodes`, `adjustment` (`exact`, `decrease`, or `increase`),
     `honored`, and `reason`.
 - `SlurmSystem.resolve_slurm_options(config, nodes, min_nodes_allowed=None,
-    partition=None, qos=None, constraint=None, desired_wall_time=None)`
-    returns a `SlurmOptions` object with fields `partition`, `qos`,
-    `constraint`, `gpus_per_node`, `max_wallclock`, `effective_nodes`,
-    `wall_time`, `honored`, and `reason`.
+    partition=None, qos=None, constraint=None, desired_wall_time=None,
+    scheduler_target=None)` returns a `SlurmOptions` object with fields
+    `partition`, `qos`, `constraint`, `gpus_per_node`, `max_wallclock`,
+    `effective_nodes`, `wall_time`, `honored`, and `reason`.
 - `PbsSystem.resolve_pbs_options(config, nodes, min_nodes_allowed=None,
-    queue=None, constraint=None, desired_wall_time=None)` returns a
-    `PbsOptions` object with fields `queue`, `constraint`, `gpus_per_node`,
-    `max_wallclock`, `filesystems`, `effective_nodes`, `wall_time`,
-    `honored`, and `reason`.
+    queue=None, constraint=None, desired_wall_time=None,
+    scheduler_target=None)` returns a `PbsOptions` object with fields `queue`,
+    `constraint`, `gpus_per_node`, `max_wallclock`, `filesystems`,
+    `effective_nodes`, `wall_time`, `honored`, and `reason`.
 
 For invalid gaps between scheduler ranges, node count is adjusted to the
 nearest valid value, preferring lower adjustments when feasible. If
@@ -216,6 +216,36 @@ told its request was refused on the axes the machine does not use. There was
 no choice to deny, so `honored` stays `True` and `reason` stays `None`. A
 target missing from a list the machine *does* define is still a denied
 request.
+
+## Requesting a target without naming its axis
+
+Asking on every axis is still awkward for a caller whose intent is simply
+"use this machine's debug target". `scheduler_target` says it once and lets
+mache work out which axis this machine uses:
+
+```python
+options = SlurmSystem.resolve_slurm_options(
+    config=config,
+    nodes=2,
+    scheduler_target="debug",
+    desired_wall_time="00:20:00",
+)
+```
+
+This selects the `debug` partition on Chrysalis, the `debug` QOS on Frontier
+and Perlmutter (leaving the default `batch` partition in place on Frontier),
+and the `debug` queue on Aurora, with no spurious `reason` on any of them.
+Slurm machines are searched partitions-first and then QOS; PBS machines
+schedule by queue, so only queues are searched. `partition`, `qos` and `queue`
+take precedence on the axis they name, so a caller can set a broad
+`scheduler_target` and still pin one axis explicitly.
+
+Once an axis is chosen the target is resolved exactly as if it had been
+requested there, so it is still subject to that target's node and wall-clock
+metadata: `scheduler_target="debug"` with a three-hour wall time on Frontier
+falls back to the `normal` QOS and says why. A name that appears on no axis at
+all is a genuine failed request, and the `reason` lists what each axis does
+offer.
 
 When `desired_wall_time` is given, the returned `wall_time` is that value
 capped at the selected target's `max_wallclock`. The same capping is available

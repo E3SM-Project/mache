@@ -721,3 +721,102 @@ max_wallclock_bins = {bins}
     )
     with pytest.raises(ValueError, match=message):
         SlurmSystem.resolve_slurm_options(config=config, nodes=8)
+
+
+@pytest.mark.parametrize(
+    'machine, expected_partition, expected_qos',
+    [
+        ('chrysalis', 'debug', ''),
+        ('pm-cpu', '', 'debug'),
+        ('pm-gpu', '', 'debug'),
+        ('frontier', 'batch', 'debug'),
+    ],
+)
+def test_scheduler_target_finds_the_right_axis(
+    machine, expected_partition, expected_qos
+):
+    """One intent lands on whichever axis the machine spells it on."""
+    config = MachineInfo(machine=machine).config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=2,
+        scheduler_target='debug',
+        desired_wall_time='00:20:00',
+    )
+
+    assert options.partition == expected_partition
+    assert options.qos == expected_qos
+    assert options.honored
+    assert options.reason is None
+
+
+def test_scheduler_target_on_pbs():
+    """PBS machines schedule by queue, so that is the axis used."""
+    config = MachineInfo(machine='aurora').config
+    options = PbsSystem.resolve_pbs_options(
+        config=config,
+        nodes=2,
+        scheduler_target='debug',
+        desired_wall_time='00:30:00',
+    )
+
+    assert options.queue == 'debug'
+    assert options.honored
+    assert options.reason is None
+
+
+def test_scheduler_target_on_no_axis():
+    """A name on no axis is a genuine failed request."""
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=2, scheduler_target='nonexistent'
+    )
+
+    assert options.partition == 'batch'
+    assert options.qos == 'normal'
+    assert not options.honored
+    assert options.reason is not None
+    assert 'not an available scheduler target' in options.reason
+    assert 'partitions: batch, extended' in options.reason
+    assert 'qos: normal, debug' in options.reason
+
+
+def test_scheduler_target_still_subject_to_wall_clock():
+    """Mapping to an axis does not exempt a target from its own limits."""
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config,
+        nodes=2,
+        scheduler_target='debug',
+        desired_wall_time='03:00:00',
+    )
+
+    assert options.qos == 'normal'
+    assert not options.honored
+    assert options.reason is not None
+    assert '02:00:00' in options.reason
+
+
+def test_explicit_target_beats_scheduler_target():
+    """An explicit axis request wins on the axis it names."""
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=2, scheduler_target='debug', qos='normal'
+    )
+
+    assert options.qos == 'normal'
+    assert options.honored
+
+
+@pytest.mark.parametrize('requested', [None, '', '   ', '<<<default>>>'])
+def test_scheduler_target_placeholders_mean_no_request(requested):
+    """Placeholders leave the machine defaults alone."""
+    config = MachineInfo(machine='frontier').config
+    options = SlurmSystem.resolve_slurm_options(
+        config=config, nodes=2, scheduler_target=requested
+    )
+
+    assert options.partition == 'batch'
+    assert options.qos == 'normal'
+    assert options.honored
+    assert options.reason is None

@@ -449,6 +449,52 @@ class ParallelSystem:
         return constraint, gpus_per_node_str, filesystems
 
     @classmethod
+    def _find_scheduler_target(
+        cls,
+        config: ConfigParser,
+        scheduler_target: str | None,
+        target_types: tuple[str, ...],
+    ) -> tuple[str | None, str | None]:
+        """
+        Find which scheduler axis a target name belongs to on this machine.
+
+        Machines hang a concept such as "debug" off whichever axis they use,
+        so a caller with one machine-independent intent can name it once and
+        let mache decide whether it is a queue, a partition or a QOS here.
+
+        ``target_types`` is searched in order, so the first axis that lists
+        the name wins.
+
+        Returns the target type that lists ``scheduler_target``, or ``None``
+        along with a reason when no axis in ``target_types`` does.  Both are
+        ``None`` when nothing was requested.
+        """
+        requested = _normalize_requested(scheduler_target)
+        if requested is None:
+            return None, None
+
+        parallel_configs = _get_parallel_configs(config)
+
+        described = []
+        for target_type in target_types:
+            plural = TARGET_TYPE_MAP[target_type]
+            targets = _parse_list(parallel_configs.get(plural))
+            if requested in targets:
+                return target_type, None
+            if len(targets) > 0:
+                described.append(f'{plural}: {", ".join(targets)}')
+
+        if len(described) == 0:
+            available = 'this machine defines no scheduler targets'
+        else:
+            available = '; '.join(described)
+
+        return None, (
+            f'"{requested}" is not an available scheduler target on this '
+            f'machine ({available})'
+        )
+
+    @classmethod
     def _resolve_constraint(
         cls, config: ConfigParser, requested: str | None
     ) -> tuple[str, str | None]:

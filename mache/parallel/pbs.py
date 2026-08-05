@@ -10,6 +10,7 @@ from mache.parallel.system import (
     ParallelSystem,
     _ceil_division,
     _combine_reasons,
+    _normalize_requested,
     cap_wall_time,
 )
 
@@ -46,11 +47,11 @@ class PbsOptions:
         string if no wall time was requested.
 
     honored : bool
-        Whether the requested queue was used. ``True`` when no queue was
-        requested.
+        Whether every requested target -- queue, constraint and
+        ``scheduler_target`` -- was used. ``True`` when none was requested.
 
     reason : str or None
-        A human-readable explanation of why a requested queue could not be
+        A human-readable explanation of why a requested target could not be
         honored, suitable for printing verbatim. ``None`` when ``honored``
         is ``True``.
     """
@@ -105,6 +106,7 @@ class PbsSystem(ParallelSystem):
         queue: str | None = None,
         constraint: str | None = None,
         desired_wall_time: str | None = None,
+        scheduler_target: str | None = None,
     ) -> PbsOptions:
         """
         Get PBS submission options for a requested node count.
@@ -135,11 +137,24 @@ class PbsSystem(ParallelSystem):
             requested queue that does not allow it is not honored, and the
             returned ``wall_time`` is capped at ``max_wallclock``.
 
+        scheduler_target : str, optional
+            A target named without saying which axis it is on, for callers
+            with one machine-independent intent such as "use the debug
+            target". PBS machines schedule by queue, so it is used as the
+            queue when this machine lists it as one. ``queue`` takes
+            precedence.
+
         Returns
         -------
         PbsOptions
             The resolved PBS submission options.
         """
+        target_type, target_reason = cls._find_scheduler_target(
+            config, scheduler_target, ('queue',)
+        )
+        if target_type == 'queue' and _normalize_requested(queue) is None:
+            queue = scheduler_target
+
         queue_resolution = cls.resolve_submission(
             config=config,
             nodes=nodes,
@@ -173,9 +188,13 @@ class PbsSystem(ParallelSystem):
             filesystems=filesystems,
             effective_nodes=effective_nodes,
             wall_time=wall_time,
-            honored=(queue_resolution.honored and constraint_reason is None),
+            honored=(
+                queue_resolution.honored
+                and constraint_reason is None
+                and target_reason is None
+            ),
             reason=_combine_reasons(
-                queue_resolution.reason, constraint_reason
+                target_reason, queue_resolution.reason, constraint_reason
             ),
         )
 

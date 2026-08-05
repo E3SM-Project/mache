@@ -9,6 +9,7 @@ from mache.parallel.system import (
     _ceil_division,
     _combine_reasons,
     _get_subprocess_int,
+    _normalize_requested,
     cap_wall_time,
 )
 
@@ -45,13 +46,13 @@ class SlurmOptions:
         string if no wall time was requested.
 
     honored : bool
-        Whether the requested partition and QOS were both used. ``True``
-        when neither was requested.
+        Whether every requested target -- partition, QOS, constraint and
+        ``scheduler_target`` -- was used. ``True`` when none was requested.
 
     reason : str or None
-        A human-readable explanation of why a requested partition or QOS
-        could not be honored, suitable for printing verbatim. ``None`` when
-        ``honored`` is ``True``.
+        A human-readable explanation of why a requested target could not be
+        honored, suitable for printing verbatim. ``None`` when ``honored``
+        is ``True``.
     """
 
     partition: str
@@ -103,6 +104,7 @@ class SlurmSystem(ParallelSystem):
         qos: str | None = None,
         constraint: str | None = None,
         desired_wall_time: str | None = None,
+        scheduler_target: str | None = None,
     ) -> SlurmOptions:
         """
         Get Slurm submission options for a requested node count.
@@ -137,11 +139,29 @@ class SlurmSystem(ParallelSystem):
             requested target that does not allow it is not honored, and the
             returned ``wall_time`` is capped at ``max_wallclock``.
 
+        scheduler_target : str, optional
+            A target named without saying which axis it is on, for callers
+            with one machine-independent intent such as "use the debug
+            target". It is used as the partition or the QOS, whichever this
+            machine lists it under, checking partitions first. ``partition``
+            and ``qos`` take precedence on the axis they name.
+
         Returns
         -------
         SlurmOptions
             The resolved Slurm submission options.
         """
+        target_type, target_reason = cls._find_scheduler_target(
+            config, scheduler_target, ('partition', 'qos')
+        )
+        if (
+            target_type == 'partition'
+            and _normalize_requested(partition) is None
+        ):
+            partition = scheduler_target
+        elif target_type == 'qos' and _normalize_requested(qos) is None:
+            qos = scheduler_target
+
         partition_resolution = cls.resolve_submission(
             config=config,
             nodes=nodes,
@@ -191,8 +211,10 @@ class SlurmSystem(ParallelSystem):
                 partition_resolution.honored
                 and qos_resolution.honored
                 and constraint_reason is None
+                and target_reason is None
             ),
             reason=_combine_reasons(
+                target_reason,
                 partition_resolution.reason,
                 qos_resolution.reason,
                 constraint_reason,
