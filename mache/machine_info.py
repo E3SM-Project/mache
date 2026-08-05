@@ -2,11 +2,12 @@ import configparser
 import os
 import pwd
 from importlib import resources as importlib_resources
-from typing import Dict
+from typing import Any, Dict
 
 from lxml import etree
 
 from mache.discover import discover_machine
+from mache.parallel.system import _get_wallclock_bins
 
 SCHEDULER_TARGET_MAP = {
     'queue': 'queues',
@@ -240,7 +241,7 @@ class MachineInfo:
 
         return account, partition, constraint, qos
 
-    def get_queue_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+    def get_queue_specs(self) -> Dict[str, Dict[str, Any]]:
         """
         Get queue policy metadata for the machine.
 
@@ -250,6 +251,8 @@ class MachineInfo:
         - ``min_nodes`` (int)
         - ``max_nodes`` (int)
         - ``max_wallclock`` (str, e.g. ``01:00:00``)
+        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets
+          whose wall-clock limit depends on the job size)
 
         Returns
         -------
@@ -259,7 +262,7 @@ class MachineInfo:
         """
         return self.get_scheduler_specs(target_type='queue')
 
-    def get_partition_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+    def get_partition_specs(self) -> Dict[str, Dict[str, Any]]:
         """
         Get partition policy metadata for the machine.
 
@@ -270,6 +273,8 @@ class MachineInfo:
         - ``min_nodes`` (int)
         - ``max_nodes`` (int)
         - ``max_wallclock`` (str, e.g. ``01:00:00``)
+        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets
+          whose wall-clock limit depends on the job size)
 
         Returns
         -------
@@ -279,7 +284,7 @@ class MachineInfo:
         """
         return self.get_scheduler_specs(target_type='partition')
 
-    def get_qos_specs(self) -> Dict[str, Dict[str, int | str | None]]:
+    def get_qos_specs(self) -> Dict[str, Dict[str, Any]]:
         """
         Get quality-of-service (QOS) policy metadata for the machine.
 
@@ -289,6 +294,8 @@ class MachineInfo:
         - ``min_nodes`` (int)
         - ``max_nodes`` (int)
         - ``max_wallclock`` (str, e.g. ``01:00:00``)
+        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets
+          whose wall-clock limit depends on the job size)
 
         Returns
         -------
@@ -300,7 +307,7 @@ class MachineInfo:
 
     def get_scheduler_specs(
         self, target_type: str
-    ) -> Dict[str, Dict[str, int | str | None]]:
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Get scheduler target metadata for queues or partitions.
 
@@ -313,8 +320,10 @@ class MachineInfo:
         -------
         target_specs : dict
             Mapping from target name to metadata with keys ``min_nodes``,
-            ``max_nodes`` and ``max_wallclock``. If a target section is
-            missing, all metadata values are ``None``.
+            ``max_nodes``, ``max_wallclock`` and ``max_wallclock_bins``. If a
+            target section is missing, all metadata values are ``None``.
+            ``max_wallclock`` and ``max_wallclock_bins`` are mutually
+            exclusive, so at most one of them is set.
         """
         if target_type not in SCHEDULER_TARGET_MAP:
             expected = ', '.join(SCHEDULER_TARGET_MAP.keys())
@@ -334,12 +343,13 @@ class MachineInfo:
             if target.strip() != ''
         ]
 
-        target_specs: Dict[str, Dict[str, int | str | None]] = {}
+        target_specs: Dict[str, Dict[str, Any]] = {}
         for target in targets:
             section = f'{target_type}.{target}'
             min_nodes = self._get_scheduler_int(section, 'min_nodes')
             max_nodes = self._get_scheduler_int(section, 'max_nodes')
             max_wallclock = self._get_scheduler_value(section, 'max_wallclock')
+            max_wallclock_bins = _get_wallclock_bins(config, section)
 
             if (
                 min_nodes is not None
@@ -355,6 +365,7 @@ class MachineInfo:
                 'min_nodes': min_nodes,
                 'max_nodes': max_nodes,
                 'max_wallclock': max_wallclock,
+                'max_wallclock_bins': max_wallclock_bins,
             }
 
         return target_specs

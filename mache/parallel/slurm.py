@@ -1,12 +1,69 @@
 import os
+import warnings
 from configparser import ConfigParser
+from dataclasses import dataclass
 from typing import List
 
 from mache.parallel.system import (
     ParallelSystem,
     _ceil_division,
+    _combine_reasons,
     _get_subprocess_int,
+    _normalize_requested,
+    cap_wall_time,
 )
+
+
+@dataclass(frozen=True)
+class SlurmOptions:
+    """
+    Slurm submission options resolved from a machine's config.
+
+    Attributes
+    ----------
+    partition : str
+        The Slurm partition, or an empty string if the machine defines none.
+
+    qos : str
+        The Slurm quality of service, or an empty string if the machine
+        defines none.
+
+    constraint : str
+        The Slurm constraint, or an empty string if the machine defines none.
+
+    gpus_per_node : str
+        The number of GPUs per node, or an empty string if not configured.
+
+    max_wallclock : str
+        The most restrictive maximum wall clock (``HH:MM:SS``) of the
+        selected partition and QOS, or an empty string if neither sets one.
+
+    effective_nodes : int
+        The node count after clamping to the selected targets' limits.
+
+    wall_time : str
+        The requested wall time capped at ``max_wallclock``, or an empty
+        string if no wall time was requested.
+
+    honored : bool
+        Whether every requested target -- partition, QOS, constraint and
+        ``scheduler_target`` -- was used. ``True`` when none was requested.
+
+    reason : str or None
+        A human-readable explanation of why a requested target could not be
+        honored, suitable for printing verbatim. ``None`` when ``honored``
+        is ``True``.
+    """
+
+    partition: str
+    qos: str
+    constraint: str
+    gpus_per_node: str
+    max_wallclock: str
+    effective_nodes: int
+    wall_time: str = ''
+    honored: bool = True
+    reason: str | None = None
 
 
 class SlurmSystem(ParallelSystem):
@@ -38,46 +95,167 @@ class SlurmSystem(ParallelSystem):
             self.gpus = self.gpus_per_node * nodes
 
     @classmethod
+    def resolve_slurm_options(
+        cls,
+        config: ConfigParser,
+        nodes: int,
+        min_nodes_allowed: int | None = None,
+        partition: str | None = None,
+        qos: str | None = None,
+        constraint: str | None = None,
+        desired_wall_time: str | None = None,
+        scheduler_target: str | None = None,
+    ) -> SlurmOptions:
+        """
+        Get Slurm submission options for a requested node count.
+
+        The partition is resolved first and the QOS is then resolved against
+        the resulting node count. A requested partition or QOS is honored
+        when the machine's metadata allows it; otherwise the default is used
+        and the returned options explain why.
+
+        Parameters
+        ----------
+        config : ConfigParser
+            Machine configuration parser.
+
+        nodes : int
+            Requested node count.
+
+        min_nodes_allowed : int, optional
+            Optional lower bound for adjusted node counts.
+
+        partition : str, optional
+            A specific partition the caller would like to use.
+
+        qos : str, optional
+            A specific quality of service the caller would like to use.
+
+        constraint : str, optional
+            A specific constraint the caller would like to use.
+
+        desired_wall_time : str, optional
+            The wall time (``HH:MM:SS``) the caller intends to request. A
+            requested target that does not allow it is not honored, and the
+            returned ``wall_time`` is capped at ``max_wallclock``.
+
+        scheduler_target : str, optional
+            A target named without saying which axis it is on, for callers
+            with one machine-independent intent such as "use the debug
+            target". It is used as the partition or the QOS, whichever this
+            machine lists it under, checking partitions first. ``partition``
+            and ``qos`` take precedence on the axis they name.
+
+        Returns
+        -------
+        SlurmOptions
+            The resolved Slurm submission options.
+        """
+        target_type, target_reason = cls._find_scheduler_target(
+            config, scheduler_target, ('partition', 'qos')
+        )
+        if (
+            target_type == 'partition'
+            and _normalize_requested(partition) is None
+        ):
+            partition = scheduler_target
+        elif target_type == 'qos' and _normalize_requested(qos) is None:
+            qos = scheduler_target
+
+        partition_resolution = cls.resolve_submission(
+            config=config,
+            nodes=nodes,
+            target_type='partition',
+            min_nodes_allowed=min_nodes_allowed,
+            requested=partition,
+            desired_wall_time=desired_wall_time,
+        )
+        partition_name = partition_resolution.target
+
+        qos_resolution = cls.resolve_submission(
+            config=config,
+            nodes=partition_resolution.effective_nodes,
+            target_type='qos',
+            min_nodes_allowed=min_nodes_allowed,
+            requested=qos,
+            desired_wall_time=desired_wall_time,
+        )
+        qos_name = qos_resolution.target
+        effective_nodes = qos_resolution.effective_nodes
+
+        _, gpus_per_node, _ = cls._get_common_submission_options(config)
+        constraint_name, constraint_reason = cls._resolve_constraint(
+            config, constraint
+        )
+
+        max_wallclock = cls._select_max_wallclock(
+            cls._get_max_wallclock(
+                config, 'partition', partition_name, effective_nodes
+            ),
+            cls._get_max_wallclock(config, 'qos', qos_name, effective_nodes),
+        )
+
+        wall_time = ''
+        if desired_wall_time is not None:
+            wall_time = cap_wall_time(desired_wall_time, max_wallclock)
+
+        return SlurmOptions(
+            partition=partition_name,
+            qos=qos_name,
+            constraint=constraint_name,
+            gpus_per_node=gpus_per_node,
+            max_wallclock=max_wallclock,
+            effective_nodes=effective_nodes,
+            wall_time=wall_time,
+            honored=(
+                partition_resolution.honored
+                and qos_resolution.honored
+                and constraint_reason is None
+                and target_reason is None
+            ),
+            reason=_combine_reasons(
+                target_reason,
+                partition_resolution.reason,
+                qos_resolution.reason,
+                constraint_reason,
+            ),
+        )
+
+    @classmethod
     def get_slurm_options(
         cls,
         config: ConfigParser,
         nodes: int,
         min_nodes_allowed: int | None = None,
     ) -> tuple[str, str, str, str, str, int]:
-        """Get Slurm submission options for a requested node count."""
-        partition_resolution = cls.resolve_submission(
+        """
+        Get Slurm submission options for a requested node count.
+
+        .. deprecated:: 3.11.0
+            Use :py:meth:`resolve_slurm_options` instead, which returns a
+            :py:class:`SlurmOptions` object and supports requesting a
+            specific partition or QOS.
+        """
+        warnings.warn(
+            'SlurmSystem.get_slurm_options() is deprecated and will be '
+            'removed in a future release. Use '
+            'SlurmSystem.resolve_slurm_options(), which returns a '
+            'SlurmOptions object.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        options = cls.resolve_slurm_options(
             config=config,
             nodes=nodes,
-            target_type='partition',
             min_nodes_allowed=min_nodes_allowed,
         )
-        partition = partition_resolution.target
-        effective_nodes = partition_resolution.effective_nodes
-
-        qos_resolution = cls.resolve_submission(
-            config=config,
-            nodes=effective_nodes,
-            target_type='qos',
-            min_nodes_allowed=min_nodes_allowed,
-        )
-        qos = qos_resolution.target
-
-        constraint, gpus_per_node, _ = cls._get_common_submission_options(
-            config
-        )
-
-        max_wallclock = cls._select_max_wallclock(
-            cls._get_max_wallclock(config, 'partition', partition),
-            cls._get_max_wallclock(config, 'qos', qos),
-        )
-
         return (
-            partition,
-            qos,
-            constraint,
-            gpus_per_node,
-            max_wallclock,
-            effective_nodes,
+            options.partition,
+            options.qos,
+            options.constraint,
+            options.gpus_per_node,
+            options.max_wallclock,
+            options.effective_nodes,
         )
 
     def _get_parallel_args(

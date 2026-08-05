@@ -42,16 +42,19 @@ def test_get_queue_specs_aurora():
         'min_nodes': 1,
         'max_nodes': 16,
         'max_wallclock': '168:00:00',
+        'max_wallclock_bins': None,
     }
     assert queue_specs['prod'] == {
         'min_nodes': 256,
         'max_nodes': None,
         'max_wallclock': '12:00:00',
+        'max_wallclock_bins': None,
     }
     assert queue_specs['debug'] == {
         'min_nodes': 1,
         'max_nodes': 2,
         'max_wallclock': '01:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -69,11 +72,13 @@ def test_get_partition_specs_chrysalis():
         'min_nodes': 1,
         'max_nodes': None,
         'max_wallclock': '168:00:00',
+        'max_wallclock_bins': None,
     }
     assert partition_specs['debug'] == {
         'min_nodes': 1,
         'max_nodes': 10,
         'max_wallclock': '168:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -86,11 +91,13 @@ def test_get_partition_specs_compy():
         'min_nodes': 1,
         'max_nodes': 440,
         'max_wallclock': '36:00:00',
+        'max_wallclock_bins': None,
     }
     assert partition_specs['short'] == {
         'min_nodes': 1,
         'max_nodes': 50,
         'max_wallclock': '02:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -103,16 +110,19 @@ def test_get_qos_specs_pm_cpu():
         'min_nodes': 1,
         'max_nodes': 8,
         'max_wallclock': '00:30:00',
+        'max_wallclock_bins': None,
     }
     assert qos_specs['regular'] == {
         'min_nodes': 1,
         'max_nodes': None,
         'max_wallclock': '48:00:00',
+        'max_wallclock_bins': None,
     }
     assert qos_specs['premium'] == {
         'min_nodes': 1,
         'max_nodes': None,
         'max_wallclock': '48:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -125,16 +135,19 @@ def test_get_qos_specs_pm_gpu():
         'min_nodes': 1,
         'max_nodes': 8,
         'max_wallclock': '00:30:00',
+        'max_wallclock_bins': None,
     }
     assert qos_specs['regular'] == {
         'min_nodes': 1,
         'max_nodes': 3072,
         'max_wallclock': '48:00:00',
+        'max_wallclock_bins': None,
     }
     assert qos_specs['premium'] == {
         'min_nodes': 1,
         'max_nodes': 3072,
         'max_wallclock': '48:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -147,11 +160,13 @@ def test_get_queue_specs_polaris():
         'min_nodes': 1,
         'max_nodes': 2,
         'max_wallclock': '01:00:00',
+        'max_wallclock_bins': None,
     }
     assert queue_specs['prod'] == {
         'min_nodes': 1,
         'max_nodes': 512,
         'max_wallclock': '24:00:00',
+        'max_wallclock_bins': None,
     }
 
 
@@ -204,6 +219,37 @@ def test_frontier_parallel_compiler_overrides(
         parallel_config['parallel_executable'] == expected_parallel_executable
     )
     assert parallel_config['distribution'] == expected_distribution
+
+
+def test_get_scheduler_specs_wallclock_bins():
+    machinfo = MachineInfo(machine='chrysalis')
+    config = machinfo.config
+    config.remove_option('partition.compute', 'max_wallclock')
+    config.set(
+        'partition.compute',
+        'max_wallclock_bins',
+        '91: 02:00:00,\n183: 06:00:00,\n1000: 12:00:00',
+    )
+
+    partition_specs = machinfo.get_partition_specs()
+
+    assert partition_specs['compute']['max_wallclock'] is None
+    assert partition_specs['compute']['max_wallclock_bins'] == [
+        (91, '02:00:00'),
+        (183, '06:00:00'),
+        (1000, '12:00:00'),
+    ]
+    assert partition_specs['debug']['max_wallclock_bins'] is None
+
+
+def test_get_scheduler_specs_wallclock_bins_conflict():
+    machinfo = MachineInfo(machine='chrysalis')
+    machinfo.config.set(
+        'partition.compute', 'max_wallclock_bins', '91: 02:00:00'
+    )
+
+    with pytest.raises(ValueError, match='cannot both be set'):
+        machinfo.get_partition_specs()
 
 
 def test_get_scheduler_specs_invalid_target_type():
