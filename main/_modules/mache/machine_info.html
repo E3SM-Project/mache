@@ -98,11 +98,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pwd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_machine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">_get_wallclock_bins</span>
 
 <span class="n">SCHEDULER_TARGET_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;queue&#39;</span><span class="p">:</span> <span class="s1">&#39;queues&#39;</span><span class="p">,</span>
@@ -346,7 +347,7 @@
 
 <div class="viewcode-block" id="MachineInfo.get_queue_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_queue_specs.html#mache.MachineInfo.get_queue_specs">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_queue_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queue_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get queue policy metadata for the machine.</span>
 
@@ -356,6 +357,8 @@
 <span class="sd">        - ``min_nodes`` (int)</span>
 <span class="sd">        - ``max_nodes`` (int)</span>
 <span class="sd">        - ``max_wallclock`` (str, e.g. ``01:00:00``)</span>
+<span class="sd">        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets</span>
+<span class="sd">          whose wall-clock limit depends on the job size)</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -368,7 +371,7 @@
 
 <div class="viewcode-block" id="MachineInfo.get_partition_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_partition_specs.html#mache.MachineInfo.get_partition_specs">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_partition_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_partition_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get partition policy metadata for the machine.</span>
 
@@ -379,6 +382,8 @@
 <span class="sd">        - ``min_nodes`` (int)</span>
 <span class="sd">        - ``max_nodes`` (int)</span>
 <span class="sd">        - ``max_wallclock`` (str, e.g. ``01:00:00``)</span>
+<span class="sd">        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets</span>
+<span class="sd">          whose wall-clock limit depends on the job size)</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -391,7 +396,7 @@
 
 <div class="viewcode-block" id="MachineInfo.get_qos_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_qos_specs.html#mache.MachineInfo.get_qos_specs">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_qos_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_qos_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get quality-of-service (QOS) policy metadata for the machine.</span>
 
@@ -401,6 +406,8 @@
 <span class="sd">        - ``min_nodes`` (int)</span>
 <span class="sd">        - ``max_nodes`` (int)</span>
 <span class="sd">        - ``max_wallclock`` (str, e.g. ``01:00:00``)</span>
+<span class="sd">        - ``max_wallclock_bins`` (list of (int, str) tuples, for targets</span>
+<span class="sd">          whose wall-clock limit depends on the job size)</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -413,7 +420,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_scheduler_specs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get scheduler target metadata for queues or partitions.</span>
 
@@ -426,8 +433,10 @@
 <span class="sd">        -------</span>
 <span class="sd">        target_specs : dict</span>
 <span class="sd">            Mapping from target name to metadata with keys ``min_nodes``,</span>
-<span class="sd">            ``max_nodes`` and ``max_wallclock``. If a target section is</span>
-<span class="sd">            missing, all metadata values are ``None``.</span>
+<span class="sd">            ``max_nodes``, ``max_wallclock`` and ``max_wallclock_bins``. If a</span>
+<span class="sd">            target section is missing, all metadata values are ``None``.</span>
+<span class="sd">            ``max_wallclock`` and ``max_wallclock_bins`` are mutually</span>
+<span class="sd">            exclusive, so at most one of them is set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">target_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SCHEDULER_TARGET_MAP</span><span class="p">:</span>
             <span class="n">expected</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCHEDULER_TARGET_MAP</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -447,12 +456,13 @@
             <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span>
         <span class="p">]</span>
 
-        <span class="n">target_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">target_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
             <span class="n">section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="n">min_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;min_nodes&#39;</span><span class="p">)</span>
             <span class="n">max_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_nodes&#39;</span><span class="p">)</span>
             <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_value</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_wallclock&#39;</span><span class="p">)</span>
+            <span class="n">max_wallclock_bins</span> <span class="o">=</span> <span class="n">_get_wallclock_bins</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">min_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -468,6 +478,7 @@
                 <span class="s1">&#39;min_nodes&#39;</span><span class="p">:</span> <span class="n">min_nodes</span><span class="p">,</span>
                 <span class="s1">&#39;max_nodes&#39;</span><span class="p">:</span> <span class="n">max_nodes</span><span class="p">,</span>
                 <span class="s1">&#39;max_wallclock&#39;</span><span class="p">:</span> <span class="n">max_wallclock</span><span class="p">,</span>
+                <span class="s1">&#39;max_wallclock_bins&#39;</span><span class="p">:</span> <span class="n">max_wallclock_bins</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">target_specs</span>

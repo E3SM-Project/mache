@@ -98,10 +98,73 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span><span class="p">,</span> <span class="n">_ceil_division</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParallelSystem</span><span class="p">,</span>
+    <span class="n">_ceil_division</span><span class="p">,</span>
+    <span class="n">_combine_reasons</span><span class="p">,</span>
+    <span class="n">_normalize_requested</span><span class="p">,</span>
+    <span class="n">cap_wall_time</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="PbsOptions">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsOptions.html#mache.parallel.pbs.PbsOptions">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PbsOptions</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PBS submission options resolved from a machine&#39;s config.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    queue : str</span>
+<span class="sd">        The PBS queue, or an empty string if the machine defines none.</span>
+
+<span class="sd">    constraint : str</span>
+<span class="sd">        The constraint, or an empty string if the machine defines none.</span>
+
+<span class="sd">    gpus_per_node : str</span>
+<span class="sd">        The number of GPUs per node, or an empty string if not configured.</span>
+
+<span class="sd">    max_wallclock : str</span>
+<span class="sd">        The maximum wall clock (``HH:MM:SS``) of the selected queue, or an</span>
+<span class="sd">        empty string if the queue does not set one.</span>
+
+<span class="sd">    filesystems : str</span>
+<span class="sd">        The filesystems used for batch jobs, or an empty string if not</span>
+<span class="sd">        configured.</span>
+
+<span class="sd">    effective_nodes : int</span>
+<span class="sd">        The node count after clamping to the selected queue&#39;s limits.</span>
+
+<span class="sd">    wall_time : str</span>
+<span class="sd">        The requested wall time capped at ``max_wallclock``, or an empty</span>
+<span class="sd">        string if no wall time was requested.</span>
+
+<span class="sd">    honored : bool</span>
+<span class="sd">        Whether every requested target -- queue, constraint and</span>
+<span class="sd">        ``scheduler_target`` -- was used. ``True`` when none was requested.</span>
+
+<span class="sd">    reason : str or None</span>
+<span class="sd">        A human-readable explanation of why a requested target could not be</span>
+<span class="sd">        honored, suitable for printing verbatim. ``None`` when ``honored``</span>
+<span class="sd">        is ``True``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">queue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">max_wallclock</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">filesystems</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">effective_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">honored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="PbsSystem">
@@ -134,13 +197,113 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;gpus_per_node&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="n">gpus_per_node</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span>
-            <span class="ow">and</span> <span class="n">gpus_per_node</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">gpus_per_node</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="PbsSystem.resolve_pbs_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_pbs_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">queue</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">desired_wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scheduler_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PbsOptions</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get PBS submission options for a requested node count.</span>
+
+<span class="sd">        A requested queue is honored when the machine&#39;s metadata allows it;</span>
+<span class="sd">        otherwise the default queue is used and the returned options explain</span>
+<span class="sd">        why.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            Machine configuration parser.</span>
+
+<span class="sd">        nodes : int</span>
+<span class="sd">            Requested node count.</span>
+
+<span class="sd">        min_nodes_allowed : int, optional</span>
+<span class="sd">            Optional lower bound for adjusted node counts.</span>
+
+<span class="sd">        queue : str, optional</span>
+<span class="sd">            A specific queue the caller would like to use.</span>
+
+<span class="sd">        constraint : str, optional</span>
+<span class="sd">            A specific constraint the caller would like to use.</span>
+
+<span class="sd">        desired_wall_time : str, optional</span>
+<span class="sd">            The wall time (``HH:MM:SS``) the caller intends to request. A</span>
+<span class="sd">            requested queue that does not allow it is not honored, and the</span>
+<span class="sd">            returned ``wall_time`` is capped at ``max_wallclock``.</span>
+
+<span class="sd">        scheduler_target : str, optional</span>
+<span class="sd">            A target named without saying which axis it is on, for callers</span>
+<span class="sd">            with one machine-independent intent such as &quot;use the debug</span>
+<span class="sd">            target&quot;. PBS machines schedule by queue, so it is used as the</span>
+<span class="sd">            queue when this machine lists it as one. ``queue`` takes</span>
+<span class="sd">            precedence.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PbsOptions</span>
+<span class="sd">            The resolved PBS submission options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target_type</span><span class="p">,</span> <span class="n">target_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_find_scheduler_target</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">scheduler_target</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;queue&#39;</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">target_type</span> <span class="o">==</span> <span class="s1">&#39;queue&#39;</span> <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">queue</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+
+        <span class="n">queue_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;queue&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">queue</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">queue_name</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">filesystems</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span>
+            <span class="n">config</span>
+        <span class="p">)</span>
+        <span class="n">constraint_name</span><span class="p">,</span> <span class="n">constraint_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_constraint</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">constraint</span>
+        <span class="p">)</span>
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="s1">&#39;queue&#39;</span><span class="p">,</span> <span class="n">queue_name</span><span class="p">,</span> <span class="n">effective_nodes</span>
+        <span class="p">)</span>
+
+        <span class="n">wall_time</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">desired_wall_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wall_time</span> <span class="o">=</span> <span class="n">cap_wall_time</span><span class="p">(</span><span class="n">desired_wall_time</span><span class="p">,</span> <span class="n">max_wallclock</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">PbsOptions</span><span class="p">(</span>
+            <span class="n">queue</span><span class="o">=</span><span class="n">queue_name</span><span class="p">,</span>
+            <span class="n">constraint</span><span class="o">=</span><span class="n">constraint_name</span><span class="p">,</span>
+            <span class="n">gpus_per_node</span><span class="o">=</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">max_wallclock</span><span class="o">=</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">filesystems</span><span class="o">=</span><span class="n">filesystems</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">wall_time</span><span class="o">=</span><span class="n">wall_time</span><span class="p">,</span>
+            <span class="n">honored</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">queue_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">constraint_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">target_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">_combine_reasons</span><span class="p">(</span>
+                <span class="n">target_reason</span><span class="p">,</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span> <span class="n">constraint_reason</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PbsSystem.get_pbs_options">
@@ -152,28 +315,33 @@
         <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get PBS submission options for a requested node count.&quot;&quot;&quot;</span>
-        <span class="n">queue_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get PBS submission options for a requested node count.</span>
+
+<span class="sd">        .. deprecated:: 3.11.0</span>
+<span class="sd">            Use :py:meth:`resolve_pbs_options` instead, which returns a</span>
+<span class="sd">            :py:class:`PbsOptions` object and supports requesting a specific</span>
+<span class="sd">            queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;PbsSystem.get_pbs_options() is deprecated and will be removed &#39;</span>
+            <span class="s1">&#39;in a future release. Use PbsSystem.resolve_pbs_options(), &#39;</span>
+            <span class="s1">&#39;which returns a PbsOptions object.&#39;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_pbs_options</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
             <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
-            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;queue&#39;</span><span class="p">,</span>
             <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">queue</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">target</span>
-        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">queue_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
-
-        <span class="n">constraint</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">filesystems</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;queue&#39;</span><span class="p">,</span> <span class="n">queue</span><span class="p">)</span>
-
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">queue</span><span class="p">,</span>
-            <span class="n">constraint</span><span class="p">,</span>
-            <span class="n">gpus_per_node</span><span class="p">,</span>
-            <span class="n">max_wallclock</span><span class="p">,</span>
-            <span class="n">filesystems</span><span class="p">,</span>
-            <span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">queue</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">constraint</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">filesystems</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

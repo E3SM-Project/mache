@@ -96,14 +96,74 @@
              
   <h1>Source code for mache.parallel.slurm</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ParallelSystem</span><span class="p">,</span>
     <span class="n">_ceil_division</span><span class="p">,</span>
+    <span class="n">_combine_reasons</span><span class="p">,</span>
     <span class="n">_get_subprocess_int</span><span class="p">,</span>
+    <span class="n">_normalize_requested</span><span class="p">,</span>
+    <span class="n">cap_wall_time</span><span class="p">,</span>
 <span class="p">)</span>
+
+
+<div class="viewcode-block" id="SlurmOptions">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmOptions.html#mache.parallel.slurm.SlurmOptions">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlurmOptions</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Slurm submission options resolved from a machine&#39;s config.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    partition : str</span>
+<span class="sd">        The Slurm partition, or an empty string if the machine defines none.</span>
+
+<span class="sd">    qos : str</span>
+<span class="sd">        The Slurm quality of service, or an empty string if the machine</span>
+<span class="sd">        defines none.</span>
+
+<span class="sd">    constraint : str</span>
+<span class="sd">        The Slurm constraint, or an empty string if the machine defines none.</span>
+
+<span class="sd">    gpus_per_node : str</span>
+<span class="sd">        The number of GPUs per node, or an empty string if not configured.</span>
+
+<span class="sd">    max_wallclock : str</span>
+<span class="sd">        The most restrictive maximum wall clock (``HH:MM:SS``) of the</span>
+<span class="sd">        selected partition and QOS, or an empty string if neither sets one.</span>
+
+<span class="sd">    effective_nodes : int</span>
+<span class="sd">        The node count after clamping to the selected targets&#39; limits.</span>
+
+<span class="sd">    wall_time : str</span>
+<span class="sd">        The requested wall time capped at ``max_wallclock``, or an empty</span>
+<span class="sd">        string if no wall time was requested.</span>
+
+<span class="sd">    honored : bool</span>
+<span class="sd">        Whether every requested target -- partition, QOS, constraint and</span>
+<span class="sd">        ``scheduler_target`` -- was used. ``True`` when none was requested.</span>
+
+<span class="sd">    reason : str or None</span>
+<span class="sd">        A human-readable explanation of why a requested target could not be</span>
+<span class="sd">        honored, suitable for printing verbatim. ``None`` when ``honored``</span>
+<span class="sd">        is ``True``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">qos</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">max_wallclock</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">effective_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">honored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="SlurmSystem">
@@ -139,6 +199,136 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
 
 
+<div class="viewcode-block" id="SlurmSystem.resolve_slurm_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_slurm_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">qos</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">desired_wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scheduler_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SlurmOptions</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get Slurm submission options for a requested node count.</span>
+
+<span class="sd">        The partition is resolved first and the QOS is then resolved against</span>
+<span class="sd">        the resulting node count. A requested partition or QOS is honored</span>
+<span class="sd">        when the machine&#39;s metadata allows it; otherwise the default is used</span>
+<span class="sd">        and the returned options explain why.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            Machine configuration parser.</span>
+
+<span class="sd">        nodes : int</span>
+<span class="sd">            Requested node count.</span>
+
+<span class="sd">        min_nodes_allowed : int, optional</span>
+<span class="sd">            Optional lower bound for adjusted node counts.</span>
+
+<span class="sd">        partition : str, optional</span>
+<span class="sd">            A specific partition the caller would like to use.</span>
+
+<span class="sd">        qos : str, optional</span>
+<span class="sd">            A specific quality of service the caller would like to use.</span>
+
+<span class="sd">        constraint : str, optional</span>
+<span class="sd">            A specific constraint the caller would like to use.</span>
+
+<span class="sd">        desired_wall_time : str, optional</span>
+<span class="sd">            The wall time (``HH:MM:SS``) the caller intends to request. A</span>
+<span class="sd">            requested target that does not allow it is not honored, and the</span>
+<span class="sd">            returned ``wall_time`` is capped at ``max_wallclock``.</span>
+
+<span class="sd">        scheduler_target : str, optional</span>
+<span class="sd">            A target named without saying which axis it is on, for callers</span>
+<span class="sd">            with one machine-independent intent such as &quot;use the debug</span>
+<span class="sd">            target&quot;. It is used as the partition or the QOS, whichever this</span>
+<span class="sd">            machine lists it under, checking partitions first. ``partition``</span>
+<span class="sd">            and ``qos`` take precedence on the axis they name.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SlurmOptions</span>
+<span class="sd">            The resolved Slurm submission options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target_type</span><span class="p">,</span> <span class="n">target_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_find_scheduler_target</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">scheduler_target</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;partition&#39;</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">target_type</span> <span class="o">==</span> <span class="s1">&#39;partition&#39;</span>
+            <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">partition</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">partition</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+        <span class="k">elif</span> <span class="n">target_type</span> <span class="o">==</span> <span class="s1">&#39;qos&#39;</span> <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">qos</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qos</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+
+        <span class="n">partition_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;partition&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">partition</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">partition_name</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">target</span>
+
+        <span class="n">qos_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">partition_resolution</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;qos&#39;</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">qos</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">qos_name</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">constraint_name</span><span class="p">,</span> <span class="n">constraint_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_constraint</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">constraint</span>
+        <span class="p">)</span>
+
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_max_wallclock</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span>
+                <span class="n">config</span><span class="p">,</span> <span class="s1">&#39;partition&#39;</span><span class="p">,</span> <span class="n">partition_name</span><span class="p">,</span> <span class="n">effective_nodes</span>
+            <span class="p">),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">,</span> <span class="n">qos_name</span><span class="p">,</span> <span class="n">effective_nodes</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">wall_time</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">desired_wall_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wall_time</span> <span class="o">=</span> <span class="n">cap_wall_time</span><span class="p">(</span><span class="n">desired_wall_time</span><span class="p">,</span> <span class="n">max_wallclock</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SlurmOptions</span><span class="p">(</span>
+            <span class="n">partition</span><span class="o">=</span><span class="n">partition_name</span><span class="p">,</span>
+            <span class="n">qos</span><span class="o">=</span><span class="n">qos_name</span><span class="p">,</span>
+            <span class="n">constraint</span><span class="o">=</span><span class="n">constraint_name</span><span class="p">,</span>
+            <span class="n">gpus_per_node</span><span class="o">=</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">max_wallclock</span><span class="o">=</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">wall_time</span><span class="o">=</span><span class="n">wall_time</span><span class="p">,</span>
+            <span class="n">honored</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">partition_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">constraint_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">target_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">_combine_reasons</span><span class="p">(</span>
+                <span class="n">target_reason</span><span class="p">,</span>
+                <span class="n">partition_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">qos_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">constraint_reason</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="SlurmSystem.get_slurm_options">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -148,40 +338,34 @@
         <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Slurm submission options for a requested node count.&quot;&quot;&quot;</span>
-        <span class="n">partition_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get Slurm submission options for a requested node count.</span>
+
+<span class="sd">        .. deprecated:: 3.11.0</span>
+<span class="sd">            Use :py:meth:`resolve_slurm_options` instead, which returns a</span>
+<span class="sd">            :py:class:`SlurmOptions` object and supports requesting a</span>
+<span class="sd">            specific partition or QOS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;SlurmSystem.get_slurm_options() is deprecated and will be &#39;</span>
+            <span class="s1">&#39;removed in a future release. Use &#39;</span>
+            <span class="s1">&#39;SlurmSystem.resolve_slurm_options(), which returns a &#39;</span>
+            <span class="s1">&#39;SlurmOptions object.&#39;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
             <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
-            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;partition&#39;</span><span class="p">,</span>
             <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">partition</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">target</span>
-        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
-
-        <span class="n">qos_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
-            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-            <span class="n">nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
-            <span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;qos&#39;</span><span class="p">,</span>
-            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">qos</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">target</span>
-
-        <span class="n">constraint</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span>
-            <span class="n">config</span>
-        <span class="p">)</span>
-
-        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_max_wallclock</span><span class="p">(</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;partition&#39;</span><span class="p">,</span> <span class="n">partition</span><span class="p">),</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">,</span> <span class="n">qos</span><span class="p">),</span>
-        <span class="p">)</span>
-
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">partition</span><span class="p">,</span>
-            <span class="n">qos</span><span class="p">,</span>
-            <span class="n">constraint</span><span class="p">,</span>
-            <span class="n">gpus_per_node</span><span class="p">,</span>
-            <span class="n">max_wallclock</span><span class="p">,</span>
-            <span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">constraint</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

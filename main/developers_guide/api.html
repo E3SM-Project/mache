@@ -81,12 +81,17 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
@@ -226,7 +231,7 @@ documentation.</p>
 </table>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution" title="mache.parallel.system.SubmissionResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubmissionResolution</span></code></a>(target, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution" title="mache.parallel.system.SubmissionResolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubmissionResolution</span></code></a>(target, ...[, honored, ...])</p></td>
 <td><p>Resolved scheduler target and effective node count.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html#mache.parallel.system.ParallelSystem" title="mache.parallel.system.ParallelSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem</span></code></a>(config)</p></td>
@@ -240,6 +245,9 @@ documentation.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission</span></code></a>(config, ...)</p></td>
 <td><p>Resolve a scheduler target and effective node count.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html#mache.parallel.system.cap_wall_time" title="mache.parallel.system.cap_wall_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cap_wall_time</span></code></a>(desired, max_wallclock)</p></td>
+<td><p>Cap a desired wall time at a scheduler target's maximum.</p></td>
 </tr>
 </tbody>
 </table>
@@ -259,20 +267,32 @@ documentation.</p>
 </table>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem" title="mache.parallel.slurm.SlurmSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem</span></code></a>(config)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmOptions.html#mache.parallel.slurm.SlurmOptions" title="mache.parallel.slurm.SlurmOptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmOptions</span></code></a>(partition, qos, constraint, ...)</p></td>
+<td><p>Slurm submission options resolved from a machine's config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem" title="mache.parallel.slurm.SlurmSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem</span></code></a>(config)</p></td>
 <td><p>SLURM resource manager for parallel jobs.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options</span></code></a>(config, nodes)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options</span></code></a>(config, nodes)</p></td>
+<td><p>Get Slurm submission options for a requested node count.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.resolve_slurm_options</span></code></a>(config, nodes)</p></td>
 <td><p>Get Slurm submission options for a requested node count.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem" title="mache.parallel.pbs.PbsSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem</span></code></a>(config)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsOptions.html#mache.parallel.pbs.PbsOptions" title="mache.parallel.pbs.PbsOptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsOptions</span></code></a>(queue, constraint, gpus_per_node, ...)</p></td>
+<td><p>PBS submission options resolved from a machine's config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem" title="mache.parallel.pbs.PbsSystem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem</span></code></a>(config)</p></td>
 <td><p>PBS resource manager for parallel jobs.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options" title="mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options" title="mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
+<td><p>Get PBS submission options for a requested node count.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.resolve_pbs_options</span></code></a>(config, nodes)</p></td>
 <td><p>Get PBS submission options for a requested node count.</p></td>
 </tr>
 </tbody>

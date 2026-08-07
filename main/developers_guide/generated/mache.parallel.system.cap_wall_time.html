@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mache.parallel.system.ParallelSystem.get_scheduler_target</title>
+  <title>mache.parallel.system.cap_wall_time</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.system.ParallelSystem.resolve_submission" href="mache.parallel.system.ParallelSystem.resolve_submission.html" />
-    <link rel="prev" title="mache.parallel.system.ParallelSystem.get_parallel_command" href="mache.parallel.system.ParallelSystem.get_parallel_command.html" />
+    <link rel="next" title="mache.parallel.login.LoginSystem" href="mache.parallel.login.LoginSystem.html" />
+    <link rel="prev" title="mache.parallel.system.ParallelSystem.resolve_submission" href="mache.parallel.system.ParallelSystem.resolve_submission.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -73,12 +73,12 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.SubmissionResolution.html">mache.parallel.system.SubmissionResolution</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.system.ParallelSystem.get_scheduler_target</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.system.cap_wall_time</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.system.cap_wall_time"><code class="docutils literal notranslate"><span class="pre">cap_wall_time()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
@@ -119,9 +119,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../api.html">API reference</a></li>
-      <li class="breadcrumb-item active">mache.parallel.system.ParallelSystem.get_scheduler_target</li>
+      <li class="breadcrumb-item active">mache.parallel.system.cap_wall_time</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/developers_guide/generated/mache.parallel.system.ParallelSystem.get_scheduler_target.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/developers_guide/generated/mache.parallel.system.cap_wall_time.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -129,14 +129,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mache-parallel-system-parallelsystem-get-scheduler-target">
-<h1>mache.parallel.system.ParallelSystem.get_scheduler_target<a class="headerlink" href="#mache-parallel-system-parallelsystem-get-scheduler-target" title="Link to this heading"></a></h1>
-<dl class="py method">
-<dt class="sig sig-object py" id="mache.parallel.system.ParallelSystem.get_scheduler_target">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ParallelSystem.</span></span><span class="sig-name descname"><span class="pre">get_scheduler_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#ParallelSystem.get_scheduler_target"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.ParallelSystem.get_scheduler_target" title="Link to this definition"></a></dt>
-<dd><p>Choose queue/partition/qos metadata target for a node count.</p>
-<p>This is a convenience wrapper around <code class="docutils literal notranslate"><span class="pre">resolve_submission()</span></code> that
-returns only the selected target.</p>
+  <section id="mache-parallel-system-cap-wall-time">
+<h1>mache.parallel.system.cap_wall_time<a class="headerlink" href="#mache-parallel-system-cap-wall-time" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="mache.parallel.system.cap_wall_time">
+<span class="sig-prename descclassname"><span class="pre">mache.parallel.system.</span></span><span class="sig-name descname"><span class="pre">cap_wall_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">desired</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_wallclock</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#cap_wall_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.cap_wall_time" title="Link to this definition"></a></dt>
+<dd><p>Cap a desired wall time at a scheduler target’s maximum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>desired</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The wall time (<code class="docutils literal notranslate"><span class="pre">HH:MM:SS</span></code>) the caller would like to request.</p></li>
+<li><p><strong>max_wallclock</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The maximum wall time (<code class="docutils literal notranslate"><span class="pre">HH:MM:SS</span></code>) the target allows, typically
+from <code class="docutils literal notranslate"><span class="pre">SlurmOptions.max_wallclock</span></code> or <code class="docutils literal notranslate"><span class="pre">PbsOptions.max_wallclock</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>wall_time</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code> if it is shorter than <code class="docutils literal notranslate"><span class="pre">desired</span></code>, otherwise
+<code class="docutils literal notranslate"><span class="pre">desired</span></code> unchanged. <code class="docutils literal notranslate"><span class="pre">desired</span></code> is also returned unchanged if
+either value is empty or cannot be parsed.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -145,8 +157,8 @@ returns only the selected target.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="mache.parallel.system.ParallelSystem.get_parallel_command.html" class="btn btn-neutral float-left" title="mache.parallel.system.ParallelSystem.get_parallel_command" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.system.ParallelSystem.resolve_submission.html" class="btn btn-neutral float-right" title="mache.parallel.system.ParallelSystem.resolve_submission" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.system.ParallelSystem.resolve_submission.html" class="btn btn-neutral float-left" title="mache.parallel.system.ParallelSystem.resolve_submission" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mache.parallel.login.LoginSystem.html" class="btn btn-neutral float-right" title="mache.parallel.login.LoginSystem" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

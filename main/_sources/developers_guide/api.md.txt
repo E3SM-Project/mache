@@ -50,6 +50,7 @@ documentation.
     ParallelSystem.get_parallel_command
     ParallelSystem.get_scheduler_target
     ParallelSystem.resolve_submission
+    cap_wall_time
 ```
 
 ```{eval-rst}
@@ -76,8 +77,10 @@ documentation.
 .. autosummary::
     :toctree: generated/
 
+    SlurmOptions
     SlurmSystem
     SlurmSystem.get_slurm_options
+    SlurmSystem.resolve_slurm_options
 ```
 
 ```{eval-rst}
@@ -86,8 +89,10 @@ documentation.
 .. autosummary::
     :toctree: generated/
 
+    PbsOptions
     PbsSystem
     PbsSystem.get_pbs_options
+    PbsSystem.resolve_pbs_options
 ```
 
 ## spack

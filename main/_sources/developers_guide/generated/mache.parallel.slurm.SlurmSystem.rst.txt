@@ -19,6 +19,7 @@
       ~SlurmSystem.get_parallel_command
       ~SlurmSystem.get_scheduler_target
       ~SlurmSystem.get_slurm_options
+      ~SlurmSystem.resolve_slurm_options
       ~SlurmSystem.resolve_submission
    
    

@@ -19,7 +19,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.spack.make_spack_env" href="mache.spack.make_spack_env.html" />
+    <link rel="next" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html" />
     <link rel="prev" title="mache.parallel.pbs.PbsSystem" href="mache.parallel.pbs.PbsSystem.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -75,15 +75,20 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.pbs.PbsSystem.get_pbs_options</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#spack">spack</a></li>
@@ -130,6 +135,11 @@
 <dt class="sig sig-object py" id="mache.parallel.pbs.PbsSystem.get_pbs_options">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">PbsSystem.</span></span><span class="sig-name descname"><span class="pre">get_pbs_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_nodes_allowed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/mache/parallel/pbs.html#PbsSystem.get_pbs_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.pbs.PbsSystem.get_pbs_options" title="Link to this definition"></a></dt>
 <dd><p>Get PBS submission options for a requested node count.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 3.11.0: </span>Use <a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve_pbs_options()</span></code></a> instead, which returns a
+<a class="reference internal" href="mache.parallel.pbs.PbsOptions.html#mache.parallel.pbs.PbsOptions" title="mache.parallel.pbs.PbsOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">PbsOptions</span></code></a> object and supports requesting a specific
+queue.</p>
+</div>
 </dd></dl>
 
 </section>
@@ -139,7 +149,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="mache.parallel.pbs.PbsSystem.html" class="btn btn-neutral float-left" title="mache.parallel.pbs.PbsSystem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.spack.make_spack_env.html" class="btn btn-neutral float-right" title="mache.spack.make_spack_env" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html" class="btn btn-neutral float-right" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

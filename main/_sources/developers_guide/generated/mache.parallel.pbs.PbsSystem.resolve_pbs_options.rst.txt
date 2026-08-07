@@ -1,0 +1,6 @@
+﻿mache.parallel.pbs.PbsSystem.resolve\_pbs\_options
+==================================================
+
+.. currentmodule:: mache.parallel.pbs
+
+.. automethod:: PbsSystem.resolve_pbs_options

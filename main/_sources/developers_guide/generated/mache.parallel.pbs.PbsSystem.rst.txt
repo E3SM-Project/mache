@@ -19,6 +19,7 @@
       ~PbsSystem.get_parallel_command
       ~PbsSystem.get_pbs_options
       ~PbsSystem.get_scheduler_target
+      ~PbsSystem.resolve_pbs_options
       ~PbsSystem.resolve_submission
    
    

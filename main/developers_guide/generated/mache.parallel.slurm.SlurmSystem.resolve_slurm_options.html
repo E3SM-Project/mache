@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mache.parallel.system.ParallelSystem.resolve_submission</title>
+  <title>mache.parallel.slurm.SlurmSystem.resolve_slurm_options</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.system.cap_wall_time" href="mache.parallel.system.cap_wall_time.html" />
-    <link rel="prev" title="mache.parallel.system.ParallelSystem.get_scheduler_target" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html" />
+    <link rel="next" title="mache.parallel.pbs.PbsOptions" href="mache.parallel.pbs.PbsOptions.html" />
+    <link rel="prev" title="mache.parallel.slurm.SlurmSystem.get_slurm_options" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -74,17 +74,17 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.system.ParallelSystem.resolve_submission</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.system.ParallelSystem.resolve_submission"><code class="docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="docutils literal notranslate"><span class="pre">SlurmSystem.resolve_slurm_options()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
@@ -119,9 +119,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../api.html">API reference</a></li>
-      <li class="breadcrumb-item active">mache.parallel.system.ParallelSystem.resolve_submission</li>
+      <li class="breadcrumb-item active">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/developers_guide/generated/mache.parallel.system.ParallelSystem.resolve_submission.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/developers_guide/generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -129,43 +129,37 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mache-parallel-system-parallelsystem-resolve-submission">
-<h1>mache.parallel.system.ParallelSystem.resolve_submission<a class="headerlink" href="#mache-parallel-system-parallelsystem-resolve-submission" title="Link to this heading"></a></h1>
+  <section id="mache-parallel-slurm-slurmsystem-resolve-slurm-options">
+<h1>mache.parallel.slurm.SlurmSystem.resolve_slurm_options<a class="headerlink" href="#mache-parallel-slurm-slurmsystem-resolve-slurm-options" title="Link to this heading"></a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="mache.parallel.system.ParallelSystem.resolve_submission">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ParallelSystem.</span></span><span class="sig-name descname"><span class="pre">resolve_submission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_nodes_allowed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_wall_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mache.parallel.system.SubmissionResolution.html#mache.parallel.system.SubmissionResolution" title="mache.parallel.system.SubmissionResolution"><span class="pre">SubmissionResolution</span></a></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#ParallelSystem.resolve_submission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.ParallelSystem.resolve_submission" title="Link to this definition"></a></dt>
-<dd><p>Resolve a scheduler target and effective node count.</p>
-<p>Policy:</p>
-<ul class="simple">
-<li><p>If <code class="docutils literal notranslate"><span class="pre">requested</span></code> is given and can be honored, use it.</p></li>
-<li><p>Otherwise, prefer exact match when available.</p></li>
-<li><p>Otherwise choose the nearest valid node count.</p></li>
-<li><p>Tie-break toward lower (decrease) adjustments.</p></li>
-<li><p>If a lower adjustment violates <code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code>, choose the
-nearest feasible higher adjustment.</p></li>
-</ul>
-<p>A requested target is a preference, not an assertion: if it cannot be
-honored, the default target is resolved instead and the returned
-resolution has <code class="docutils literal notranslate"><span class="pre">honored=False</span></code> along with a <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p>
+<dt class="sig sig-object py" id="mache.parallel.slurm.SlurmSystem.resolve_slurm_options">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">SlurmSystem.</span></span><span class="sig-name descname"><span class="pre">resolve_slurm_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_nodes_allowed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_wall_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html#mache.parallel.slurm.SlurmOptions" title="mache.parallel.slurm.SlurmOptions"><span class="pre">SlurmOptions</span></a></span></span><a class="reference internal" href="../../_modules/mache/parallel/slurm.html#SlurmSystem.resolve_slurm_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="Link to this definition"></a></dt>
+<dd><p>Get Slurm submission options for a requested node count.</p>
+<p>The partition is resolved first and the QOS is then resolved against
+the resulting node count. A requested partition or QOS is honored
+when the machine’s metadata allows it; otherwise the default is used
+and the returned options explain why.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<em>ConfigParser</em>) – Machine configuration parser.</p></li>
 <li><p><strong>nodes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Requested node count.</p></li>
-<li><p><strong>target_type</strong> (<em>{'queue'</em><em>, </em><em>'partition'</em><em>, </em><em>'qos'}</em>) – Scheduler target type to resolve.</p></li>
 <li><p><strong>min_nodes_allowed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Optional lower bound for adjusted node counts.</p></li>
-<li><p><strong>requested</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A specific target the caller would like to use. <code class="docutils literal notranslate"><span class="pre">None</span></code>, an
-empty string and placeholders such as <code class="docutils literal notranslate"><span class="pre">&lt;&lt;&lt;default&gt;&gt;&gt;</span></code> all mean
-“no target was requested”.  A request is also ignored when the
-machine defines no targets of this type at all, since there is
-then no choice for the request to have been denied.</p></li>
-<li><p><strong>desired_wall_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The wall time (<code class="docutils literal notranslate"><span class="pre">HH:MM:SS</span></code>) the caller intends to request. When
-given, a requested target whose <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code> is shorter is
-not honored.</p></li>
+<li><p><strong>partition</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A specific partition the caller would like to use.</p></li>
+<li><p><strong>qos</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A specific quality of service the caller would like to use.</p></li>
+<li><p><strong>constraint</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A specific constraint the caller would like to use.</p></li>
+<li><p><strong>desired_wall_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – The wall time (<code class="docutils literal notranslate"><span class="pre">HH:MM:SS</span></code>) the caller intends to request. A
+requested target that does not allow it is not honored, and the
+returned <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is capped at <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>.</p></li>
+<li><p><strong>scheduler_target</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – A target named without saying which axis it is on, for callers
+with one machine-independent intent such as “use the debug
+target”. It is used as the partition or the QOS, whichever this
+machine lists it under, checking partitions first. <code class="docutils literal notranslate"><span class="pre">partition</span></code>
+and <code class="docutils literal notranslate"><span class="pre">qos</span></code> take precedence on the axis they name.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>SubmissionResolution</em> – The selected target and adjusted node count.</p>
+<dd class="field-even"><p><em>SlurmOptions</em> – The resolved Slurm submission options.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -176,8 +170,8 @@ not honored.</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="mache.parallel.system.ParallelSystem.get_scheduler_target.html" class="btn btn-neutral float-left" title="mache.parallel.system.ParallelSystem.get_scheduler_target" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.system.cap_wall_time.html" class="btn btn-neutral float-right" title="mache.parallel.system.cap_wall_time" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html" class="btn btn-neutral float-left" title="mache.parallel.slurm.SlurmSystem.get_slurm_options" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mache.parallel.pbs.PbsOptions.html" class="btn btn-neutral float-right" title="mache.parallel.pbs.PbsOptions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

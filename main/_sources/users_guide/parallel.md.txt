@@ -102,7 +102,8 @@ A common pattern is to generate scheduler directives separately, then use
 - Use `MachineInfo.get_account_defaults()` to populate account/partition/QOS.
 - Use `MachineInfo.get_queue_specs()`, `MachineInfo.get_partition_specs()` or
     `MachineInfo.get_qos_specs()` for optional scheduler-target policy
-    metadata (`min_nodes`, `max_nodes`, `max_wallclock`) when available.
+    metadata (`min_nodes`, `max_nodes`, `max_wallclock`,
+    `max_wallclock_bins`) when available.
 - Render scheduler headers (`#SBATCH` or `#PBS`) in your template logic.
 - Use `get_parallel_command()` to build the executable line.
 
@@ -130,18 +131,152 @@ machine metadata:
 - `ParallelSystem.get_scheduler_target(config, target_type, nodes)` selects
     one of `queue`, `partition`, or `qos`.
 - `ParallelSystem.resolve_submission(config, nodes, target_type,
-    min_nodes_allowed=None)` returns a `SubmissionResolution` with fields
-    `target`, `requested_nodes`, `effective_nodes`, and `adjustment`
-    (`exact`, `decrease`, or `increase`).
-- `SlurmSystem.get_slurm_options(config, nodes, min_nodes_allowed=None)`
-    returns `(partition, qos, constraint, gpus_per_node, max_wallclock,
-    effective_nodes)`.
-- `PbsSystem.get_pbs_options(config, nodes, min_nodes_allowed=None)` returns
-    `(queue, constraint, gpus_per_node, max_wallclock, filesystems,
-    effective_nodes)`.
+    min_nodes_allowed=None, requested=None, desired_wall_time=None)` returns a
+    `SubmissionResolution` with fields `target`, `requested_nodes`,
+    `effective_nodes`, `adjustment` (`exact`, `decrease`, or `increase`),
+    `honored`, and `reason`.
+- `SlurmSystem.resolve_slurm_options(config, nodes, min_nodes_allowed=None,
+    partition=None, qos=None, constraint=None, desired_wall_time=None,
+    scheduler_target=None)` returns a `SlurmOptions` object with fields
+    `partition`, `qos`, `constraint`, `gpus_per_node`, `max_wallclock`,
+    `effective_nodes`, `wall_time`, `honored`, and `reason`.
+- `PbsSystem.resolve_pbs_options(config, nodes, min_nodes_allowed=None,
+    queue=None, constraint=None, desired_wall_time=None,
+    scheduler_target=None)` returns a `PbsOptions` object with fields `queue`,
+    `constraint`, `gpus_per_node`, `max_wallclock`, `filesystems`,
+    `effective_nodes`, `wall_time`, `honored`, and `reason`.
 
 For invalid gaps between scheduler ranges, node count is adjusted to the
 nearest valid value, preferring lower adjustments when feasible. If
 `min_nodes_allowed` disallows lower adjustments, resolution moves to the next
 valid higher range. If no feasible target exists, these functions raise
 `ValueError`.
+
+```{note}
+`SlurmSystem.get_slurm_options()` and `PbsSystem.get_pbs_options()` return the
+same values as tuples. They are deprecated as of v3.11.0 in favor of
+`resolve_slurm_options()` and `resolve_pbs_options()`, which can be extended
+with new fields without breaking positional unpacking.
+```
+
+## Requesting a specific queue, partition or QOS
+
+Callers that want a particular scheduler target -- for example a test suite
+that should run in the `debug` QOS -- can ask for one directly instead of
+rewriting the machine's config:
+
+```python
+from mache import MachineInfo
+from mache.parallel.slurm import SlurmSystem
+
+config = MachineInfo(machine="pm-cpu").config
+options = SlurmSystem.resolve_slurm_options(
+    config=config,
+    nodes=4,
+    qos="debug",
+    desired_wall_time="02:00:00",
+)
+
+if not options.honored:
+    print(f"Falling back to the {options.qos} qos: {options.reason}")
+```
+
+A requested target is a preference, not an assertion. mache honors it when the
+machine's metadata allows it and otherwise resolves the default target,
+setting `honored = False` and putting a printable explanation in `reason`. A
+request is not honored when:
+
+- the target is not in the machine's `[parallel]` `queues` / `partitions` /
+    `qos` list,
+- clamping the node count to the target's `min_nodes`/`max_nodes` would fall
+    below `min_nodes_allowed`, or
+- `desired_wall_time` is longer than the target's `max_wallclock`.
+
+A constraint can be requested the same way. Unlike a queue, partition or QOS,
+it has no node-count or wall-clock metadata and no `[constraint.*]` section, so
+it is validated only against the machine's `[parallel] constraints` list: a
+constraint that is not on that list falls back to the machine's default with a
+`reason`, exactly as the other targets do, and a machine that defines no
+constraints ignores the request entirely.
+
+Clamping the node count on its own does *not* prevent a target from being
+honored. The clamp is reported through `effective_nodes` and `adjustment`, and
+`min_nodes_allowed` is the guard for a clamp the caller cannot live with.
+
+`requested` values of `None`, an empty string, and placeholders of the form
+`<<<default>>>` all mean "no target was requested", so config-driven callers
+can pass their raw config value through without guarding against unset
+placeholders.
+
+A request is also ignored, rather than denied, when the machine defines no
+targets of that type at all. Machines hang a concept like "debug" off
+different axes -- a partition on Chrysalis, a QOS on Frontier and Perlmutter,
+a queue on Aurora -- so a caller that asks on more than one axis should not be
+told its request was refused on the axes the machine does not use. There was
+no choice to deny, so `honored` stays `True` and `reason` stays `None`. A
+target missing from a list the machine *does* define is still a denied
+request.
+
+## Requesting a target without naming its axis
+
+Asking on every axis is still awkward for a caller whose intent is simply
+"use this machine's debug target". `scheduler_target` says it once and lets
+mache work out which axis this machine uses:
+
+```python
+options = SlurmSystem.resolve_slurm_options(
+    config=config,
+    nodes=2,
+    scheduler_target="debug",
+    desired_wall_time="00:20:00",
+)
+```
+
+This selects the `debug` partition on Chrysalis, the `debug` QOS on Frontier
+and Perlmutter (leaving the default `batch` partition in place on Frontier),
+and the `debug` queue on Aurora, with no spurious `reason` on any of them.
+Slurm machines are searched partitions-first and then QOS; PBS machines
+schedule by queue, so only queues are searched. `partition`, `qos` and `queue`
+take precedence on the axis they name, so a caller can set a broad
+`scheduler_target` and still pin one axis explicitly.
+
+Once an axis is chosen the target is resolved exactly as if it had been
+requested there, so it is still subject to that target's node and wall-clock
+metadata: `scheduler_target="debug"` with a three-hour wall time on Frontier
+falls back to the `normal` QOS and says why. A name that appears on no axis at
+all is a genuine failed request, and the `reason` lists what each axis does
+offer.
+
+When `desired_wall_time` is given, the returned `wall_time` is that value
+capped at the selected target's `max_wallclock`. The same capping is available
+on its own:
+
+```python
+from mache.parallel.system import cap_wall_time
+
+cap_wall_time("04:00:00", "00:30:00")  # "00:30:00"
+```
+
+Note that mache resolves the partition and the QOS independently and has no
+concept of one being valid only with the other. A caller that requests both is
+responsible for asking for a combination its machine accepts.
+
+## Wall-clock limits that depend on job size
+
+On some machines, the maximum wall time depends on how many nodes a job asks
+for. Frontier's `batch` partition allows 2 hours for 1-91 nodes, 6 hours for
+92-183 nodes, and 12 hours above that. These machines describe their policy
+with `max_wallclock_bins` rather than a single `max_wallclock` (see
+{ref}`dev-new-config-file`), and mache selects the bin that matches the
+resolved node count:
+
+```python
+options = SlurmSystem.resolve_slurm_options(config=config, nodes=8)
+options.max_wallclock  # "02:00:00" on Frontier
+
+options = SlurmSystem.resolve_slurm_options(config=config, nodes=200)
+options.max_wallclock  # "12:00:00" on Frontier
+```
+
+When both a partition and a QOS set a limit, the more restrictive of the two
+is reported, and that is also the limit `wall_time` is capped at.

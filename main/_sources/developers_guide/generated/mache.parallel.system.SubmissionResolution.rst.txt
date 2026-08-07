@@ -23,6 +23,8 @@
 
    .. autosummary::
    
+      ~SubmissionResolution.honored
+      ~SubmissionResolution.reason
       ~SubmissionResolution.target
       ~SubmissionResolution.requested_nodes
       ~SubmissionResolution.effective_nodes

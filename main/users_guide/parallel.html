@@ -57,6 +57,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#using-this-in-generated-job-scripts">Using this in generated job scripts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#slurm-distribution-options">Slurm distribution options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#selecting-scheduler-options-by-node-count">Selecting scheduler options by node count</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requesting-a-specific-queue-partition-or-qos">Requesting a specific queue, partition or QOS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requesting-a-target-without-naming-its-axis">Requesting a target without naming its axis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wall-clock-limits-that-depend-on-job-size">Wall-clock limits that depend on job size</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
@@ -202,7 +205,8 @@ provide a config override when they intentionally want thread-level placement.</
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_account_defaults()</span></code> to populate account/partition/QOS.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_queue_specs()</span></code>, <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_partition_specs()</span></code> or
 <code class="docutils literal notranslate"><span class="pre">MachineInfo.get_qos_specs()</span></code> for optional scheduler-target policy
-metadata (<code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>) when available.</p></li>
+metadata (<code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max_wallclock_bins</span></code>) when available.</p></li>
 <li><p>Render scheduler headers (<code class="docutils literal notranslate"><span class="pre">#SBATCH</span></code> or <code class="docutils literal notranslate"><span class="pre">#PBS</span></code>) in your template logic.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> to build the executable line.</p></li>
 </ul>
@@ -229,19 +233,138 @@ machine metadata:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target(config,</span> <span class="pre">target_type,</span> <span class="pre">nodes)</span></code> selects
 one of <code class="docutils literal notranslate"><span class="pre">queue</span></code>, <code class="docutils literal notranslate"><span class="pre">partition</span></code>, or <code class="docutils literal notranslate"><span class="pre">qos</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission(config,</span> <span class="pre">nodes,</span> <span class="pre">target_type,</span>&#160;&#160; <span class="pre">min_nodes_allowed=None)</span></code> returns a <code class="docutils literal notranslate"><span class="pre">SubmissionResolution</span></code> with fields
-<code class="docutils literal notranslate"><span class="pre">target</span></code>, <code class="docutils literal notranslate"><span class="pre">requested_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, and <code class="docutils literal notranslate"><span class="pre">adjustment</span></code>
-(<code class="docutils literal notranslate"><span class="pre">exact</span></code>, <code class="docutils literal notranslate"><span class="pre">decrease</span></code>, or <code class="docutils literal notranslate"><span class="pre">increase</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None)</span></code>
-returns <code class="docutils literal notranslate"><span class="pre">(partition,</span> <span class="pre">qos,</span> <span class="pre">constraint,</span> <span class="pre">gpus_per_node,</span> <span class="pre">max_wallclock,</span>&#160;&#160; <span class="pre">effective_nodes)</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None)</span></code> returns
-<code class="docutils literal notranslate"><span class="pre">(queue,</span> <span class="pre">constraint,</span> <span class="pre">gpus_per_node,</span> <span class="pre">max_wallclock,</span> <span class="pre">filesystems,</span>&#160;&#160; <span class="pre">effective_nodes)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission(config,</span> <span class="pre">nodes,</span> <span class="pre">target_type,</span>&#160;&#160; <span class="pre">min_nodes_allowed=None,</span> <span class="pre">requested=None,</span> <span class="pre">desired_wall_time=None)</span></code> returns a
+<code class="docutils literal notranslate"><span class="pre">SubmissionResolution</span></code> with fields <code class="docutils literal notranslate"><span class="pre">target</span></code>, <code class="docutils literal notranslate"><span class="pre">requested_nodes</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">adjustment</span></code> (<code class="docutils literal notranslate"><span class="pre">exact</span></code>, <code class="docutils literal notranslate"><span class="pre">decrease</span></code>, or <code class="docutils literal notranslate"><span class="pre">increase</span></code>),
+<code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SlurmSystem.resolve_slurm_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None,</span>&#160;&#160; <span class="pre">partition=None,</span> <span class="pre">qos=None,</span> <span class="pre">constraint=None,</span> <span class="pre">desired_wall_time=None,</span>&#160;&#160; <span class="pre">scheduler_target=None)</span></code> returns a <code class="docutils literal notranslate"><span class="pre">SlurmOptions</span></code> object with fields
+<code class="docutils literal notranslate"><span class="pre">partition</span></code>, <code class="docutils literal notranslate"><span class="pre">qos</span></code>, <code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">wall_time</span></code>, <code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PbsSystem.resolve_pbs_options(config,</span> <span class="pre">nodes,</span> <span class="pre">min_nodes_allowed=None,</span>&#160;&#160; <span class="pre">queue=None,</span> <span class="pre">constraint=None,</span> <span class="pre">desired_wall_time=None,</span>&#160;&#160; <span class="pre">scheduler_target=None)</span></code> returns a <code class="docutils literal notranslate"><span class="pre">PbsOptions</span></code> object with fields <code class="docutils literal notranslate"><span class="pre">queue</span></code>,
+<code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code>, <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>, <code class="docutils literal notranslate"><span class="pre">filesystems</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">wall_time</span></code>, <code class="docutils literal notranslate"><span class="pre">honored</span></code>, and <code class="docutils literal notranslate"><span class="pre">reason</span></code>.</p></li>
 </ul>
 <p>For invalid gaps between scheduler ranges, node count is adjusted to the
 nearest valid value, preferring lower adjustments when feasible. If
 <code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code> disallows lower adjustments, resolution moves to the next
 valid higher range. If no feasible target exists, these functions raise
 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">SlurmSystem.get_slurm_options()</span></code> and <code class="docutils literal notranslate"><span class="pre">PbsSystem.get_pbs_options()</span></code> return the
+same values as tuples. They are deprecated as of v3.11.0 in favor of
+<code class="docutils literal notranslate"><span class="pre">resolve_slurm_options()</span></code> and <code class="docutils literal notranslate"><span class="pre">resolve_pbs_options()</span></code>, which can be extended
+with new fields without breaking positional unpacking.</p>
+</div>
+</section>
+<section id="requesting-a-specific-queue-partition-or-qos">
+<h2>Requesting a specific queue, partition or QOS<a class="headerlink" href="#requesting-a-specific-queue-partition-or-qos" title="Link to this heading"></a></h2>
+<p>Callers that want a particular scheduler target – for example a test suite
+that should run in the <code class="docutils literal notranslate"><span class="pre">debug</span></code> QOS – can ask for one directly instead of
+rewriting the machine’s config:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmSystem</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="s2">&quot;pm-cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">config</span>
+<span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">qos</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">honored</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Falling back to the </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="si">}</span><span class="s2"> qos: </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A requested target is a preference, not an assertion. mache honors it when the
+machine’s metadata allows it and otherwise resolves the default target,
+setting <code class="docutils literal notranslate"><span class="pre">honored</span> <span class="pre">=</span> <span class="pre">False</span></code> and putting a printable explanation in <code class="docutils literal notranslate"><span class="pre">reason</span></code>. A
+request is not honored when:</p>
+<ul class="simple">
+<li><p>the target is not in the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> <code class="docutils literal notranslate"><span class="pre">queues</span></code> / <code class="docutils literal notranslate"><span class="pre">partitions</span></code> /
+<code class="docutils literal notranslate"><span class="pre">qos</span></code> list,</p></li>
+<li><p>clamping the node count to the target’s <code class="docutils literal notranslate"><span class="pre">min_nodes</span></code>/<code class="docutils literal notranslate"><span class="pre">max_nodes</span></code> would fall
+below <code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code>, or</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">desired_wall_time</span></code> is longer than the target’s <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>.</p></li>
+</ul>
+<p>A constraint can be requested the same way. Unlike a queue, partition or QOS,
+it has no node-count or wall-clock metadata and no <code class="docutils literal notranslate"><span class="pre">[constraint.*]</span></code> section, so
+it is validated only against the machine’s <code class="docutils literal notranslate"><span class="pre">[parallel]</span> <span class="pre">constraints</span></code> list: a
+constraint that is not on that list falls back to the machine’s default with a
+<code class="docutils literal notranslate"><span class="pre">reason</span></code>, exactly as the other targets do, and a machine that defines no
+constraints ignores the request entirely.</p>
+<p>Clamping the node count on its own does <em>not</em> prevent a target from being
+honored. The clamp is reported through <code class="docutils literal notranslate"><span class="pre">effective_nodes</span></code> and <code class="docutils literal notranslate"><span class="pre">adjustment</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">min_nodes_allowed</span></code> is the guard for a clamp the caller cannot live with.</p>
+<p><code class="docutils literal notranslate"><span class="pre">requested</span></code> values of <code class="docutils literal notranslate"><span class="pre">None</span></code>, an empty string, and placeholders of the form
+<code class="docutils literal notranslate"><span class="pre">&lt;&lt;&lt;default&gt;&gt;&gt;</span></code> all mean “no target was requested”, so config-driven callers
+can pass their raw config value through without guarding against unset
+placeholders.</p>
+<p>A request is also ignored, rather than denied, when the machine defines no
+targets of that type at all. Machines hang a concept like “debug” off
+different axes – a partition on Chrysalis, a QOS on Frontier and Perlmutter,
+a queue on Aurora – so a caller that asks on more than one axis should not be
+told its request was refused on the axes the machine does not use. There was
+no choice to deny, so <code class="docutils literal notranslate"><span class="pre">honored</span></code> stays <code class="docutils literal notranslate"><span class="pre">True</span></code> and <code class="docutils literal notranslate"><span class="pre">reason</span></code> stays <code class="docutils literal notranslate"><span class="pre">None</span></code>. A
+target missing from a list the machine <em>does</em> define is still a denied
+request.</p>
+</section>
+<section id="requesting-a-target-without-naming-its-axis">
+<h2>Requesting a target without naming its axis<a class="headerlink" href="#requesting-a-target-without-naming-its-axis" title="Link to this heading"></a></h2>
+<p>Asking on every axis is still awkward for a caller whose intent is simply
+“use this machine’s debug target”. <code class="docutils literal notranslate"><span class="pre">scheduler_target</span></code> says it once and lets
+mache work out which axis this machine uses:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">scheduler_target</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;00:20:00&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This selects the <code class="docutils literal notranslate"><span class="pre">debug</span></code> partition on Chrysalis, the <code class="docutils literal notranslate"><span class="pre">debug</span></code> QOS on Frontier
+and Perlmutter (leaving the default <code class="docutils literal notranslate"><span class="pre">batch</span></code> partition in place on Frontier),
+and the <code class="docutils literal notranslate"><span class="pre">debug</span></code> queue on Aurora, with no spurious <code class="docutils literal notranslate"><span class="pre">reason</span></code> on any of them.
+Slurm machines are searched partitions-first and then QOS; PBS machines
+schedule by queue, so only queues are searched. <code class="docutils literal notranslate"><span class="pre">partition</span></code>, <code class="docutils literal notranslate"><span class="pre">qos</span></code> and <code class="docutils literal notranslate"><span class="pre">queue</span></code>
+take precedence on the axis they name, so a caller can set a broad
+<code class="docutils literal notranslate"><span class="pre">scheduler_target</span></code> and still pin one axis explicitly.</p>
+<p>Once an axis is chosen the target is resolved exactly as if it had been
+requested there, so it is still subject to that target’s node and wall-clock
+metadata: <code class="docutils literal notranslate"><span class="pre">scheduler_target=&quot;debug&quot;</span></code> with a three-hour wall time on Frontier
+falls back to the <code class="docutils literal notranslate"><span class="pre">normal</span></code> QOS and says why. A name that appears on no axis at
+all is a genuine failed request, and the <code class="docutils literal notranslate"><span class="pre">reason</span></code> lists what each axis does
+offer.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">desired_wall_time</span></code> is given, the returned <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is that value
+capped at the selected target’s <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code>. The same capping is available
+on its own:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">cap_wall_time</span>
+
+<span class="n">cap_wall_time</span><span class="p">(</span><span class="s2">&quot;04:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;00:30:00&quot;</span><span class="p">)</span>  <span class="c1"># &quot;00:30:00&quot;</span>
+</pre></div>
+</div>
+<p>Note that mache resolves the partition and the QOS independently and has no
+concept of one being valid only with the other. A caller that requests both is
+responsible for asking for a combination its machine accepts.</p>
+</section>
+<section id="wall-clock-limits-that-depend-on-job-size">
+<h2>Wall-clock limits that depend on job size<a class="headerlink" href="#wall-clock-limits-that-depend-on-job-size" title="Link to this heading"></a></h2>
+<p>On some machines, the maximum wall time depends on how many nodes a job asks
+for. Frontier’s <code class="docutils literal notranslate"><span class="pre">batch</span></code> partition allows 2 hours for 1-91 nodes, 6 hours for
+92-183 nodes, and 12 hours above that. These machines describe their policy
+with <code class="docutils literal notranslate"><span class="pre">max_wallclock_bins</span></code> rather than a single <code class="docutils literal notranslate"><span class="pre">max_wallclock</span></code> (see
+<a class="reference internal" href="../developers_guide/adding_new_machine.html#dev-new-config-file"><span class="std std-ref">Adding a new config file</span></a>), and mache selects the bin that matches the
+resolved node count:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;02:00:00&quot; on Frontier</span>
+
+<span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;12:00:00&quot; on Frontier</span>
+</pre></div>
+</div>
+<p>When both a partition and a QOS set a limit, the more restrictive of the two
+is reported, and that is also the limit <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is capped at.</p>
 </section>
 </section>
 
