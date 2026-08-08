@@ -1,4 +1,8 @@
+import argparse
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from mache.deploy import bootstrap
 
@@ -379,3 +383,247 @@ def test_merge_pixi_toml_dependencies_adds_missing_channels(
 
     text = target.read_text(encoding='utf-8')
     assert 'channels = ["conda-forge", "custom"]' in text
+
+
+def _fail_check_call(failures, monkeypatch):
+    """Make ``check_call`` fail ``failures`` times, then succeed."""
+    calls = {'count': 0}
+
+    def fake_check_call(commands, log_file, is_quiet, **kwargs):
+        calls['count'] += 1
+        if calls['count'] <= failures:
+            raise subprocess.CalledProcessError(1, commands)
+        return 'ok'
+
+    monkeypatch.setattr(bootstrap, 'check_call', fake_check_call)
+    monkeypatch.setattr(bootstrap.time, 'sleep', lambda seconds: None)
+    return calls
+
+
+def test_check_call_with_retries_skips_on_retry_when_first_try_works(
+    monkeypatch, tmp_path: Path
+):
+    log_filename = str(tmp_path / 'bootstrap.log')
+    _fail_check_call(0, monkeypatch)
+    retries = []
+
+    result = bootstrap.check_call_with_retries(
+        ['pixi', 'install'],
+        log_filename,
+        True,
+        on_retry=lambda: retries.append(1),
+    )
+
+    assert result == 'ok'
+    assert retries == []
+
+
+def test_check_call_with_retries_calls_on_retry_between_attempts(
+    monkeypatch, tmp_path: Path
+):
+    log_filename = str(tmp_path / 'bootstrap.log')
+    calls = _fail_check_call(2, monkeypatch)
+    retries = []
+
+    result = bootstrap.check_call_with_retries(
+        ['pixi', 'install'],
+        log_filename,
+        True,
+        on_retry=lambda: retries.append(1),
+    )
+
+    assert result == 'ok'
+    assert calls['count'] == 3
+    assert len(retries) == 2
+
+
+def test_check_call_with_retries_never_calls_on_retry_after_last_failure(
+    monkeypatch, tmp_path: Path
+):
+    log_filename = str(tmp_path / 'bootstrap.log')
+    calls = _fail_check_call(5, monkeypatch)
+    retries = []
+
+    with pytest.raises(subprocess.CalledProcessError):
+        bootstrap.check_call_with_retries(
+            ['pixi', 'install'],
+            log_filename,
+            True,
+            retries=3,
+            on_retry=lambda: retries.append(1),
+        )
+
+    assert calls['count'] == 3
+    assert len(retries) == 2
+
+
+def test_check_call_with_retries_ignores_on_retry_failures(
+    monkeypatch, tmp_path: Path
+):
+    log_filename = str(tmp_path / 'bootstrap.log')
+    _fail_check_call(5, monkeypatch)
+
+    def broken_on_retry():
+        raise RuntimeError('cache clear exploded')
+
+    with pytest.raises(subprocess.CalledProcessError):
+        bootstrap.check_call_with_retries(
+            ['pixi', 'install'],
+            log_filename,
+            True,
+            retries=3,
+            on_retry=broken_on_retry,
+        )
+
+    log_text = Path(log_filename).read_text(encoding='utf-8')
+    assert 'cache clear exploded' in log_text
+
+
+def test_clear_pixi_repodata_cache_runs_pixi_clean_cache(
+    monkeypatch, tmp_path: Path
+):
+    recorded = {}
+
+    def fake_check_call(commands, log_filename, quiet, **kwargs):
+        recorded['commands'] = commands
+        recorded['kwargs'] = kwargs
+
+    monkeypatch.setattr(bootstrap, 'check_call', fake_check_call)
+    monkeypatch.setenv('PIXI_CACHE_DIR', str(tmp_path / 'pixi-cache'))
+
+    bootstrap._clear_pixi_repodata_cache(
+        pixi_exe='/path/to/pixi',
+        log_filename=str(tmp_path / 'bootstrap.log'),
+        quiet=True,
+    )
+
+    assert recorded['commands'] == [
+        '/path/to/pixi',
+        'clean',
+        'cache',
+        '--repodata',
+        '-y',
+    ]
+    env = recorded['kwargs']['env']
+    assert env['PIXI_CACHE_DIR'] == str(tmp_path / 'pixi-cache')
+    assert 'PIXI_IN_SHELL' not in env
+
+
+def test_clear_pixi_repodata_cache_tolerates_failure(
+    monkeypatch, tmp_path: Path
+):
+    def fake_check_call(commands, log_filename, quiet, **kwargs):
+        raise subprocess.CalledProcessError(1, commands)
+
+    monkeypatch.setattr(bootstrap, 'check_call', fake_check_call)
+
+    log_filename = tmp_path / 'bootstrap.log'
+    bootstrap._clear_pixi_repodata_cache(
+        pixi_exe='/path/to/pixi',
+        log_filename=str(log_filename),
+        quiet=True,
+    )
+
+    log_text = log_filename.read_text(encoding='utf-8')
+    assert 'Could not clear the pixi repodata cache' in log_text
+
+
+def _stub_bootstrap_run(monkeypatch, tmp_path: Path, *, dev_mache):
+    """Stub out everything ``_run`` does apart from the pixi install."""
+    monkeypatch.chdir(tmp_path)
+
+    args = argparse.Namespace(
+        software='polaris',
+        quiet=True,
+        mache_version='3.11.0',
+        pixi=None,
+        pixi_path=None,
+        python='3.12',
+        recreate=False,
+        mache_fork='E3SM-Project/mache' if dev_mache else None,
+        mache_branch='main' if dev_mache else None,
+    )
+
+    monkeypatch.setattr(bootstrap, '_parse_args', lambda: args)
+    monkeypatch.setattr(bootstrap, 'check_location', lambda software: None)
+    monkeypatch.setattr(
+        bootstrap,
+        '_get_pixi_executable',
+        lambda pixi, log_filename, quiet: '/path/to/pixi',
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        '_write_bootstrap_pixi_config',
+        lambda bootstrap_dir: None,
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        '_clone_mache_repo',
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        '_copy_mache_pixi_toml',
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        '_write_bootstrap_pixi_toml_with_mache',
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        'build_pixi_shell_hook_prefix',
+        lambda **kwargs: 'prefix &&',
+    )
+    monkeypatch.setattr(
+        bootstrap,
+        'install_dev_mache',
+        lambda **kwargs: None,
+    )
+
+    recorded = {}
+
+    def fake_check_call_with_retries(commands, log_filename, quiet, **kwargs):
+        recorded['commands'] = commands
+        recorded['kwargs'] = kwargs
+
+    monkeypatch.setattr(
+        bootstrap,
+        'check_call_with_retries',
+        fake_check_call_with_retries,
+    )
+
+    cleared = []
+    monkeypatch.setattr(
+        bootstrap,
+        '_clear_pixi_repodata_cache',
+        lambda **kwargs: cleared.append(kwargs),
+    )
+
+    return recorded, cleared
+
+
+@pytest.mark.parametrize('dev_mache', [True, False])
+def test_run_clears_repodata_cache_between_install_attempts(
+    monkeypatch, tmp_path: Path, dev_mache: bool
+):
+    recorded, cleared = _stub_bootstrap_run(
+        monkeypatch, tmp_path, dev_mache=dev_mache
+    )
+
+    log_filename = str(tmp_path / 'bootstrap.log')
+    bootstrap._run(log_filename)
+
+    assert recorded['commands'] == ['/path/to/pixi', 'install']
+
+    on_retry = recorded['kwargs']['on_retry']
+    on_retry()
+
+    assert cleared == [
+        {
+            'pixi_exe': '/path/to/pixi',
+            'log_filename': log_filename,
+            'quiet': True,
+        }
+    ]
