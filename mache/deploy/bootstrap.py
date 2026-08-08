@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
+from functools import partial
 from pathlib import Path
 from typing import Dict, List  # noqa: F401
 
@@ -344,9 +345,18 @@ def check_call_with_retries(
     *,
     retries=3,
     retry_delay=2.0,
+    on_retry=None,
     **popen_kwargs,
 ):
-    """Run a command with a few retries for transient pixi/network failures."""
+    """Run a command with a few retries for transient pixi/network failures.
+
+    If ``on_retry`` is given, it is called with no arguments after a failed
+    attempt that will be followed by another attempt.  It is never called
+    before the first attempt or after the final failure.  It is meant to
+    change whatever state made the previous attempt fail (for example,
+    clearing a stale repodata cache).  A failure inside ``on_retry`` is
+    logged and ignored so that it cannot mask the original error.
+    """
 
     last_error = None
     for attempt in range(1, retries + 1):
@@ -357,18 +367,67 @@ def check_call_with_retries(
             if attempt >= retries:
                 raise
 
-            message = (
+            _log_message(
                 f'Command failed on attempt {attempt}/{retries}; '
-                f'retrying in {retry_delay:.0f}s...\n'
+                f'retrying in {retry_delay:.0f}s...\n',
+                log_filename,
+                quiet,
             )
-            with open(log_filename, 'a', encoding='utf-8') as log_file:
-                log_file.write(message)
-            if not quiet:
-                print(message)
+            if on_retry is not None:
+                _run_retry_hook(on_retry, log_filename, quiet)
             time.sleep(retry_delay)
 
     if last_error is not None:
         raise last_error
+
+
+def _log_message(message, log_filename, quiet):
+    """Append a message to the log file and echo it unless quiet."""
+    with open(log_filename, 'a', encoding='utf-8') as log_file:
+        log_file.write(message)
+    if not quiet:
+        print(message)
+
+
+def _run_retry_hook(on_retry, log_filename, quiet):
+    """Call a retry hook, logging (but not raising) any failure."""
+    try:
+        on_retry()
+    except Exception as exc:
+        _log_message(
+            f'The retry hook failed and was ignored: {exc}\n',
+            log_filename,
+            quiet,
+        )
+
+
+def _clear_pixi_repodata_cache(*, pixi_exe, log_filename, quiet):
+    """Drop cached repodata so the next solve refetches it.
+
+    A stale repodata cache makes every retry of a failed ``pixi install``
+    read the same cached (and possibly out-of-date) package index without
+    any network traffic, so the retries cannot succeed.  Clearing the cache
+    costs a few MB of downloads on the next attempt and only happens after
+    a command has already failed.
+    """
+    _log_message(
+        'Clearing the pixi repodata cache before retrying...\n',
+        log_filename,
+        quiet,
+    )
+    try:
+        check_call(
+            [pixi_exe, 'clean', 'cache', '--repodata', '-y'],
+            log_filename,
+            quiet,
+            env=build_pixi_env(),
+        )
+    except Exception as exc:
+        _log_message(
+            f'Could not clear the pixi repodata cache: {exc}\n',
+            log_filename,
+            quiet,
+        )
 
 
 def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
@@ -555,6 +614,12 @@ def _run(log_filename):
             quiet,
             cwd=str(bootstrap_dir),
             env=build_pixi_env(),
+            on_retry=partial(
+                _clear_pixi_repodata_cache,
+                pixi_exe=pixi_exe,
+                log_filename=log_filename,
+                quiet=quiet,
+            ),
         )
 
         pixi_toml = str(pixi_toml_path.resolve())
@@ -584,6 +649,12 @@ def _run(log_filename):
             quiet,
             cwd=str(bootstrap_dir),
             env=build_pixi_env(),
+            on_retry=partial(
+                _clear_pixi_repodata_cache,
+                pixi_exe=pixi_exe,
+                log_filename=log_filename,
+                quiet=quiet,
+            ),
         )
 
 
