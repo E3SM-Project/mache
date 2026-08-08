@@ -106,6 +106,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>  <span class="c1"># noqa: F401</span>
 
@@ -443,9 +444,18 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">retry_delay</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">on_retry</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">popen_kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a command with a few retries for transient pixi/network failures.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a command with a few retries for transient pixi/network failures.</span>
+
+<span class="sd">    If ``on_retry`` is given, it is called with no arguments after a failed</span>
+<span class="sd">    attempt that will be followed by another attempt.  It is never called</span>
+<span class="sd">    before the first attempt or after the final failure.  It is meant to</span>
+<span class="sd">    change whatever state made the previous attempt fail (for example,</span>
+<span class="sd">    clearing a stale repodata cache).  A failure inside ``on_retry`` is</span>
+<span class="sd">    logged and ignored so that it cannot mask the original error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">last_error</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
@@ -456,18 +466,67 @@
             <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;=</span> <span class="n">retries</span><span class="p">:</span>
                 <span class="k">raise</span>
 
-            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_log_message</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s1">&#39;Command failed on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">retries</span><span class="si">}</span><span class="s1">; &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;retrying in </span><span class="si">{</span><span class="n">retry_delay</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">s...</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;retrying in </span><span class="si">{</span><span class="n">retry_delay</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">s...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="n">log_filename</span><span class="p">,</span>
+                <span class="n">quiet</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
-                <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">on_retry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_run_retry_hook</span><span class="p">(</span><span class="n">on_retry</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">last_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">last_error</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_message</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Append a message to the log file and echo it unless quiet.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_retry_hook</span><span class="p">(</span><span class="n">on_retry</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Call a retry hook, logging (but not raising) any failure.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">on_retry</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">_log_message</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;The retry hook failed and was ignored: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clear_pixi_repodata_cache</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">pixi_exe</span><span class="p">,</span> <span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop cached repodata so the next solve refetches it.</span>
+
+<span class="sd">    A stale repodata cache makes every retry of a failed ``pixi install``</span>
+<span class="sd">    read the same cached (and possibly out-of-date) package index without</span>
+<span class="sd">    any network traffic, so the retries cannot succeed.  Clearing the cache</span>
+<span class="sd">    costs a few MB of downloads on the next attempt and only happens after</span>
+<span class="sd">    a command has already failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_log_message</span><span class="p">(</span>
+        <span class="s1">&#39;Clearing the pixi repodata cache before retrying...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">log_filename</span><span class="p">,</span>
+        <span class="n">quiet</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">check_call</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">&#39;clean&#39;</span><span class="p">,</span> <span class="s1">&#39;cache&#39;</span><span class="p">,</span> <span class="s1">&#39;--repodata&#39;</span><span class="p">,</span> <span class="s1">&#39;-y&#39;</span><span class="p">],</span>
+            <span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">_log_message</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Could not clear the pixi repodata cache: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">log_filename</span><span class="p">,</span>
+            <span class="n">quiet</span><span class="p">,</span>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="build_pixi_shell_hook_prefix">
@@ -666,6 +725,12 @@
             <span class="n">quiet</span><span class="p">,</span>
             <span class="n">cwd</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="p">),</span>
             <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
+            <span class="n">on_retry</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">_clear_pixi_repodata_cache</span><span class="p">,</span>
+                <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+                <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
         <span class="n">pixi_toml</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
@@ -695,6 +760,12 @@
             <span class="n">quiet</span><span class="p">,</span>
             <span class="n">cwd</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="p">),</span>
             <span class="n">env</span><span class="o">=</span><span class="n">build_pixi_env</span><span class="p">(),</span>
+            <span class="n">on_retry</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">_clear_pixi_repodata_cache</span><span class="p">,</span>
+                <span class="n">pixi_exe</span><span class="o">=</span><span class="n">pixi_exe</span><span class="p">,</span>
+                <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
+                <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
 
