@@ -197,7 +197,7 @@ machine-provided HDF5/NetCDF bundle.  New code should prefer
 <p><strong>Recommended pattern for downstream packages:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">if</span> <span class="n">needs_newer_cmake</span><span class="p">:</span>
-    <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;cmake&quot;</span><span class="p">)</span>
+    <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"cmake"</span><span class="p">)</span>
 
 <span class="n">make_spack_env</span><span class="p">(</span>
     <span class="o">...</span><span class="p">,</span>
@@ -206,15 +206,15 @@ machine-provided HDF5/NetCDF bundle.  New code should prefer
 </pre></div>
 </div>
 <p>To opt out of the machine-provided HDF5/NetCDF bundle, use either:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hdf5_netcdf&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span><span class="s2">"hdf5_netcdf"</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>or the individual package names:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span>
-    <span class="s2">&quot;hdf5&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;netcdf-c&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;netcdf-fortran&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;parallel-netcdf&quot;</span><span class="p">,</span>
+    <span class="s2">"hdf5"</span><span class="p">,</span>
+    <span class="s2">"netcdf-c"</span><span class="p">,</span>
+    <span class="s2">"netcdf-fortran"</span><span class="p">,</span>
+    <span class="s2">"parallel-netcdf"</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -241,7 +241,7 @@ activated in the user’s shell.</p></li>
     <span class="n">env_name</span><span class="o">=</span><span class="n">spack_env</span><span class="p">,</span>
     <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
     <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-    <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
+    <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>  <span class="c1"># or 'csh'</span>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
@@ -293,7 +293,7 @@ environment variables for a given machine, compiler, and MPI library.</p>
     <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
     <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
     <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-    <span class="n">shell</span><span class="o">=</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;csh&#39;</span>
+    <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>  <span class="c1"># or 'csh'</span>
     <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
     <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>

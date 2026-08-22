@@ -112,51 +112,51 @@
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.cli.add_deploy_subparser.html#mache.deploy.cli.add_deploy_subparser">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_deploy_subparser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">_SubParsersAction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">deploy</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;deploy&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Deploy E3SM software environments&#39;</span>
+        <span class="s1">'deploy'</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">'Deploy E3SM software environments'</span>
     <span class="p">)</span>
-    <span class="n">deploy_sub</span> <span class="o">=</span> <span class="n">deploy</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s1">&#39;deploy_cmd&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">deploy_sub</span> <span class="o">=</span> <span class="n">deploy</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s1">'deploy_cmd'</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">p_init</span> <span class="o">=</span> <span class="n">deploy_sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;init&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Initialize deploy files in a repo&#39;</span>
+        <span class="s1">'init'</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">'Initialize deploy files in a repo'</span>
     <span class="p">)</span>
     <span class="n">p_update</span> <span class="o">=</span> <span class="n">deploy_sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;update&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Update deploy files to a new mache version&#39;</span><span class="p">,</span>
+        <span class="s1">'update'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Update deploy files to a new mache version'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">for</span> <span class="n">parser</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p_init</span><span class="p">,</span> <span class="n">p_update</span><span class="p">):</span>
         <span class="c1"># common args for init and update</span>
 
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s1">&#39;--repo-root&#39;</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to target repo root, default is .&#39;</span><span class="p">,</span>
+            <span class="s1">'--repo-root'</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="s1">'.'</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">'Path to target repo root, default is .'</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s1">&#39;--software&#39;</span><span class="p">,</span>
+            <span class="s1">'--software'</span><span class="p">,</span>
             <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Target software name (e.g. polaris)&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">'Target software name (e.g. polaris)'</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s1">&#39;--mache-version&#39;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Pinned mache version for this repo, default is the current &#39;</span>
-            <span class="s1">&#39;mache version&#39;</span><span class="p">,</span>
+            <span class="s1">'--mache-version'</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">'Pinned mache version for this repo, default is the current '</span>
+            <span class="s1">'mache version'</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">p_init</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--overwrite&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Overwrite existing deploy files&#39;</span><span class="p">,</span>
+        <span class="s1">'--overwrite'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Overwrite existing deploy files'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">p_run</span> <span class="o">=</span> <span class="n">deploy_sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;run&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Run deployment (typically invoked by a target-software &#39;</span>
-        <span class="s1">&#39;deploy.py)&#39;</span><span class="p">,</span>
+        <span class="s1">'run'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Run deployment (typically invoked by a target-software '</span>
+        <span class="s1">'deploy.py)'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">spec</span> <span class="o">=</span> <span class="n">load_repo_cli_spec_file</span><span class="p">()</span>
-    <span class="n">run_args</span> <span class="o">=</span> <span class="n">filter_args_by_route</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">)</span>
+    <span class="n">run_args</span> <span class="o">=</span> <span class="n">filter_args_by_route</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s1">'run'</span><span class="p">)</span>
     <span class="n">add_args_to_parser</span><span class="p">(</span><span class="n">p_run</span><span class="p">,</span> <span class="n">run_args</span><span class="p">)</span>
 
     <span class="n">deploy</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_dispatch_deploy</span><span class="p">)</span></div>
@@ -164,7 +164,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dispatch_deploy</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">&#39;init&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">'init'</span><span class="p">:</span>
         <span class="n">init_or_update_repo</span><span class="p">(</span>
             <span class="n">repo_root</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
             <span class="n">software</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">software</span><span class="p">,</span>
@@ -172,10 +172,10 @@
             <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Initialized deploy files in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Initialized deploy files in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">&#39;update&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">'update'</span><span class="p">:</span>
         <span class="n">init_or_update_repo</span><span class="p">(</span>
             <span class="n">repo_root</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
             <span class="n">software</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">software</span><span class="p">,</span>
@@ -183,15 +183,15 @@
             <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updated deploy files in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Updated deploy files in </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span> <span class="o">==</span> <span class="s1">'run'</span><span class="p">:</span>
         <span class="n">run_deploy</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-        <span class="s1">&#39;Not implemented yet: mache deploy &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span><span class="p">)</span>
+        <span class="s1">'Not implemented yet: mache deploy '</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">deploy_cmd</span><span class="p">)</span>
     <span class="p">)</span>
 </pre></div>
 

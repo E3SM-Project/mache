@@ -105,58 +105,58 @@
 <div class="viewcode-block" id="add_jigsaw_subparser">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.jigsaw.cli.add_jigsaw_subparser.html#mache.jigsaw.cli.add_jigsaw_subparser">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_jigsaw_subparser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">_SubParsersAction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the ``mache jigsaw`` command group to the top-level CLI.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Add the ``mache jigsaw`` command group to the top-level CLI."""</span>
     <span class="n">jigsaw</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;jigsaw&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Build and install JIGSAW/JIGSAW-Python&#39;</span><span class="p">,</span>
+        <span class="s1">'jigsaw'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Build and install JIGSAW/JIGSAW-Python'</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">jigsaw_sub</span> <span class="o">=</span> <span class="n">jigsaw</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s1">&#39;jigsaw_cmd&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">jigsaw_sub</span> <span class="o">=</span> <span class="n">jigsaw</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s1">'jigsaw_cmd'</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">p_install</span> <span class="o">=</span> <span class="n">jigsaw_sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s1">&#39;install&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Build and install jigsawpy into pixi or conda&#39;</span><span class="p">,</span>
+        <span class="s1">'install'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Build and install jigsawpy into pixi or conda'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--jigsaw-python-path&#39;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;jigsaw-python&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to jigsaw-python source relative to --repo-root.&#39;</span><span class="p">,</span>
+        <span class="s1">'--jigsaw-python-path'</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s1">'jigsaw-python'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Path to jigsaw-python source relative to --repo-root.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--repo-root&#39;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Repository root containing jigsaw-python.&#39;</span><span class="p">,</span>
+        <span class="s1">'--repo-root'</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s1">'.'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Repository root containing jigsaw-python.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--quiet&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Suppress command output to stdout and only write logs.&#39;</span><span class="p">,</span>
+        <span class="s1">'--quiet'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Suppress command output to stdout and only write logs.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--pixi-feature&#39;</span><span class="p">,</span>
+        <span class="s1">'--pixi-feature'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s1">&#39;Optional pixi feature to target for installation. &#39;</span>
-            <span class="s1">&#39;Useful when active environment is default but CI &#39;</span>
-            <span class="s1">&#39;environments are also defined in the same manifest.&#39;</span>
+            <span class="s1">'Optional pixi feature to target for installation. '</span>
+            <span class="s1">'Useful when active environment is default but CI '</span>
+            <span class="s1">'environments are also defined in the same manifest.'</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--pixi-manifest&#39;</span><span class="p">,</span>
+        <span class="s1">'--pixi-manifest'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s1">&#39;Optional path to a pixi manifest file or workspace &#39;</span>
-            <span class="s1">&#39;directory to update when using the pixi backend. Useful &#39;</span>
-            <span class="s1">&#39;for local, untracked developer manifests.&#39;</span>
+            <span class="s1">'Optional path to a pixi manifest file or workspace '</span>
+            <span class="s1">'directory to update when using the pixi backend. Useful '</span>
+            <span class="s1">'for local, untracked developer manifests.'</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--pixi-local&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'--pixi-local'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s1">&#39;Install into an auto-managed local pixi manifest copy under &#39;</span>
-            <span class="s1">&#39;.mache_cache/jigsaw/pixi-local instead of mutating the &#39;</span>
-            <span class="s1">&#39;source manifest directly.&#39;</span>
+            <span class="s1">'Install into an auto-managed local pixi manifest copy under '</span>
+            <span class="s1">'.mache_cache/jigsaw/pixi-local instead of mutating the '</span>
+            <span class="s1">'source manifest directly.'</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -165,7 +165,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dispatch_jigsaw</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jigsaw_cmd</span> <span class="o">==</span> <span class="s1">&#39;install&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jigsaw_cmd</span> <span class="o">==</span> <span class="s1">'install'</span><span class="p">:</span>
         <span class="n">deploy_jigsawpy</span><span class="p">(</span>
             <span class="n">jigsaw_python_path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">jigsaw_python_path</span><span class="p">,</span>
             <span class="n">repo_root</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
@@ -178,7 +178,7 @@
         <span class="k">return</span>
 
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-        <span class="s1">&#39;Not implemented yet: mache jigsaw &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">jigsaw_cmd</span><span class="p">)</span>
+        <span class="s1">'Not implemented yet: mache jigsaw '</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">jigsaw_cmd</span><span class="p">)</span>
     <span class="p">)</span>
 </pre></div>
 

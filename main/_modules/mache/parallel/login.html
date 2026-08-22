@@ -105,21 +105,21 @@
 <div class="viewcode-block" id="LoginSystem">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LoginSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource manager for login nodes (no parallel execution).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resource manager for login nodes (no parallel execution)."""</span>
 
 <div class="viewcode-block" id="LoginSystem.__init__">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="n">login_cores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;login_cores&#39;</span><span class="p">)</span>
+        <span class="n">login_cores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_cores'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">login_cores</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s1">&#39;login_cores must be set in the config for the login system.&#39;</span>
+                <span class="s1">'login_cores must be set in the config for the login system.'</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="n">login_cores</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">&#39;login_gpus&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_gpus'</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="mi">1</span>
@@ -132,9 +132,9 @@
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the parallel command-line arguments related to resources.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
         <span class="c1"># Not supported for login system</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parallel execution is not allowed on login nodes.&#39;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Parallel execution is not allowed on login nodes.'</span><span class="p">)</span></div>
 
 </pre></div>
 

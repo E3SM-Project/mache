@@ -104,30 +104,30 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>
 
 <span class="n">JOB_ENV_VARS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;slurm&#39;</span><span class="p">:</span> <span class="s1">&#39;SLURM_JOB_ID&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;pbs&#39;</span><span class="p">:</span> <span class="s1">&#39;PBS_JOBID&#39;</span><span class="p">,</span>
+    <span class="s1">'slurm'</span><span class="p">:</span> <span class="s1">'SLURM_JOB_ID'</span><span class="p">,</span>
+    <span class="s1">'pbs'</span><span class="p">:</span> <span class="s1">'PBS_JOBID'</span><span class="p">,</span>
 <span class="p">}</span>
 
 
 <div class="viewcode-block" id="get_parallel_system">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.parallel.get_parallel_system.html#mache.parallel.get_parallel_system">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_parallel_system</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParallelSystem</span><span class="p">:</span>
-    <span class="n">system</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;system&#39;</span><span class="p">)</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'system'</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">system_name</span><span class="p">,</span> <span class="n">env_var</span> <span class="ow">in</span> <span class="n">JOB_ENV_VARS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="n">system_name</span> <span class="ow">and</span> <span class="n">env_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-            <span class="n">system</span> <span class="o">=</span> <span class="s1">&#39;login&#39;</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="s1">'login'</span>
             <span class="k">break</span>
 
-    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">&#39;slurm&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'slurm'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SlurmSystem</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">&#39;pbs&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'pbs'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">PbsSystem</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">&#39;single_node&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'single_node'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SingleNodeSystem</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">&#39;login&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'login'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">LoginSystem</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unexpected parallel system: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Unexpected parallel system: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span></div>
 
 </pre></div>
 

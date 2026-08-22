@@ -106,16 +106,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">_get_wallclock_bins</span>
 
 <span class="n">SCHEDULER_TARGET_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;queue&#39;</span><span class="p">:</span> <span class="s1">&#39;queues&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;partition&#39;</span><span class="p">:</span> <span class="s1">&#39;partitions&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;qos&#39;</span><span class="p">:</span> <span class="s1">&#39;qos&#39;</span><span class="p">,</span>
+    <span class="s1">'queue'</span><span class="p">:</span> <span class="s1">'queues'</span><span class="p">,</span>
+    <span class="s1">'partition'</span><span class="p">:</span> <span class="s1">'partitions'</span><span class="p">,</span>
+    <span class="s1">'qos'</span><span class="p">:</span> <span class="s1">'qos'</span><span class="p">,</span>
 <span class="p">}</span>
 
 
 <div class="viewcode-block" id="MachineInfo">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MachineInfo</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    An object containing information about an E3SM supported machine</span>
 
 <span class="sd">    Attributes</span>
@@ -137,9 +137,9 @@
 <span class="sd">        A list of MPI libraries for this machine if ``e3sm_supported == True``</span>
 
 <span class="sd">    os : str</span>
-<span class="sd">        The machine&#39;s operating system if ``e3sm_supported == True``</span>
+<span class="sd">        The machine's operating system if ``e3sm_supported == True``</span>
 
-<span class="sd">    e3sm_unified_mpi : {&#39;nompi&#39;, &#39;system&#39;, None}</span>
+<span class="sd">    e3sm_unified_mpi : {'nompi', 'system', None}</span>
 <span class="sd">        Which MPI type is included in the E3SM-Unified environment (if one is</span>
 <span class="sd">        loaded)</span>
 
@@ -167,12 +167,12 @@
 <span class="sd">        The name of the current user, for use in web-portal directories. This</span>
 <span class="sd">        value is also added to the ``web_portal`` and ``username`` option of</span>
 <span class="sd">        the ``config`` attribute.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="MachineInfo.__init__">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Create an object with information about the E3SM supported machine</span>
 
 <span class="sd">        Parameters</span>
@@ -184,11 +184,11 @@
 <span class="sd">        quiet : bool, optional</span>
 <span class="sd">            Whether to print warnings if the machine name is ambiguous</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">machine</span> <span class="o">=</span> <span class="n">discover_machine</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unable to discover machine from host name&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Unable to discover machine from host name'</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">machine</span> <span class="o">=</span> <span class="n">machine</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config</span><span class="p">()</span>
@@ -214,24 +214,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">web_portal_url</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())</span><span class="o">.</span><span class="n">pw_name</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s1">&#39;web_portal&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s1">&#39;web_portal&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;web_portal&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s1">'web_portal'</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s1">'web_portal'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">'web_portal'</span><span class="p">,</span> <span class="s1">'username'</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Convert the info to a format that is good for printing</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        info : str</span>
 <span class="sd">            The contents as a string for printing to the terminal</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">info</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Machine: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">machine</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;  E3SM Supported Machine: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_supported</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="sa">f</span><span class="s1">'Machine: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">machine</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'  E3SM Supported Machine: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_supported</span><span class="si">}</span><span class="s1">'</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -241,13 +241,13 @@
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="n">info</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;  Compilers: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compilers</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;  MPI libraries: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mpilibs</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;  OS: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+                <span class="sa">f</span><span class="s1">'  Compilers: </span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compilers</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+                <span class="sa">f</span><span class="s1">'  MPI libraries: </span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mpilibs</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+                <span class="sa">f</span><span class="s1">'  OS: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="si">}</span><span class="s1">'</span>
             <span class="p">)</span>
 
-        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
 
         <span class="n">print_unified</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -255,46 +255,46 @@
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">print_unified</span><span class="p">:</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">E3SM-Unified: &#39;</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">E3SM-Unified: '</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  E3SM-Unified is not currently loaded&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  E3SM-Unified is not currently loaded'</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Activation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Activation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span><span class="si">}</span><span class="s1">'</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_base</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_base</span><span class="si">}</span><span class="s1">'</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  MPI type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  MPI type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
 
         <span class="n">print_diags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">print_diags</span><span class="p">:</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Diagnostics: &#39;</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Diagnostics: '</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
 
         <span class="n">print_inputdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">print_inputdata</span><span class="p">:</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Input Data: &#39;</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Input Data: '</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  Base path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
 
-        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Config options: &#39;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">Config options: '</span>
         <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">sections</span><span class="p">():</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  [</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s1">]&#39;</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">  [</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s1">]'</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="n">section</span><span class="p">):</span>
-                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
         <span class="k">return</span> <span class="n">info</span>
 
 <div class="viewcode-block" id="MachineInfo.get_account_defaults">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_account_defaults.html#mache.MachineInfo.get_account_defaults">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_account_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get default account, partition and quality of service (QOS) for</span>
 <span class="sd">        this machine.</span>
 
@@ -314,31 +314,31 @@
 <span class="sd">        qos : str</span>
 <span class="sd">            The default quality of service on the machine, or ``None`` if no</span>
 <span class="sd">            QOS should be specified</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
-        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;account&#39;</span><span class="p">):</span>
-            <span class="n">account</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;account&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'account'</span><span class="p">):</span>
+            <span class="n">account</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'account'</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">account</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;partitions&#39;</span><span class="p">):</span>
-            <span class="n">partition</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;partitions&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'partitions'</span><span class="p">):</span>
+            <span class="n">partition</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'partitions'</span><span class="p">)</span>
             <span class="c1"># take the first entry</span>
-            <span class="n">partition</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">partition</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">partition</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;constraints&#39;</span><span class="p">):</span>
-            <span class="n">constraint</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;constraints&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'constraints'</span><span class="p">):</span>
+            <span class="n">constraint</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'constraints'</span><span class="p">)</span>
             <span class="c1"># take the first entry</span>
-            <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">constraint</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">):</span>
-            <span class="n">qos</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="s1">&#39;qos&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'qos'</span><span class="p">):</span>
+            <span class="n">qos</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="s1">'qos'</span><span class="p">)</span>
             <span class="c1"># take the first entry</span>
-            <span class="n">qos</span> <span class="o">=</span> <span class="n">qos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">qos</span> <span class="o">=</span> <span class="n">qos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">qos</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -348,7 +348,7 @@
 <div class="viewcode-block" id="MachineInfo.get_queue_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_queue_specs.html#mache.MachineInfo.get_queue_specs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queue_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get queue policy metadata for the machine.</span>
 
 <span class="sd">        Queue names are taken from ``parallel.queues``. For each queue, this</span>
@@ -365,14 +365,14 @@
 <span class="sd">        queue_specs : dict</span>
 <span class="sd">            Mapping from queue name to queue metadata. If a queue section is</span>
 <span class="sd">            missing, all metadata values are ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;queue&#39;</span><span class="p">)</span></div>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">'queue'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MachineInfo.get_partition_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_partition_specs.html#mache.MachineInfo.get_partition_specs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_partition_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get partition policy metadata for the machine.</span>
 
 <span class="sd">        Partition names are taken from ``parallel.partitions``. For each</span>
@@ -390,14 +390,14 @@
 <span class="sd">        partition_specs : dict</span>
 <span class="sd">            Mapping from partition name to partition metadata. If a partition</span>
 <span class="sd">            section is missing, all metadata values are ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;partition&#39;</span><span class="p">)</span></div>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">'partition'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MachineInfo.get_qos_specs">
 <a class="viewcode-back" href="../../developers_guide/generated/mache.MachineInfo.get_qos_specs.html#mache.MachineInfo.get_qos_specs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_qos_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get quality-of-service (QOS) policy metadata for the machine.</span>
 
 <span class="sd">        QOS names are taken from ``parallel.qos``. For each QOS, this method</span>
@@ -414,19 +414,19 @@
 <span class="sd">        qos_specs : dict</span>
 <span class="sd">            Mapping from QOS name to QOS metadata. If a QOS section is</span>
 <span class="sd">            missing, all metadata values are ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">&#39;qos&#39;</span><span class="p">)</span></div>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_specs</span><span class="p">(</span><span class="n">target_type</span><span class="o">=</span><span class="s1">'qos'</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_scheduler_specs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get scheduler target metadata for queues or partitions.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        target_type : {&#39;queue&#39;, &#39;partition&#39;, &#39;qos&#39;}</span>
+<span class="sd">        target_type : {'queue', 'partition', 'qos'}</span>
 <span class="sd">            The target type to parse.</span>
 
 <span class="sd">        Returns</span>
@@ -437,31 +437,31 @@
 <span class="sd">            target section is missing, all metadata values are ``None``.</span>
 <span class="sd">            ``max_wallclock`` and ``max_wallclock_bins`` are mutually</span>
 <span class="sd">            exclusive, so at most one of them is set.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">target_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SCHEDULER_TARGET_MAP</span><span class="p">:</span>
-            <span class="n">expected</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCHEDULER_TARGET_MAP</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">expected</span> <span class="o">=</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCHEDULER_TARGET_MAP</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Unexpected target_type: </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">. Expected one of: &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s1">.&#39;</span>
+                <span class="sa">f</span><span class="s1">'Unexpected target_type: </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">. Expected one of: '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s1">.'</span>
             <span class="p">)</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
         <span class="n">parallel_option</span> <span class="o">=</span> <span class="n">SCHEDULER_TARGET_MAP</span><span class="p">[</span><span class="n">target_type</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="n">parallel_option</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="n">parallel_option</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{}</span>
 
         <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">,</span> <span class="n">parallel_option</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parallel'</span><span class="p">,</span> <span class="n">parallel_option</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">''</span>
         <span class="p">]</span>
 
         <span class="n">target_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
-            <span class="n">section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="n">min_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;min_nodes&#39;</span><span class="p">)</span>
-            <span class="n">max_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_nodes&#39;</span><span class="p">)</span>
-            <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_value</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">&#39;max_wallclock&#39;</span><span class="p">)</span>
+            <span class="n">section</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">min_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">'min_nodes'</span><span class="p">)</span>
+            <span class="n">max_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_int</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">'max_nodes'</span><span class="p">)</span>
+            <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_value</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="s1">'max_wallclock'</span><span class="p">)</span>
             <span class="n">max_wallclock_bins</span> <span class="o">=</span> <span class="n">_get_wallclock_bins</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span>
@@ -470,21 +470,21 @@
                 <span class="ow">and</span> <span class="n">min_nodes</span> <span class="o">&gt;</span> <span class="n">max_nodes</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s1">&#39;Invalid </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1"> config [</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s1">]: min_nodes &#39;</span>
-                    <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">min_nodes</span><span class="si">}</span><span class="s1">) is greater than max_nodes (</span><span class="si">{</span><span class="n">max_nodes</span><span class="si">}</span><span class="s1">).&#39;</span>
+                    <span class="sa">f</span><span class="s1">'Invalid </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s1"> config [</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s1">]: min_nodes '</span>
+                    <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="n">min_nodes</span><span class="si">}</span><span class="s1">) is greater than max_nodes (</span><span class="si">{</span><span class="n">max_nodes</span><span class="si">}</span><span class="s1">).'</span>
                 <span class="p">)</span>
 
             <span class="n">target_specs</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">&#39;min_nodes&#39;</span><span class="p">:</span> <span class="n">min_nodes</span><span class="p">,</span>
-                <span class="s1">&#39;max_nodes&#39;</span><span class="p">:</span> <span class="n">max_nodes</span><span class="p">,</span>
-                <span class="s1">&#39;max_wallclock&#39;</span><span class="p">:</span> <span class="n">max_wallclock</span><span class="p">,</span>
-                <span class="s1">&#39;max_wallclock_bins&#39;</span><span class="p">:</span> <span class="n">max_wallclock_bins</span><span class="p">,</span>
+                <span class="s1">'min_nodes'</span><span class="p">:</span> <span class="n">min_nodes</span><span class="p">,</span>
+                <span class="s1">'max_nodes'</span><span class="p">:</span> <span class="n">max_nodes</span><span class="p">,</span>
+                <span class="s1">'max_wallclock'</span><span class="p">:</span> <span class="n">max_wallclock</span><span class="p">,</span>
+                <span class="s1">'max_wallclock_bins'</span><span class="p">:</span> <span class="n">max_wallclock_bins</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">target_specs</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;get a parser for config options&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""get a parser for config options"""</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span>
             <span class="n">interpolation</span><span class="o">=</span><span class="n">configparser</span><span class="o">.</span><span class="n">ExtendedInterpolation</span><span class="p">()</span>
@@ -495,12 +495,12 @@
         <span class="c1"># first, read the default configs for all machines, then override with</span>
         <span class="c1"># machine-specific configs</span>
         <span class="n">default_cfg_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">&#39;mache.machines&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;default.cfg&#39;</span>
+            <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">'mache.machines'</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'default.cfg'</span>
         <span class="p">)</span>
         <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">default_cfg_path</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">cfg_path</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">&#39;mache.machines&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1">.cfg&#39;</span>
+                <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">'mache.machines'</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">machine</span><span class="si">}</span><span class="s1">.cfg'</span>
             <span class="p">)</span>
             <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cfg_path</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
@@ -509,103 +509,103 @@
         <span class="k">return</span> <span class="n">config</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_compilers_and_mpi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse the compilers and mpi modules from XML config files&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Parse the compilers and mpi modules from XML config files"""</span>
         <span class="n">machine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">machine</span>
 
         <span class="n">xml_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">&#39;mache.cime_machine_config&#39;</span><span class="p">)</span>
-            <span class="o">/</span> <span class="s1">&#39;config_machines.xml&#39;</span>
+            <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">'mache.cime_machine_config'</span><span class="p">)</span>
+            <span class="o">/</span> <span class="s1">'config_machines.xml'</span>
         <span class="p">)</span>
 
         <span class="n">root</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">xml_path</span><span class="p">))</span>
 
-        <span class="n">machines</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;config_machines&#39;</span><span class="p">))</span>
+        <span class="n">machines</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">'config_machines'</span><span class="p">))</span>
 
         <span class="n">mach</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">machine_xml</span> <span class="ow">in</span> <span class="n">machines</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">machine_xml</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;machine&#39;</span>
-                <span class="ow">and</span> <span class="n">machine_xml</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;MACH&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">machine</span>
+                <span class="n">machine_xml</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">'machine'</span>
+                <span class="ow">and</span> <span class="n">machine_xml</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">'MACH'</span><span class="p">]</span> <span class="o">==</span> <span class="n">machine</span>
             <span class="p">):</span>
                 <span class="n">mach</span> <span class="o">=</span> <span class="n">machine_xml</span>
                 <span class="k">break</span>
 
         <span class="k">if</span> <span class="n">mach</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># this is not an E3SM supported machine, so we&#39;re done</span>
+            <span class="c1"># this is not an E3SM supported machine, so we're done</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_supported</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_supported</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">compilers</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">mach</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;COMPILERS&#39;</span><span class="p">:</span>
-                <span class="n">compilers</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">'COMPILERS'</span><span class="p">:</span>
+                <span class="n">compilers</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)</span>
                 <span class="k">break</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">compilers</span> <span class="o">=</span> <span class="n">compilers</span>
 
         <span class="n">mpilibs</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">mach</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;MPILIBS&#39;</span><span class="p">:</span>
-                <span class="n">mpilibs</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">'MPILIBS'</span><span class="p">:</span>
+                <span class="n">mpilibs</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)</span>
                 <span class="k">break</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">mpilibs</span> <span class="o">=</span> <span class="n">mpilibs</span>
 
         <span class="n">machine_os</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">mach</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;OS&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">'OS'</span><span class="p">:</span>
                 <span class="n">machine_os</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">text</span>
                 <span class="k">break</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="n">machine_os</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_detect_e3sm_unified</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read E3SM-Unified base path and detect whether it is running&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read E3SM-Unified base path and detect whether it is running"""</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
 
         <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
-            <span class="s1">&#39;e3sm_unified&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span>
+            <span class="s1">'e3sm_unified'</span><span class="p">,</span> <span class="s1">'base_path'</span>
         <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;e3sm_unified&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'e3sm_unified'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="s1">&#39;E3SMU_SCRIPT&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;E3SMU_SCRIPT&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">'E3SMU_SCRIPT'</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_activation</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'E3SMU_SCRIPT'</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="s1">&#39;E3SMU_MPI&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;E3SMU_MPI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">'E3SMU_MPI'</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">e3sm_unified_mpi</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'E3SMU_MPI'</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_diagnostics_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get config options related to diagnostics data&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get config options related to diagnostics data"""</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
 
         <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
-            <span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span>
+            <span class="s1">'diagnostics'</span><span class="p">,</span> <span class="s1">'base_path'</span>
         <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">diagnostics_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'diagnostics'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_inputdata_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get config options related to inputdata&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get config options related to inputdata"""</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
 
-        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">&#39;inputdata&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;inputdata&#39;</span><span class="p">,</span> <span class="s1">&#39;base_path&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s1">'inputdata'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputdata_base</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'inputdata'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_scheduler_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a scheduler-target config value, treating empty as unset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get a scheduler-target config value, treating empty as unset."""</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_scheduler_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an integer scheduler-target config value if set.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get an integer scheduler-target config value if set."""</span>
         <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_scheduler_value</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>

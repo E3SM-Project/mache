@@ -94,7 +94,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.deploy.hooks</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Deployment hooks for ``mache deploy run``.</span>
+<span></span><span class="sd">"""Deployment hooks for ``mache deploy run``.</span>
 
 <span class="sd">Security note</span>
 <span class="sd">-------------</span>
@@ -109,7 +109,7 @@
 <span class="sd">  entrypoint functions.</span>
 <span class="sd">- Hook loading does not permanently modify ``sys.path``.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -124,23 +124,23 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
-<span class="n">HookCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">&#39;DeployContext&#39;</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+<span class="n">HookCallable</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">'DeployContext'</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 
 
 <span class="n">HOOK_STAGE_ORDER</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="c1"># pixi lifecycle (preferred names)</span>
-    <span class="s1">&#39;pre_pixi&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;post_pixi&#39;</span><span class="p">,</span>
+    <span class="s1">'pre_pixi'</span><span class="p">,</span>
+    <span class="s1">'post_pixi'</span><span class="p">,</span>
     <span class="c1"># future spack lifecycle</span>
-    <span class="s1">&#39;pre_spack&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;post_spack&#39;</span><span class="p">,</span>
+    <span class="s1">'pre_spack'</span><span class="p">,</span>
+    <span class="s1">'post_spack'</span><span class="p">,</span>
     <span class="c1"># publication lifecycle</span>
-    <span class="s1">&#39;pre_publish&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;post_publish&#39;</span><span class="p">,</span>
+    <span class="s1">'pre_publish'</span><span class="p">,</span>
+    <span class="s1">'post_publish'</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">DEPRECATED_HOOK_STAGE_ALIASES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;post_deploy&#39;</span><span class="p">:</span> <span class="s1">&#39;pre_publish&#39;</span><span class="p">,</span>
+    <span class="s1">'post_deploy'</span><span class="p">:</span> <span class="s1">'pre_publish'</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">KNOWN_HOOK_STAGES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">HOOK_STAGE_ORDER</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span>
@@ -152,7 +152,7 @@
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.DeployContext.html#mache.deploy.hooks.DeployContext">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DeployContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A small bundle of state passed to hook functions.</span>
+<span class="w">    </span><span class="sd">"""A small bundle of state passed to hook functions.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -161,7 +161,7 @@
 <span class="sd">      mutating ``config`` in-place.</span>
 <span class="sd">    - Hooks may raise exceptions to abort deployment.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">software</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">machine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
@@ -185,7 +185,7 @@
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.HookRegistry.html#mache.deploy.hooks.HookRegistry">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HookRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved hooks for a single deploy run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolved hooks for a single deploy run."""</span>
 
     <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">entrypoints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HookCallable</span><span class="p">]</span>
@@ -194,22 +194,22 @@
 <div class="viewcode-block" id="HookRegistry.run_hook">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.hooks.HookRegistry.run_hook.html#mache.deploy.hooks.HookRegistry.run_hook">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a hook stage if it is defined.</span>
+<span class="w">        </span><span class="sd">"""Run a hook stage if it is defined.</span>
 
 <span class="sd">        If a hook returns a mapping, it is merged into ``context.runtime``.</span>
 <span class="sd">        After the hook finishes, a JSON snapshot of the context is written</span>
 <span class="sd">        under ``deploy_tmp/hooks`` to aid debugging.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entrypoints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">file_display</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="ow">or</span> <span class="s1">&#39;&lt;unknown&gt;&#39;</span>
-        <span class="n">func_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;callable&gt;&#39;</span><span class="p">)</span>
+        <span class="n">file_display</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="ow">or</span> <span class="s1">'&lt;unknown&gt;'</span>
+        <span class="n">func_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">'__name__'</span><span class="p">,</span> <span class="s1">'&lt;callable&gt;'</span><span class="p">)</span>
 
         <span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s1">&#39;Running hook stage=</span><span class="si">%s</span><span class="s1"> file=</span><span class="si">%s</span><span class="s1"> func=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">'Running hook stage=</span><span class="si">%s</span><span class="s1"> file=</span><span class="si">%s</span><span class="s1"> func=</span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
             <span class="n">stage</span><span class="p">,</span>
             <span class="n">file_display</span><span class="p">,</span>
             <span class="n">func_name</span><span class="p">,</span>
@@ -246,8 +246,8 @@
         <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="p">(</span>
-                    <span class="sa">f</span><span class="s1">&#39;Hook failed: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> &#39;</span>
-                    <span class="sa">f</span><span class="s1">&#39;file=</span><span class="si">{</span><span class="n">file_display</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="sa">f</span><span class="s1">'Hook failed: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> '</span>
+                    <span class="sa">f</span><span class="s1">'file=</span><span class="si">{</span><span class="n">file_display</span><span class="si">}</span><span class="s1">'</span>
                 <span class="p">)</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span></div>
 </div>
@@ -255,11 +255,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_deep_update</span><span class="p">(</span><span class="n">dst</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">src</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively merge ``src`` into ``dst``.</span>
+<span class="w">    </span><span class="sd">"""Recursively merge ``src`` into ``dst``.</span>
 
 <span class="sd">    If both ``dst[key]`` and ``src[key]`` are dicts, merge recursively.</span>
 <span class="sd">    Otherwise, ``src[key]`` overwrites ``dst[key]``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">src_val</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">dst_val</span> <span class="o">=</span> <span class="n">dst</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -276,7 +276,7 @@
     <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HookRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load deployment hooks from a target-software repository.</span>
+<span class="w">    </span><span class="sd">"""Load deployment hooks from a target-software repository.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -288,15 +288,15 @@
 <span class="sd">        .. code-block:: yaml</span>
 
 <span class="sd">           hooks:</span>
-<span class="sd">             file: &quot;deploy/hooks.py&quot;  # default</span>
+<span class="sd">             file: "deploy/hooks.py"  # default</span>
 <span class="sd">             log_context: false        # optional</span>
 <span class="sd">             entrypoints:</span>
-<span class="sd">               pre_pixi: &quot;pre_pixi&quot;        # optional</span>
-<span class="sd">               post_pixi: &quot;post_pixi&quot;      # optional</span>
-<span class="sd">               pre_spack: &quot;pre_spack&quot;      # optional</span>
-<span class="sd">               post_spack: &quot;post_spack&quot;    # optional</span>
-<span class="sd">               pre_publish: &quot;pre_publish&quot;  # optional</span>
-<span class="sd">               post_publish: &quot;post_publish&quot;  # optional</span>
+<span class="sd">               pre_pixi: "pre_pixi"        # optional</span>
+<span class="sd">               post_pixi: "post_pixi"      # optional</span>
+<span class="sd">               pre_spack: "pre_spack"      # optional</span>
+<span class="sd">               post_spack: "post_spack"    # optional</span>
+<span class="sd">               pre_publish: "pre_publish"  # optional</span>
+<span class="sd">               post_publish: "post_publish"  # optional</span>
 
 <span class="sd">        If the ``hooks`` section is missing, hooks are considered disabled.</span>
 
@@ -316,45 +316,45 @@
 <span class="sd">    Missing file semantics</span>
 <span class="sd">    ----------------------</span>
 <span class="sd">    - If the ``hooks`` section is not present, a missing hooks file is treated</span>
-<span class="sd">      as &quot;no hooks&quot;.</span>
+<span class="sd">      as "no hooks".</span>
 <span class="sd">    - If the ``hooks`` section is present (explicitly configured) and the</span>
 <span class="sd">      hooks file is missing, a ``FileNotFoundError`` is raised.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">hooks_cfg_raw</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hooks&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">hooks_cfg_raw</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'hooks'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">hooks_cfg_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">HookRegistry</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">entrypoints</span><span class="o">=</span><span class="p">{})</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hooks_cfg_raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;hooks&#39; section must be a mapping&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"'hooks' section must be a mapping"</span><span class="p">)</span>
 
     <span class="n">hooks_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">hooks_cfg_raw</span>
 
-    <span class="n">file_rel</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="s1">&#39;deploy/hooks.py&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">file_rel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_rel</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-        <span class="n">file_rel</span> <span class="o">=</span> <span class="s1">&#39;deploy/hooks.py&#39;</span>
+    <span class="n">file_rel</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'file'</span><span class="p">,</span> <span class="s1">'deploy/hooks.py'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">file_rel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_rel</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+        <span class="n">file_rel</span> <span class="o">=</span> <span class="s1">'deploy/hooks.py'</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_rel</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hooks.file must be a string&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'hooks.file must be a string'</span><span class="p">)</span>
 
-    <span class="n">log_context</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;log_context&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">log_context</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'log_context'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_context</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hooks.log_context must be a boolean&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'hooks.log_context must be a boolean'</span><span class="p">)</span>
 
-    <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entrypoints&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="n">hooks_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entrypoints'</span><span class="p">,</span> <span class="p">{})</span>
     <span class="k">if</span> <span class="n">entrypoints_cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">entrypoints_cfg</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entrypoints_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;hooks.entrypoints must be a mapping&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'hooks.entrypoints must be a mapping'</span><span class="p">)</span>
 
     <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">entrypoints_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">KNOWN_HOOK_STAGES</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
-        <span class="n">unknown_list</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">))</span>
-        <span class="n">known_list</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">KNOWN_HOOK_STAGES</span><span class="p">)</span>
+        <span class="n">unknown_list</span> <span class="o">=</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">))</span>
+        <span class="n">known_list</span> <span class="o">=</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">KNOWN_HOOK_STAGES</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Unknown hook stage(s): </span><span class="si">{</span><span class="n">unknown_list</span><span class="si">}</span><span class="s1">. &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;Known stages: </span><span class="si">{</span><span class="n">known_list</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">'Unknown hook stage(s): </span><span class="si">{</span><span class="n">unknown_list</span><span class="si">}</span><span class="s1">. '</span>
+                <span class="sa">f</span><span class="s1">'Known stages: </span><span class="si">{</span><span class="n">known_list</span><span class="si">}</span><span class="s1">'</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -368,7 +368,7 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">hooks_path</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Hooks configured but file not found: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="sa">f</span><span class="s1">'Hooks configured but file not found: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">'</span>
         <span class="p">)</span>
 
     <span class="n">module</span> <span class="o">=</span> <span class="n">_load_module_from_path</span><span class="p">(</span><span class="n">hooks_path</span><span class="o">=</span><span class="n">hooks_path</span><span class="p">)</span>
@@ -385,26 +385,26 @@
         <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Hook entrypoint not found: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">'Hook entrypoint not found: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> '</span>
+                <span class="sa">f</span><span class="s1">'func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">'</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Hook entrypoint is not callable: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">'Hook entrypoint is not callable: stage=</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1"> '</span>
+                <span class="sa">f</span><span class="s1">'func=</span><span class="si">{</span><span class="n">func_name</span><span class="si">}</span><span class="s1"> file=</span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">'</span>
             <span class="p">)</span>
 
         <span class="n">resolved</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
 
     <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s1">&#39;Loaded hooks from </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">'Loaded hooks from </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
             <span class="n">hooks_path</span><span class="p">,</span>
-            <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span>
+            <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s1">&#39;Hooks file loaded but no entrypoints configured: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">'Hooks file loaded but no entrypoints configured: </span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
             <span class="n">hooks_path</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -437,15 +437,15 @@
 
         <span class="k">if</span> <span class="n">canonical_stage</span> <span class="ow">in</span> <span class="n">normalized</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s1">&#39;hooks.entrypoints.&#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s1"> is a deprecated alias for &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;hooks.entrypoints.</span><span class="si">{</span><span class="n">canonical_stage</span><span class="si">}</span><span class="s1">; &#39;</span>
-                <span class="s1">&#39;do not configure both.&#39;</span>
+                <span class="s1">'hooks.entrypoints.'</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s1"> is a deprecated alias for '</span>
+                <span class="sa">f</span><span class="s1">'hooks.entrypoints.</span><span class="si">{</span><span class="n">canonical_stage</span><span class="si">}</span><span class="s1">; '</span>
+                <span class="s1">'do not configure both.'</span>
             <span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s1">&#39;hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> is deprecated; use &#39;</span>
-            <span class="s1">&#39;hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> instead.&#39;</span><span class="p">,</span>
+            <span class="s1">'hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> is deprecated; use '</span>
+            <span class="s1">'hooks.entrypoints.</span><span class="si">%s</span><span class="s1"> instead.'</span><span class="p">,</span>
             <span class="n">alias</span><span class="p">,</span>
             <span class="n">canonical_stage</span><span class="p">,</span>
         <span class="p">)</span>
@@ -466,13 +466,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_module_from_path</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">hooks_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamically import a module without modifying sys.path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Dynamically import a module without modifying sys.path."""</span>
 
-    <span class="n">module_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mache_deploy_hooks_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">module_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'mache_deploy_hooks_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s1">'</span>
 
     <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">hooks_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unable to load hooks module from: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Unable to load hooks module from: </span><span class="si">{</span><span class="n">hooks_path</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
 
     <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
     <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
@@ -484,7 +484,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">configparser_to_nested_dict</span><span class="p">(</span>
     <span class="n">cfg</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a ``ConfigParser`` to a JSON/YAML-friendly nested mapping.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert a ``ConfigParser`` to a JSON/YAML-friendly nested mapping."""</span>
 
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">sections</span><span class="p">():</span>
@@ -503,37 +503,37 @@
     <span class="n">hook_result</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">error</span><span class="p">:</span> <span class="ne">Exception</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a JSON-friendly context snapshot for hook debugging.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a JSON-friendly context snapshot for hook debugging."""</span>
 
     <span class="n">snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;stage&#39;</span><span class="p">:</span> <span class="n">stage</span><span class="p">,</span>
-        <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;failed&#39;</span> <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;ok&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="n">file_path</span><span class="p">,</span>
-        <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">func_name</span><span class="p">,</span>
-        <span class="s1">&#39;context&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;software&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">software</span><span class="p">,</span>
-            <span class="s1">&#39;machine&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
-            <span class="s1">&#39;repo_root&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
-            <span class="s1">&#39;deploy_dir&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">deploy_dir</span><span class="p">,</span>
-            <span class="s1">&#39;work_dir&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span>
-            <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
-            <span class="s1">&#39;pins&#39;</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">pins</span><span class="p">),</span>
-            <span class="s1">&#39;machine_config&#39;</span><span class="p">:</span> <span class="n">configparser_to_nested_dict</span><span class="p">(</span>
+        <span class="s1">'stage'</span><span class="p">:</span> <span class="n">stage</span><span class="p">,</span>
+        <span class="s1">'status'</span><span class="p">:</span> <span class="s1">'failed'</span> <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">'ok'</span><span class="p">,</span>
+        <span class="s1">'file'</span><span class="p">:</span> <span class="n">file_path</span><span class="p">,</span>
+        <span class="s1">'function'</span><span class="p">:</span> <span class="n">func_name</span><span class="p">,</span>
+        <span class="s1">'context'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'software'</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">software</span><span class="p">,</span>
+            <span class="s1">'machine'</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
+            <span class="s1">'repo_root'</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
+            <span class="s1">'deploy_dir'</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">deploy_dir</span><span class="p">,</span>
+            <span class="s1">'work_dir'</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span>
+            <span class="s1">'config'</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
+            <span class="s1">'pins'</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">pins</span><span class="p">),</span>
+            <span class="s1">'machine_config'</span><span class="p">:</span> <span class="n">configparser_to_nested_dict</span><span class="p">(</span>
                 <span class="n">context</span><span class="o">.</span><span class="n">machine_config</span>
             <span class="p">),</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">)),</span>
-            <span class="s1">&#39;runtime_before&#39;</span><span class="p">:</span> <span class="n">runtime_before</span><span class="p">,</span>
-            <span class="s1">&#39;runtime_after&#39;</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">runtime</span><span class="p">),</span>
+            <span class="s1">'args'</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">)),</span>
+            <span class="s1">'runtime_before'</span><span class="p">:</span> <span class="n">runtime_before</span><span class="p">,</span>
+            <span class="s1">'runtime_after'</span><span class="p">:</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">runtime</span><span class="p">),</span>
         <span class="p">},</span>
     <span class="p">}</span>
 
     <span class="k">if</span> <span class="n">hook_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">snapshot</span><span class="p">[</span><span class="s1">&#39;hook_result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">hook_result</span><span class="p">)</span>
+        <span class="n">snapshot</span><span class="p">[</span><span class="s1">'hook_result'</span><span class="p">]</span> <span class="o">=</span> <span class="n">_json_ready</span><span class="p">(</span><span class="n">hook_result</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">snapshot</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-            <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">),</span>
+        <span class="n">snapshot</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'type'</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s1">'message'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">),</span>
         <span class="p">}</span>
 
     <span class="k">return</span> <span class="n">snapshot</span>
@@ -546,19 +546,19 @@
     <span class="n">snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">log_context</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write and optionally log a hook context snapshot.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Write and optionally log a hook context snapshot."""</span>
 
-    <span class="n">snapshot_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="s1">&#39;hooks&#39;</span><span class="p">)</span>
-    <span class="n">snapshot_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1">_context.json&#39;</span><span class="p">)</span>
+    <span class="n">snapshot_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="s1">'hooks'</span><span class="p">)</span>
+    <span class="n">snapshot_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1">_context.json'</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">snapshot_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">snapshot_path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">snapshot</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - unlikely filesystem error</span>
         <span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s1">&#39;Failed to write hook context snapshot stage=</span><span class="si">%s</span><span class="s1"> path=</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">'Failed to write hook context snapshot stage=</span><span class="si">%s</span><span class="s1"> path=</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
             <span class="n">stage</span><span class="p">,</span>
             <span class="n">snapshot_path</span><span class="p">,</span>
             <span class="n">exc</span><span class="p">,</span>
@@ -566,20 +566,20 @@
         <span class="k">return</span>
 
     <span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s1">&#39;Wrote hook context snapshot stage=</span><span class="si">%s</span><span class="s1"> path=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="s1">'Wrote hook context snapshot stage=</span><span class="si">%s</span><span class="s1"> path=</span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
         <span class="n">stage</span><span class="p">,</span>
         <span class="n">snapshot_path</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">log_context</span><span class="p">:</span>
         <span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s1">&#39;Hook context snapshot stage=</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">'Hook context snapshot stage=</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
             <span class="n">stage</span><span class="p">,</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">snapshot</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_json_ready</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a value into a JSON-friendly structure.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert a value into a JSON-friendly structure."""</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>

@@ -100,7 +100,7 @@
 <div class="viewcode-block" id="define_square_bracket_environment">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.jinja.define_square_bracket_environment.html#mache.deploy.jinja.define_square_bracket_environment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">define_square_bracket_environment</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Define a Jinja2 environment that uses square brackets for delimiters.</span>
 
 <span class="sd">    This is useful for rendering double templates that also contain curly-brace</span>
@@ -110,17 +110,17 @@
 <span class="sd">    -------</span>
 <span class="sd">    jinja2.Environment</span>
 <span class="sd">        A Jinja2 environment with square-bracket delimiters.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
         <span class="n">undefined</span><span class="o">=</span><span class="n">StrictUndefined</span><span class="p">,</span>
         <span class="n">autoescape</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">keep_trailing_newline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">variable_start_string</span><span class="o">=</span><span class="s1">&#39;[[&#39;</span><span class="p">,</span>
-        <span class="n">variable_end_string</span><span class="o">=</span><span class="s1">&#39;]]&#39;</span><span class="p">,</span>
-        <span class="n">block_start_string</span><span class="o">=</span><span class="s1">&#39;[%&#39;</span><span class="p">,</span>
-        <span class="n">block_end_string</span><span class="o">=</span><span class="s1">&#39;%]&#39;</span><span class="p">,</span>
-        <span class="n">comment_start_string</span><span class="o">=</span><span class="s1">&#39;[#&#39;</span><span class="p">,</span>
-        <span class="n">comment_end_string</span><span class="o">=</span><span class="s1">&#39;#]&#39;</span><span class="p">,</span>
+        <span class="n">variable_start_string</span><span class="o">=</span><span class="s1">'[['</span><span class="p">,</span>
+        <span class="n">variable_end_string</span><span class="o">=</span><span class="s1">']]'</span><span class="p">,</span>
+        <span class="n">block_start_string</span><span class="o">=</span><span class="s1">'[%'</span><span class="p">,</span>
+        <span class="n">block_end_string</span><span class="o">=</span><span class="s1">'%]'</span><span class="p">,</span>
+        <span class="n">comment_start_string</span><span class="o">=</span><span class="s1">'[#'</span><span class="p">,</span>
+        <span class="n">comment_end_string</span><span class="o">=</span><span class="s1">'#]'</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>

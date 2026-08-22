@@ -384,9 +384,9 @@ environment-variable setup from generated shell snippets, and</p></li>
 <p>The package list in <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code> does not need any special syntax
 for this.  You simply request the Spack package you want, for example:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">software</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cmake@{{</span><span class="nv"> </span><span class="s">spack.cmake</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"cmake@{{</span><span class="nv"> </span><span class="s">spack.cmake</span><span class="nv"> </span><span class="s">}}"</span>
 <span class="nt">library</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;trilinos@{{</span><span class="nv"> </span><span class="s">spack.trilinos</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"trilinos@{{</span><span class="nv"> </span><span class="s">spack.trilinos</span><span class="nv"> </span><span class="s">}}"</span>
 </pre></div>
 </div>
 <p>The same mechanism can be used for the machine-provided HDF5/NetCDF bundle:</p>
@@ -415,18 +415,18 @@ translate that into <code class="docutils literal notranslate"><span class="pre"
 <span class="k">def</span><span class="w"> </span><span class="nf">pre_spack</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="n">exclude_packages</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spack&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude_packages&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="n">exclude_packages</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"spack"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"exclude_packages"</span><span class="p">,</span> <span class="p">[]))</span>
 
     <span class="n">use_bundle</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">&quot;deploy&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
-        <span class="s2">&quot;deploy&quot;</span><span class="p">,</span> <span class="s2">&quot;use_e3sm_hdf5_netcdf&quot;</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">"deploy"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span>
+        <span class="s2">"deploy"</span><span class="p">,</span> <span class="s2">"use_e3sm_hdf5_netcdf"</span>
     <span class="p">):</span>
-        <span class="n">use_bundle</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span> <span class="s2">&quot;use_e3sm_hdf5_netcdf&quot;</span><span class="p">)</span>
+        <span class="n">use_bundle</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">"deploy"</span><span class="p">,</span> <span class="s2">"use_e3sm_hdf5_netcdf"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">use_bundle</span><span class="p">:</span>
-        <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hdf5_netcdf&quot;</span><span class="p">)</span>
+        <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"hdf5_netcdf"</span><span class="p">)</span>
 
-    <span class="n">updates</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;spack&quot;</span><span class="p">,</span> <span class="p">{})[</span><span class="s2">&quot;exclude_packages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exclude_packages</span>
+    <span class="n">updates</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"spack"</span><span class="p">,</span> <span class="p">{})[</span><span class="s2">"exclude_packages"</span><span class="p">]</span> <span class="o">=</span> <span class="n">exclude_packages</span>
     <span class="k">return</span> <span class="n">updates</span>
 </pre></div>
 </div>
@@ -457,12 +457,12 @@ expects, you must also update the runtime code.</p></li>
 <code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code>, then let hooks add or remove a few machine-specific
 tools. For example:</p>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[dependencies]</span>
-<span class="n">python</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;{{ python }}.*&quot;</span>
-<span class="n">pip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
-<span class="n">setuptools</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;=60&quot;</span>
+<span class="n">python</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"{{ python }}.*"</span>
+<span class="n">pip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"*"</span>
+<span class="n">setuptools</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;=60"</span>
 <span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">set</span><span class="w"> </span><span class="n">omitted_dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">omit</span><span class="mi">_</span><span class="n">dependencies</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="n">default</span><span class="err">(</span><span class="k">[]</span><span class="err">)</span><span class="w"> </span><span class="err">%}</span>
-<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">if</span><span class="w"> </span><span class="s1">&#39;git&#39;</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">omitted_dependencies</span><span class="w"> </span><span class="err">%}</span>
-<span class="n">git</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">if</span><span class="w"> </span><span class="s1">'git'</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">omitted_dependencies</span><span class="w"> </span><span class="err">%}</span>
+<span class="n">git</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"*"</span>
 <span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">endif</span><span class="w"> </span><span class="err">%}</span>
 <span class="err">{%</span><span class="n">-</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="n">dependency</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">extra_dependencies</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="n">default</span><span class="err">(</span><span class="k">[]</span><span class="err">)</span><span class="w"> </span><span class="err">%}</span>
 <span class="err">{{</span><span class="w"> </span><span class="n">dependency</span><span class="w"> </span><span class="err">}}</span>
@@ -534,16 +534,16 @@ the current conda-forge <code class="docutils literal notranslate"><span class="
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">pre_pixi</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">omit_dependencies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="p">(</span>
-        <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">)</span>
-        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">,</span> <span class="s2">&quot;use_system_git&quot;</span><span class="p">)</span>
-        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">&quot;my_software&quot;</span><span class="p">,</span> <span class="s2">&quot;use_system_git&quot;</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="s2">"my_software"</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s2">"my_software"</span><span class="p">,</span> <span class="s2">"use_system_git"</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">machine_config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s2">"my_software"</span><span class="p">,</span> <span class="s2">"use_system_git"</span><span class="p">)</span>
     <span class="p">):</span>
-        <span class="n">omit_dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;git&quot;</span><span class="p">)</span>
+        <span class="n">omit_dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"git"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;pixi&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;omit_dependencies&quot;</span><span class="p">:</span> <span class="n">omit_dependencies</span><span class="p">,</span>
-            <span class="s2">&quot;extra_dependencies&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;my-extra-tool = &quot;&gt;=1.0&quot;&#39;</span><span class="p">],</span>
+        <span class="s2">"pixi"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"omit_dependencies"</span><span class="p">:</span> <span class="n">omit_dependencies</span><span class="p">,</span>
+            <span class="s2">"extra_dependencies"</span><span class="p">:</span> <span class="p">[</span><span class="s1">'my-extra-tool = "&gt;=1.0"'</span><span class="p">],</span>
         <span class="p">}</span>
     <span class="p">}</span>
 </pre></div>
@@ -556,14 +556,14 @@ For example, a <code class="docutils literal notranslate"><span class="pre">pre_
 directory can ask mache to keep the directory itself writable by the deployment
 group while leaving its contents non-group-writable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">pre_publish</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">latest_path</span> <span class="o">=</span> <span class="s2">&quot;/path/to/shared/latest&quot;</span>
+    <span class="n">latest_path</span> <span class="o">=</span> <span class="s2">"/path/to/shared/latest"</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;shared&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;managed_directories&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"shared"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"managed_directories"</span><span class="p">:</span> <span class="p">[</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">latest_path</span><span class="p">,</span>
-                    <span class="s2">&quot;root_group_writable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">"path"</span><span class="p">:</span> <span class="n">latest_path</span><span class="p">,</span>
+                    <span class="s2">"root_group_writable"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">],</span>
         <span class="p">},</span>
@@ -610,19 +610,19 @@ flag that should survive <code class="docutils literal notranslate"><span class=
 <p>For example, Compass could add both <code class="docutils literal notranslate"><span class="pre">--with-albany</span></code> and
 <code class="docutils literal notranslate"><span class="pre">--moab-version</span> <span class="pre">5.6.0</span></code> like this:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"arguments"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;flags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--with-albany&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;dest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;with_albany&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;help&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Install optional Albany and Trilinos support.&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;route&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;run&quot;</span><span class="p">]</span>
+<span class="w">      </span><span class="nt">"flags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"--with-albany"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"dest"</span><span class="p">:</span><span class="w"> </span><span class="s2">"with_albany"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"store_true"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"help"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Install optional Albany and Trilinos support."</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"route"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"deploy"</span><span class="p">,</span><span class="w"> </span><span class="s2">"run"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;flags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;--moab-version&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;dest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;moab_version&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;help&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Version of MOAB to install for this deployment.&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;route&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;run&quot;</span><span class="p">]</span>
+<span class="w">      </span><span class="nt">"flags"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"--moab-version"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"dest"</span><span class="p">:</span><span class="w"> </span><span class="s2">"moab_version"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"help"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Version of MOAB to install for this deployment."</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"route"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"deploy"</span><span class="p">,</span><span class="w"> </span><span class="s2">"run"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
@@ -635,9 +635,9 @@ flag that should survive <code class="docutils literal notranslate"><span class=
 </ul>
 <p>Then enable hooks in <code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code>:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">hooks</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy/hooks.py&quot;</span>
+<span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"deploy/hooks.py"</span>
 <span class="w">  </span><span class="nt">entrypoints</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">pre_spack</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;pre_spack&quot;</span>
+<span class="w">    </span><span class="nt">pre_spack</span><span class="p">:</span><span class="w"> </span><span class="s">"pre_spack"</span>
 </pre></div>
 </div>
 <p>And use the flags inside <code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code>:</p>
@@ -645,14 +645,14 @@ flag that should survive <code class="docutils literal notranslate"><span class=
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pre_spack</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;with_albany&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;with_albany.txt&quot;</span>
-        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;Albany requested</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">"with_albany"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"with_albany.txt"</span>
+        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">"Albany requested</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
-    <span class="n">moab_version</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;moab_version&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">moab_version</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">"moab_version"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">moab_version</span><span class="p">:</span>
-        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;moab_version.txt&quot;</span>
-        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">moab_version</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">marker</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"moab_version.txt"</span>
+        <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">moab_version</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Running</p>

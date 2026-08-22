@@ -131,7 +131,7 @@ workloads based on each machine’s config file.</p>
 <span class="n">machine_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">()</span>
 <span class="n">parallel_system</span> <span class="o">=</span> <span class="n">get_parallel_system</span><span class="p">(</span><span class="n">machine_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;your_package.run_task&quot;</span><span class="p">,</span> <span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="s2">&quot;smoke&quot;</span><span class="p">]</span>
+<span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"python"</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"your_package.run_task"</span><span class="p">,</span> <span class="s2">"--case"</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">]</span>
 <span class="n">command</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">get_parallel_command</span><span class="p">(</span>
     <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
     <span class="n">ntasks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
@@ -139,7 +139,7 @@ workloads based on each machine’s config file.</p>
     <span class="n">gpus_per_task</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>On a batch allocation, this returns an <code class="docutils literal notranslate"><span class="pre">srun</span></code>/<code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> command using the
@@ -265,16 +265,16 @@ rewriting the machine’s config:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmSystem</span>
 
-<span class="n">config</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="s2">&quot;pm-cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">config</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="s2">"pm-cpu"</span><span class="p">)</span><span class="o">.</span><span class="n">config</span>
 <span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
     <span class="n">nodes</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">qos</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
-    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">,</span>
+    <span class="n">qos</span><span class="o">=</span><span class="s2">"debug"</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">"02:00:00"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">honored</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Falling back to the </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="si">}</span><span class="s2"> qos: </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Falling back to the </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="si">}</span><span class="s2"> qos: </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A requested target is a preference, not an assertion. mache honors it when the
@@ -318,8 +318,8 @@ mache work out which axis this machine uses:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
     <span class="n">nodes</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-    <span class="n">scheduler_target</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span>
-    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">&quot;00:20:00&quot;</span><span class="p">,</span>
+    <span class="n">scheduler_target</span><span class="o">=</span><span class="s2">"debug"</span><span class="p">,</span>
+    <span class="n">desired_wall_time</span><span class="o">=</span><span class="s2">"00:20:00"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -341,7 +341,7 @@ capped at the selected target’s <code class="docutils literal notranslate"><sp
 on its own:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">cap_wall_time</span>
 
-<span class="n">cap_wall_time</span><span class="p">(</span><span class="s2">&quot;04:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;00:30:00&quot;</span><span class="p">)</span>  <span class="c1"># &quot;00:30:00&quot;</span>
+<span class="n">cap_wall_time</span><span class="p">(</span><span class="s2">"04:00:00"</span><span class="p">,</span> <span class="s2">"00:30:00"</span><span class="p">)</span>  <span class="c1"># "00:30:00"</span>
 </pre></div>
 </div>
 <p>Note that mache resolves the partition and the QOS independently and has no
@@ -357,10 +357,10 @@ with <code class="docutils literal notranslate"><span class="pre">max_wallclock_
 <a class="reference internal" href="../developers_guide/adding_new_machine.html#dev-new-config-file"><span class="std std-ref">Adding a new config file</span></a>), and mache selects the bin that matches the
 resolved node count:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;02:00:00&quot; on Frontier</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># "02:00:00" on Frontier</span>
 
 <span class="n">options</span> <span class="o">=</span> <span class="n">SlurmSystem</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># &quot;12:00:00&quot; on Frontier</span>
+<span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span>  <span class="c1"># "12:00:00" on Frontier</span>
 </pre></div>
 </div>
 <p>When both a partition and a QOS set a limit, the more restrictive of the two
