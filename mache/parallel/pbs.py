@@ -415,8 +415,15 @@ class PbsSystem(ParallelSystem):
             return []
 
         if placement.gpus == 0:
-            # an explicit "no GPUs", rather than an omission that leaves the
-            # launch seeing every device on the node
+            # An explicit "no GPUs".  Unlike --gres=none on Slurm, this is
+            # not the thing that makes concurrency work here: PALS reserves
+            # nothing, so a launch that says nothing about GPUs does not
+            # block the next one.  It is belt and braces, and how much it
+            # actually hides has not been measured.  An empty
+            # CUDA_VISIBLE_DEVICES means "no devices", but an empty
+            # ZE_AFFINITY_MASK may instead mean "no mask", which is every
+            # tile.  Settling that takes two placed CPU-only launches on
+            # Aurora reporting what Level Zero sees.
             value = ''
         else:
             if placement.gpu_ids is None:

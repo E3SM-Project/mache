@@ -368,10 +368,14 @@ was measured not to confine a launch on either of the GPU machines mache
 supports, while a per-launch total does.
 
 `gpus` defaults to 0, and 0 is rendered as an explicit request for *no* GPUs.
-This matters more than it sounds: a launch that says nothing about GPUs is
-read as claiming every one on the node, so the next launch waits. Callers
-whose work uses no GPUs -- most of them -- get correct behavior without having
-to know GPUs were ever a consideration.
+On Slurm this matters more than it sounds: a launch that says nothing about
+GPUs is read as claiming every one on the node, so the next launch waits.
+Callers whose work uses no GPUs -- most of them -- get correct behavior
+without having to know GPUs were ever a consideration.
+
+On PALS the same request is belt and braces rather than the mechanism that
+makes concurrency work, since nothing there reserves a GPU in the first
+place. See {ref}`users-parallel-pals-gpus`.
 
 ### Which cores are honored
 
@@ -389,6 +393,8 @@ How much of that set is honored depends on the mechanism:
 
 Either way, mache raises `ValueError` if the set is too small for
 `ntasks x cpus_per_task`.
+
+(users-parallel-pals-gpus)=
 
 ### Assigning GPUs on PBS with PALS
 
@@ -415,6 +421,15 @@ PALS, and `len(gpu_ids)` must equal `gpus`.
 
 `gpu_ids` is ignored where the scheduler assigns GPUs itself, which is every
 Slurm machine.
+
+A placement with no GPUs sets the variable to an empty value. Note that this
+is weaker than the equivalent on Slurm: PALS reserves nothing, so a launch
+that stays quiet about GPUs does not block the next one, and how much an
+empty value actually hides has not been measured. An empty
+`CUDA_VISIBLE_DEVICES` means "no devices", but an empty `ZE_AFFINITY_MASK`
+may instead mean "no mask", which is every tile. Do not rely on it to keep a
+GPU launch and a CPU launch off the same device -- give the GPU launch
+explicit `gpu_ids` instead.
 
 Two config options support this, both already set on the machines that need
 them: `gpu_visible_devices_var` names the variable, and the ordered
