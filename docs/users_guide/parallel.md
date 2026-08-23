@@ -490,6 +490,15 @@ the operating system and the site's own services hold back. The two differ by
 several percent, and the whole point of the number is that a caller can pack
 up to it.
 
+```{warning}
+Most shipped values are still estimates, rounded down from the node memory
+each site documents, because the figure that matters can only be read off the
+machine itself. A config whose value has not been measured there says so in a
+comment above the option. Estimates err low on purpose: packing less work than
+a node could hold is wasteful, while packing more is a job killed for
+exhausting the node.
+```
+
 A machine whose config does not set `memory_per_node` reports `None` for both,
 rather than `0`, since no machine has no memory. Every machine `mache` ships a
 config for sets it; a site-specific or user config may not. The login-node
