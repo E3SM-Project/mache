@@ -49,6 +49,7 @@ Depending on the parallel system, the following options are typically required:
 
 - `cores_per_node`
 - `gpus_per_node` (if GPUs are available)
+- `memory_per_node`
 - `max_mpi_tasks_per_node`
 - `cpus_per_task_flag` (primarily for PBS launchers)
 - `cpu_bind`, `gpu_bind`, `mem_bind`, `placement` (optional launcher tuning)
@@ -63,6 +64,22 @@ Downstream projects that intentionally want hyperthreading can override these
 settings in their own config to use hardware-thread counts and thread binding.
 In other words, these config fields are the hyperthreading controls rather
 than a dedicated boolean option.
+
+`memory_per_node` is the usable memory of one compute node in **MB** -- what
+the site reports as available to a job, not the hardware capacity. On a Slurm
+machine, read it off the machine itself:
+
+```bash
+sinfo --noheader --format="%m" --partition=<the machine's default partition>
+```
+
+A test fails if any shipped config omits it, since a machine without it works
+for everything else and the omission would only surface as a downstream tool
+unable to decide how much work fits on a node. Nothing in CI can check that
+the value is right, so if you have to estimate it -- from what the site
+documents, say -- round it down and mark it as an estimate in a comment above
+the option, as the unverified machines do. Too low wastes some of a node; too
+high gets a job killed for exhausting one.
 
 Compiler-specific overrides can be provided in optional
 `[parallel.<compiler>]` sections, e.g. `[parallel.gnu]`.
