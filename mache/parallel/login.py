@@ -22,6 +22,8 @@ class LoginSystem(ParallelSystem):
         self.gpus = self.get_config_int('login_gpus')
         self.gpus_per_node = self.gpus
 
+        # memory stays None: memory_per_node describes a compute node, and a
+        # login node neither has that much nor hands out what it does have
         self.nodes = 1
         self.mpi_allowed = False
 

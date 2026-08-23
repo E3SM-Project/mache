@@ -138,6 +138,11 @@ class PbsSystem(ParallelSystem):
             self.gpus_per_node = gpus_per_node
             self.gpus = gpus_per_node * nodes
 
+        memory_per_node = self.get_config_int('memory_per_node', default=None)
+        if memory_per_node is not None:
+            self.memory_per_node = memory_per_node
+            self.memory = memory_per_node * nodes
+
     @classmethod
     def resolve_pbs_options(
         cls,

@@ -73,6 +73,15 @@ class ParallelSystem:
     gpus_per_node : int
         The number of GPUs available per node.
 
+    memory : int
+        The total memory available on the system in MB, or ``None`` if the
+        machine's config does not describe it.
+
+    memory_per_node : int
+        The memory available per node in MB, or ``None`` if the machine's
+        config does not describe it. This is the memory a job may actually
+        use, which is smaller than the hardware capacity of a node.
+
     nodes : int
         The total number of nodes available on the system.
 
@@ -94,6 +103,8 @@ class ParallelSystem:
         self.cores_per_node: int | None = None
         self.gpus: int | None = None
         self.gpus_per_node: int | None = None
+        self.memory: int | None = None
+        self.memory_per_node: int | None = None
         self.nodes: int | None = None
         self.mpi_allowed: bool | None = None
 
@@ -201,7 +212,7 @@ class ParallelSystem:
         """Get a config value from the parallel configs."""
         return self.parallel_configs.get(key, default)
 
-    def get_config_int(self, key: str, default: int = 0) -> int | None:
+    def get_config_int(self, key: str, default: int | None = 0) -> int | None:
         """Get an integer config value from the parallel configs."""
         value = self.get_config(key, default)
         return int(value) if value is not None else None

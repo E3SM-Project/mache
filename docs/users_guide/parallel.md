@@ -11,7 +11,8 @@ Downstream software (for example, Polaris software) can:
 
 1. Load machine config with `MachineInfo`.
 2. Build a parallel-system object with `get_parallel_system()`.
-3. Query available resources (`cores`, `nodes`, `gpus`, and `mpi_allowed`).
+3. Query available resources (`cores`, `nodes`, `gpus`, `memory`, and
+   `mpi_allowed`).
 4. Build a machine-correct launcher command with `get_parallel_command()`.
 5. Use the command for either generated job scripts or direct subprocess calls.
 
@@ -458,4 +459,48 @@ was given.
 Verifying GPU placement from inside a launch needs the scheduler's global GPU
 identifiers, such as `SLURM_STEP_GPUS`. `CUDA_VISIBLE_DEVICES` is renumbered
 per launch, so four launches on four different GPUs all report device `0`.
+```
+
+(users-parallel-memory)=
+
+## How much memory a machine has
+
+A caller deciding how many pieces of work fit inside one allocation needs to
+know how much memory it has to divide up. `mache` reports it beside the core
+and GPU counts:
+
+```python
+from mache import MachineInfo
+from mache.parallel import get_parallel_system
+
+parallel_system = get_parallel_system(MachineInfo().config)
+
+print(parallel_system.memory_per_node)  # MB on one node
+print(parallel_system.memory)  # MB across the whole allocation
+```
+
+`memory` is `memory_per_node` times the node count, exactly as `cores` is
+`cores_per_node` times the node count. Both are in **MB**, which is the unit
+Slurm's memory options default to.
+
+The figure is the memory a job may actually use -- what the site reports as
+available, rounded down -- not the hardware capacity of a node. On a Slurm
+machine that is the `MEMORY` column of `sinfo`, which is already net of what
+the operating system and the site's own services hold back. The two differ by
+several percent, and the whole point of the number is that a caller can pack
+up to it.
+
+A machine whose config does not set `memory_per_node` reports `None` for both,
+rather than `0`, since no machine has no memory. Every machine `mache` ships a
+config for sets it; a site-specific or user config may not. The login-node
+system always reports `None`: `memory_per_node` describes a compute node, and
+a login node neither has that much nor hands out what it does have.
+
+```{note}
+Memory is machine description only. Nothing in `get_parallel_command()` reads
+it, and a `ResourcePlacement` deliberately does not carry it: on the machines
+measured, a memory request in a launch command reserved nothing and prevented
+nothing, so carrying one would imply a guarantee that `mache` cannot make.
+Deciding how much memory each piece of work may take is the caller's, because
+only the caller knows what else it is running.
 ```

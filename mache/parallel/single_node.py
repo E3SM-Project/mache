@@ -31,6 +31,13 @@ class SingleNodeSystem(ParallelSystem):
         self.mpi_allowed = True
         self.gpus_per_node = self.get_config_int('gpus_per_node')
         self.gpus = self.gpus_per_node
+        # unlike cores, memory is not detected from the machine itself: the
+        # figure that matters is the memory a job may use, which only the
+        # config knows
+        self.memory_per_node = self.get_config_int(
+            'memory_per_node', default=None
+        )
+        self.memory = self.memory_per_node
 
     @property
     def placement_support(self) -> PlacementSupport:

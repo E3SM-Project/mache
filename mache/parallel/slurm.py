@@ -140,6 +140,11 @@ class SlurmSystem(ParallelSystem):
         self.gpus_per_node = self.get_config_int('gpus_per_node')
         if self.gpus_per_node is not None:
             self.gpus = self.gpus_per_node * nodes
+        self.memory_per_node = self.get_config_int(
+            'memory_per_node', default=None
+        )
+        if self.memory_per_node is not None:
+            self.memory = self.memory_per_node * nodes
 
     @classmethod
     def resolve_slurm_options(
