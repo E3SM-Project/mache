@@ -19,6 +19,12 @@ how many GPUs a particular launch should be confined to. Target software
 describes the placement; `mache` renders it into whatever the machine's
 launcher needs.
 
+It also proposes that `mache` describe how much memory a machine's nodes
+have, in the same way it already describes their cores and GPUs. Memory is
+the one resource a placement deliberately does *not* carry, for reasons
+given below, and the two proposals together draw the line: `mache` says what
+a machine has and where a launch goes; the caller decides what fits.
+
 The immediate driver is Polaris, which is adding the ability to run
 independent steps concurrently within one allocation. The capability is not
 Polaris-specific; anything running several pieces of work inside one
@@ -59,6 +65,21 @@ equivalent — for most callers, whose work uses no GPUs at all, the explicit
 *per task* does not confine a launch — measured on both GPU machines. A
 per-launch total does. This is a genuine asymmetry with how CPUs are
 described, and the API has to reflect it rather than smooth it over.
+
+**Asking for memory changed nothing observable.** Giving a launch a share of
+the node's memory neither fixed the serialization — the unstated GPU claim
+did that — nor appeared to reserve anything. This is a negative result and
+it is the reason memory is absent from the placement type: a memory figure
+rendered into a launch command would reserve nothing and prevent nothing,
+while implying to every reader that it did.
+
+The limit of that evidence is worth stating, since it decides a boundary.
+It shows memory was not the cause of the serialization. It does not show
+that a memory request is inert on every machine, and in particular nobody
+has yet checked whether a launch given a small allowance is killed for
+exceeding it. Polaris's Phase A validation includes that check, and if some
+machine turns out to enforce, a memory field becomes worth adding — as an
+additive change, on evidence, rather than now on expectation.
 
 ---
 
@@ -131,6 +152,42 @@ that GPUs were ever a consideration.
 
 ---
 
+### Requirement: Describe how much memory a node has
+
+`mache` must report the memory available on a machine's nodes, as a
+per-node figure and as an allocation-wide total, beside the core and GPU
+counts it already reports.
+
+A caller running several pieces of work inside one allocation has to decide
+how many of them fit, and memory is one of the quantities that decides it.
+That number is a property of the machine, which is what `mache` is for; a
+caller that had to discover it for itself would either hard-code it per
+machine — duplicating exactly what `mache` exists to centralize — or read it
+from a node it has not been given yet.
+
+The figure must be the memory a job may actually use, not the hardware
+total, since the two differ by enough to matter and it is the smaller one a
+caller must not exceed.
+
+---
+
+### Requirement: A placement says where, not how much memory
+
+The placement type must not carry memory.
+
+Every field in a placement is rendered into a launch command. On the
+machines measured, a memory field would render into nothing, or into an
+option that demonstrably does nothing — and a caller reading the type would
+reasonably conclude that `mache` was keeping memory apart for it, which is
+the one thing nothing here can do.
+
+This keeps a clean division. `mache` describes what a machine has and
+renders where a launch goes. Deciding how much of the machine each piece of
+work may take is the caller's, because only the caller knows what else it is
+running.
+
+---
+
 ### Requirement: Report what the machine supports
 
 `mache` must be able to tell a caller which placement mechanism applies on
@@ -198,6 +255,37 @@ cannot leak from the parent into a later launch that meant to set its own,
 and it is removed first for the same reason. This follows what E3SM's own
 `config_machines.xml` already does on these machines.
 
+### A machine's memory
+
+`memory_per_node` joins `cores_per_node` and `gpus_per_node` as a
+`[parallel]` config option in each shipped machine config, and
+`ParallelSystem` exposes it alongside an allocation-wide `memory`, computed
+from it and the node count exactly as `cores` is computed from
+`cores_per_node`. Nothing in `get_parallel_command()` reads it. It is
+machine description, and it travels the same path as the rest of the
+machine description.
+
+Two details are worth fixing rather than leaving to whoever fills in the
+configs.
+
+**Megabytes, as an integer.** It matches the unit Slurm's memory options
+default to, and the unit callers already use — Polaris's step attribute is
+in megabytes — so no conversion sits between the number written down and the
+number acted on. Gigabytes would read better in a config file and would
+force every usable-memory figure to be rounded to something wrong.
+
+**The number is what the site reports as available, rounded down**, not the
+hardware capacity. On a Slurm machine that is what `sinfo` reports for the
+node, which is already net of what the operating system and the site's own
+services hold back. The two differ by several percent, and the whole value
+of the figure is that a caller can pack up to it.
+
+Machine configs give one value per machine, as they already do for cores and
+GPUs. On a machine with more than one node type this describes the type the
+config's constraint selects, which is the existing convention and its
+existing limitation; memory does not make it worse and should not be the
+occasion for fixing it.
+
 ### Capability detection
 
 The mechanism must be determined at run time, from the launcher actually
@@ -222,7 +310,15 @@ placement silently does nothing.
 - an optional argument to `ParallelSystem.get_parallel_command()`, and a
   rendering of it in `SlurmSystem`, `PbsSystem` and `SingleNodeSystem`;
 - capability detection, computed once and reported;
-- `SlurmSystem` gains version detection, since its rendering depends on it.
+- `SlurmSystem` gains version detection, since its rendering depends on it;
+- `memory_per_node` as a `[parallel]` config option in every shipped machine
+  config, with `memory` and `memory_per_node` on `ParallelSystem`.
+
+The memory work is independent of the placement work and shares none of its
+code. It is here because it is the other half of what a caller needs in
+order to schedule concurrent launches, and because splitting a machine's
+description across two repositories would be worse than the small amount of
+unrelatedness in one document. It can land separately and in either order.
 
 `SingleNodeSystem` can honor a core set and should, since it makes the
 capability testable without a batch system at all. It confines a launch with
@@ -251,6 +347,12 @@ exactly as today.
 
 Slurm must be tested at both sides of the 20.11 boundary, with the version
 faked, since both are in production and CI will only ever have one.
+
+Because a missing `memory_per_node` would leave a caller unable to schedule
+on a machine that otherwise works, every shipped machine config must be
+checked for it, in the same way the placement rendering is checked against
+every shipped config. An omission should fail in CI, when a machine is added
+or edited, rather than on the machine.
 
 ### Behavior on real machines
 
