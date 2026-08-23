@@ -286,6 +286,38 @@ config's constraint selects, which is the existing convention and its
 existing limitation; memory does not make it worse and should not be the
 occasion for fixing it.
 
+### The first values will be estimates, and must be corrected
+
+Whoever adds these options to the machine configs cannot measure them. The
+figure that matters is what a job on that machine may actually allocate, and
+that is knowable only from the machine — not from vendor specifications, not
+from site documentation, and not from what a login node's `/proc/meminfo`
+happens to say. The initial values will therefore be estimates, and they
+must be labeled as estimates in the configs rather than shipped looking like
+facts.
+
+Two things follow.
+
+**Estimates must err low.** Too high is a job killed for exhausting a node;
+too low is a job that packs less work than it could. The failure directions
+are not comparable, so an unverified figure should be rounded down hard
+enough that being wrong is merely wasteful.
+
+**The correction has to be someone's job, and the only opportunity is
+already scheduled.** Polaris's Phase A validation runs on Chrysalis,
+Perlmutter CPU and GPU, Frontier and Aurora — the same five machines these
+configs describe — and it is the point at which anyone is on all of them
+with a reason to look. Measuring the per-node memory there and returning
+corrections is part of that work, described in Polaris's Phase A design
+document. This is easy to lose between two repositories, which is why it is
+written down in both.
+
+Each config option should carry a comment saying whether its value has been
+measured or is still an estimate, and that comment should be removed as each
+machine is verified. A reader can then see at a glance which machines are on
+firm ground, and an unverified machine cannot quietly pass for a verified
+one.
+
 ### Capability detection
 
 The mechanism must be determined at run time, from the launcher actually
@@ -353,6 +385,11 @@ on a machine that otherwise works, every shipped machine config must be
 checked for it, in the same way the placement rendering is checked against
 every shipped config. An omission should fail in CI, when a machine is added
 or edited, rather than on the machine.
+
+CI cannot check that the value is *right* — no test has a node to compare
+against. The only check on correctness is the measurement on real machines
+described above, and the honest statement of the situation is that a value
+CI accepts is a value nobody has verified.
 
 ### Behavior on real machines
 
