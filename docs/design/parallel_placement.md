@@ -46,10 +46,14 @@ it asks for, and two steps that ask for everything will serialize. Both eras
 are in production on machines Polaris supports: Chrysalis runs 20.02,
 Perlmutter and Frontier run 25.11.
 
-**A launch claims every GPU on its node unless it says otherwise.** This, and
+**An unstated GPU requirement is read as a claim on all of them.** This, and
 not memory or CPU contention, is what prevented concurrency on the GPU
-machines: each launch implicitly reserved all of them, so the next waited.
-Constraining CPUs does not constrain GPUs.
+machines: a launch that said nothing about GPUs implicitly reserved every
+one on the node, so the next waited. Constraining CPUs does not constrain
+GPUs. The consequence for the API is that a placement must be able to say
+"no GPUs" explicitly, and that saying nothing must not be treated as
+equivalent — for most callers, whose work uses no GPUs at all, the explicit
+"none" is the common case.
 
 **GPUs must be requested as a per-launch total.** Requesting a number of GPUs
 *per task* does not confine a launch — measured on both GPU machines. A
@@ -120,8 +124,10 @@ as a count.
 A placement must express GPUs as a total for the launch, not as a count per
 task, for the reason measured above.
 
-A launch that does not ask for GPUs must be able to say so explicitly, so
-that it does not implicitly reserve the node's GPUs and block others.
+The total must default to none, and "none" must be rendered as an explicit
+request for no GPUs rather than as an omission. Callers whose work uses no
+GPUs — the majority — should get correct behavior without having to know
+that GPUs were ever a consideration.
 
 ---
 
