@@ -247,5 +247,7 @@ Verification must use the scheduler's global GPU identifiers instead. This
 cost us a round of testing and is worth stating in any test that checks GPU
 placement.
 
-The scripts used to establish these findings live in Polaris under
-`utils/launcher_spike/` and can be adapted rather than rewritten.
+These findings were established with throwaway scripts that are not being
+preserved. The per-machine results they produced are recorded in Polaris's
+task-parallelism design documents, which is where to look for the detail
+behind the requirements above.
