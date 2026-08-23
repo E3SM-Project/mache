@@ -123,6 +123,13 @@ If both are present, `distribution` takes precedence. Prefer `distribution`
 for machines whose documented Slurm usage relies on explicit values like
 `block:cyclic` rather than the older `plane=<tasks>` form.
 
+```{note}
+The `placement` config option here is the Slurm task distribution and is
+unrelated to the `placement` argument to `get_parallel_command()` described in
+{ref}`users-parallel-placement`. Passing that argument drops this config
+option from the command.
+```
+
 ## Selecting scheduler options by node count
 
 `mache.parallel` also provides helpers for selecting queue/partition/QOS from
@@ -280,3 +287,160 @@ options.max_wallclock  # "12:00:00" on Frontier
 
 When both a partition and a QOS set a limit, the more restrictive of the two
 is reported, and that is also the limit `wall_time` is capped at.
+
+(users-parallel-placement)=
+
+## Placing concurrent launches within one allocation
+
+`get_parallel_command()` normally asks for resources in the abstract -- this
+many tasks, this many CPUs each -- and lets the machine decide where the work
+runs. That is enough while a tool runs one piece of work at a time. As soon as
+it wants to run two inside the same allocation, the two launches are given
+overlapping resources or, more often, the second waits until the first has
+finished.
+
+An optional `placement` says where a launch should run:
+
+```python
+from mache import MachineInfo
+from mache.parallel import ResourcePlacement, get_parallel_system
+
+parallel_system = get_parallel_system(MachineInfo().config)
+
+placement = ResourcePlacement(
+    nodes=["nid001373"],
+    cores=list(range(8, 16)),
+)
+command = parallel_system.get_parallel_command(
+    args=["./run_step.py"],
+    ntasks=1,
+    cpus_per_task=8,
+    placement=placement,
+)
+```
+
+A placement carries three things: the nodes the launch may use, the cores it
+may use on each of them, and how many GPUs it needs in total. mache renders
+them into whatever the machine's launcher needs, so callers do not have to
+know which flags a given site takes.
+
+A call without a placement produces exactly the command it produced before
+this feature existed.
+
+### Checking what a machine supports
+
+Not every machine can confine a launch. Check before running things
+concurrently, rather than discovering the answer as a hang or as silent
+oversubscription:
+
+```python
+from mache.parallel import PlacementSupport
+
+support = parallel_system.placement_support
+if support is PlacementSupport.NONE:
+    print("this machine cannot place launches; run steps one at a time")
+elif support is PlacementSupport.CPU_BINDING:
+    print("placement is by CPU binding, which the work itself could ignore")
+```
+
+The three values are:
+
+- `PlacementSupport.SCHEDULER` -- the batch system reserves what each launch
+    asks for, so a launch cannot exceed what it was given. This is Slurm 20.11
+    and newer.
+- `PlacementSupport.CPU_BINDING` -- the launcher binds each task to specific
+    cores, which keeps concurrent launches apart but reserves nothing. Work
+    that rebinds itself is not prevented from doing so. This is Slurm before
+    20.11, PBS with PALS, and `single_node`.
+- `PlacementSupport.NONE` -- there is no mechanism here. Passing a placement
+    raises `ValueError` rather than producing a command that would be accepted
+    and then silently do nothing.
+
+This is determined at run time from the launcher actually present, not from
+the machine's config, because a site can be upgraded without its mache config
+changing.
+
+### GPUs are a total, not a count per task
+
+`ResourcePlacement.gpus` is the number of GPUs for the whole launch. This is
+deliberately unlike `cpus_per_task`: asking for a number of GPUs *per task*
+was measured not to confine a launch on either of the GPU machines mache
+supports, while a per-launch total does.
+
+`gpus` defaults to 0, and 0 is rendered as an explicit request for *no* GPUs.
+This matters more than it sounds: a launch that says nothing about GPUs is
+read as claiming every one on the node, so the next launch waits. Callers
+whose work uses no GPUs -- most of them -- get correct behavior without having
+to know GPUs were ever a consideration.
+
+### Which cores are honored
+
+`cores` is an explicit set rather than a count, because the usable cores on a
+node may not be contiguous and may not start at zero -- Aurora reserves core 0
+and cores 49-52 -- and because a count cannot say *which* cores.
+
+How much of that set is honored depends on the mechanism:
+
+- where the scheduler reserves resources, only the size of the set is used;
+    Slurm is asked for that many cores and picks which ones itself, and an
+    explicit core list is rejected outright alongside `-c`
+- where placement is by CPU binding, the set is used exactly as given, in
+    order, split into one contiguous chunk of `cpus_per_task` cores per task
+
+Either way, mache raises `ValueError` if the set is too small for
+`ntasks x cpus_per_task`.
+
+### Assigning GPUs on PBS with PALS
+
+PALS has no scheduler to hand out GPUs, so isolation there is by the vendor's
+visible-device variable -- `ZE_AFFINITY_MASK` on Aurora,
+`CUDA_VISIBLE_DEVICES` on Polaris. mache renders it into the `mpiexec` command
+and needs to be told *which* devices to name:
+
+```python
+placement = ResourcePlacement(
+    nodes=["x4401c1s0b0n0"],
+    cores=list(range(1, 9)),
+    gpus=1,
+    gpu_ids=[2],
+)
+```
+
+`gpu_ids` are indices from 0 to `gpus_per_node - 1`; mache maps them to
+whatever form the machine's variable takes, including Aurora's `device.tile`
+addressing. Only the caller knows about every launch running at that moment,
+so only the caller can assign disjoint GPUs -- mache renders what it is given
+and never guesses. A placement with `gpus > 0` and no `gpu_ids` raises on
+PALS, and `len(gpu_ids)` must equal `gpus`.
+
+`gpu_ids` is ignored where the scheduler assigns GPUs itself, which is every
+Slurm machine.
+
+Two config options support this, both already set on the machines that need
+them: `gpu_visible_devices_var` names the variable, and the ordered
+`gpu_bind = list:...` binding list, where a machine has one, says how its
+devices are named.
+
+### What a placement overrides
+
+A placement is the authority on which resources a launch gets, so it
+supersedes the machine's config options that describe spreading a launch over
+a whole node:
+
+- `distribution` and the legacy `placement` config option are dropped, since
+    the placement has already said which nodes and how many cores the launch
+    gets
+- `cpu_bind`, `gpu_bind` and `mem_bind` are dropped when they name specific
+    cores or devices, as Aurora's do
+- `cpu_bind` is also dropped wherever the placement renders its own binding
+- `gpu_bind` is dropped when the placement asks for no GPUs
+
+A binding *policy* such as `cpu_bind = cores` or `gpu_bind = closest` is kept
+where it does not conflict, since it still applies within whatever the launch
+was given.
+
+```{note}
+Verifying GPU placement from inside a launch needs the scheduler's global GPU
+identifiers, such as `SLURM_STEP_GPUS`. `CUDA_VISIBLE_DEVICES` is renumbered
+per launch, so four launches on four different GPUs all report device `0`.
+```

@@ -3,6 +3,12 @@ from configparser import ConfigParser
 
 from mache.parallel.login import LoginSystem
 from mache.parallel.pbs import PbsSystem
+from mache.parallel.placement import (
+    PlacementSupport as PlacementSupport,
+)
+from mache.parallel.placement import (
+    ResourcePlacement as ResourcePlacement,
+)
 from mache.parallel.single_node import SingleNodeSystem
 from mache.parallel.slurm import SlurmSystem
 from mache.parallel.system import ParallelSystem

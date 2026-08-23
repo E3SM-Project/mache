@@ -3,6 +3,8 @@ from configparser import ConfigParser
 from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Literal
 
+from mache.parallel.placement import PlacementSupport, ResourcePlacement
+
 # the config option in [parallel] that lists each type of scheduler target
 TARGET_TYPE_MAP = {
     'queue': 'queues',
@@ -95,12 +97,31 @@ class ParallelSystem:
         self.nodes: int | None = None
         self.mpi_allowed: bool | None = None
 
+    @property
+    def placement_support(self) -> PlacementSupport:
+        """
+        The placement mechanism available on this machine.
+
+        A caller that wants to run several launches at once inside one
+        allocation should check this first: on a machine that reports
+        ``PlacementSupport.NONE``, concurrent launches will oversubscribe or
+        serialize rather than run side by side.
+
+        This is determined from the launcher actually present rather than
+        from the machine's config, since a site can be upgraded across a
+        launcher change without its mache config changing, and a stale
+        assumption there fails in the worst way -- the command is accepted
+        and the placement silently does nothing.
+        """
+        return PlacementSupport.NONE
+
     def get_parallel_command(
         self,
         args: List[str],
         ntasks: int,
         cpus_per_task: int = 0,
         gpus_per_task: int = 0,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """
         Get the parallel execution command for the current system.
@@ -117,7 +138,19 @@ class ParallelSystem:
             The number of CPUs to allocate per task.
 
         gpus_per_task : int, optional
-            The number of GPUs to allocate per task.
+            The number of GPUs to allocate per task. Ignored when
+            ``placement`` is given, which expresses GPUs as a total for the
+            launch instead.
+
+        placement : mache.parallel.ResourcePlacement, optional
+            Which nodes, cores and GPUs to confine this launch to, for
+            callers running several launches at once inside one allocation.
+            When it is not given, the command is exactly what it would have
+            been without this argument.
+
+            A placement supersedes the machine's ``distribution``,
+            ``placement``, ``gpu_bind`` and ``mem_bind`` config options,
+            which describe how to spread a launch over a whole node.
 
         Returns
         -------
@@ -125,9 +158,10 @@ class ParallelSystem:
             The complete command to execute the parallel job.
         """
         parallel_executable = self.get_config('parallel_executable')
-        command = parallel_executable.split(' ')
+        command = self._get_command_prefix(placement)
+        command.extend(parallel_executable.split(' '))
         parallel_args = self._get_parallel_args(
-            cpus_per_task, gpus_per_task, ntasks
+            cpus_per_task, gpus_per_task, ntasks, placement
         )
         command.extend(parallel_args)
         command.extend(args)
@@ -138,9 +172,30 @@ class ParallelSystem:
         cpus_per_task: int,
         gpus_per_task: int,
         ntasks: int,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
         raise NotImplementedError
+
+    def _get_command_prefix(
+        self, placement: ResourcePlacement | None
+    ) -> List[str]:
+        """Get anything that has to come before the parallel executable."""
+        return []
+
+    def _check_placement_supported(
+        self, placement: ResourcePlacement | None
+    ) -> None:
+        """Raise if a placement was given but cannot be honored here."""
+        if placement is None:
+            return
+        if self.placement_support is PlacementSupport.NONE:
+            raise ValueError(
+                f'This machine cannot place a launch: no placement mechanism '
+                f'was found for the "{self.get_config("parallel_executable")}"'
+                f' launcher. Check placement_support before passing a '
+                f'placement.'
+            )
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get a config value from the parallel configs."""

@@ -2,6 +2,7 @@ import multiprocessing
 from configparser import ConfigParser
 from typing import List
 
+from mache.parallel.placement import ResourcePlacement
 from mache.parallel.system import ParallelSystem
 
 
@@ -29,6 +30,7 @@ class LoginSystem(ParallelSystem):
         cpus_per_task: int,
         gpus_per_task: int,
         ntasks: int,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
         # Not supported for login system

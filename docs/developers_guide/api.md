@@ -48,9 +48,20 @@ documentation.
     SubmissionResolution
     ParallelSystem
     ParallelSystem.get_parallel_command
+    ParallelSystem.placement_support
     ParallelSystem.get_scheduler_target
     ParallelSystem.resolve_submission
     cap_wall_time
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.placement
+
+.. autosummary::
+    :toctree: generated/
+
+    PlacementSupport
+    ResourcePlacement
 ```
 
 ```{eval-rst}
@@ -81,6 +92,7 @@ documentation.
     SlurmSystem
     SlurmSystem.get_slurm_options
     SlurmSystem.resolve_slurm_options
+    get_slurm_version
 ```
 
 ```{eval-rst}
@@ -93,6 +105,7 @@ documentation.
     PbsSystem
     PbsSystem.get_pbs_options
     PbsSystem.resolve_pbs_options
+    is_pals_launcher
 ```
 
 ## spack

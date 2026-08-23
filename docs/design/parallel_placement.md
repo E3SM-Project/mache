@@ -183,6 +183,21 @@ three cases established by measurement are:
   isolation is by the vendor's visible-device mechanism, which is the
   documented approach on those machines.
 
+There is no scheduler on PALS to hand out GPUs, so a total is not enough
+there: something has to name the devices. Deriving them from the placement's
+core set would work only while every concurrent launch has the same shape,
+and would collide the first time launches of different sizes ran beside each
+other. Only the caller sees every launch running at that moment, so the
+placement carries the device indices the caller assigned, and `mache` renders
+them rather than guessing. The total remains the machine-independent
+statement and is what Slurm is given; a PALS placement that asks for GPUs
+without naming them is an error, not an invitation to choose.
+
+The variable is set on the command line rather than exported, so a value
+cannot leak from the parent into a later launch that meant to set its own,
+and it is removed first for the same reason. This follows what E3SM's own
+`config_machines.xml` already does on these machines.
+
 ### Capability detection
 
 The mechanism must be determined at run time, from the launcher actually
@@ -201,15 +216,18 @@ placement silently does nothing.
 
 ---
 
-- a small placement type in `mache.parallel`, holding nodes, cores and GPU
-  total;
+- a small placement type in `mache.parallel`, holding nodes, cores, a GPU
+  total and — only where the batch system does not assign GPUs itself — the
+  device indices the caller chose;
 - an optional argument to `ParallelSystem.get_parallel_command()`, and a
   rendering of it in `SlurmSystem`, `PbsSystem` and `SingleNodeSystem`;
 - capability detection, computed once and reported;
 - `SlurmSystem` gains version detection, since its rendering depends on it.
 
 `SingleNodeSystem` can honor a core set and should, since it makes the
-capability testable without a batch system at all.
+capability testable without a batch system at all. It confines a launch with
+`taskset`, which the whole process tree inherits, and reports the
+CPU-binding mechanism.
 
 This is an additive change. No existing caller passes a placement, so no
 existing behavior moves.
