@@ -58,7 +58,9 @@ def test_resolve_spack_path_prefers_cli(tmp_path: Path):
         reason='deployment is enabled',
     )
 
-    assert resolved == str((Path.home() / 'cli-spack').resolve())
+    # the path is expanded and made absolute, not resolved through
+    # symlinks, so a symlinked home must not be followed here either
+    assert resolved == str(Path.home() / 'cli-spack')
 
 
 def test_resolve_spack_path_uses_runtime_then_config(tmp_path: Path):
