@@ -25,6 +25,11 @@ the one resource a placement deliberately does *not* carry, for reasons
 given below, and the two proposals together draw the line: `mache` says what
 a machine has and where a launch goes; the caller decides what fits.
 
+A caller that has decided can then say so: an optional memory **cap**, given
+separately from the placement and absent unless asked for, holds a launch to
+a figure the caller deliberately stated. It is a cap and not a reservation,
+and it is rendered only on machines that will act on it.
+
 The immediate driver is Polaris, which is adding the ability to run
 independent steps concurrently within one allocation. The capability is not
 Polaris-specific; anything running several pieces of work inside one
@@ -75,19 +80,29 @@ and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and on
 Frontier, and reaches 4 GB and exits 0 on Chrysalis, whose Slurm predates
 20.11.
 
-Both halves point the same way, and together they are why memory is absent
-from the placement type. Where a memory figure is inert it would reserve
-nothing and prevent nothing while implying to every reader that it did.
-Where it is enforced it would be a cap, and work that under-declared would
-be killed rather than merely mis-scheduled. Neither is a thing to render on
-a caller's behalf out of a field it may have filled in loosely.
+Both halves point the same way, and together they decide where memory
+belongs. Where a memory figure is inert it reserves nothing and prevents
+nothing while implying to every reader that it did. Where it is enforced it
+is a cap, and work that under-declared would be killed rather than merely
+mis-scheduled. Neither is a thing to render on a caller's behalf out of a
+field that was filled in loosely — which is why memory stays out of the
+placement type, and why a cap is stated separately and only when a caller
+means it.
+
+**A placement does not cap memory by itself.** Asking Slurm for exactly the
+cores a launch needs does not hand it a slice of the node's memory to go
+with them. A placed single-core launch and an unplaced control, neither
+mentioning memory, both allocated twice what a single core's proportional
+share of the node would be, and neither was touched — measured on Perlmutter
+CPU and Frontier. That bounds rather than settles: it shows no ceiling below
+the amount tried, and Perlmutter GPU was not tested on the point.
 
 The one worry this raises does not materialize: silence about memory does
 not repeat the trap that silence about GPUs sets. An unstated memory
 requirement is not read as a claim on the node's memory. On both Perlmutter
 GPU and Frontier, four concurrent launches that said nothing about it all
 started within 40 ms of each other and ran for their full duration. Aurora
-and Perlmutter CPU are unmeasured on this point.
+is unmeasured on this point.
 
 ---
 
@@ -197,14 +212,49 @@ running.
 
 ---
 
+### Requirement: A memory cap is stated separately, and only on purpose
+
+A caller must be able to say how much memory a launch may use, as an
+argument of its own rather than as part of a placement, absent unless it is
+given.
+
+The requirement above rests on a memory figure being rendered "out of a
+field that was filled in loosely" — a caller filling in a placement to say
+where its work goes, and finding it had also declared a limit it would be
+held to. A separate argument removes exactly that. Setting it is a distinct
+act, and the caller that performs it has said a number knowing it is a
+ceiling.
+
+The two requirements are therefore the same rule seen twice, not a reversal
+of one by the other: the placement still says *where*, and how much memory
+is a different statement, made in a different place in the signature.
+
+What is being asked for is a **cap, not a reservation**. Nothing measured
+suggests such a figure sets memory aside, so it must not be documented in
+terms that read as scheduling. And because it means nothing at all on
+machines whose launcher has no memory option or ignores the one it has, it
+must be rendered only where it will be acted on. A cap on the command line
+that nothing keeps is worse than no cap: it reads to everyone who sees the
+command as a safety net.
+
+---
+
 ### Requirement: Report what the machine supports
 
 `mache` must be able to tell a caller which placement mechanism applies on
-the current machine: scheduler-enforced, CPU-binding fallback, or none.
+the current machine: scheduler-enforced, CPU-binding fallback, or none, and
+whether a memory cap will be enforced here.
 
 A caller that cannot place work needs to know that before it tries to run
 things concurrently, rather than discovering it as a hang or as silent
 oversubscription.
+
+The two reports differ in what they justify. A placement that cannot be
+honored is an error, because concurrent launches will then collide. A cap
+that cannot be enforced is not: the work runs correctly and is merely
+unprotected, so the caller is told rather than stopped, and can record in a
+run log that caps do not bite on this machine instead of believing it has a
+safety net.
 
 ---
 
@@ -335,6 +385,50 @@ config's constraint selects, which is the existing convention and its
 existing limitation; memory does not make it worse and should not be the
 occasion for fixing it.
 
+### A memory cap on a launch
+
+`get_parallel_command()` takes an optional `memory_cap`, in MB, alongside
+the placement and independent of it. Absent, nothing about memory is
+rendered and every existing caller's command is unchanged.
+
+**Per node, in MB**, which is both what Slurm's `--mem` means and what
+`memory_per_node` is denominated in — the figure a caller divides up between
+the launches it runs at once. A different denomination would put a
+conversion between two numbers the caller has to reason about together.
+
+**Rendered only where it will be acted on.** On Slurm 20.11 and newer that
+is `--mem=<N>M`. Chrysalis's Slurm accepts the same option and does not act
+on it, and PALS has no equivalent at all; on both, `mache` renders nothing.
+Rendering an option known to be inert would put a figure on the command line
+that nothing keeps, which is the failure this design objects to everywhere
+else: something that reads as though it is working.
+
+The version is a proxy, and worth naming as one. Memory enforcement comes
+from the cgroup constraints a site configures, not from the step options
+20.11 added; the boundary is the same only because that is where it was
+measured. A site running a new Slurm with memory constraints disabled would
+be reported as enforcing when it is not. That is why the constant deciding
+it is separate from the one deciding step isolation, though the two
+currently hold the same number.
+
+**Two values, not three.** Whether a launcher lacks a memory option or
+accepts one and ignores it, the consequence for the caller is the same:
+nothing here will hold the launch to its cap. `memory_cap_support` says
+`ENFORCED` or `NONE` and does not distinguish two ways of being useless.
+
+**Not validated against `memory_per_node`.** The obvious check — refusing a
+cap larger than the node is said to have — would reject caps the node can
+honor. The shipped figures are conservative by design, and on Perlmutter and
+Frontier they measured below what a node actually reported, so `mache` would
+be enforcing its own estimate.
+
+**What has not been measured** is whether a stated cap is also a claim. If
+Slurm treats `--mem` on a step as a reservation and not only as a limit,
+then two concurrent launches whose caps together exceed the node would
+serialize, the way an unstated GPU requirement serializes them today.
+Nothing measured suggests it does, and nothing measured rules it out: every
+concurrency measurement so far was made without caps.
+
 ### The first values will be estimates, and must be corrected
 
 Whoever adds these options to the machine configs cannot measure them. The
@@ -352,20 +446,47 @@ too low is a job that packs less work than it could. The failure directions
 are not comparable, so an unverified figure should be rounded down hard
 enough that being wrong is merely wasteful.
 
-**The correction has to be someone's job, and the only opportunity is
-already scheduled.** Polaris's Phase A validation runs on Chrysalis,
-Perlmutter CPU and GPU, Frontier and Aurora — the same five machines these
-configs describe — and it is the point at which anyone is on all of them
-with a reason to look. Measuring the per-node memory there and returning
-corrections is part of that work, described in Polaris's Phase A design
-document. This is easy to lose between two repositories, which is why it is
-written down in both.
+**A single node cannot establish the number.** What a node reports is
+evidence about that node. The figure a config needs is the smallest any of
+them reports, and getting it costs no allocation — `sinfo -o "%m" -p
+<partition>` on Slurm, and take the minimum. This was learned the awkward
+way in the first round of measurement, when a figure read off whichever node
+a job happened to land on was briefly taken for evidence that one machine
+had two node types; the sample had come from a different machine's node. No
+machine `mache` ships a config for is currently known to differ in memory
+between its nodes.
 
-Each config option should carry a comment saying whether its value has been
-measured or is still an estimate, and that comment should be removed as each
-machine is verified. A reader can then see at a glance which machines are on
-firm ground, and an unverified machine cannot quietly pass for a verified
-one.
+**The correction was someone's job, and that opportunity has now come
+round.** Polaris's Phase A validation ran on Chrysalis, Perlmutter CPU and
+GPU, Frontier and Aurora — the same five machines these configs describe.
+What came back is that **no shipped value is wrong**, and that only one of
+them rests on more than a sample:
+
+| machine | config | measured | standing |
+| --- | --- | --- | --- |
+| Chrysalis | 253000 | 253000 | surveyed, and agrees |
+| Perlmutter CPU | 480000 | 515100 | one node; config is conservative |
+| Perlmutter GPU | 240000 | 257200 | two nodes; config is conservative |
+| Frontier | 480000 | 512000 | one node; config is conservative |
+| Aurora | 960000 | — | never measured; a `pbsnodes` parse found nothing |
+
+Every configured value is at or below what a node reported, which is the
+direction estimates are asked to err in. Aurora is the real gap: it has no
+measurement at all.
+
+Each config option carries a comment saying where its figure came from — a
+partition-wide survey, a sample of one or two nodes, or nothing but the
+site's documentation — and that comment is what changes as each machine is
+surveyed. A reader can then see at a glance which machines are on firm
+ground, and a sampled machine cannot quietly pass for a surveyed one.
+
+**The stakes are lower than they were.** Polaris now treats the configured
+figure as a planning estimate rather than a promise: it sizes job scripts
+with it at setup, when no node has been assigned yet, and inside the
+allocation reads what the nodes it actually received report, accounting
+against those and reporting any disagreement. A stale or optimistic value
+can no longer over-admit at run time. That is a reason not to hold a release
+for perfect numbers, not a reason to stop wanting them.
 
 ### Capability detection
 
@@ -393,7 +514,12 @@ placement silently does nothing.
 - capability detection, computed once and reported;
 - `SlurmSystem` gains version detection, since its rendering depends on it;
 - `memory_per_node` as a `[parallel]` config option in every shipped machine
-  config, with `memory` and `memory_per_node` on `ParallelSystem`.
+  config, with `memory` and `memory_per_node` on `ParallelSystem`;
+- an optional `memory_cap` argument to
+  `ParallelSystem.get_parallel_command()`, rendered as `--mem` by
+  `SlurmSystem` where the version says it will be enforced and rendered
+  nowhere else, with a `memory_cap_support` report beside
+  `placement_support`.
 
 The memory work is independent of the placement work and shares none of its
 code. It is here because it is the other half of what a caller needs in
@@ -458,25 +584,49 @@ preserved. The per-machine results they produced are recorded in Polaris's
 task-parallelism design documents, which is where to look for the detail
 behind the requirements above.
 
-### What the first round of validation left open
+### What validation found, machine by machine
 
-The first round ran on Chrysalis, Frontier, Perlmutter GPU and Aurora.
-Chrysalis and Frontier came back clean — exact cores on Chrysalis, and four
-concurrent launches with disjoint cores and disjoint GPUs on Frontier. The
-two problems it found are the `--env-remove` rejection and the `gpu_bind =
-none` GPU loss, both described above and both now changed. Neither change is
-confirmed until a machine says so, and the memory figures in the shipped
-configs are all still estimates. What remains:
+Validation ran on all five machines, and the rendering works on every one of
+them. This is recorded here in prose because the harness that produced it is
+being removed from Polaris's history at the end of its Phase A, taking the
+raw evidence with it.
 
-- **Aurora, everything downstream of the rejected command.** Nothing there
-  got past `--env-remove`, so whether the placement is honored at all,
-  whether `--env VAR=VAL` is accepted, and whether an empty `ZE_AFFINITY_MASK`
-  means "no devices" or "no mask" are all still unknown. This is the one to
-  rerun first, since it is a whole machine's placement path with no evidence
-  behind it.
-- **Perlmutter GPU, without `gpu_bind = none`.** One rerun confirms or kills
-  the hypothesis that the flag is what cost three of four concurrent launches
-  their GPUs.
-- **Perlmutter CPU.** Not yet run.
-- **`memory_per_node` on every machine.** Still unmeasured everywhere, and
-  now known to be a figure a machine will enforce rather than ignore.
+Two defects were found, both in the first round, both fixed above and both
+confirmed by a rerun.
+
+- **Chrysalis** (Slurm 20.02, CPU only) — clean. Placement is by explicit
+  CPU binding, and the cores a launch got were exactly the cores it was
+  given. A memory figure is not enforced: a step allowed 1024 MB and told to
+  take 4 GB reached 4 GB and exited 0.
+- **Perlmutter CPU** (Slurm 25.11) — clean first time.
+- **Perlmutter GPU** (Slurm 25.11) — clean once `gpu_bind = none` was
+  dropped. Before that, four concurrent placed launches each asking for one
+  GPU produced one launch with a GPU and three with none, which ran anyway
+  and exited 0. Memory is enforced: the same 4 GB step was killed at 960 MB.
+- **Frontier** (Slurm 25.11) — clean throughout, including four concurrent
+  launches with disjoint cores and disjoint GPUs. Memory is enforced, at the
+  same 960 MB.
+- **Aurora** (PBS with PALS) — every placed launch failed to start until
+  `--env-remove` was dropped; clean afterwards.
+
+### What is still open
+
+**The empty-`ZE_AFFINITY_MASK` question, which a green Aurora run does not
+close.** On Slurm, the GPUs a launch can see are reported by the scheduler's
+own variables, so a check reads back something `mache` did not write. On
+PALS nothing assigns GPUs: `mache` renders the indices the caller chose into
+the variable, and the check reads that same variable back. A clean run
+therefore confirms the plumbing and says nothing about what Level Zero makes
+of an empty value — whether it means "no devices" or "no mask", which is
+every tile. Settling it takes a placed CPU-only launch on Aurora reporting
+what Level Zero actually sees.
+
+**Whether a stated memory cap is also a claim**, described above. Every
+concurrency measurement so far was made without caps.
+
+**The memory cap rendering itself.** The enforcement facts behind it were
+measured directly, but no launch has yet been run through
+`get_parallel_command()` with `memory_cap` set.
+
+**A survey of `memory_per_node` on every machine but Chrysalis**, and any
+measurement at all on Aurora.
