@@ -76,6 +76,21 @@ sinfo --noheader --format="%m" --partition=<the machine's default partition>
 That prints one figure per node group, so **take the smallest**. The value
 has to be one no node falls below, and a figure read off whichever node you
 happen to be on is evidence about that node rather than about the partition.
+Where the config offers more than one partition, the figure has to hold for
+all of them, so pass them all: `--partition=batch,extended`.
+
+Not every machine separates its node types by partition. Perlmutter selects
+between CPU and GPU nodes with a *constraint*, so a partition-wide query there
+mixes the two and the smallest figure comes back from whichever type has less.
+Select on the feature column instead:
+
+```bash
+sinfo --noheader --format="%m %f" | awk '$2 ~ /(^|,)cpu(,|$)/ {print $1}' \
+    | sort -n | head -1
+```
+
+Check which axis a machine uses before trusting the answer -- if its config
+sets `constraints` rather than `partitions`, this is the query it needs.
 
 On a PBS machine the same figure is `resources_available.mem`:
 
