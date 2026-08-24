@@ -77,6 +77,20 @@ That prints one figure per node group, so **take the smallest**. The value
 has to be one no node falls below, and a figure read off whichever node you
 happen to be on is evidence about that node rather than about the partition.
 
+On a PBS machine the same figure is `resources_available.mem`:
+
+```bash
+pbsnodes -a | grep resources_available.mem
+```
+
+Take the smallest of those too. If the field is missing, do **not** fall back
+to the kernel's `MemTotal` from `/proc/meminfo`. That reports what the
+hardware holds, which is larger than what the site hands a job, and the
+distance between the two is the whole reason this option exists -- copying it
+in makes the value too high in exactly the direction that gets a job killed.
+Leave the estimate in place and say in the comment that the measurement was
+attempted and produced nothing, as Aurora's config does.
+
 A test fails if any shipped config omits it, since a machine without it works
 for everything else and the omission would only surface as a downstream tool
 unable to decide how much work fits on a node. Nothing in CI can check that
