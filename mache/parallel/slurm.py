@@ -1,17 +1,46 @@
+import functools
 import os
+import re
+import subprocess
 import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import List
 
+from mache.parallel.memory import MemoryCapSupport
+from mache.parallel.placement import (
+    BINDING_OPTIONS,
+    PlacementSupport,
+    ResourcePlacement,
+    cpu_mask,
+    names_resources,
+    split_cores,
+)
 from mache.parallel.system import (
     ParallelSystem,
     _ceil_division,
     _combine_reasons,
     _get_subprocess_int,
+    _get_subprocess_str,
     _normalize_requested,
     cap_wall_time,
 )
+
+# Slurm 20.11 made job steps reserve what they ask for instead of sharing a
+# node, and added the options that control it. Before that release those
+# options do not exist and passing them is an error, not a no-op, so the two
+# eras need different commands. Both are in production on machines mache
+# supports.
+STEP_ISOLATION_VERSION = (20, 11)
+
+# Where a memory cap on a job step is enforced. This is the same boundary as
+# step isolation, but it is a separate fact and a separate constant: memory
+# enforcement comes from the cgroup constraints a site configures, not from
+# the step options 20.11 added, and evidence that moves one should not move
+# the other. What was measured is that a step allowed 1024 MB and told to
+# take 4 GB is killed at 960 MB on Perlmutter and Frontier, and runs to
+# completion on Chrysalis.
+MEMORY_ENFORCEMENT_VERSION = (20, 11)
 
 
 @dataclass(frozen=True)
@@ -66,6 +95,34 @@ class SlurmOptions:
     reason: str | None = None
 
 
+@functools.cache
+def get_slurm_version() -> tuple[int, int] | None:
+    """
+    Get the major and minor version of the Slurm installed on this machine.
+
+    The version is read from ``srun`` itself rather than from a machine's
+    config, because a site can be upgraded across the 20.11 change in job
+    step behavior without its mache config changing. It is looked up at most
+    once per process.
+
+    Returns
+    -------
+    version : tuple of int or None
+        The major and minor version, or ``None`` if ``srun`` is missing or
+        reports a version that cannot be parsed.
+    """
+    try:
+        output = _get_subprocess_str(['srun', '--version'])
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    # e.g. "slurm 25.11.5"
+    match = re.search(r'(\d+)\.(\d+)', output)
+    if match is None:
+        return None
+    return int(match.group(1)), int(match.group(2))
+
+
 class SlurmSystem(ParallelSystem):
     """SLURM resource manager for parallel jobs."""
 
@@ -77,7 +134,10 @@ class SlurmSystem(ParallelSystem):
                 'set to "slurm".'
             )
         job_id = os.environ['SLURM_JOB_ID']
-        cores_per_node = self.get_config_int('cores_per_node')
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would leave the machine
+        # reporting no cores instead of raising
+        cores_per_node = self.get_config_int('cores_per_node', default=None)
         if cores_per_node is None:
             raise ValueError(
                 'cores_per_node must be set in the config for the slurm '
@@ -90,9 +150,16 @@ class SlurmSystem(ParallelSystem):
         self.cores_per_node = cores_per_node
         self.nodes = nodes
         self.mpi_allowed = True
-        self.gpus_per_node = self.get_config_int('gpus_per_node')
-        if self.gpus_per_node is not None:
-            self.gpus = self.gpus_per_node * nodes
+        # 0 rather than None here: a machine that says nothing about GPUs
+        # has none, which is an answer and not a gap
+        gpus_per_node = self.get_config_int('gpus_per_node', default=0)
+        self.gpus_per_node = gpus_per_node
+        self.gpus = gpus_per_node * nodes
+        self.memory_per_node = self.get_config_int(
+            'memory_per_node', default=None
+        )
+        if self.memory_per_node is not None:
+            self.memory = self.memory_per_node * nodes
 
     @classmethod
     def resolve_slurm_options(
@@ -258,14 +325,69 @@ class SlurmSystem(ParallelSystem):
             options.effective_nodes,
         )
 
+    @property
+    def placement_support(self) -> PlacementSupport:
+        """
+        The placement mechanism available on this machine.
+
+        Slurm 20.11 and newer reserves what a job step asks for, so placement
+        is scheduler enforced. Before that release, steps share a node and
+        the only mechanism is an explicit CPU binding, which keeps concurrent
+        launches on disjoint cores but does not reserve them.
+        """
+        version = get_slurm_version()
+        if version is None:
+            return PlacementSupport.NONE
+        if version >= STEP_ISOLATION_VERSION:
+            return PlacementSupport.SCHEDULER
+        return PlacementSupport.CPU_BINDING
+
+    @property
+    def memory_cap_support(self) -> MemoryCapSupport:
+        """
+        Whether this machine will hold a launch to a memory cap.
+
+        The Slurm version is what this is read from, since that is what was
+        measured and it is what mache can ask the machine. It is a proxy:
+        the enforcement itself comes from the site's cgroup configuration,
+        so a site running a new Slurm with memory constraints turned off
+        would be reported as enforcing when it does not.
+        """
+        version = get_slurm_version()
+        if version is None or version < MEMORY_ENFORCEMENT_VERSION:
+            return MemoryCapSupport.NONE
+        return MemoryCapSupport.ENFORCED
+
+    def _get_memory_args(self, memory_cap: int | None) -> List[str]:
+        """Get the arguments that hold a launch to a memory cap."""
+        if memory_cap is None:
+            return []
+        if self.memory_cap_support is not MemoryCapSupport.ENFORCED:
+            # Chrysalis's Slurm accepts --mem on a step and does not act on
+            # it. Rendering it there would put a figure on the command line
+            # that nothing keeps, which reads to anyone who sees the command
+            # as a safety net that is not there.
+            return []
+        # a per-node figure, which is what --mem means and what
+        # memory_per_node is denominated in
+        return [f'--mem={memory_cap}M']
+
     def _get_parallel_args(
         self,
         cpus_per_task: int,
         gpus_per_task: int,
         ntasks: int,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
-        max_mpi_tasks_per_node = self.get_config_int('max_mpi_tasks_per_node')
+        self._check_placement_supported(placement)
+
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would cap the launch at no
+        # tasks at all instead of raising
+        max_mpi_tasks_per_node = self.get_config_int(
+            'max_mpi_tasks_per_node', default=None
+        )
         if max_mpi_tasks_per_node is None:
             raise ValueError(
                 'max_mpi_tasks_per_node must be set in the config for the '
@@ -276,14 +398,20 @@ class SlurmSystem(ParallelSystem):
         if nodes is None:
             raise ValueError('Node count is not set for the slurm system.')
 
-        tasks_per_node = _ceil_division(ntasks, nodes)
+        if placement is not None and len(placement.nodes) > 0:
+            available_nodes = len(placement.nodes)
+            launch_nodes = available_nodes
+        else:
+            available_nodes = nodes
+            launch_nodes = _ceil_division(ntasks, max_mpi_tasks_per_node)
+
+        tasks_per_node = _ceil_division(ntasks, available_nodes)
         if tasks_per_node > max_mpi_tasks_per_node:
             raise ValueError(
                 f'Calculated tasks_per_node ({tasks_per_node}) exceeds the '
                 f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
                 f'likely need to allocate more nodes.'
             )
-        launch_nodes = _ceil_division(ntasks, max_mpi_tasks_per_node)
 
         parallel_args = [
             '-c',
@@ -293,30 +421,135 @@ class SlurmSystem(ParallelSystem):
             '-n',
             f'{ntasks}',
         ]
-        if gpus_per_task > 0:
+
+        if placement is not None:
+            parallel_args = self._add_placement_args(
+                parallel_args, cpus_per_task, ntasks, placement
+            )
+        elif gpus_per_task > 0:
             gpus_per_task_flag = self.get_config('gpus_per_task_flag')
             if gpus_per_task_flag is None:
                 gpus_per_task_flag = '--gpus-per-task'
             parallel_args.extend([gpus_per_task_flag, f'{gpus_per_task}'])
 
-        flags = {
-            'cpu_bind': '--cpu-bind',
-            'gpu_bind': '--gpu-bind',
-            'mem_bind': '--mem-bind',
-        }
-        for option, flag in flags.items():
-            value = self.get_config(option)
-            if value is not None and value != '':
-                parallel_args.append(f'{flag}={value}')
+        parallel_args.extend(self._get_binding_args(placement))
+
+        if placement is not None:
+            # a placement already says which nodes and how many cores a
+            # launch gets, so the machine's way of spreading a launch over a
+            # whole node has nothing left to decide and could only contradict
+            # it
+            return parallel_args
 
         distribution = self.get_config('distribution')
         if distribution is not None and distribution != '':
             parallel_args.extend(['-m', distribution])
             return parallel_args
 
-        placement = self.get_config('placement')
-        if placement is not None and placement != '':
+        # the legacy `placement` config option, which is the srun task
+        # distribution and is unrelated to the `placement` argument above
+        distribution_type = self.get_config('placement')
+        if distribution_type is not None and distribution_type != '':
             parallel_args.extend(
-                ['-m', f'{placement}={max_mpi_tasks_per_node}']
+                ['-m', f'{distribution_type}={max_mpi_tasks_per_node}']
             )
         return parallel_args
+
+    def _add_placement_args(
+        self,
+        parallel_args: List[str],
+        cpus_per_task: int,
+        ntasks: int,
+        placement: ResourcePlacement,
+    ) -> List[str]:
+        """Add the arguments that confine a launch to a placement."""
+        if len(placement.nodes) > 0:
+            parallel_args.extend(['-w', ','.join(placement.nodes)])
+
+        chunks = split_cores(placement, ntasks, cpus_per_task)
+
+        if self.placement_support is PlacementSupport.CPU_BINDING:
+            if placement.gpus > 0:
+                version = get_slurm_version()
+                if version is None:
+                    running = 'unknown'
+                else:
+                    running = f'{version[0]}.{version[1]}'
+                raise ValueError(
+                    f'This machine runs Slurm {running}, which has no way to '
+                    f"give a job step a share of the node's GPUs. Placing "
+                    f'GPUs needs Slurm {STEP_ISOLATION_VERSION[0]}.'
+                    f'{STEP_ISOLATION_VERSION[1]} or newer.'
+                )
+            # Before 20.11 steps share a node's cores by default and --exact
+            # does not exist, so the cores a launch may use have to be named
+            # one mask per task.
+            masks = ','.join(cpu_mask(chunk) for chunk in chunks)
+            parallel_args.append(f'--cpu-bind=mask_cpu:{masks}')
+            return parallel_args
+
+        # 20.11 and newer: ask for exactly what this launch needs instead of
+        # inheriting the job's resources, and let Slurm choose which cores
+        # satisfy the count.
+        parallel_args.append('--exact')
+        if placement.gpus > 0:
+            # a total for the launch, not a count per task: a per-task count
+            # was measured not to confine a launch on either GPU machine
+            parallel_args.append(f'--gpus={placement.gpus}')
+        else:
+            # saying nothing about GPUs is read as claiming every one on the
+            # node, which is what serializes concurrent launches there
+            parallel_args.append('--gres=none')
+        return parallel_args
+
+    def _get_binding_args(
+        self, placement: ResourcePlacement | None
+    ) -> List[str]:
+        """Get the binding arguments the machine's config asks for."""
+        binding_args = []
+        for option in BINDING_OPTIONS:
+            value = self.get_config(option)
+            if value is None or value == '':
+                continue
+            if placement is not None and not self._keeps_binding(
+                option, value, placement
+            ):
+                continue
+            flag = f'--{option.replace("_", "-")}'
+            binding_args.append(f'{flag}={value}')
+        return binding_args
+
+    def _keeps_binding(
+        self, option: str, value: str, placement: ResourcePlacement
+    ) -> bool:
+        """
+        Check whether a config binding survives alongside a placement.
+
+        A binding policy such as ``cores`` or ``closest`` still applies
+        within whatever the placement gave the launch. One that names
+        specific cores or devices does not, because the placement is now the
+        authority on which resources the launch has. Nor does a ``gpu_bind``
+        of ``none``, which asks for no binding at all.
+        """
+        if names_resources(value):
+            return False
+        if option == 'cpu_bind':
+            # on pre-20.11 Slurm the placement renders its own cpu binding
+            return self.placement_support is not PlacementSupport.CPU_BINDING
+        if option == 'gpu_bind':
+            if placement.gpus == 0:
+                # binding tasks to GPUs contradicts having asked for none
+                return False
+            # A `gpu_bind` of `none` asks Slurm not to bind tasks to GPUs,
+            # which is what it does anyway without the option, so dropping
+            # it takes nothing away.  Keeping it alongside an explicit
+            # --gpus=N appears to cost something: of four concurrent placed
+            # launches on Perlmutter GPU asking for one GPU each, one was
+            # given a GPU and the other three got none, ran anyway and
+            # exited 0.  Frontier, whose `gpu_bind` is `closest`, gave all
+            # four disjoint GPUs from a nearly identical command.  That
+            # `none` is what suppressed the assignment rather than merely
+            # the binding is a hypothesis, still to be confirmed by a rerun
+            # on Perlmutter GPU with the option gone.
+            return value.strip() != 'none'
+        return True

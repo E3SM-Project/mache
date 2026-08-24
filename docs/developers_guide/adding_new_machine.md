@@ -49,6 +49,7 @@ Depending on the parallel system, the following options are typically required:
 
 - `cores_per_node`
 - `gpus_per_node` (if GPUs are available)
+- `memory_per_node`
 - `max_mpi_tasks_per_node`
 - `cpus_per_task_flag` (primarily for PBS launchers)
 - `cpu_bind`, `gpu_bind`, `mem_bind`, `placement` (optional launcher tuning)
@@ -63,6 +64,56 @@ Downstream projects that intentionally want hyperthreading can override these
 settings in their own config to use hardware-thread counts and thread binding.
 In other words, these config fields are the hyperthreading controls rather
 than a dedicated boolean option.
+
+`memory_per_node` is the usable memory of one compute node in **MB** -- what
+the site reports as available to a job, not the hardware capacity. On a Slurm
+machine, read it off the machine itself:
+
+```bash
+sinfo --noheader --format="%m" --partition=<the machine's default partition>
+```
+
+That prints one figure per node group, so **take the smallest**. The value
+has to be one no node falls below, and a figure read off whichever node you
+happen to be on is evidence about that node rather than about the partition.
+Where the config offers more than one partition, the figure has to hold for
+all of them, so pass them all: `--partition=batch,extended`.
+
+Not every machine separates its node types by partition. Perlmutter selects
+between CPU and GPU nodes with a *constraint*, so a partition-wide query there
+mixes the two and the smallest figure comes back from whichever type has less.
+Select on the feature column instead:
+
+```bash
+sinfo --noheader --format="%m %f" | awk '$2 ~ /(^|,)cpu(,|$)/ {print $1}' \
+    | sort -n | head -1
+```
+
+Check which axis a machine uses before trusting the answer -- if its config
+sets `constraints` rather than `partitions`, this is the query it needs.
+
+On a PBS machine the same figure is `resources_available.mem`:
+
+```bash
+pbsnodes -a | grep resources_available.mem
+```
+
+Take the smallest of those too. If the field is missing, do **not** fall back
+to the kernel's `MemTotal` from `/proc/meminfo`. That reports what the
+hardware holds, which is larger than what the site hands a job, and the
+distance between the two is the whole reason this option exists -- copying it
+in makes the value too high in exactly the direction that gets a job killed.
+Leave the estimate in place and say in the comment that the measurement was
+attempted and produced nothing, as Aurora's config does.
+
+A test fails if any shipped config omits it, since a machine without it works
+for everything else and the omission would only surface as a downstream tool
+unable to decide how much work fits on a node. Nothing in CI can check that
+the value is right, so say in a comment above the option where the figure
+came from -- a survey of the partition, a sample of one or two nodes, or the
+site's documentation -- as the shipped configs do. If you had to estimate it,
+round it down: too low wastes some of a node, while too high gets a job
+killed for exhausting one.
 
 Compiler-specific overrides can be provided in optional
 `[parallel.<compiler>]` sections, e.g. `[parallel.gnu]`.

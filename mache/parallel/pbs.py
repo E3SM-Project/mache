@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 import subprocess
@@ -6,10 +7,18 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import List
 
+from mache.parallel.placement import (
+    BINDING_OPTIONS,
+    PlacementSupport,
+    ResourcePlacement,
+    names_resources,
+    split_cores,
+)
 from mache.parallel.system import (
     ParallelSystem,
     _ceil_division,
     _combine_reasons,
+    _get_subprocess_str,
     _normalize_requested,
     cap_wall_time,
 )
@@ -67,6 +76,38 @@ class PbsOptions:
     reason: str | None = None
 
 
+@functools.cache
+def is_pals_launcher(executable: str) -> bool:
+    """
+    Check whether a launcher is PALS, which can place concurrent launches.
+
+    PALS is the only PBS launcher mache has a placement mechanism for, and
+    the other launchers on PBS machines -- Open MPI's ``mpirun`` on Improv,
+    for example -- take none of its options. The launcher is asked directly
+    rather than trusting the machine's config, since a site can change it
+    without its mache config changing.
+
+    Parameters
+    ----------
+    executable : str
+        The launcher to ask, which is the first word of the machine's
+        ``parallel_executable``.
+
+    Returns
+    -------
+    is_pals : bool
+        Whether the launcher identified itself as PALS.
+    """
+    try:
+        output = _get_subprocess_str([executable, '--version'])
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    # PALS reports e.g. "mpiexec version 1.8.0 revision ...", where Hydra
+    # reports "HYDRA build details:" and Open MPI reports "mpiexec (OpenRTE)"
+    return re.match(r'mpiexec version \d', output.strip()) is not None
+
+
 class PbsSystem(ParallelSystem):
     """PBS resource manager for parallel jobs."""
 
@@ -78,7 +119,10 @@ class PbsSystem(ParallelSystem):
                 'to "pbs".'
             )
 
-        cores_per_node = self.get_config_int('cores_per_node')
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would leave the machine
+        # reporting no cores instead of raising
+        cores_per_node = self.get_config_int('cores_per_node', default=None)
         if cores_per_node is None:
             raise ValueError(
                 'cores_per_node must be set in the config for the pbs system.'
@@ -92,10 +136,16 @@ class PbsSystem(ParallelSystem):
         self.nodes = nodes
         self.mpi_allowed = True
 
-        gpus_per_node = self.get_config_int('gpus_per_node')
-        if gpus_per_node is not None:
-            self.gpus_per_node = gpus_per_node
-            self.gpus = gpus_per_node * nodes
+        # 0 rather than None here: a machine that says nothing about GPUs
+        # has none, which is an answer and not a gap
+        gpus_per_node = self.get_config_int('gpus_per_node', default=0)
+        self.gpus_per_node = gpus_per_node
+        self.gpus = gpus_per_node * nodes
+
+        memory_per_node = self.get_config_int('memory_per_node', default=None)
+        if memory_per_node is not None:
+            self.memory_per_node = memory_per_node
+            self.memory = memory_per_node * nodes
 
     @classmethod
     def resolve_pbs_options(
@@ -234,13 +284,35 @@ class PbsSystem(ParallelSystem):
             options.effective_nodes,
         )
 
+    @property
+    def placement_support(self) -> PlacementSupport:
+        """
+        The placement mechanism available on this machine.
+
+        PALS supports concurrent launches within one PBS job and places them
+        by naming hosts and CPU lists explicitly. That binds each task to
+        given cores but does not reserve them from the batch system, so it is
+        the weaker of the two mechanisms. Other PBS launchers have no
+        placement mechanism at all.
+        """
+        parallel_executable = self.get_config('parallel_executable')
+        if parallel_executable is None or parallel_executable.strip() == '':
+            return PlacementSupport.NONE
+        executable = parallel_executable.split(' ')[0]
+        if is_pals_launcher(executable):
+            return PlacementSupport.CPU_BINDING
+        return PlacementSupport.NONE
+
     def _get_parallel_args(
         self,
         cpus_per_task: int,
         gpus_per_task: int,
         ntasks: int,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
+        self._check_placement_supported(placement)
+
         # PBS mpiexec/mpirun options are launcher's responsibility, so the
         # flag used for CPUs per task is configurable per machine
         cpus_per_task_flag = self.get_config('cpus_per_task_flag')
@@ -253,13 +325,24 @@ class PbsSystem(ParallelSystem):
         if nodes is None:
             raise ValueError('Node count is not set for the pbs system.')
 
-        max_mpi_tasks_per_node = self.get_config_int('max_mpi_tasks_per_node')
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would cap the launch at no
+        # tasks at all instead of raising
+        max_mpi_tasks_per_node = self.get_config_int(
+            'max_mpi_tasks_per_node', default=None
+        )
         if max_mpi_tasks_per_node is None:
             raise ValueError(
                 'max_mpi_tasks_per_node must be set in the config for the pbs '
                 'system.'
             )
-        tasks_per_node = _ceil_division(ntasks, nodes)
+
+        if placement is not None and len(placement.nodes) > 0:
+            available_nodes = len(placement.nodes)
+        else:
+            available_nodes = nodes
+
+        tasks_per_node = _ceil_division(ntasks, available_nodes)
         if tasks_per_node > max_mpi_tasks_per_node:
             raise ValueError(
                 f'Calculated tasks_per_node ({tasks_per_node}) exceeds the '
@@ -276,23 +359,139 @@ class PbsSystem(ParallelSystem):
             cpus_per_task_flag,
             f'{cpus_per_task}',
         ]
-        if (
+
+        if placement is not None:
+            parallel_args.extend(
+                self._get_placement_args(cpus_per_task, ntasks, placement)
+            )
+        elif (
             gpus_per_task > 0
             and gpus_per_task_flag is not None
             and gpus_per_task_flag != ''
         ):
             parallel_args.extend([gpus_per_task_flag, f'{gpus_per_task}'])
 
-        flags = {
-            'cpu_bind': '--cpu-bind',
-            'gpu_bind': '--gpu-bind',
-            'mem_bind': '--mem-bind',
-        }
-        for option, flag in flags.items():
+        for option in BINDING_OPTIONS:
             value = self.get_config(option)
-            if value is not None and value != '':
-                parallel_args.extend([flag, value])
+            if value is None or value == '':
+                continue
+            if placement is not None and (
+                names_resources(value) or option in ('cpu_bind', 'gpu_bind')
+            ):
+                # the placement is the authority on which cores and devices
+                # this launch gets: it renders its own --cpu-bind, sets GPU
+                # visibility instead of binding it, and a whole-node binding
+                # list would contradict it
+                continue
+            parallel_args.extend([f'--{option.replace("_", "-")}', value])
         return parallel_args
+
+    def _get_placement_args(
+        self,
+        cpus_per_task: int,
+        ntasks: int,
+        placement: ResourcePlacement,
+    ) -> List[str]:
+        """Get the arguments that confine a launch to a placement."""
+        placement_args = []
+        if len(placement.nodes) > 0:
+            placement_args.extend(['--hosts', ','.join(placement.nodes)])
+
+        chunks = split_cores(placement, ntasks, cpus_per_task)
+        core_list = ':'.join(
+            ','.join(f'{core}' for core in chunk) for chunk in chunks
+        )
+        placement_args.extend(['--cpu-bind', f'list:{core_list}'])
+
+        placement_args.extend(self._get_visible_devices_args(placement))
+        return placement_args
+
+    def _get_visible_devices_args(
+        self, placement: ResourcePlacement
+    ) -> List[str]:
+        """
+        Get the arguments that confine a launch to given GPUs.
+
+        PALS does not reserve GPUs, so isolation is by the vendor's
+        visible-device variable, which is the documented approach on these
+        machines. It is set on the command line rather than exported, so that
+        a value cannot leak from the parent into a later launch that meant to
+        set its own.
+
+        Setting the variable is all that is done. An earlier version removed
+        it first as well, with ``--env-remove``, which Aurora's PALS
+        ``mpiexec`` rejects as an unrecognized option -- and rejects the whole
+        command with it, so every placed launch on Aurora failed to start.
+        The removal was belt and braces to begin with: ``--env`` sets the
+        variable explicitly, which already overrides whatever was inherited.
+        """
+        variable = self.get_config('gpu_visible_devices_var')
+        if variable is None or variable == '':
+            if placement.gpus > 0:
+                raise ValueError(
+                    f'The placement asks for {placement.gpus} gpus but this '
+                    f'machine does not set gpu_visible_devices_var, so mache '
+                    f'has no way to confine a launch to some of its GPUs.'
+                )
+            return []
+
+        if placement.gpus == 0:
+            # An explicit "no GPUs".  Unlike --gres=none on Slurm, this is
+            # not the thing that makes concurrency work here: PALS reserves
+            # nothing, so a launch that says nothing about GPUs does not
+            # block the next one.  It is belt and braces, and how much it
+            # actually hides has not been measured.  An empty
+            # CUDA_VISIBLE_DEVICES means "no devices", but an empty
+            # ZE_AFFINITY_MASK may instead mean "no mask", which is every
+            # tile.  Settling that takes two placed CPU-only launches on
+            # Aurora reporting what Level Zero sees.
+            value = ''
+        else:
+            if placement.gpu_ids is None:
+                raise ValueError(
+                    f'The placement asks for {placement.gpus} gpus but does '
+                    f'not say which. This machine has no scheduler to assign '
+                    f'them, so the caller -- which is the only thing that '
+                    f'knows about every concurrent launch -- must set '
+                    f'gpu_ids.'
+                )
+            devices = self._get_devices()
+            for gpu_id in placement.gpu_ids:
+                if gpu_id >= len(devices):
+                    raise ValueError(
+                        f'The placement asks for GPU {gpu_id} but this '
+                        f'machine has {len(devices)} per node.'
+                    )
+            value = ','.join(devices[gpu_id] for gpu_id in placement.gpu_ids)
+
+        # `--env VAR=VAL` as two arguments, which is the form PALS's usage
+        # text describes.  The `--env=VAR=VAL` form has never got as far as
+        # being tried: on Aurora the command was rejected at `--env-remove`
+        # before the parser reached it.  Every option mache renders in the
+        # two-argument form -- `--depth`, `--hosts`, `--cpu-bind list:` --
+        # did get past that parser, so this is the form with evidence behind
+        # it.
+        return ['--env', f'{variable}={value}']
+
+    def _get_devices(self) -> List[str]:
+        """
+        Get the node's GPUs, in order, as the vendor's variable names them.
+
+        A machine whose devices are not simply numbered from zero -- Aurora
+        addresses a tile as ``0.1`` -- already lists them in order in its
+        ``gpu_bind`` binding list, so that is used when it is present.
+        """
+        gpu_bind = self.get_config('gpu_bind')
+        if gpu_bind is not None and gpu_bind.startswith('list:'):
+            return gpu_bind[len('list:') :].split(':')
+
+        gpus_per_node = self.gpus_per_node
+        if gpus_per_node is None:
+            raise ValueError(
+                'gpus_per_node must be set in the config to place GPUs on '
+                'the pbs system.'
+            )
+        return [f'{index}' for index in range(gpus_per_node)]
 
     def _get_node_count_from_qstat(self):
         """Try to determine node count from qstat output."""

@@ -1,7 +1,10 @@
 import subprocess
 from configparser import ConfigParser
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, overload
+
+from mache.parallel.memory import MemoryCapSupport
+from mache.parallel.placement import PlacementSupport, ResourcePlacement
 
 # the config option in [parallel] that lists each type of scheduler target
 TARGET_TYPE_MAP = {
@@ -71,6 +74,15 @@ class ParallelSystem:
     gpus_per_node : int
         The number of GPUs available per node.
 
+    memory : int
+        The total memory available on the system in MB, or ``None`` if the
+        machine's config does not describe it.
+
+    memory_per_node : int
+        The memory available per node in MB, or ``None`` if the machine's
+        config does not describe it. This is the memory a job may actually
+        use, which is smaller than the hardware capacity of a node.
+
     nodes : int
         The total number of nodes available on the system.
 
@@ -92,8 +104,45 @@ class ParallelSystem:
         self.cores_per_node: int | None = None
         self.gpus: int | None = None
         self.gpus_per_node: int | None = None
+        self.memory: int | None = None
+        self.memory_per_node: int | None = None
         self.nodes: int | None = None
         self.mpi_allowed: bool | None = None
+
+    @property
+    def placement_support(self) -> PlacementSupport:
+        """
+        The placement mechanism available on this machine.
+
+        A caller that wants to run several launches at once inside one
+        allocation should check this first: on a machine that reports
+        ``PlacementSupport.NONE``, concurrent launches will oversubscribe or
+        serialize rather than run side by side.
+
+        This is determined from the launcher actually present rather than
+        from the machine's config, since a site can be upgraded across a
+        launcher change without its mache config changing, and a stale
+        assumption there fails in the worst way -- the command is accepted
+        and the placement silently does nothing.
+        """
+        return PlacementSupport.NONE
+
+    @property
+    def memory_cap_support(self) -> MemoryCapSupport:
+        """
+        Whether this machine will hold a launch to a memory cap.
+
+        A caller passing ``memory_cap`` to
+        :py:meth:`get_parallel_command` should check this first, so that it
+        can say in a log that caps are not enforced here rather than believe
+        it has a safety net it does not have.
+
+        Unlike a placement, an unenforceable cap is not an error: the work
+        still runs correctly, it is only unprotected. A placement that
+        cannot be honored, by contrast, means concurrent launches collide,
+        so that one raises.
+        """
+        return MemoryCapSupport.NONE
 
     def get_parallel_command(
         self,
@@ -101,6 +150,8 @@ class ParallelSystem:
         ntasks: int,
         cpus_per_task: int = 0,
         gpus_per_task: int = 0,
+        placement: ResourcePlacement | None = None,
+        memory_cap: int | None = None,
     ) -> List[str]:
         """
         Get the parallel execution command for the current system.
@@ -117,19 +168,50 @@ class ParallelSystem:
             The number of CPUs to allocate per task.
 
         gpus_per_task : int, optional
-            The number of GPUs to allocate per task.
+            The number of GPUs to allocate per task. Ignored when
+            ``placement`` is given, which expresses GPUs as a total for the
+            launch instead.
+
+        placement : mache.parallel.ResourcePlacement, optional
+            Which nodes, cores and GPUs to confine this launch to, for
+            callers running several launches at once inside one allocation.
+            When it is not given, the command is exactly what it would have
+            been without this argument.
+
+            A placement supersedes the machine's ``distribution``,
+            ``placement``, ``gpu_bind`` and ``mem_bind`` config options,
+            which describe how to spread a launch over a whole node.
+
+        memory_cap : int, optional
+            The most memory, in MB, this launch may use on each node it runs
+            on. Absent by default, in which case nothing about memory is
+            rendered and the launch may use whatever the node has.
+
+            It is a *cap*, not a reservation. Nothing measured suggests it
+            sets memory aside, so a launch that stays under its cap is not
+            protected from a concurrent one that does not. It is rendered
+            only where the batch system will act on it; check
+            ``memory_cap_support`` to find out whether this machine is one
+            of those.
+
+            The unit and the per-node denomination match ``memory_per_node``,
+            which is the figure a caller divides up between the launches it
+            runs at once.
 
         Returns
         -------
         command : list of str
             The complete command to execute the parallel job.
         """
+        _check_memory_cap(memory_cap)
         parallel_executable = self.get_config('parallel_executable')
-        command = parallel_executable.split(' ')
+        command = self._get_command_prefix(placement)
+        command.extend(parallel_executable.split(' '))
         parallel_args = self._get_parallel_args(
-            cpus_per_task, gpus_per_task, ntasks
+            cpus_per_task, gpus_per_task, ntasks, placement
         )
         command.extend(parallel_args)
+        command.extend(self._get_memory_args(memory_cap))
         command.extend(args)
         return command
 
@@ -138,16 +220,59 @@ class ParallelSystem:
         cpus_per_task: int,
         gpus_per_task: int,
         ntasks: int,
+        placement: ResourcePlacement | None = None,
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
         raise NotImplementedError
+
+    def _get_memory_args(self, memory_cap: int | None) -> List[str]:
+        """Get the arguments that hold a launch to a memory cap."""
+        return []
+
+    def _get_command_prefix(
+        self, placement: ResourcePlacement | None
+    ) -> List[str]:
+        """Get anything that has to come before the parallel executable."""
+        return []
+
+    def _check_placement_supported(
+        self, placement: ResourcePlacement | None
+    ) -> None:
+        """Raise if a placement was given but cannot be honored here."""
+        if placement is None:
+            return
+        if self.placement_support is PlacementSupport.NONE:
+            raise ValueError(
+                f'This machine cannot place a launch: no placement mechanism '
+                f'was found for the "{self.get_config("parallel_executable")}"'
+                f' launcher. Check placement_support before passing a '
+                f'placement.'
+            )
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get a config value from the parallel configs."""
         return self.parallel_configs.get(key, default)
 
-    def get_config_int(self, key: str, default: int = 0) -> int | None:
-        """Get an integer config value from the parallel configs."""
+    @overload
+    def get_config_int(self, key: str) -> int: ...
+
+    @overload
+    def get_config_int(self, key: str, default: int) -> int: ...
+
+    @overload
+    def get_config_int(self, key: str, default: None) -> int | None: ...
+
+    def get_config_int(self, key: str, default: int | None = 0) -> int | None:
+        """
+        Get an integer config value from the parallel configs.
+
+        The default is ``0``, so an absent key is indistinguishable from one
+        set to zero unless the caller says otherwise. A caller that needs to
+        tell "the config does not say" from "the config says none" must pass
+        ``default=None`` explicitly, and the overloads above make that the
+        only way to get a ``None`` back -- so a check for one against any
+        other default is dead code rather than the safeguard it looks like.
+        """
         value = self.get_config(key, default)
         return int(value) if value is not None else None
 
@@ -822,6 +947,22 @@ def _max_wallclock_to_seconds(max_wallclock: str) -> int | None:
         return None
 
     return hours * 3600 + minutes * 60 + seconds
+
+
+def _check_memory_cap(memory_cap: int | None) -> None:
+    """Check that a memory cap is a number of MB that means something."""
+    if memory_cap is None:
+        return
+    if memory_cap <= 0:
+        raise ValueError(
+            f'memory_cap is the MB a launch may use, so it must be positive, '
+            f'but it is {memory_cap}.'
+        )
+    # deliberately not checked against memory_per_node: that figure is a
+    # planning estimate, low on purpose and on every machine but Chrysalis a
+    # sample rather than a survey.  It has measured below what a node
+    # actually reported on Perlmutter and on Frontier, so refusing a cap for
+    # exceeding it would reject caps the node can honor.
 
 
 def _ceil_division(a: int, b: int) -> int:

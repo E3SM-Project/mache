@@ -11,7 +11,8 @@ Downstream software (for example, Polaris software) can:
 
 1. Load machine config with `MachineInfo`.
 2. Build a parallel-system object with `get_parallel_system()`.
-3. Query available resources (`cores`, `nodes`, `gpus`, and `mpi_allowed`).
+3. Query available resources (`cores`, `nodes`, `gpus`, `memory`, and
+   `mpi_allowed`).
 4. Build a machine-correct launcher command with `get_parallel_command()`.
 5. Use the command for either generated job scripts or direct subprocess calls.
 
@@ -122,6 +123,13 @@ For `slurm` systems, mache supports two ways to control `srun -m`:
 If both are present, `distribution` takes precedence. Prefer `distribution`
 for machines whose documented Slurm usage relies on explicit values like
 `block:cyclic` rather than the older `plane=<tasks>` form.
+
+```{note}
+The `placement` config option here is the Slurm task distribution and is
+unrelated to the `placement` argument to `get_parallel_command()` described in
+{ref}`users-parallel-placement`. Passing that argument drops this config
+option from the command.
+```
 
 ## Selecting scheduler options by node count
 
@@ -280,3 +288,326 @@ options.max_wallclock  # "12:00:00" on Frontier
 
 When both a partition and a QOS set a limit, the more restrictive of the two
 is reported, and that is also the limit `wall_time` is capped at.
+
+(users-parallel-placement)=
+
+## Placing concurrent launches within one allocation
+
+`get_parallel_command()` normally asks for resources in the abstract -- this
+many tasks, this many CPUs each -- and lets the machine decide where the work
+runs. That is enough while a tool runs one piece of work at a time. As soon as
+it wants to run two inside the same allocation, the two launches are given
+overlapping resources or, more often, the second waits until the first has
+finished.
+
+```{note}
+`placement`, `memory_cap` and `memory_per_node` are new in v3.12.0. A tool
+that depends on them should require at least that version rather than test
+for the capability: on an older `mache`, `get_parallel_command()` takes no
+`placement` at all, and a launch that expected to be confined to part of a
+node would instead be free to use the whole allocation -- which looks like a
+working run right up until two of them collide.
+```
+
+An optional `placement` says where a launch should run:
+
+```python
+from mache import MachineInfo
+from mache.parallel import ResourcePlacement, get_parallel_system
+
+parallel_system = get_parallel_system(MachineInfo().config)
+
+placement = ResourcePlacement(
+    nodes=["nid001373"],
+    cores=list(range(8, 16)),
+)
+command = parallel_system.get_parallel_command(
+    args=["./run_step.py"],
+    ntasks=1,
+    cpus_per_task=8,
+    placement=placement,
+)
+```
+
+A placement carries three things: the nodes the launch may use, the cores it
+may use on each of them, and how many GPUs it needs in total. mache renders
+them into whatever the machine's launcher needs, so callers do not have to
+know which flags a given site takes.
+
+A call without a placement produces exactly the command it produced before
+this feature existed.
+
+### Checking what a machine supports
+
+Not every machine can confine a launch. Check before running things
+concurrently, rather than discovering the answer as a hang or as silent
+oversubscription:
+
+```python
+from mache.parallel import PlacementSupport
+
+support = parallel_system.placement_support
+if support is PlacementSupport.NONE:
+    print("this machine cannot place launches; run steps one at a time")
+elif support is PlacementSupport.CPU_BINDING:
+    print("placement is by CPU binding, which the work itself could ignore")
+```
+
+The three values are:
+
+- `PlacementSupport.SCHEDULER` -- the batch system reserves what each launch
+    asks for, so a launch cannot exceed what it was given. This is Slurm 20.11
+    and newer.
+- `PlacementSupport.CPU_BINDING` -- the launcher binds each task to specific
+    cores, which keeps concurrent launches apart but reserves nothing. Work
+    that rebinds itself is not prevented from doing so. This is Slurm before
+    20.11, PBS with PALS, and `single_node`.
+- `PlacementSupport.NONE` -- there is no mechanism here. Passing a placement
+    raises `ValueError` rather than producing a command that would be accepted
+    and then silently do nothing.
+
+This is determined at run time from the launcher actually present, not from
+the machine's config, because a site can be upgraded without its mache config
+changing.
+
+### GPUs are a total, not a count per task
+
+`ResourcePlacement.gpus` is the number of GPUs for the whole launch. This is
+deliberately unlike `cpus_per_task`: asking for a number of GPUs *per task*
+was measured not to confine a launch on either of the GPU machines mache
+supports, while a per-launch total does.
+
+`gpus` defaults to 0, and 0 is rendered as an explicit request for *no* GPUs.
+On Slurm this matters more than it sounds: a launch that says nothing about
+GPUs is read as claiming every one on the node, so the next launch waits.
+Callers whose work uses no GPUs -- most of them -- get correct behavior
+without having to know GPUs were ever a consideration.
+
+On PALS the same request is belt and braces rather than the mechanism that
+makes concurrency work, since nothing there reserves a GPU in the first
+place. See {ref}`users-parallel-pals-gpus`.
+
+### Which cores are honored
+
+`cores` is an explicit set rather than a count, because the usable cores on a
+node may not be contiguous and may not start at zero -- Aurora reserves core 0
+and cores 49-52 -- and because a count cannot say *which* cores.
+
+How much of that set is honored depends on the mechanism:
+
+- where the scheduler reserves resources, only the size of the set is used;
+    Slurm is asked for that many cores and picks which ones itself, and an
+    explicit core list is rejected outright alongside `-c`
+- where placement is by CPU binding, the set is used exactly as given, in
+    order, split into one contiguous chunk of `cpus_per_task` cores per task
+
+Either way, mache raises `ValueError` if the set is too small for
+`ntasks x cpus_per_task`.
+
+(users-parallel-pals-gpus)=
+
+### Assigning GPUs on PBS with PALS
+
+PALS has no scheduler to hand out GPUs, so isolation there is by the vendor's
+visible-device variable -- `ZE_AFFINITY_MASK` on Aurora,
+`CUDA_VISIBLE_DEVICES` on Polaris. mache renders it into the `mpiexec` command
+and needs to be told *which* devices to name:
+
+```python
+placement = ResourcePlacement(
+    nodes=["x4401c1s0b0n0"],
+    cores=list(range(1, 9)),
+    gpus=1,
+    gpu_ids=[2],
+)
+```
+
+`gpu_ids` are indices from 0 to `gpus_per_node - 1`; mache maps them to
+whatever form the machine's variable takes, including Aurora's `device.tile`
+addressing. Only the caller knows about every launch running at that moment,
+so only the caller can assign disjoint GPUs -- mache renders what it is given
+and never guesses. A placement with `gpus > 0` and no `gpu_ids` raises on
+PALS, and `len(gpu_ids)` must equal `gpus`.
+
+`gpu_ids` is ignored where the scheduler assigns GPUs itself, which is every
+Slurm machine.
+
+A placement with no GPUs sets the variable to an empty value. Note that this
+is weaker than the equivalent on Slurm: PALS reserves nothing, so a launch
+that stays quiet about GPUs does not block the next one, and how much an
+empty value actually hides has not been measured. An empty
+`CUDA_VISIBLE_DEVICES` means "no devices", but an empty `ZE_AFFINITY_MASK`
+may instead mean "no mask", which is every tile. Do not rely on it to keep a
+GPU launch and a CPU launch off the same device -- give the GPU launch
+explicit `gpu_ids` instead.
+
+Two config options support this, both already set on the machines that need
+them: `gpu_visible_devices_var` names the variable, and the ordered
+`gpu_bind = list:...` binding list, where a machine has one, says how its
+devices are named.
+
+### What a placement overrides
+
+A placement is the authority on which resources a launch gets, so it
+supersedes the machine's config options that describe spreading a launch over
+a whole node:
+
+- `distribution` and the legacy `placement` config option are dropped, since
+    the placement has already said which nodes and how many cores the launch
+    gets
+- `cpu_bind`, `gpu_bind` and `mem_bind` are dropped when they name specific
+    cores or devices, as Aurora's do
+- `cpu_bind` is also dropped wherever the placement renders its own binding
+- `gpu_bind` is dropped when the placement asks for no GPUs, and also when it
+    is `none`, which asks for no binding at all
+
+A binding *policy* such as `cpu_bind = cores` or `gpu_bind = closest` is kept
+where it does not conflict, since it still applies within whatever the launch
+was given.
+
+```{note}
+`gpu_bind = none` is dropped because keeping it appears to cost a placement
+its GPUs. Of four concurrent placed launches on Perlmutter GPU asking for one
+GPU each, one was given a GPU and the other three got none, ran anyway and
+exited 0. Frontier, whose `gpu_bind` is `closest`, gave all four disjoint
+GPUs from a nearly identical command. Dropping `none` takes nothing away,
+since Slurm does not bind tasks to GPUs without the option either.
+```
+
+```{note}
+Verifying GPU placement from inside a launch needs the scheduler's global GPU
+identifiers, such as `SLURM_STEP_GPUS`. `CUDA_VISIBLE_DEVICES` is renumbered
+per launch, so four launches on four different GPUs all report device `0`.
+```
+
+(users-parallel-memory)=
+
+## How much memory a machine has
+
+A caller deciding how many pieces of work fit inside one allocation needs to
+know how much memory it has to divide up. `mache` reports it beside the core
+and GPU counts:
+
+```python
+from mache import MachineInfo
+from mache.parallel import get_parallel_system
+
+parallel_system = get_parallel_system(MachineInfo().config)
+
+print(parallel_system.memory_per_node)  # MB on one node
+print(parallel_system.memory)  # MB across the whole allocation
+```
+
+`memory` is `memory_per_node` times the node count, exactly as `cores` is
+`cores_per_node` times the node count. Both are in **MB**, which is the unit
+Slurm's memory options default to.
+
+The figure is the memory a job may actually use -- what the site reports as
+available, rounded down -- not the hardware capacity of a node. On a Slurm
+machine that is the `MEMORY` column of `sinfo`, which is already net of what
+the operating system and the site's own services hold back. The two differ by
+several percent, and the whole point of the number is that a caller can pack
+up to it.
+
+```{warning}
+Most shipped values are still estimates, rounded down from the node memory
+each site documents, because the figure that matters can only be read off the
+machine itself. A config whose value has not been measured there says so in a
+comment above the option. Estimates err low on purpose: packing less work than
+a node could hold is wasteful, while packing more is a job killed for
+exhausting the node.
+```
+
+A machine whose config does not set `memory_per_node` reports `None` for both,
+rather than `0`, since no machine has no memory. Every machine `mache` ships a
+config for sets it; a site-specific or user config may not. The login-node
+system always reports `None`: `memory_per_node` describes a compute node, and
+a login node neither has that much nor hands out what it does have.
+
+```{note}
+`memory_per_node` describes the machine, and a `ResourcePlacement`
+deliberately does not carry memory: a placement says *where* a launch runs,
+and how much memory it may use is a separate statement, made with a separate
+argument -- see {ref}`users-parallel-memory-cap`. Deciding how much each
+piece of work may take remains the caller's, because only the caller knows
+what else it is running.
+```
+
+(users-parallel-memory-cap)=
+
+## Capping the memory a launch may use
+
+`get_parallel_command()` takes an optional `memory_cap`, in MB, which is the
+most memory the launch may use on each node it runs on:
+
+```python
+command = parallel_system.get_parallel_command(
+    args=['./run.py'],
+    ntasks=4,
+    cpus_per_task=2,
+    placement=placement,
+    memory_cap=16000,
+)
+```
+
+It is absent by default. Without it, nothing about memory is rendered and the
+command is exactly what it would have been -- which is also what every
+existing caller gets.
+
+The unit and the per-node denomination match `memory_per_node`, since that is
+the figure a caller divides up between the launches it runs at once.
+
+```{warning}
+`memory_cap` is a **cap, not a reservation**. Nothing measured suggests it
+sets memory aside for the launch, so staying under a cap does not protect a
+launch from a concurrent one that ignores its own. What it does do, where the
+batch system acts on it, is kill the launch for exceeding it: a step allowed
+1024 MB and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and
+on Frontier.
+```
+
+### Where a cap is worth anything
+
+Not every machine will hold a launch to a cap, so `mache` renders one only
+where it will be acted on, and reports which kind of machine this is:
+
+```python
+from mache.parallel import MemoryCapSupport
+
+if parallel_system.memory_cap_support is MemoryCapSupport.NONE:
+    print('memory caps are not enforced here')
+```
+
+- `MemoryCapSupport.ENFORCED` -- the batch system holds the launch to its cap
+    and kills it for exceeding it. Slurm 20.11 and newer.
+- `MemoryCapSupport.NONE` -- nothing here will hold a launch to a cap, so
+    `mache` renders none. Either the launcher has no memory option at all, as
+    PALS on Aurora does not, or it accepts one and does not act on it, as
+    Chrysalis's Slurm does with `--mem`.
+
+Passing a cap to a machine that reports `NONE` is not an error and does not
+raise: the work still runs correctly, it is simply unprotected. This differs
+from passing a placement to a machine that cannot honor one, which does
+raise, because that means concurrent launches collide rather than merely go
+unguarded. Check `memory_cap_support` when it matters that the cap is real.
+
+```{note}
+`mache` renders nothing on a machine that will not act on a cap, rather than
+rendering an option the machine accepts and ignores. A figure on the command
+line that nothing keeps reads to anyone who sees the command as a safety net
+that is not there.
+```
+
+### What a placement does not do about memory
+
+A placement does not cap memory on its own. A placed single-core launch and
+an unplaced control, neither mentioning memory, both allocated twice what a
+single core's proportional share of the node would be, and neither was
+touched -- measured on Perlmutter CPU and Frontier. Asking Slurm for exactly
+the cores a launch needs does not hand it a slice of the node's memory to go
+with them.
+
+The reassuring half of the same result is that saying nothing about memory
+does not repeat the trap that saying nothing about GPUs sets. An unstated
+memory requirement is not read as a claim on the node's memory: four
+concurrent launches that say nothing about it start together and run.

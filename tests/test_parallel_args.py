@@ -1,6 +1,8 @@
 from configparser import ConfigParser
 
+from mache.parallel.login import LoginSystem
 from mache.parallel.pbs import PbsSystem
+from mache.parallel.single_node import SingleNodeSystem
 from mache.parallel.slurm import SlurmSystem
 
 
@@ -321,3 +323,116 @@ def test_pbs_reports_no_gpus_as_zero(monkeypatch):
     # known absence of GPUs as 0 rather than as None
     assert system.gpus_per_node == 0
     assert system.gpus == 0
+
+
+def test_slurm_reports_memory(monkeypatch):
+    """A machine's memory is reported per node and for the allocation."""
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+            'memory_per_node': '253000',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 2
+    )
+
+    system = SlurmSystem(config)
+
+    assert system.memory_per_node == 253000
+    assert system.memory == 506000
+
+
+def test_slurm_reports_unknown_memory_as_none(monkeypatch):
+    """A config without memory_per_node reports no memory, not zero."""
+    config = _get_config(
+        {
+            'parallel_executable': 'srun --label',
+            'cores_per_node': '32',
+        }
+    )
+
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 2
+    )
+
+    system = SlurmSystem(config)
+
+    # zero would read as "this machine has no memory", which is never true
+    assert system.memory_per_node is None
+    assert system.memory is None
+
+
+def test_pbs_reports_memory(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+            'memory_per_node': '512000',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 2
+    )
+
+    system = PbsSystem(config)
+
+    assert system.memory_per_node == 512000
+    assert system.memory == 1024000
+
+
+def test_pbs_reports_unknown_memory_as_none(monkeypatch):
+    config = _get_config(
+        {
+            'parallel_executable': 'mpiexec --label',
+            'cores_per_node': '32',
+        }
+    )
+
+    monkeypatch.setenv('PBS_JOBID', '12345.server')
+    monkeypatch.setattr(
+        PbsSystem, '_get_node_count_from_qstat', lambda self: 2
+    )
+
+    system = PbsSystem(config)
+
+    assert system.memory_per_node is None
+    assert system.memory is None
+
+
+def test_single_node_reports_memory():
+    """One node, so the per-node figure is also the total."""
+    config = _get_config(
+        {
+            'parallel_executable': 'mpirun',
+            'cores_per_node': '4',
+            'memory_per_node': '16000',
+        }
+    )
+
+    system = SingleNodeSystem(config)
+
+    assert system.memory_per_node == 16000
+    assert system.memory == 16000
+
+
+def test_login_reports_no_memory():
+    """memory_per_node describes a compute node, not a login node."""
+    config = _get_config(
+        {
+            'login_cores': '4',
+            'login_gpus': '0',
+            'memory_per_node': '253000',
+        }
+    )
+
+    system = LoginSystem(config)
+
+    assert system.memory_per_node is None
+    assert system.memory is None
