@@ -516,19 +516,90 @@ system always reports `None`: `memory_per_node` describes a compute node, and
 a login node neither has that much nor hands out what it does have.
 
 ```{note}
-Memory is machine description only. Nothing in `get_parallel_command()` reads
-it, and a `ResourcePlacement` deliberately does not carry it. A memory figure
-in a launch command is not harmless decoration: a step given `--mem=1024M`
-and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and on
-Frontier, while on Chrysalis, whose Slurm is older, it reaches 4 GB and exits
-0. A figure carried in a placement would therefore be an enforced cap on some
-machines and inert on others, and work that under-declared would be killed
-rather than merely mis-scheduled. Deciding how much memory each piece of work
-may take is the caller's, because only the caller knows what else it is
+`memory_per_node` describes the machine, and a `ResourcePlacement`
+deliberately does not carry memory: a placement says *where* a launch runs,
+and how much memory it may use is a separate statement, made with a separate
+argument -- see [Capping the memory a launch may
+use](#users-parallel-memory-cap). Deciding how much each piece of work may
+take remains the caller's, because only the caller knows what else it is
 running.
-
-Saying nothing about memory does not repeat the trap that saying nothing
-about GPUs sets. An unstated memory requirement is not read as a claim on the
-node's memory: four concurrent launches that say nothing about it start
-together and run, on both GPU machines measured.
 ```
+
+(users-parallel-memory-cap)=
+
+## Capping the memory a launch may use
+
+`get_parallel_command()` takes an optional `memory_cap`, in MB, which is the
+most memory the launch may use on each node it runs on:
+
+```python
+command = parallel_system.get_parallel_command(
+    args=['./run.py'],
+    ntasks=4,
+    cpus_per_task=2,
+    placement=placement,
+    memory_cap=16000,
+)
+```
+
+It is absent by default. Without it, nothing about memory is rendered and the
+command is exactly what it would have been -- which is also what every
+existing caller gets.
+
+The unit and the per-node denomination match `memory_per_node`, since that is
+the figure a caller divides up between the launches it runs at once.
+
+```{warning}
+`memory_cap` is a **cap, not a reservation**. Nothing measured suggests it
+sets memory aside for the launch, so staying under a cap does not protect a
+launch from a concurrent one that ignores its own. What it does do, where the
+batch system acts on it, is kill the launch for exceeding it: a step allowed
+1024 MB and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and
+on Frontier.
+```
+
+### Where a cap is worth anything
+
+Not every machine will hold a launch to a cap, so `mache` renders one only
+where it will be acted on, and reports which kind of machine this is:
+
+```python
+from mache.parallel import MemoryCapSupport
+
+if parallel_system.memory_cap_support is MemoryCapSupport.NONE:
+    print('memory caps are not enforced here')
+```
+
+- `MemoryCapSupport.ENFORCED` -- the batch system holds the launch to its cap
+    and kills it for exceeding it. Slurm 20.11 and newer.
+- `MemoryCapSupport.NONE` -- nothing here will hold a launch to a cap, so
+    `mache` renders none. Either the launcher has no memory option at all, as
+    PALS on Aurora does not, or it accepts one and does not act on it, as
+    Chrysalis's Slurm does with `--mem`.
+
+Passing a cap to a machine that reports `NONE` is not an error and does not
+raise: the work still runs correctly, it is simply unprotected. This differs
+from passing a placement to a machine that cannot honor one, which does
+raise, because that means concurrent launches collide rather than merely go
+unguarded. Check `memory_cap_support` when it matters that the cap is real.
+
+```{note}
+`mache` renders nothing on a machine that will not act on a cap, rather than
+rendering an option the machine accepts and ignores. A figure on the command
+line that nothing keeps reads to anyone who sees the command as a safety net
+that is not there.
+```
+
+### What a placement does not do about memory
+
+A placement does not cap memory on its own. A placed single-core launch and
+an unplaced control, neither mentioning memory, both allocated twice what a
+single core's proportional share of the node would be, and neither was
+touched -- measured on Perlmutter CPU and Frontier. Asking Slurm for exactly
+the cores a launch needs does not hand it a slice of the node's memory to go
+with them.
+
+The reassuring half of the same result is that saying nothing about memory
+does not repeat the trap that saying nothing about GPUs sets. An unstated
+memory requirement is not read as a claim on the node's memory: four
+concurrent launches that say nothing about it start together and run.

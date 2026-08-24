@@ -49,6 +49,7 @@ documentation.
     ParallelSystem
     ParallelSystem.get_parallel_command
     ParallelSystem.placement_support
+    ParallelSystem.memory_cap_support
     ParallelSystem.get_scheduler_target
     ParallelSystem.resolve_submission
     cap_wall_time
@@ -62,6 +63,15 @@ documentation.
 
     PlacementSupport
     ResourcePlacement
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.memory
+
+.. autosummary::
+    :toctree: generated/
+
+    MemoryCapSupport
 ```
 
 ```{eval-rst}

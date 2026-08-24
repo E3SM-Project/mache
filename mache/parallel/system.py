@@ -3,6 +3,7 @@ from configparser import ConfigParser
 from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Literal
 
+from mache.parallel.memory import MemoryCapSupport
 from mache.parallel.placement import PlacementSupport, ResourcePlacement
 
 # the config option in [parallel] that lists each type of scheduler target
@@ -126,6 +127,23 @@ class ParallelSystem:
         """
         return PlacementSupport.NONE
 
+    @property
+    def memory_cap_support(self) -> MemoryCapSupport:
+        """
+        Whether this machine will hold a launch to a memory cap.
+
+        A caller passing ``memory_cap`` to
+        :py:meth:`get_parallel_command` should check this first, so that it
+        can say in a log that caps are not enforced here rather than believe
+        it has a safety net it does not have.
+
+        Unlike a placement, an unenforceable cap is not an error: the work
+        still runs correctly, it is only unprotected. A placement that
+        cannot be honored, by contrast, means concurrent launches collide,
+        so that one raises.
+        """
+        return MemoryCapSupport.NONE
+
     def get_parallel_command(
         self,
         args: List[str],
@@ -133,6 +151,7 @@ class ParallelSystem:
         cpus_per_task: int = 0,
         gpus_per_task: int = 0,
         placement: ResourcePlacement | None = None,
+        memory_cap: int | None = None,
     ) -> List[str]:
         """
         Get the parallel execution command for the current system.
@@ -163,11 +182,28 @@ class ParallelSystem:
             ``placement``, ``gpu_bind`` and ``mem_bind`` config options,
             which describe how to spread a launch over a whole node.
 
+        memory_cap : int, optional
+            The most memory, in MB, this launch may use on each node it runs
+            on. Absent by default, in which case nothing about memory is
+            rendered and the launch may use whatever the node has.
+
+            It is a *cap*, not a reservation. Nothing measured suggests it
+            sets memory aside, so a launch that stays under its cap is not
+            protected from a concurrent one that does not. It is rendered
+            only where the batch system will act on it; check
+            ``memory_cap_support`` to find out whether this machine is one
+            of those.
+
+            The unit and the per-node denomination match ``memory_per_node``,
+            which is the figure a caller divides up between the launches it
+            runs at once.
+
         Returns
         -------
         command : list of str
             The complete command to execute the parallel job.
         """
+        _check_memory_cap(memory_cap)
         parallel_executable = self.get_config('parallel_executable')
         command = self._get_command_prefix(placement)
         command.extend(parallel_executable.split(' '))
@@ -175,6 +211,7 @@ class ParallelSystem:
             cpus_per_task, gpus_per_task, ntasks, placement
         )
         command.extend(parallel_args)
+        command.extend(self._get_memory_args(memory_cap))
         command.extend(args)
         return command
 
@@ -187,6 +224,10 @@ class ParallelSystem:
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
         raise NotImplementedError
+
+    def _get_memory_args(self, memory_cap: int | None) -> List[str]:
+        """Get the arguments that hold a launch to a memory cap."""
+        return []
 
     def _get_command_prefix(
         self, placement: ResourcePlacement | None
@@ -888,6 +929,22 @@ def _max_wallclock_to_seconds(max_wallclock: str) -> int | None:
         return None
 
     return hours * 3600 + minutes * 60 + seconds
+
+
+def _check_memory_cap(memory_cap: int | None) -> None:
+    """Check that a memory cap is a number of MB that means something."""
+    if memory_cap is None:
+        return
+    if memory_cap <= 0:
+        raise ValueError(
+            f'memory_cap is the MB a launch may use, so it must be positive, '
+            f'but it is {memory_cap}.'
+        )
+    # deliberately not checked against memory_per_node: that figure is a
+    # planning estimate, low on purpose and on every machine but Chrysalis a
+    # sample rather than a survey.  It has measured below what a node
+    # actually reported on Perlmutter and on Frontier, so refusing a cap for
+    # exceeding it would reject caps the node can honor.
 
 
 def _ceil_division(a: int, b: int) -> int:

@@ -7,6 +7,7 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import List
 
+from mache.parallel.memory import MemoryCapSupport
 from mache.parallel.placement import (
     BINDING_OPTIONS,
     PlacementSupport,
@@ -31,6 +32,15 @@ from mache.parallel.system import (
 # eras need different commands. Both are in production on machines mache
 # supports.
 STEP_ISOLATION_VERSION = (20, 11)
+
+# Where a memory cap on a job step is enforced. This is the same boundary as
+# step isolation, but it is a separate fact and a separate constant: memory
+# enforcement comes from the cgroup constraints a site configures, not from
+# the step options 20.11 added, and evidence that moves one should not move
+# the other. What was measured is that a step allowed 1024 MB and told to
+# take 4 GB is killed at 960 MB on Perlmutter and Frontier, and runs to
+# completion on Chrysalis.
+MEMORY_ENFORCEMENT_VERSION = (20, 11)
 
 
 @dataclass(frozen=True)
@@ -326,6 +336,36 @@ class SlurmSystem(ParallelSystem):
         if version >= STEP_ISOLATION_VERSION:
             return PlacementSupport.SCHEDULER
         return PlacementSupport.CPU_BINDING
+
+    @property
+    def memory_cap_support(self) -> MemoryCapSupport:
+        """
+        Whether this machine will hold a launch to a memory cap.
+
+        The Slurm version is what this is read from, since that is what was
+        measured and it is what mache can ask the machine. It is a proxy:
+        the enforcement itself comes from the site's cgroup configuration,
+        so a site running a new Slurm with memory constraints turned off
+        would be reported as enforcing when it does not.
+        """
+        version = get_slurm_version()
+        if version is None or version < MEMORY_ENFORCEMENT_VERSION:
+            return MemoryCapSupport.NONE
+        return MemoryCapSupport.ENFORCED
+
+    def _get_memory_args(self, memory_cap: int | None) -> List[str]:
+        """Get the arguments that hold a launch to a memory cap."""
+        if memory_cap is None:
+            return []
+        if self.memory_cap_support is not MemoryCapSupport.ENFORCED:
+            # Chrysalis's Slurm accepts --mem on a step and does not act on
+            # it. Rendering it there would put a figure on the command line
+            # that nothing keeps, which reads to anyone who sees the command
+            # as a safety net that is not there.
+            return []
+        # a per-node figure, which is what --mem means and what
+        # memory_per_node is denominated in
+        return [f'--mem={memory_cap}M']
 
     def _get_parallel_args(
         self,

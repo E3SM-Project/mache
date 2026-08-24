@@ -2,6 +2,9 @@ import os
 from configparser import ConfigParser
 
 from mache.parallel.login import LoginSystem
+from mache.parallel.memory import (
+    MemoryCapSupport as MemoryCapSupport,
+)
 from mache.parallel.pbs import PbsSystem
 from mache.parallel.placement import (
     PlacementSupport as PlacementSupport,
