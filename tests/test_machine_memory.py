@@ -9,7 +9,9 @@ is added or edited rather than on the machine.
 
 What this cannot check is whether a value is *right*: no test has a node to
 compare against. A value CI accepts is a value nobody has verified, which is
-why an unmeasured config marks its figure as an estimate.
+why each config says above the option where its figure came from -- a
+partition-wide survey, a sample of one or two nodes, or nothing but the
+site's documentation.
 """
 
 from configparser import ConfigParser
