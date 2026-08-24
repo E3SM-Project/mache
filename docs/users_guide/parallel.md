@@ -449,11 +449,21 @@ a whole node:
 - `cpu_bind`, `gpu_bind` and `mem_bind` are dropped when they name specific
     cores or devices, as Aurora's do
 - `cpu_bind` is also dropped wherever the placement renders its own binding
-- `gpu_bind` is dropped when the placement asks for no GPUs
+- `gpu_bind` is dropped when the placement asks for no GPUs, and also when it
+    is `none`, which asks for no binding at all
 
 A binding *policy* such as `cpu_bind = cores` or `gpu_bind = closest` is kept
 where it does not conflict, since it still applies within whatever the launch
 was given.
+
+```{note}
+`gpu_bind = none` is dropped because keeping it appears to cost a placement
+its GPUs. Of four concurrent placed launches on Perlmutter GPU asking for one
+GPU each, one was given a GPU and the other three got none, ran anyway and
+exited 0. Frontier, whose `gpu_bind` is `closest`, gave all four disjoint
+GPUs from a nearly identical command. Dropping `none` takes nothing away,
+since Slurm does not bind tasks to GPUs without the option either.
+```
 
 ```{note}
 Verifying GPU placement from inside a launch needs the scheduler's global GPU

@@ -478,7 +478,8 @@ class SlurmSystem(ParallelSystem):
         A binding policy such as ``cores`` or ``closest`` still applies
         within whatever the placement gave the launch. One that names
         specific cores or devices does not, because the placement is now the
-        authority on which resources the launch has.
+        authority on which resources the launch has. Nor does a ``gpu_bind``
+        of ``none``, which asks for no binding at all.
         """
         if names_resources(value):
             return False
@@ -486,6 +487,19 @@ class SlurmSystem(ParallelSystem):
             # on pre-20.11 Slurm the placement renders its own cpu binding
             return self.placement_support is not PlacementSupport.CPU_BINDING
         if option == 'gpu_bind':
-            # binding tasks to GPUs contradicts having asked for none
-            return placement.gpus > 0
+            if placement.gpus == 0:
+                # binding tasks to GPUs contradicts having asked for none
+                return False
+            # A `gpu_bind` of `none` asks Slurm not to bind tasks to GPUs,
+            # which is what it does anyway without the option, so dropping
+            # it takes nothing away.  Keeping it alongside an explicit
+            # --gpus=N appears to cost something: of four concurrent placed
+            # launches on Perlmutter GPU asking for one GPU each, one was
+            # given a GPU and the other three got none, ran anyway and
+            # exited 0.  Frontier, whose `gpu_bind` is `closest`, gave all
+            # four disjoint GPUs from a nearly identical command.  That
+            # `none` is what suppressed the assignment rather than merely
+            # the binding is a hypothesis, still to be confirmed by a rerun
+            # on Perlmutter GPU with the option gone.
+            return value.strip() != 'none'
         return True

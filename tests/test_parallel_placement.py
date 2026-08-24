@@ -280,6 +280,19 @@ def test_modern_slurm_keeps_gpu_binding_when_gpus_asked_for(monkeypatch):
     assert '--gpu-bind=closest' in args
 
 
+def test_modern_slurm_drops_a_gpu_binding_of_none(monkeypatch):
+    """A gpu_bind of `none` left three of four pm-gpu launches GPU-less."""
+    system = _get_slurm_system(monkeypatch, MODERN_SLURM, gpu_bind='none')
+    placement = ResourcePlacement(
+        nodes=['nid001'], cores=list(range(8)), gpus=2
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
+    )
+    assert '--gpus=2' in args
+    assert not any(arg.startswith('--gpu-bind') for arg in args)
+
+
 def test_placement_supersedes_the_distribution(monkeypatch):
     system = _get_slurm_system(
         monkeypatch,

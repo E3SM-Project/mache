@@ -240,6 +240,21 @@ three cases established by measurement are:
   isolation is by the vendor's visible-device mechanism, which is the
   documented approach on those machines.
 
+A machine's own binding options are kept alongside a placement only where
+they do not contradict it, and one value has to be singled out. A `gpu_bind`
+of `none` asks Slurm not to bind tasks to GPUs, which is what it does anyway
+without the option — so dropping it takes nothing away, and keeping it
+appears to take something away. Four concurrent placed launches on Perlmutter
+GPU, whose configured `gpu_bind` is `none`, each asked for one GPU: one was
+given a GPU and the other three got none, ran anyway and exited 0. Frontier,
+whose `gpu_bind` is `closest`, gave all four disjoint GPUs from a nearly
+identical command. That `none` suppressed the assignment rather than merely
+the binding is a hypothesis, not yet confirmed, and confirming it takes one
+rerun on Perlmutter GPU with the option gone. The change is made now because
+the asymmetry of the two outcomes is the whole point: a launch that silently
+runs on no GPU and exits 0 is the same class of failure as a placement that
+silently does nothing.
+
 There is no scheduler on PALS to hand out GPUs, so a total is not enough
 there: something has to name the devices. Deriving them from the placement's
 core set would work only while every concurrent launch has the same shape,
