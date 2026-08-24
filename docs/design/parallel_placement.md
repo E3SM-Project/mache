@@ -678,5 +678,13 @@ concurrency measurement so far was made without caps.
 measured directly, but no launch has yet been run through
 `get_parallel_command()` with `memory_cap` set.
 
-**A survey of `memory_per_node` on every machine but Chrysalis**, and any
-measurement at all on Aurora.
+**Any measurement of `memory_per_node` on Aurora.** Every Slurm machine has
+now been surveyed; Aurora's figure is still the site's documentation rounded
+down, and the one attempt found no `resources_available.mem` to read. It is
+not urgent: the estimate sits well below even the hardware figure, which is
+the direction that wastes a node rather than kills a job. But it is the last
+value in this table that nobody has read off a machine.
+
+Both Aurora items wait on the same thing — someone on the machine, when it is
+up. Neither blocks a release, and neither should be closed by a run that did
+not actually ask the question.
