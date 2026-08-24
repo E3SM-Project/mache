@@ -1,7 +1,7 @@
 import subprocess
 from configparser import ConfigParser
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, overload
 
 from mache.parallel.memory import MemoryCapSupport
 from mache.parallel.placement import PlacementSupport, ResourcePlacement
@@ -253,8 +253,26 @@ class ParallelSystem:
         """Get a config value from the parallel configs."""
         return self.parallel_configs.get(key, default)
 
+    @overload
+    def get_config_int(self, key: str) -> int: ...
+
+    @overload
+    def get_config_int(self, key: str, default: int) -> int: ...
+
+    @overload
+    def get_config_int(self, key: str, default: None) -> int | None: ...
+
     def get_config_int(self, key: str, default: int | None = 0) -> int | None:
-        """Get an integer config value from the parallel configs."""
+        """
+        Get an integer config value from the parallel configs.
+
+        The default is ``0``, so an absent key is indistinguishable from one
+        set to zero unless the caller says otherwise. A caller that needs to
+        tell "the config does not say" from "the config says none" must pass
+        ``default=None`` explicitly, and the overloads above make that the
+        only way to get a ``None`` back -- so a check for one against any
+        other default is dead code rather than the safeguard it looks like.
+        """
         value = self.get_config(key, default)
         return int(value) if value is not None else None
 

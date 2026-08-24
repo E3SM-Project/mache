@@ -119,7 +119,10 @@ class PbsSystem(ParallelSystem):
                 'to "pbs".'
             )
 
-        cores_per_node = self.get_config_int('cores_per_node')
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would leave the machine
+        # reporting no cores instead of raising
+        cores_per_node = self.get_config_int('cores_per_node', default=None)
         if cores_per_node is None:
             raise ValueError(
                 'cores_per_node must be set in the config for the pbs system.'
@@ -133,10 +136,11 @@ class PbsSystem(ParallelSystem):
         self.nodes = nodes
         self.mpi_allowed = True
 
-        gpus_per_node = self.get_config_int('gpus_per_node')
-        if gpus_per_node is not None:
-            self.gpus_per_node = gpus_per_node
-            self.gpus = gpus_per_node * nodes
+        # 0 rather than None here: a machine that says nothing about GPUs
+        # has none, which is an answer and not a gap
+        gpus_per_node = self.get_config_int('gpus_per_node', default=0)
+        self.gpus_per_node = gpus_per_node
+        self.gpus = gpus_per_node * nodes
 
         memory_per_node = self.get_config_int('memory_per_node', default=None)
         if memory_per_node is not None:
@@ -321,7 +325,12 @@ class PbsSystem(ParallelSystem):
         if nodes is None:
             raise ValueError('Node count is not set for the pbs system.')
 
-        max_mpi_tasks_per_node = self.get_config_int('max_mpi_tasks_per_node')
+        # default=None so an absent option reaches the check below:
+        # get_config_int defaults to 0, which would cap the launch at no
+        # tasks at all instead of raising
+        max_mpi_tasks_per_node = self.get_config_int(
+            'max_mpi_tasks_per_node', default=None
+        )
         if max_mpi_tasks_per_node is None:
             raise ValueError(
                 'max_mpi_tasks_per_node must be set in the config for the pbs '

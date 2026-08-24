@@ -20,7 +20,10 @@ class SingleNodeSystem(ParallelSystem):
     def __init__(self, config: ConfigParser):
         super().__init__(config)
         cores_detected = multiprocessing.cpu_count()
-        cores_per_node = self.get_config_int('cores_per_node')
+        # default=None so an absent option is distinguishable from a
+        # configured zero: get_config_int defaults to 0, and min() against
+        # that would report a machine with no cores at all
+        cores_per_node = self.get_config_int('cores_per_node', default=None)
         if cores_per_node is None:
             cores_per_node = cores_detected
         else:
@@ -29,7 +32,9 @@ class SingleNodeSystem(ParallelSystem):
         self.cores = cores_per_node
         self.nodes = 1
         self.mpi_allowed = True
-        self.gpus_per_node = self.get_config_int('gpus_per_node')
+        # 0 rather than None here: a machine that says nothing about GPUs
+        # has none, which is an answer and not a gap
+        self.gpus_per_node = self.get_config_int('gpus_per_node', default=0)
         self.gpus = self.gpus_per_node
         # unlike cores, memory is not detected from the machine itself: the
         # figure that matters is the memory a job may use, which only the
