@@ -1,0 +1,6 @@
+﻿mache.jigsaw.detect\_install\_backend
+=====================================
+
+.. currentmodule:: mache.jigsaw
+
+.. autofunction:: detect_install_backend

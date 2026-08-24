@@ -1,0 +1,6 @@
+﻿mache.deploy.spack.deploy\_spack\_software\_env
+===============================================
+
+.. currentmodule:: mache.deploy.spack
+
+.. autofunction:: deploy_spack_software_env

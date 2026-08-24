@@ -1,0 +1,31 @@
+﻿mache.parallel.placement.ResourcePlacement
+==========================================
+
+.. currentmodule:: mache.parallel.placement
+
+.. autoclass:: ResourcePlacement
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ResourcePlacement.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ResourcePlacement.gpu_ids
+      ~ResourcePlacement.gpus
+      ~ResourcePlacement.nodes
+      ~ResourcePlacement.cores
+   
+   

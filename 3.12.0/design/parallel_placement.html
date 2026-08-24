@@ -1,0 +1,783 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Document: parallel placement</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1b7a0a1e"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Design Document: parallel placement</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/design/parallel_placement.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="design-document-parallel-placement">
+<h1>Design Document: parallel placement<a class="headerlink" href="#design-document-parallel-placement" title="Link to this heading"></a></h1>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code> builds the command that launches parallel work on an HPC
+system — <code class="docutils literal notranslate"><span class="pre">srun</span></code> on Slurm machines, <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> on PBS machines. Today that
+command always asks for resources in the abstract: this many tasks, this many
+CPUs each. It has no way to say <em>where</em> the work should run.</p>
+<p>That is sufficient while the target software runs one piece of work at a time.
+It is the blocking limitation as soon as it wants to run two, because two
+launches that each describe their needs in the abstract will be given
+overlapping resources, or — more often — the second will wait until the first
+has finished.</p>
+<p>This document proposes adding an optional <strong>placement</strong> to
+<code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>: a description of which nodes, how many cores and
+how many GPUs a particular launch should be confined to. Target software
+describes the placement; <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders it into whatever the machine’s
+launcher needs.</p>
+<p>It also proposes that <code class="docutils literal notranslate"><span class="pre">mache</span></code> describe how much memory a machine’s nodes
+have, in the same way it already describes their cores and GPUs. Memory is
+the one resource a placement deliberately does <em>not</em> carry, for reasons
+given below, and the two proposals together draw the line: <code class="docutils literal notranslate"><span class="pre">mache</span></code> says what
+a machine has and where a launch goes; the caller decides what fits.</p>
+<p>A caller that has decided can then say so: an optional memory <strong>cap</strong>, given
+separately from the placement and absent unless asked for, holds a launch to
+a figure the caller deliberately stated. It is a cap and not a reservation,
+and it is rendered only on machines that will act on it.</p>
+<p>The immediate driver is Polaris, which is adding the ability to run
+independent steps concurrently within one allocation. The capability is not
+Polaris-specific; anything running several pieces of work inside one
+allocation needs it.</p>
+</section>
+<hr class="docutils" />
+<section id="background-what-was-measured">
+<h2>Background: what was measured<a class="headerlink" href="#background-what-was-measured" title="Link to this heading"></a></h2>
+<p>The requirements below are not derived from documentation. They come from
+running concurrent placed launches on Chrysalis, Perlmutter (CPU and GPU),
+Frontier and Aurora, and recording what each machine actually did. Four
+results shaped this design.</p>
+<p><strong>Launching is cheap.</strong> Between 60 and 670 launches per minute depending on
+the machine. A widely held belief that Perlmutter throttles <code class="docutils literal notranslate"><span class="pre">srun</span></code> to roughly
+one launch a minute did not survive measurement; the symptom that produced
+that belief was concurrent launches queueing, not launches being rate
+limited.</p>
+<p><strong>Slurm changed meaningfully at 20.11.</strong> Before that release, job steps share
+a node’s resources by default, and the options that now control this do not
+exist — passing them is an error, not a no-op. After it, a step reserves what
+it asks for, and two steps that ask for everything will serialize. Both eras
+are in production on machines Polaris supports: Chrysalis runs 20.02,
+Perlmutter and Frontier run 25.11.</p>
+<p><strong>An unstated GPU requirement is read as a claim on all of them.</strong> This, and
+not memory or CPU contention, is what prevented concurrency on the GPU
+machines: a launch that said nothing about GPUs implicitly reserved every
+one on the node, so the next waited. Constraining CPUs does not constrain
+GPUs. The consequence for the API is that a placement must be able to say
+“no GPUs” explicitly, and that saying nothing must not be treated as
+equivalent — for most callers, whose work uses no GPUs at all, the explicit
+“none” is the common case.</p>
+<p><strong>GPUs must be requested as a per-launch total.</strong> Requesting a number of GPUs
+<em>per task</em> does not confine a launch — measured on both GPU machines. A
+per-launch total does. This is a genuine asymmetry with how CPUs are
+described, and the API has to reflect it rather than smooth it over.</p>
+<p><strong>Asking for memory changed nothing observable — but memory is enforced.</strong>
+Giving a launch a share of the node’s memory neither fixed the serialization
+— the unstated GPU claim did that — nor appeared to reserve anything. That
+negative result is about serialization and does not generalize, which a
+later measurement on the same machines settled: a step given <code class="docutils literal notranslate"><span class="pre">--mem=1024M</span></code>
+and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and on
+Frontier, and reaches 4 GB and exits 0 on Chrysalis, whose Slurm predates
+20.11.</p>
+<p>Both halves point the same way, and together they decide where memory
+belongs. Where a memory figure is inert it reserves nothing and prevents
+nothing while implying to every reader that it did. Where it is enforced it
+is a cap, and work that under-declared would be killed rather than merely
+mis-scheduled. Neither is a thing to render on a caller’s behalf out of a
+field that was filled in loosely — which is why memory stays out of the
+placement type, and why a cap is stated separately and only when a caller
+means it.</p>
+<p><strong>A placement does not cap memory by itself.</strong> Asking Slurm for exactly the
+cores a launch needs does not hand it a slice of the node’s memory to go
+with them. A placed single-core launch and an unplaced control, neither
+mentioning memory, both allocated twice what a single core’s proportional
+share of the node would be, and neither was touched — measured on Perlmutter
+CPU and Frontier. That bounds rather than settles: it shows no ceiling below
+the amount tried, and Perlmutter GPU was not tested on the point.</p>
+<p>The one worry this raises does not materialize: silence about memory does
+not repeat the trap that silence about GPUs sets. An unstated memory
+requirement is not read as a claim on the node’s memory. On both Perlmutter
+GPU and Frontier, four concurrent launches that said nothing about it all
+started within 40 ms of each other and ran for their full duration. Aurora
+is unmeasured on this point.</p>
+</section>
+<hr class="docutils" />
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<hr class="docutils" />
+<section id="requirement-express-placement-without-machine-specific-knowledge">
+<h3>Requirement: Express placement without machine-specific knowledge<a class="headerlink" href="#requirement-express-placement-without-machine-specific-knowledge" title="Link to this heading"></a></h3>
+<p>Target software must be able to say where a launch should run in terms it
+already understands — nodes, cores, GPUs — without knowing the flags any
+particular machine uses.</p>
+<p>The flags differ not only between Slurm and PBS but between Slurm versions on
+similar machines. If target software has to know them, that knowledge spreads
+into every caller and has to be updated whenever a site upgrades.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-isolation-enforced-by-the-batch-system">
+<h3>Requirement: Isolation enforced by the batch system<a class="headerlink" href="#requirement-isolation-enforced-by-the-batch-system" title="Link to this heading"></a></h3>
+<p>Where the batch system can keep concurrent launches on separate resources, it
+must be asked to do so.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> should not implement placement by pinning processes itself when the
+scheduler can do it. Scheduler-enforced placement is a stronger guarantee:
+work that ignores an affinity mask is not prevented from doing so, whereas
+work given a resource reservation cannot exceed it.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-support-both-eras-of-slurm">
+<h3>Requirement: Support both eras of Slurm<a class="headerlink" href="#requirement-support-both-eras-of-slurm" title="Link to this heading"></a></h3>
+<p>Placement must work on Slurm both before and after the 20.11 change in job
+step behavior.</p>
+<p>On older Slurm the modern options do not exist and passing them fails
+outright, so a different mechanism is required. Explicit CPU binding is
+available there and was measured to give concurrent launches disjoint cores.
+This is a weaker guarantee than a reservation, and <code class="docutils literal notranslate"><span class="pre">mache</span></code> must report which
+mechanism it used so callers can decide whether that is acceptable.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-support-pbs-with-pals">
+<h3>Requirement: Support PBS with PALS<a class="headerlink" href="#requirement-support-pbs-with-pals" title="Link to this heading"></a></h3>
+<p>Placement must work on PBS systems using the PALS launcher, where concurrent
+launches within one job are already supported and are placed by naming hosts
+and CPU lists explicitly.</p>
+<p>The usable set of cores on such a machine may not be contiguous and may not
+start at zero. Placement must be expressible as an explicit set rather than
+as a count.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-gpus-as-a-per-launch-total">
+<h3>Requirement: GPUs as a per-launch total<a class="headerlink" href="#requirement-gpus-as-a-per-launch-total" title="Link to this heading"></a></h3>
+<p>A placement must express GPUs as a total for the launch, not as a count per
+task, for the reason measured above.</p>
+<p>The total must default to none, and “none” must be rendered as an explicit
+request for no GPUs rather than as an omission. Callers whose work uses no
+GPUs — the majority — should get correct behavior without having to know
+that GPUs were ever a consideration.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-describe-how-much-memory-a-node-has">
+<h3>Requirement: Describe how much memory a node has<a class="headerlink" href="#requirement-describe-how-much-memory-a-node-has" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> must report the memory available on a machine’s nodes, as a
+per-node figure and as an allocation-wide total, beside the core and GPU
+counts it already reports.</p>
+<p>A caller running several pieces of work inside one allocation has to decide
+how many of them fit, and memory is one of the quantities that decides it.
+That number is a property of the machine, which is what <code class="docutils literal notranslate"><span class="pre">mache</span></code> is for; a
+caller that had to discover it for itself would either hard-code it per
+machine — duplicating exactly what <code class="docutils literal notranslate"><span class="pre">mache</span></code> exists to centralize — or read it
+from a node it has not been given yet.</p>
+<p>The figure must be the memory a job may actually use, not the hardware
+total, since the two differ by enough to matter and it is the smaller one a
+caller must not exceed.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-placement-says-where-not-how-much-memory">
+<h3>Requirement: A placement says where, not how much memory<a class="headerlink" href="#requirement-a-placement-says-where-not-how-much-memory" title="Link to this heading"></a></h3>
+<p>The placement type must not carry memory.</p>
+<p>Every field in a placement is rendered into a launch command, and a memory
+field would render into an option whose effect differs by machine: inert on
+the older Slurm, and on the newer one a cap that kills a step for exceeding
+it. A caller reading the type would reasonably conclude that <code class="docutils literal notranslate"><span class="pre">mache</span></code> was
+keeping memory apart for it — which on one machine is a promise nothing here
+can keep, and on the other is a limit the caller did not ask to be held to.</p>
+<p>This keeps a clean division. <code class="docutils literal notranslate"><span class="pre">mache</span></code> describes what a machine has and
+renders where a launch goes. Deciding how much of the machine each piece of
+work may take is the caller’s, because only the caller knows what else it is
+running.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-a-memory-cap-is-stated-separately-and-only-on-purpose">
+<h3>Requirement: A memory cap is stated separately, and only on purpose<a class="headerlink" href="#requirement-a-memory-cap-is-stated-separately-and-only-on-purpose" title="Link to this heading"></a></h3>
+<p>A caller must be able to say how much memory a launch may use, as an
+argument of its own rather than as part of a placement, absent unless it is
+given.</p>
+<p>The requirement above rests on a memory figure being rendered “out of a
+field that was filled in loosely” — a caller filling in a placement to say
+where its work goes, and finding it had also declared a limit it would be
+held to. A separate argument removes exactly that. Setting it is a distinct
+act, and the caller that performs it has said a number knowing it is a
+ceiling.</p>
+<p>The two requirements are therefore the same rule seen twice, not a reversal
+of one by the other: the placement still says <em>where</em>, and how much memory
+is a different statement, made in a different place in the signature.</p>
+<p>What is being asked for is a <strong>cap, not a reservation</strong>. Nothing measured
+suggests such a figure sets memory aside, so it must not be documented in
+terms that read as scheduling. And because it means nothing at all on
+machines whose launcher has no memory option or ignores the one it has, it
+must be rendered only where it will be acted on. A cap on the command line
+that nothing keeps is worse than no cap: it reads to everyone who sees the
+command as a safety net.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-report-what-the-machine-supports">
+<h3>Requirement: Report what the machine supports<a class="headerlink" href="#requirement-report-what-the-machine-supports" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> must be able to tell a caller which placement mechanism applies on
+the current machine: scheduler-enforced, CPU-binding fallback, or none, and
+whether a memory cap will be enforced here.</p>
+<p>A caller that cannot place work needs to know that before it tries to run
+things concurrently, rather than discovering it as a hang or as silent
+oversubscription.</p>
+<p>The two reports differ in what they justify. A placement that cannot be
+honored is an error, because concurrent launches will then collide. A cap
+that cannot be enforced is not: the work runs correctly and is merely
+unprotected, so the caller is told rather than stopped, and can record in a
+run log that caps do not bite on this machine instead of believing it has a
+safety net.</p>
+</section>
+<hr class="docutils" />
+<section id="requirement-existing-behavior-unchanged">
+<h3>Requirement: Existing behavior unchanged<a class="headerlink" href="#requirement-existing-behavior-unchanged" title="Link to this heading"></a></h3>
+<p>A call to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> without a placement must produce exactly
+the command it produces today.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="design">
+<h2>Design<a class="headerlink" href="#design" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<hr class="docutils" />
+<section id="the-placement-description">
+<h3>The placement description<a class="headerlink" href="#the-placement-description" title="Link to this heading"></a></h3>
+<p>A placement carries three things: the nodes a launch may use, the cores it may
+use, and the number of GPUs it needs in total. Cores are given as an explicit
+set rather than a count, because that is what the non-contiguous case
+requires and because a count cannot express which cores.</p>
+<p><code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> takes it as an optional argument. When it is absent,
+nothing changes.</p>
+</section>
+<section id="rendering-per-system">
+<h3>Rendering per system<a class="headerlink" href="#rendering-per-system" title="Link to this heading"></a></h3>
+<p>Each <code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code> subclass renders the placement in its own terms. The
+three cases established by measurement are:</p>
+<ul class="simple">
+<li><p><strong>Slurm 20.11 and newer</strong> — ask for exactly the resources the launch needs
+rather than inheriting the job’s, name the nodes, and give the GPU total.
+This yields concurrent launches with disjoint cores and disjoint GPUs,
+enforced by Slurm.</p></li>
+<li><p><strong>Slurm before 20.11</strong> — the above options do not exist. Concurrent
+launches already share the node, and placement comes from an explicit CPU
+binding. Report that the weaker mechanism was used.</p></li>
+<li><p><strong>PBS with PALS</strong> — name the hosts and give an explicit core list. GPU
+isolation is by the vendor’s visible-device mechanism, which is the
+documented approach on those machines.</p></li>
+</ul>
+<p>A machine’s own binding options are kept alongside a placement only where
+they do not contradict it, and one value has to be singled out. A <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code>
+of <code class="docutils literal notranslate"><span class="pre">none</span></code> asks Slurm not to bind tasks to GPUs, which is what it does anyway
+without the option — so dropping it takes nothing away, and keeping it
+appears to take something away. Four concurrent placed launches on Perlmutter
+GPU, whose configured <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> is <code class="docutils literal notranslate"><span class="pre">none</span></code>, each asked for one GPU: one was
+given a GPU and the other three got none, ran anyway and exited 0. Frontier,
+whose <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> is <code class="docutils literal notranslate"><span class="pre">closest</span></code>, gave all four disjoint GPUs from a nearly
+identical command. That <code class="docutils literal notranslate"><span class="pre">none</span></code> suppressed the assignment rather than merely
+the binding is a hypothesis, not yet confirmed, and confirming it takes one
+rerun on Perlmutter GPU with the option gone. The change is made now because
+the asymmetry of the two outcomes is the whole point: a launch that silently
+runs on no GPU and exits 0 is the same class of failure as a placement that
+silently does nothing.</p>
+<p>There is no scheduler on PALS to hand out GPUs, so a total is not enough
+there: something has to name the devices. Deriving them from the placement’s
+core set would work only while every concurrent launch has the same shape,
+and would collide the first time launches of different sizes ran beside each
+other. Only the caller sees every launch running at that moment, so the
+placement carries the device indices the caller assigned, and <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders
+them rather than guessing. The total remains the machine-independent
+statement and is what Slurm is given; a PALS placement that asks for GPUs
+without naming them is an error, not an invitation to choose.</p>
+<p>The variable is set on the command line rather than exported, so a value
+cannot leak from the parent into a later launch that meant to set its own.
+This follows what E3SM’s own <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> already does on these
+machines.</p>
+<p>Setting it is all that is done. Removing it first as well, so that nothing
+inherited could survive, is what the first implementation did — and Aurora’s
+PALS <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> has no <code class="docutils literal notranslate"><span class="pre">--env-remove</span></code>, rejects the whole command when given
+one, and so failed every placed launch on the machine before any of them
+started. The removal was belt and braces to begin with, since <code class="docutils literal notranslate"><span class="pre">--env</span></code> sets
+the variable explicitly and that already overrides whatever was inherited.
+It would only have mattered if setting an <em>empty</em> value differed from not
+setting one, which is the open question below rather than something the
+removal answered.</p>
+<p>The variable is given as two arguments, <code class="docutils literal notranslate"><span class="pre">--env</span> <span class="pre">VAR=VAL</span></code>, which is the form
+PALS’s usage text describes. Whether <code class="docutils literal notranslate"><span class="pre">--env=VAR=VAL</span></code> would also be accepted
+is not known: the Aurora command was rejected at <code class="docutils literal notranslate"><span class="pre">--env-remove</span></code> before its
+parser reached the <code class="docutils literal notranslate"><span class="pre">--env</span></code> after it. The two-argument form is the one with
+evidence behind it, because every other option <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders for PALS —
+<code class="docutils literal notranslate"><span class="pre">--depth</span></code>, <code class="docutils literal notranslate"><span class="pre">--hosts</span></code>, <code class="docutils literal notranslate"><span class="pre">--cpu-bind</span> <span class="pre">list:</span></code> — is rendered that way and did get
+past that parser.</p>
+<p>One thing to know before it becomes urgent: PALS’s usage output marks both
+<code class="docutils literal notranslate"><span class="pre">--cpu-bind</span></code> and <code class="docutils literal notranslate"><span class="pre">--mem-bind</span></code> as deprecated. They are still accepted, and
+Aurora’s unplaced launches use them and run, so nothing is broken today. But
+the PALS placement path is built on <code class="docutils literal notranslate"><span class="pre">--cpu-bind</span> <span class="pre">list:</span></code>, so it is that path
+that will have to change when they go, and there is no second mechanism on
+PALS to fall back to.</p>
+</section>
+<section id="a-machine-s-memory">
+<h3>A machine’s memory<a class="headerlink" href="#a-machine-s-memory" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> joins <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> and <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code> as a
+<code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config option in each shipped machine config, and
+<code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code> exposes it alongside an allocation-wide <code class="docutils literal notranslate"><span class="pre">memory</span></code>, computed
+from it and the node count exactly as <code class="docutils literal notranslate"><span class="pre">cores</span></code> is computed from
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>. Nothing in <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> reads it. It is
+machine description, and it travels the same path as the rest of the
+machine description.</p>
+<p>Two details are worth fixing rather than leaving to whoever fills in the
+configs.</p>
+<p><strong>Megabytes, as an integer.</strong> It matches the unit Slurm’s memory options
+default to, and the unit callers already use — Polaris’s step attribute is
+in megabytes — so no conversion sits between the number written down and the
+number acted on. Gigabytes would read better in a config file and would
+force every usable-memory figure to be rounded to something wrong.</p>
+<p><strong>The number is what the site reports as available, rounded down</strong>, not the
+hardware capacity. On a Slurm machine that is what <code class="docutils literal notranslate"><span class="pre">sinfo</span></code> reports for the
+node, which is already net of what the operating system and the site’s own
+services hold back. The two differ by several percent, and the whole value
+of the figure is that a caller can pack up to it.</p>
+<p>Machine configs give one value per machine, as they already do for cores and
+GPUs. On a machine with more than one node type this describes the type the
+config’s constraint selects, which is the existing convention and its
+existing limitation; memory does not make it worse and should not be the
+occasion for fixing it.</p>
+</section>
+<section id="a-memory-cap-on-a-launch">
+<h3>A memory cap on a launch<a class="headerlink" href="#a-memory-cap-on-a-launch" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> takes an optional <code class="docutils literal notranslate"><span class="pre">memory_cap</span></code>, in MB, alongside
+the placement and independent of it. Absent, nothing about memory is
+rendered and every existing caller’s command is unchanged.</p>
+<p><strong>Per node, in MB</strong>, which is both what Slurm’s <code class="docutils literal notranslate"><span class="pre">--mem</span></code> means and what
+<code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> is denominated in — the figure a caller divides up between
+the launches it runs at once. A different denomination would put a
+conversion between two numbers the caller has to reason about together.</p>
+<p><strong>Rendered only where it will be acted on.</strong> On Slurm 20.11 and newer that
+is <code class="docutils literal notranslate"><span class="pre">--mem=&lt;N&gt;M</span></code>. Chrysalis’s Slurm accepts the same option and does not act
+on it, and PALS has no equivalent at all; on both, <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders nothing.
+Rendering an option known to be inert would put a figure on the command line
+that nothing keeps, which is the failure this design objects to everywhere
+else: something that reads as though it is working.</p>
+<p>The version is a proxy, and worth naming as one. Memory enforcement comes
+from the cgroup constraints a site configures, not from the step options
+20.11 added; the boundary is the same only because that is where it was
+measured. A site running a new Slurm with memory constraints disabled would
+be reported as enforcing when it is not. That is why the constant deciding
+it is separate from the one deciding step isolation, though the two
+currently hold the same number.</p>
+<p><strong>Two values, not three.</strong> Whether a launcher lacks a memory option or
+accepts one and ignores it, the consequence for the caller is the same:
+nothing here will hold the launch to its cap. <code class="docutils literal notranslate"><span class="pre">memory_cap_support</span></code> says
+<code class="docutils literal notranslate"><span class="pre">ENFORCED</span></code> or <code class="docutils literal notranslate"><span class="pre">NONE</span></code> and does not distinguish two ways of being useless.</p>
+<p><strong>Not validated against <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code>.</strong> The obvious check — refusing a
+cap larger than the node is said to have — would reject caps the node can
+honor. The shipped figures are conservative by design, and on Perlmutter and
+Frontier they measured below what a node actually reported, so <code class="docutils literal notranslate"><span class="pre">mache</span></code> would
+be enforcing its own estimate.</p>
+<p><strong>What has not been measured</strong> is whether a stated cap is also a claim. If
+Slurm treats <code class="docutils literal notranslate"><span class="pre">--mem</span></code> on a step as a reservation and not only as a limit,
+then two concurrent launches whose caps together exceed the node would
+serialize, the way an unstated GPU requirement serializes them today.
+Nothing measured suggests it does, and nothing measured rules it out: every
+concurrency measurement so far was made without caps.</p>
+</section>
+<section id="the-first-values-will-be-estimates-and-must-be-corrected">
+<h3>The first values will be estimates, and must be corrected<a class="headerlink" href="#the-first-values-will-be-estimates-and-must-be-corrected" title="Link to this heading"></a></h3>
+<p>Whoever adds these options to the machine configs cannot measure them. The
+figure that matters is what a job on that machine may actually allocate, and
+that is knowable only from the machine — not from vendor specifications, not
+from site documentation, and not from what a login node’s <code class="docutils literal notranslate"><span class="pre">/proc/meminfo</span></code>
+happens to say. The initial values will therefore be estimates, and they
+must be labeled as estimates in the configs rather than shipped looking like
+facts.</p>
+<p>Two things follow.</p>
+<p><strong>Estimates must err low.</strong> Too high is a job killed for exhausting a node;
+too low is a job that packs less work than it could. The failure directions
+are not comparable, so an unverified figure should be rounded down hard
+enough that being wrong is merely wasteful. This is a rule about
+<em>estimates</em>. Once a figure has been read off the machine, padding it further
+only wastes the node; what is left to worry about is whether the figure is
+the partition’s smallest, and that is answered by surveying rather than by
+rounding down again.</p>
+<p><strong>A single node cannot establish the number.</strong> What a node reports is
+evidence about that node. The figure a config needs is the smallest any of
+them reports, and getting it costs no allocation — <code class="docutils literal notranslate"><span class="pre">sinfo</span> <span class="pre">-o</span> <span class="pre">&quot;%m&quot;</span> <span class="pre">-p</span> <span class="pre">&lt;partition&gt;</span></code> on Slurm, and take the minimum. This was learned the awkward
+way in the first round of measurement, when a figure read off whichever node
+a job happened to land on was briefly taken for evidence that one machine
+had two node types; the sample had come from a different machine’s node. No
+machine <code class="docutils literal notranslate"><span class="pre">mache</span></code> ships a config for is currently known to differ in memory
+between its nodes.</p>
+<p><strong>The correction was someone’s job, and that opportunity has now come
+round.</strong> Polaris’s Phase A validation ran on Chrysalis, Perlmutter CPU and
+GPU, Frontier and Aurora — the same five machines these configs describe.
+What came back is that <strong>no shipped value was wrong</strong>: every one sat at or
+below what the nodes reported, which is the direction estimates are asked to
+err in. Three have now been raised to the measured figure, and every machine
+running Slurm has been surveyed.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>machine</p></th>
+<th class="head"><p>shipped</p></th>
+<th class="head"><p>measured</p></th>
+<th class="head"><p>evidence</p></th>
+<th class="head"><p>standing</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Chrysalis</p></td>
+<td><p>253000</p></td>
+<td><p>253000</p></td>
+<td><p>every node in the partition</p></td>
+<td><p>surveyed, and agrees; unchanged</p></td>
+</tr>
+<tr class="row-odd"><td><p>Perlmutter CPU</p></td>
+<td><p>515100</p></td>
+<td><p>515100</p></td>
+<td><p>every <code class="docutils literal notranslate"><span class="pre">cpu</span></code> node group, and <code class="docutils literal notranslate"><span class="pre">nid004394</span></code>, <code class="docutils literal notranslate"><span class="pre">nid006473</span></code></p></td>
+<td><p>raised from 480000; surveyed</p></td>
+</tr>
+<tr class="row-even"><td><p>Perlmutter GPU</p></td>
+<td><p>257200</p></td>
+<td><p>257200</p></td>
+<td><p>every <code class="docutils literal notranslate"><span class="pre">gpu</span></code> node group, and <code class="docutils literal notranslate"><span class="pre">nid002328</span></code>, <code class="docutils literal notranslate"><span class="pre">nid002993</span></code></p></td>
+<td><p>raised from 240000; surveyed</p></td>
+</tr>
+<tr class="row-odd"><td><p>Frontier</p></td>
+<td><p>512000</p></td>
+<td><p>512000</p></td>
+<td><p>every node in <code class="docutils literal notranslate"><span class="pre">batch</span></code> and <code class="docutils literal notranslate"><span class="pre">extended</span></code>, and <code class="docutils literal notranslate"><span class="pre">frontier01793</span></code>, <code class="docutils literal notranslate"><span class="pre">03091</span></code>, <code class="docutils literal notranslate"><span class="pre">08884</span></code></p></td>
+<td><p>raised from 480000; surveyed</p></td>
+</tr>
+<tr class="row-even"><td><p>Aurora</p></td>
+<td><p>960000</p></td>
+<td><p>—</p></td>
+<td><p>none</p></td>
+<td><p>never measured</p></td>
+</tr>
+</tbody>
+</table>
+<p>Each sampled figure came from <code class="docutils literal notranslate"><span class="pre">sinfo</span> <span class="pre">-h</span> <span class="pre">-o</span> <span class="pre">&quot;%m&quot;</span> <span class="pre">-n</span> <span class="pre">&lt;node&gt;</span></code> on the node the
+job actually ran on, which is what the site says a job may use rather than
+what the hardware holds. The surveys read the same field across every node
+group at once, and <strong>every one returned exactly what its sample had</strong>. So the
+raise cost nothing in the end, and three of these four figures now rest on
+the whole machine rather than on the nodes a scheduler happened to hand out.</p>
+<p>That the samples were right is worth reading carefully, because it is not
+the same as their having been trustworthy. Each was one or two nodes out of
+thousands, and what makes the surveyed figures better is not that they
+disagreed but that they cannot have missed a smaller node. The lesson stands
+whichever way the numbers had fallen.</p>
+<p><strong>Perlmutter had to be surveyed on a different axis.</strong> It separates CPU from
+GPU nodes by constraint, not by partition, so <code class="docutils literal notranslate"><span class="pre">sinfo</span> <span class="pre">-p</span> <span class="pre">&lt;partition&gt;</span></code> there
+mixes the two and returns whichever type has less — quietly, and looking
+exactly like a correct answer. The query has to select on the feature column
+instead. Which axis a machine uses is visible in its own <code class="docutils literal notranslate"><span class="pre">mache</span></code> config:
+<code class="docutils literal notranslate"><span class="pre">constraints</span></code> rather than <code class="docutils literal notranslate"><span class="pre">partitions</span></code>.</p>
+<p><strong>Raising them spends the margin the estimates carried, deliberately.</strong> A
+value 7% low is not harmless here: Polaris derives every step’s default
+memory from it, so the shortfall propagates into every step on that machine,
+and the figure is read at setup when there is nothing else to go on. Against
+that, an optimistic value can no longer over-admit at run time, because
+Polaris reads what its assigned nodes report once it is inside the
+allocation and accounts against those. So the cost of being slightly high is
+now bounded in a way the cost of being persistently low is not.</p>
+<p>The risk that came with spending it has since been retired. While these
+values equalled a sample rather than sitting below one, a single smaller node
+anywhere in those partitions would have put the figure above the minimum —
+the side that kills a job rather than the side that wastes a node. The
+surveys close that, and they cost three commands from three login nodes and
+no allocation at all. <strong>That is the whole price of the difference between a
+figure that is probably right and one that is known to be</strong>, and it is worth
+saying because the reason these values went unmeasured for so long was never
+that measuring them was expensive.</p>
+<p><strong>Aurora is now the only gap</strong>, and the way its measurement failed is a trap
+for whoever tries next. The <code class="docutils literal notranslate"><span class="pre">pbsnodes</span></code> output parsed to no
+<code class="docutils literal notranslate"><span class="pre">resources_available.mem</span></code>, and the harness fell back to the kernel’s
+<code class="docutils literal notranslate"><span class="pre">MemTotal</span></code>, reading 1161578 MB. That number is not the answer: it is what
+the hardware holds, and the distance between it and what the site hands a
+job is the entire reason this option exists.</p>
+<p>Each config option carries a comment saying where its figure came from — a
+survey of the machine, a sample of a node or two, or nothing but the site’s
+documentation — and that comment is what changes as each machine is
+surveyed. Four now say surveyed and name the query that produced them, so
+the next person to doubt a figure can rerun it rather than start over.
+Aurora’s says an estimate, and says what went wrong. Nothing rests on a
+sample any more, which was the state this section was written to get out of.</p>
+<p><strong>The stakes are lower than they were.</strong> Polaris now treats the configured
+figure as a planning estimate rather than a promise: it sizes job scripts
+with it at setup, when no node has been assigned yet, and inside the
+allocation reads what the nodes it actually received report, accounting
+against those and reporting any disagreement. A stale or optimistic value
+can no longer over-admit at run time. That is a reason not to hold a release
+for perfect numbers, not a reason to stop wanting them.</p>
+</section>
+<section id="capability-detection">
+<h3>Capability detection<a class="headerlink" href="#capability-detection" title="Link to this heading"></a></h3>
+<p>The mechanism must be determined at run time, from the launcher actually
+present, not from configuration. The same machine can be upgraded across the
+20.11 boundary without its <code class="docutils literal notranslate"><span class="pre">mache</span></code> configuration changing, and a stale
+assumption there fails in the worst way: the command is accepted and the
+placement silently does nothing.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<hr class="docutils" />
+<ul class="simple">
+<li><p>a small placement type in <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code>, holding nodes, cores, a GPU
+total and — only where the batch system does not assign GPUs itself — the
+device indices the caller chose;</p></li>
+<li><p>an optional argument to <code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command()</span></code>, and a
+rendering of it in <code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code>, <code class="docutils literal notranslate"><span class="pre">PbsSystem</span></code> and <code class="docutils literal notranslate"><span class="pre">SingleNodeSystem</span></code>;</p></li>
+<li><p>capability detection, computed once and reported;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code> gains version detection, since its rendering depends on it;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> as a <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config option in every shipped machine
+config, with <code class="docutils literal notranslate"><span class="pre">memory</span></code> and <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> on <code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code>;</p></li>
+<li><p>an optional <code class="docutils literal notranslate"><span class="pre">memory_cap</span></code> argument to
+<code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command()</span></code>, rendered as <code class="docutils literal notranslate"><span class="pre">--mem</span></code> by
+<code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code> where the version says it will be enforced and rendered
+nowhere else, with a <code class="docutils literal notranslate"><span class="pre">memory_cap_support</span></code> report beside
+<code class="docutils literal notranslate"><span class="pre">placement_support</span></code>.</p></li>
+</ul>
+<p>The memory work is independent of the placement work and shares none of its
+code. It is here because it is the other half of what a caller needs in
+order to schedule concurrent launches, and because splitting a machine’s
+description across two repositories would be worse than the small amount of
+unrelatedness in one document. It can land separately and in either order.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SingleNodeSystem</span></code> can honor a core set and should, since it makes the
+capability testable without a batch system at all. It confines a launch with
+<code class="docutils literal notranslate"><span class="pre">taskset</span></code>, which the whole process tree inherits, and reports the
+CPU-binding mechanism.</p>
+<p>This is an additive change. No existing caller passes a placement, so no
+existing behavior moves.</p>
+</section>
+<hr class="docutils" />
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
+<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<hr class="docutils" />
+<section id="command-construction">
+<h3>Command construction<a class="headerlink" href="#command-construction" title="Link to this heading"></a></h3>
+<p>Unit tests must check the rendered command for each system and each placement
+shape: one node, several nodes, a non-contiguous core set, a GPU total, an
+explicit request for no GPUs, and no placement at all — which must render
+exactly as today.</p>
+<p>Slurm must be tested at both sides of the 20.11 boundary, with the version
+faked, since both are in production and CI will only ever have one.</p>
+<p>Because a missing <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> would leave a caller unable to schedule
+on a machine that otherwise works, every shipped machine config must be
+checked for it, in the same way the placement rendering is checked against
+every shipped config. An omission should fail in CI, when a machine is added
+or edited, rather than on the machine.</p>
+<p>CI cannot check that the value is <em>right</em> — no test has a node to compare
+against. The only check on correctness is the measurement on real machines
+described above, and the honest statement of the situation is that a value
+CI accepts is a value nobody has verified.</p>
+</section>
+<section id="behavior-on-real-machines">
+<h3>Behavior on real machines<a class="headerlink" href="#behavior-on-real-machines" title="Link to this heading"></a></h3>
+<p>Command construction can be tested without an allocation; whether a machine
+honors the command cannot. Validation must include launching several placed
+pieces of work concurrently inside one allocation and confirming from inside
+each that it sees only the cores and GPUs it was given.</p>
+<p>Note that on CUDA machines the visible-device variable is renumbered per
+launch, so four launches on four different GPUs all report device <code class="docutils literal notranslate"><span class="pre">0</span></code>.
+Verification must use the scheduler’s global GPU identifiers instead. This
+cost us a round of testing and is worth stating in any test that checks GPU
+placement.</p>
+<p>These findings were established with throwaway scripts that are not being
+preserved. The per-machine results they produced are recorded in Polaris’s
+task-parallelism design documents, which is where to look for the detail
+behind the requirements above.</p>
+</section>
+<section id="what-validation-found-machine-by-machine">
+<h3>What validation found, machine by machine<a class="headerlink" href="#what-validation-found-machine-by-machine" title="Link to this heading"></a></h3>
+<p>Validation ran on all five machines, and the rendering works on every one of
+them. This is recorded here in prose because the harness that produced it is
+being removed from Polaris’s history at the end of its Phase A, taking the
+raw evidence with it.</p>
+<p>Two defects were found, both in the first round, both fixed above and both
+confirmed by a rerun.</p>
+<ul class="simple">
+<li><p><strong>Chrysalis</strong> (Slurm 20.02, CPU only) — clean. Placement is by explicit
+CPU binding, and the cores a launch got were exactly the cores it was
+given. A memory figure is not enforced: a step allowed 1024 MB and told to
+take 4 GB reached 4 GB and exited 0.</p></li>
+<li><p><strong>Perlmutter CPU</strong> (Slurm 25.11) — clean first time.</p></li>
+<li><p><strong>Perlmutter GPU</strong> (Slurm 25.11) — clean once <code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">none</span></code> was
+dropped. Before that, four concurrent placed launches each asking for one
+GPU produced one launch with a GPU and three with none, which ran anyway
+and exited 0. Memory is enforced: the same 4 GB step was killed at 960 MB.</p></li>
+<li><p><strong>Frontier</strong> (Slurm 25.11) — clean throughout, including four concurrent
+launches with disjoint cores and disjoint GPUs. Memory is enforced, at the
+same 960 MB.</p></li>
+<li><p><strong>Aurora</strong> (PBS with PALS) — every placed launch failed to start until
+<code class="docutils literal notranslate"><span class="pre">--env-remove</span></code> was dropped; clean afterwards.</p></li>
+</ul>
+</section>
+<section id="what-is-still-open">
+<h3>What is still open<a class="headerlink" href="#what-is-still-open" title="Link to this heading"></a></h3>
+<p><strong>The empty-<code class="docutils literal notranslate"><span class="pre">ZE_AFFINITY_MASK</span></code> question, which a green Aurora run does not
+close.</strong> On Slurm, the GPUs a launch can see are reported by the scheduler’s
+own variables, so a check reads back something <code class="docutils literal notranslate"><span class="pre">mache</span></code> did not write. On
+PALS nothing assigns GPUs: <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders the indices the caller chose into
+the variable, and the check reads that same variable back. A clean run
+therefore confirms the plumbing and says nothing about what Level Zero makes
+of an empty value — whether it means “no devices” or “no mask”, which is
+every tile. Settling it takes a placed CPU-only launch on Aurora reporting
+what Level Zero actually sees.</p>
+<p><strong>Whether a stated memory cap is also a claim</strong>, described above. Every
+concurrency measurement so far was made without caps.</p>
+<p><strong>The memory cap rendering itself.</strong> The enforcement facts behind it were
+measured directly, but no launch has yet been run through
+<code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> with <code class="docutils literal notranslate"><span class="pre">memory_cap</span></code> set.</p>
+<p><strong>Any measurement of <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> on Aurora.</strong> Every Slurm machine has
+now been surveyed; Aurora’s figure is still the site’s documentation rounded
+down, and the one attempt found no <code class="docutils literal notranslate"><span class="pre">resources_available.mem</span></code> to read. It is
+not urgent: the estimate sits well below even the hardware figure, which is
+the direction that wastes a node rather than kills a job. But it is the last
+value in this table that nobody has read off a machine.</p>
+<p>Both Aurora items wait on the same thing — someone on the machine, when it is
+up. Neither blocks a release, and neither should be closed by a run that did
+not actually ask the question.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.12.0">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

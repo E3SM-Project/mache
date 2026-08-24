@@ -1,0 +1,6 @@
+﻿mache.parallel.slurm.get\_slurm\_version
+========================================
+
+.. currentmodule:: mache.parallel.slurm
+
+.. autofunction:: get_slurm_version

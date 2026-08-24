@@ -4,6 +4,10 @@
     "url": "/mache/main/"
   },
   {
+    "version": "3.12.0",
+    "url": "/mache/3.12.0/"
+  },
+  {
     "version": "3.11.0",
     "url": "/mache/3.11.0/"
   },

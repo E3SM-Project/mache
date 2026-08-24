@@ -1,0 +1,6 @@
+﻿mache.deploy.bootstrap.install\_dev\_mache
+==========================================
+
+.. currentmodule:: mache.deploy.bootstrap
+
+.. autofunction:: install_dev_mache

@@ -1,0 +1,720 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.parallel.slurm</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1b7a0a1e"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../parallel.html">mache.parallel</a></li>
+      <li class="breadcrumb-item active">mache.parallel.slurm</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.parallel.slurm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryCapSupport</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BINDING_OPTIONS</span><span class="p">,</span>
+    <span class="n">PlacementSupport</span><span class="p">,</span>
+    <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">cpu_mask</span><span class="p">,</span>
+    <span class="n">names_resources</span><span class="p">,</span>
+    <span class="n">split_cores</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParallelSystem</span><span class="p">,</span>
+    <span class="n">_ceil_division</span><span class="p">,</span>
+    <span class="n">_combine_reasons</span><span class="p">,</span>
+    <span class="n">_get_subprocess_int</span><span class="p">,</span>
+    <span class="n">_get_subprocess_str</span><span class="p">,</span>
+    <span class="n">_normalize_requested</span><span class="p">,</span>
+    <span class="n">cap_wall_time</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Slurm 20.11 made job steps reserve what they ask for instead of sharing a</span>
+<span class="c1"># node, and added the options that control it. Before that release those</span>
+<span class="c1"># options do not exist and passing them is an error, not a no-op, so the two</span>
+<span class="c1"># eras need different commands. Both are in production on machines mache</span>
+<span class="c1"># supports.</span>
+<span class="n">STEP_ISOLATION_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+<span class="c1"># Where a memory cap on a job step is enforced. This is the same boundary as</span>
+<span class="c1"># step isolation, but it is a separate fact and a separate constant: memory</span>
+<span class="c1"># enforcement comes from the cgroup constraints a site configures, not from</span>
+<span class="c1"># the step options 20.11 added, and evidence that moves one should not move</span>
+<span class="c1"># the other. What was measured is that a step allowed 1024 MB and told to</span>
+<span class="c1"># take 4 GB is killed at 960 MB on Perlmutter and Frontier, and runs to</span>
+<span class="c1"># completion on Chrysalis.</span>
+<span class="n">MEMORY_ENFORCEMENT_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SlurmOptions">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmOptions.html#mache.parallel.slurm.SlurmOptions">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlurmOptions</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Slurm submission options resolved from a machine's config.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    partition : str</span>
+<span class="sd">        The Slurm partition, or an empty string if the machine defines none.</span>
+
+<span class="sd">    qos : str</span>
+<span class="sd">        The Slurm quality of service, or an empty string if the machine</span>
+<span class="sd">        defines none.</span>
+
+<span class="sd">    constraint : str</span>
+<span class="sd">        The Slurm constraint, or an empty string if the machine defines none.</span>
+
+<span class="sd">    gpus_per_node : str</span>
+<span class="sd">        The number of GPUs per node, or an empty string if not configured.</span>
+
+<span class="sd">    max_wallclock : str</span>
+<span class="sd">        The most restrictive maximum wall clock (``HH:MM:SS``) of the</span>
+<span class="sd">        selected partition and QOS, or an empty string if neither sets one.</span>
+
+<span class="sd">    effective_nodes : int</span>
+<span class="sd">        The node count after clamping to the selected targets' limits.</span>
+
+<span class="sd">    wall_time : str</span>
+<span class="sd">        The requested wall time capped at ``max_wallclock``, or an empty</span>
+<span class="sd">        string if no wall time was requested.</span>
+
+<span class="sd">    honored : bool</span>
+<span class="sd">        Whether every requested target -- partition, QOS, constraint and</span>
+<span class="sd">        ``scheduler_target`` -- was used. ``True`` when none was requested.</span>
+
+<span class="sd">    reason : str or None</span>
+<span class="sd">        A human-readable explanation of why a requested target could not be</span>
+<span class="sd">        honored, suitable for printing verbatim. ``None`` when ``honored``</span>
+<span class="sd">        is ``True``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">qos</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">max_wallclock</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">effective_nodes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="n">honored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="get_slurm_version">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.get_slurm_version.html#mache.parallel.slurm.get_slurm_version">[docs]</a>
+<span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_slurm_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Get the major and minor version of the Slurm installed on this machine.</span>
+
+<span class="sd">    The version is read from ``srun`` itself rather than from a machine's</span>
+<span class="sd">    config, because a site can be upgraded across the 20.11 change in job</span>
+<span class="sd">    step behavior without its mache config changing. It is looked up at most</span>
+<span class="sd">    once per process.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    version : tuple of int or None</span>
+<span class="sd">        The major and minor version, or ``None`` if ``srun`` is missing or</span>
+<span class="sd">        reports a version that cannot be parsed.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">_get_subprocess_str</span><span class="p">([</span><span class="s1">'srun'</span><span class="p">,</span> <span class="s1">'--version'</span><span class="p">])</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># e.g. "slurm 25.11.5"</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'(\d+)\.(\d+)'</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="SlurmSystem">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlurmSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""SLURM resource manager for parallel jobs."""</span>
+
+<div class="viewcode-block" id="SlurmSystem.__init__">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">'SLURM_JOB_ID'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">'SLURM_JOB_ID environment variable not found but system is '</span>
+                <span class="s1">'set to "slurm".'</span>
+            <span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'SLURM_JOB_ID'</span><span class="p">]</span>
+        <span class="c1"># default=None so an absent option reaches the check below:</span>
+        <span class="c1"># get_config_int defaults to 0, which would leave the machine</span>
+        <span class="c1"># reporting no cores instead of raising</span>
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'cores_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'cores_per_node must be set in the config for the slurm '</span>
+                <span class="s1">'system.'</span>
+            <span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'squeue'</span><span class="p">,</span> <span class="s1">'--noheader'</span><span class="p">,</span> <span class="s1">'-j'</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="s1">'-o'</span><span class="p">,</span> <span class="s1">'%D'</span><span class="p">]</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">_get_subprocess_int</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">cores</span> <span class="o">=</span> <span class="n">cores_per_node</span> <span class="o">*</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">cores</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># 0 rather than None here: a machine that says nothing about GPUs</span>
+        <span class="c1"># has none, which is an answer and not a gap</span>
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'gpus_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">gpus_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span>
+            <span class="s1">'memory_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="SlurmSystem.resolve_slurm_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_slurm_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">qos</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">desired_wall_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scheduler_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SlurmOptions</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get Slurm submission options for a requested node count.</span>
+
+<span class="sd">        The partition is resolved first and the QOS is then resolved against</span>
+<span class="sd">        the resulting node count. A requested partition or QOS is honored</span>
+<span class="sd">        when the machine's metadata allows it; otherwise the default is used</span>
+<span class="sd">        and the returned options explain why.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : ConfigParser</span>
+<span class="sd">            Machine configuration parser.</span>
+
+<span class="sd">        nodes : int</span>
+<span class="sd">            Requested node count.</span>
+
+<span class="sd">        min_nodes_allowed : int, optional</span>
+<span class="sd">            Optional lower bound for adjusted node counts.</span>
+
+<span class="sd">        partition : str, optional</span>
+<span class="sd">            A specific partition the caller would like to use.</span>
+
+<span class="sd">        qos : str, optional</span>
+<span class="sd">            A specific quality of service the caller would like to use.</span>
+
+<span class="sd">        constraint : str, optional</span>
+<span class="sd">            A specific constraint the caller would like to use.</span>
+
+<span class="sd">        desired_wall_time : str, optional</span>
+<span class="sd">            The wall time (``HH:MM:SS``) the caller intends to request. A</span>
+<span class="sd">            requested target that does not allow it is not honored, and the</span>
+<span class="sd">            returned ``wall_time`` is capped at ``max_wallclock``.</span>
+
+<span class="sd">        scheduler_target : str, optional</span>
+<span class="sd">            A target named without saying which axis it is on, for callers</span>
+<span class="sd">            with one machine-independent intent such as "use the debug</span>
+<span class="sd">            target". It is used as the partition or the QOS, whichever this</span>
+<span class="sd">            machine lists it under, checking partitions first. ``partition``</span>
+<span class="sd">            and ``qos`` take precedence on the axis they name.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SlurmOptions</span>
+<span class="sd">            The resolved Slurm submission options.</span>
+<span class="sd">        """</span>
+        <span class="n">target_type</span><span class="p">,</span> <span class="n">target_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_find_scheduler_target</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">scheduler_target</span><span class="p">,</span> <span class="p">(</span><span class="s1">'partition'</span><span class="p">,</span> <span class="s1">'qos'</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">target_type</span> <span class="o">==</span> <span class="s1">'partition'</span>
+            <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">partition</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">partition</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+        <span class="k">elif</span> <span class="n">target_type</span> <span class="o">==</span> <span class="s1">'qos'</span> <span class="ow">and</span> <span class="n">_normalize_requested</span><span class="p">(</span><span class="n">qos</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qos</span> <span class="o">=</span> <span class="n">scheduler_target</span>
+
+        <span class="n">partition_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">'partition'</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">partition</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">partition_name</span> <span class="o">=</span> <span class="n">partition_resolution</span><span class="o">.</span><span class="n">target</span>
+
+        <span class="n">qos_resolution</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_submission</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">partition_resolution</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="o">=</span><span class="s1">'qos'</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+            <span class="n">requested</span><span class="o">=</span><span class="n">qos</span><span class="p">,</span>
+            <span class="n">desired_wall_time</span><span class="o">=</span><span class="n">desired_wall_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">qos_name</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">target</span>
+        <span class="n">effective_nodes</span> <span class="o">=</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">effective_nodes</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">gpus_per_node</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_common_submission_options</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">constraint_name</span><span class="p">,</span> <span class="n">constraint_reason</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_constraint</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">constraint</span>
+        <span class="p">)</span>
+
+        <span class="n">max_wallclock</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_max_wallclock</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span>
+                <span class="n">config</span><span class="p">,</span> <span class="s1">'partition'</span><span class="p">,</span> <span class="n">partition_name</span><span class="p">,</span> <span class="n">effective_nodes</span>
+            <span class="p">),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_get_max_wallclock</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s1">'qos'</span><span class="p">,</span> <span class="n">qos_name</span><span class="p">,</span> <span class="n">effective_nodes</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">wall_time</span> <span class="o">=</span> <span class="s1">''</span>
+        <span class="k">if</span> <span class="n">desired_wall_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wall_time</span> <span class="o">=</span> <span class="n">cap_wall_time</span><span class="p">(</span><span class="n">desired_wall_time</span><span class="p">,</span> <span class="n">max_wallclock</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SlurmOptions</span><span class="p">(</span>
+            <span class="n">partition</span><span class="o">=</span><span class="n">partition_name</span><span class="p">,</span>
+            <span class="n">qos</span><span class="o">=</span><span class="n">qos_name</span><span class="p">,</span>
+            <span class="n">constraint</span><span class="o">=</span><span class="n">constraint_name</span><span class="p">,</span>
+            <span class="n">gpus_per_node</span><span class="o">=</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">max_wallclock</span><span class="o">=</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">effective_nodes</span><span class="o">=</span><span class="n">effective_nodes</span><span class="p">,</span>
+            <span class="n">wall_time</span><span class="o">=</span><span class="n">wall_time</span><span class="p">,</span>
+            <span class="n">honored</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">partition_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">qos_resolution</span><span class="o">.</span><span class="n">honored</span>
+                <span class="ow">and</span> <span class="n">constraint_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">target_reason</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">_combine_reasons</span><span class="p">(</span>
+                <span class="n">target_reason</span><span class="p">,</span>
+                <span class="n">partition_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">qos_resolution</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">constraint_reason</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SlurmSystem.get_slurm_options">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_slurm_options</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_nodes_allowed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get Slurm submission options for a requested node count.</span>
+
+<span class="sd">        .. deprecated:: 3.11.0</span>
+<span class="sd">            Use :py:meth:`resolve_slurm_options` instead, which returns a</span>
+<span class="sd">            :py:class:`SlurmOptions` object and supports requesting a</span>
+<span class="sd">            specific partition or QOS.</span>
+<span class="sd">        """</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">'SlurmSystem.get_slurm_options() is deprecated and will be '</span>
+            <span class="s1">'removed in a future release. Use '</span>
+            <span class="s1">'SlurmSystem.resolve_slurm_options(), which returns a '</span>
+            <span class="s1">'SlurmOptions object.'</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_slurm_options</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">min_nodes_allowed</span><span class="o">=</span><span class="n">min_nodes_allowed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">qos</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">constraint</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">max_wallclock</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">effective_nodes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The placement mechanism available on this machine.</span>
+
+<span class="sd">        Slurm 20.11 and newer reserves what a job step asks for, so placement</span>
+<span class="sd">        is scheduler enforced. Before that release, steps share a node and</span>
+<span class="sd">        the only mechanism is an explicit CPU binding, which keeps concurrent</span>
+<span class="sd">        launches on disjoint cores but does not reserve them.</span>
+<span class="sd">        """</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">get_slurm_version</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;=</span> <span class="n">STEP_ISOLATION_VERSION</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">SCHEDULER</span>
+        <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">memory_cap_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MemoryCapSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Whether this machine will hold a launch to a memory cap.</span>
+
+<span class="sd">        The Slurm version is what this is read from, since that is what was</span>
+<span class="sd">        measured and it is what mache can ask the machine. It is a proxy:</span>
+<span class="sd">        the enforcement itself comes from the site's cgroup configuration,</span>
+<span class="sd">        so a site running a new Slurm with memory constraints turned off</span>
+<span class="sd">        would be reported as enforcing when it does not.</span>
+<span class="sd">        """</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">get_slurm_version</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">version</span> <span class="o">&lt;</span> <span class="n">MEMORY_ENFORCEMENT_VERSION</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MemoryCapSupport</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">return</span> <span class="n">MemoryCapSupport</span><span class="o">.</span><span class="n">ENFORCED</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_memory_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_cap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the arguments that hold a launch to a memory cap."""</span>
+        <span class="k">if</span> <span class="n">memory_cap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_cap_support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MemoryCapSupport</span><span class="o">.</span><span class="n">ENFORCED</span><span class="p">:</span>
+            <span class="c1"># Chrysalis's Slurm accepts --mem on a step and does not act on</span>
+            <span class="c1"># it. Rendering it there would put a figure on the command line</span>
+            <span class="c1"># that nothing keeps, which reads to anyone who sees the command</span>
+            <span class="c1"># as a safety net that is not there.</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># a per-node figure, which is what --mem means and what</span>
+        <span class="c1"># memory_per_node is denominated in</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'--mem=</span><span class="si">{</span><span class="n">memory_cap</span><span class="si">}</span><span class="s1">M'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement_supported</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+
+        <span class="c1"># default=None so an absent option reaches the check below:</span>
+        <span class="c1"># get_config_int defaults to 0, which would cap the launch at no</span>
+        <span class="c1"># tasks at all instead of raising</span>
+        <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span>
+            <span class="s1">'max_mpi_tasks_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_mpi_tasks_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'max_mpi_tasks_per_node must be set in the config for the '</span>
+                <span class="s1">'slurm system.'</span>
+            <span class="p">)</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Node count is not set for the slurm system.'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">available_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+            <span class="n">launch_nodes</span> <span class="o">=</span> <span class="n">available_nodes</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">available_nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+            <span class="n">launch_nodes</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
+
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">available_nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tasks_per_node</span> <span class="o">&gt;</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'Calculated tasks_per_node (</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">) exceeds the '</span>
+                <span class="sa">f</span><span class="s1">'max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You '</span>
+                <span class="sa">f</span><span class="s1">'likely need to allocate more nodes.'</span>
+            <span class="p">)</span>
+
+        <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">'-c'</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+            <span class="s1">'-N'</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">launch_nodes</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+            <span class="s1">'-n'</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parallel_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_placement_args</span><span class="p">(</span>
+                <span class="n">parallel_args</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">placement</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">gpus_per_task</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">gpus_per_task_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpus_per_task_flag'</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">gpus_per_task_flag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gpus_per_task_flag</span> <span class="o">=</span> <span class="s1">'--gpus-per-task'</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">gpus_per_task_flag</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">gpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
+
+        <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_binding_args</span><span class="p">(</span><span class="n">placement</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># a placement already says which nodes and how many cores a</span>
+            <span class="c1"># launch gets, so the machine's way of spreading a launch over a</span>
+            <span class="c1"># whole node has nothing left to decide and could only contradict</span>
+            <span class="c1"># it</span>
+            <span class="k">return</span> <span class="n">parallel_args</span>
+
+        <span class="n">distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'distribution'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">distribution</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-m'</span><span class="p">,</span> <span class="n">distribution</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">parallel_args</span>
+
+        <span class="c1"># the legacy `placement` config option, which is the srun task</span>
+        <span class="c1"># distribution and is unrelated to the `placement` argument above</span>
+        <span class="n">distribution_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'placement'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distribution_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">distribution_type</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span><span class="s1">'-m'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">distribution_type</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_placement_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parallel_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Add the arguments that confine a launch to a placement."""</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-w'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
+
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">split_cores</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">version</span> <span class="o">=</span> <span class="n">get_slurm_version</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">running</span> <span class="o">=</span> <span class="s1">'unknown'</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">running</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">version</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">'This machine runs Slurm </span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s1">, which has no way to '</span>
+                    <span class="sa">f</span><span class="s2">"give a job step a share of the node's GPUs. Placing "</span>
+                    <span class="sa">f</span><span class="s1">'GPUs needs Slurm </span><span class="si">{</span><span class="n">STEP_ISOLATION_VERSION</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">.'</span>
+                    <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">STEP_ISOLATION_VERSION</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1"> or newer.'</span>
+                <span class="p">)</span>
+            <span class="c1"># Before 20.11 steps share a node's cores by default and --exact</span>
+            <span class="c1"># does not exist, so the cores a launch may use have to be named</span>
+            <span class="c1"># one mask per task.</span>
+            <span class="n">masks</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cpu_mask</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">)</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--cpu-bind=mask_cpu:</span><span class="si">{</span><span class="n">masks</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">parallel_args</span>
+
+        <span class="c1"># 20.11 and newer: ask for exactly what this launch needs instead of</span>
+        <span class="c1"># inheriting the job's resources, and let Slurm choose which cores</span>
+        <span class="c1"># satisfy the count.</span>
+        <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'--exact'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># a total for the launch, not a count per task: a per-task count</span>
+            <span class="c1"># was measured not to confine a launch on either GPU machine</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--gpus=</span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># saying nothing about GPUs is read as claiming every one on the</span>
+            <span class="c1"># node, which is what serializes concurrent launches there</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'--gres=none'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_binding_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the binding arguments the machine's config asks for."""</span>
+        <span class="n">binding_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">BINDING_OPTIONS</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keeps_binding</span><span class="p">(</span>
+                <span class="n">option</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">placement</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'--</span><span class="si">{</span><span class="n">option</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-"</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">binding_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">flag</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">binding_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_keeps_binding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Check whether a config binding survives alongside a placement.</span>
+
+<span class="sd">        A binding policy such as ``cores`` or ``closest`` still applies</span>
+<span class="sd">        within whatever the placement gave the launch. One that names</span>
+<span class="sd">        specific cores or devices does not, because the placement is now the</span>
+<span class="sd">        authority on which resources the launch has. Nor does a ``gpu_bind``</span>
+<span class="sd">        of ``none``, which asks for no binding at all.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">names_resources</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s1">'cpu_bind'</span><span class="p">:</span>
+            <span class="c1"># on pre-20.11 Slurm the placement renders its own cpu binding</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s1">'gpu_bind'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># binding tasks to GPUs contradicts having asked for none</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="c1"># A `gpu_bind` of `none` asks Slurm not to bind tasks to GPUs,</span>
+            <span class="c1"># which is what it does anyway without the option, so dropping</span>
+            <span class="c1"># it takes nothing away.  Keeping it alongside an explicit</span>
+            <span class="c1"># --gpus=N appears to cost something: of four concurrent placed</span>
+            <span class="c1"># launches on Perlmutter GPU asking for one GPU each, one was</span>
+            <span class="c1"># given a GPU and the other three got none, ran anyway and</span>
+            <span class="c1"># exited 0.  Frontier, whose `gpu_bind` is `closest`, gave all</span>
+            <span class="c1"># four disjoint GPUs from a nearly identical command.  That</span>
+            <span class="c1"># `none` is what suppressed the assignment rather than merely</span>
+            <span class="c1"># the binding is a hypothesis, still to be confirmed by a rerun</span>
+            <span class="c1"># on Perlmutter GPU with the option gone.</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">'none'</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="3.12.0">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
