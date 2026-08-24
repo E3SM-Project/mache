@@ -444,7 +444,11 @@ Two things follow.
 **Estimates must err low.** Too high is a job killed for exhausting a node;
 too low is a job that packs less work than it could. The failure directions
 are not comparable, so an unverified figure should be rounded down hard
-enough that being wrong is merely wasteful.
+enough that being wrong is merely wasteful. This is a rule about
+*estimates*. Once a figure has been read off the machine, padding it further
+only wastes the node; what is left to worry about is whether the figure is
+the partition's smallest, and that is answered by surveying rather than by
+rounding down again.
 
 **A single node cannot establish the number.** What a node reports is
 evidence about that node. The figure a config needs is the smallest any of
@@ -459,20 +463,46 @@ between its nodes.
 **The correction was someone's job, and that opportunity has now come
 round.** Polaris's Phase A validation ran on Chrysalis, Perlmutter CPU and
 GPU, Frontier and Aurora — the same five machines these configs describe.
-What came back is that **no shipped value is wrong**, and that only one of
-them rests on more than a sample:
+What came back is that **no shipped value was wrong**: every one sat at or
+below what the nodes reported, which is the direction estimates are asked to
+err in. Three have now been raised to the measured figure.
 
-| machine | config | measured | standing |
-| --- | --- | --- | --- |
-| Chrysalis | 253000 | 253000 | surveyed, and agrees |
-| Perlmutter CPU | 480000 | 515100 | one node; config is conservative |
-| Perlmutter GPU | 240000 | 257200 | two nodes; config is conservative |
-| Frontier | 480000 | 512000 | one node; config is conservative |
-| Aurora | 960000 | — | never measured; a `pbsnodes` parse found nothing |
+| machine | shipped | measured | nodes | standing |
+| --- | --- | --- | --- | --- |
+| Chrysalis | 253000 | 253000 | partition-wide | surveyed, and agrees; unchanged |
+| Perlmutter CPU | 515100 | 515100 | `nid004394`, `nid006473` | raised from 480000; sampled |
+| Perlmutter GPU | 257200 | 257200 | `nid002328`, `nid002993` | raised from 240000; sampled |
+| Frontier | 512000 | 512000 | `frontier01793`, `03091`, `08884` | raised from 480000; sampled |
+| Aurora | 960000 | — | none | never measured |
 
-Every configured value is at or below what a node reported, which is the
-direction estimates are asked to err in. Aurora is the real gap: it has no
-measurement at all.
+Every sampled figure came from `sinfo -h -o "%m" -n <node>` on the node the
+job actually ran on, which is what the site says a job may use rather than
+what the hardware holds.
+
+**Raising them spends the margin the estimates carried, deliberately.** A
+value 7% low is not harmless here: Polaris derives every step's default
+memory from it, so the shortfall propagates into every step on that machine,
+and the figure is read at setup when there is nothing else to go on. Against
+that, an optimistic value can no longer over-admit at run time, because
+Polaris reads what its assigned nodes report once it is inside the
+allocation and accounts against those. So the cost of being slightly high is
+now bounded in a way the cost of being persistently low is not.
+
+What it buys is worth stating plainly all the same: three of these four now
+*equal* a sample rather than sit below one. If any node in those partitions
+is smaller, the value is above the partition minimum, which is the side that
+kills a job rather than the side that wastes a node. Nothing suggests those
+partitions are mixed, and no machine `mache` ships a config for is known to
+differ in memory between its nodes — but nothing has ruled it out either.
+The `sinfo -h -o "%m" -p <partition>` that would settle all three costs no
+allocation and has not been run.
+
+**Aurora is the real gap**, and the way its measurement failed is a trap for
+whoever tries next. The `pbsnodes` output parsed to no
+`resources_available.mem`, and the harness fell back to the kernel's
+`MemTotal`, reading 1161578 MB. That number is not the answer: it is what
+the hardware holds, and the distance between it and what the site hands a
+job is the entire reason this option exists.
 
 Each config option carries a comment saying where its figure came from — a
 partition-wide survey, a sample of one or two nodes, or nothing but the
