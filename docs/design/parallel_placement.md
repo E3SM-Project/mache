@@ -465,22 +465,29 @@ round.** Polaris's Phase A validation ran on Chrysalis, Perlmutter CPU and
 GPU, Frontier and Aurora — the same five machines these configs describe.
 What came back is that **no shipped value was wrong**: every one sat at or
 below what the nodes reported, which is the direction estimates are asked to
-err in. Three have now been raised to the measured figure.
+err in. Three have now been raised to the measured figure, and every machine
+running Slurm has been surveyed.
 
 | machine | shipped | measured | evidence | standing |
 | --- | --- | --- | --- | --- |
 | Chrysalis | 253000 | 253000 | every node in the partition | surveyed, and agrees; unchanged |
 | Perlmutter CPU | 515100 | 515100 | every `cpu` node group, and `nid004394`, `nid006473` | raised from 480000; surveyed |
 | Perlmutter GPU | 257200 | 257200 | every `gpu` node group, and `nid002328`, `nid002993` | raised from 240000; surveyed |
-| Frontier | 512000 | 512000 | `frontier01793`, `03091`, `08884` | raised from 480000; sampled |
+| Frontier | 512000 | 512000 | every node in `batch` and `extended`, and `frontier01793`, `03091`, `08884` | raised from 480000; surveyed |
 | Aurora | 960000 | — | none | never measured |
 
 Each sampled figure came from `sinfo -h -o "%m" -n <node>` on the node the
 job actually ran on, which is what the site says a job may use rather than
-what the hardware holds. The surveys used the same field across every node
-group at once, and returned exactly what the samples had — so on Perlmutter
-the raise cost nothing after all, and the two figures now rest on the whole
-machine rather than on the nodes a scheduler happened to hand out.
+what the hardware holds. The surveys read the same field across every node
+group at once, and **every one returned exactly what its sample had**. So the
+raise cost nothing in the end, and three of these four figures now rest on
+the whole machine rather than on the nodes a scheduler happened to hand out.
+
+That the samples were right is worth reading carefully, because it is not
+the same as their having been trustworthy. Each was one or two nodes out of
+thousands, and what makes the surveyed figures better is not that they
+disagreed but that they cannot have missed a smaller node. The lesson stands
+whichever way the numbers had fallen.
 
 **Perlmutter had to be surveyed on a different axis.** It separates CPU from
 GPU nodes by constraint, not by partition, so `sinfo -p <partition>` there
@@ -498,31 +505,30 @@ Polaris reads what its assigned nodes report once it is inside the
 allocation and accounts against those. So the cost of being slightly high is
 now bounded in a way the cost of being persistently low is not.
 
-What it buys is worth stating plainly all the same, and **Frontier is where
-it is still owed.** Its figure equals a sample of three nodes rather than
-sitting below one, so if any node in `batch` or `extended` reports less, the
-value is above the partition minimum — the side that kills a job rather than
-the side that wastes a node. Nothing suggests those partitions are mixed,
-and the two Perlmutter surveys both came back agreeing with their samples,
-which is weak evidence that the others will too. But weak evidence is what
-it is. The query costs no allocation and runs from a login node:
+The risk that came with spending it has since been retired. While these
+values equalled a sample rather than sitting below one, a single smaller node
+anywhere in those partitions would have put the figure above the minimum —
+the side that kills a job rather than the side that wastes a node. The
+surveys close that, and they cost three commands from three login nodes and
+no allocation at all. **That is the whole price of the difference between a
+figure that is probably right and one that is known to be**, and it is worth
+saying because the reason these values went unmeasured for so long was never
+that measuring them was expensive.
 
-```bash
-sinfo -h -o "%m" -p batch,extended | sort -n | head -1
-```
-
-**Aurora is the real gap**, and the way its measurement failed is a trap for
-whoever tries next. The `pbsnodes` output parsed to no
+**Aurora is now the only gap**, and the way its measurement failed is a trap
+for whoever tries next. The `pbsnodes` output parsed to no
 `resources_available.mem`, and the harness fell back to the kernel's
 `MemTotal`, reading 1161578 MB. That number is not the answer: it is what
 the hardware holds, and the distance between it and what the site hands a
 job is the entire reason this option exists.
 
 Each config option carries a comment saying where its figure came from — a
-partition-wide survey, a sample of one or two nodes, or nothing but the
-site's documentation — and that comment is what changes as each machine is
-surveyed. A reader can then see at a glance which machines are on firm
-ground, and a sampled machine cannot quietly pass for a surveyed one.
+survey of the machine, a sample of a node or two, or nothing but the site's
+documentation — and that comment is what changes as each machine is
+surveyed. Four now say surveyed and name the query that produced them, so
+the next person to doubt a figure can rerun it rather than start over.
+Aurora's says an estimate, and says what went wrong. Nothing rests on a
+sample any more, which was the state this section was written to get out of.
 
 **The stakes are lower than they were.** Polaris now treats the configured
 figure as a planning estimate rather than a promise: it sizes job scripts
