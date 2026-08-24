@@ -66,20 +66,28 @@ equivalent — for most callers, whose work uses no GPUs at all, the explicit
 per-launch total does. This is a genuine asymmetry with how CPUs are
 described, and the API has to reflect it rather than smooth it over.
 
-**Asking for memory changed nothing observable.** Giving a launch a share of
-the node's memory neither fixed the serialization — the unstated GPU claim
-did that — nor appeared to reserve anything. This is a negative result and
-it is the reason memory is absent from the placement type: a memory figure
-rendered into a launch command would reserve nothing and prevent nothing,
-while implying to every reader that it did.
+**Asking for memory changed nothing observable — but memory is enforced.**
+Giving a launch a share of the node's memory neither fixed the serialization
+— the unstated GPU claim did that — nor appeared to reserve anything. That
+negative result is about serialization and does not generalize, which a
+later measurement on the same machines settled: a step given `--mem=1024M`
+and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and on
+Frontier, and reaches 4 GB and exits 0 on Chrysalis, whose Slurm predates
+20.11.
 
-The limit of that evidence is worth stating, since it decides a boundary.
-It shows memory was not the cause of the serialization. It does not show
-that a memory request is inert on every machine, and in particular nobody
-has yet checked whether a launch given a small allowance is killed for
-exceeding it. Polaris's Phase A validation includes that check, and if some
-machine turns out to enforce, a memory field becomes worth adding — as an
-additive change, on evidence, rather than now on expectation.
+Both halves point the same way, and together they are why memory is absent
+from the placement type. Where a memory figure is inert it would reserve
+nothing and prevent nothing while implying to every reader that it did.
+Where it is enforced it would be a cap, and work that under-declared would
+be killed rather than merely mis-scheduled. Neither is a thing to render on
+a caller's behalf out of a field it may have filled in loosely.
+
+The one worry this raises does not materialize: silence about memory does
+not repeat the trap that silence about GPUs sets. An unstated memory
+requirement is not read as a claim on the node's memory. On both Perlmutter
+GPU and Frontier, four concurrent launches that said nothing about it all
+started within 40 ms of each other and ran for their full duration. Aurora
+and Perlmutter CPU are unmeasured on this point.
 
 ---
 
@@ -175,11 +183,12 @@ caller must not exceed.
 
 The placement type must not carry memory.
 
-Every field in a placement is rendered into a launch command. On the
-machines measured, a memory field would render into nothing, or into an
-option that demonstrably does nothing — and a caller reading the type would
-reasonably conclude that `mache` was keeping memory apart for it, which is
-the one thing nothing here can do.
+Every field in a placement is rendered into a launch command, and a memory
+field would render into an option whose effect differs by machine: inert on
+the older Slurm, and on the newer one a cap that kills a step for exceeding
+it. A caller reading the type would reasonably conclude that `mache` was
+keeping memory apart for it — which on one machine is a promise nothing here
+can keep, and on the other is a limit the caller did not ask to be held to.
 
 This keeps a clean division. `mache` describes what a machine has and
 renders where a launch goes. Deciding how much of the machine each piece of
@@ -287,6 +296,13 @@ parser reached the `--env` after it. The two-argument form is the one with
 evidence behind it, because every other option `mache` renders for PALS —
 `--depth`, `--hosts`, `--cpu-bind list:` — is rendered that way and did get
 past that parser.
+
+One thing to know before it becomes urgent: PALS's usage output marks both
+`--cpu-bind` and `--mem-bind` as deprecated. They are still accepted, and
+Aurora's unplaced launches use them and run, so nothing is broken today. But
+the PALS placement path is built on `--cpu-bind list:`, so it is that path
+that will have to change when they go, and there is no second mechanism on
+PALS to fall back to.
 
 ### A machine's memory
 
@@ -441,3 +457,26 @@ These findings were established with throwaway scripts that are not being
 preserved. The per-machine results they produced are recorded in Polaris's
 task-parallelism design documents, which is where to look for the detail
 behind the requirements above.
+
+### What the first round of validation left open
+
+The first round ran on Chrysalis, Frontier, Perlmutter GPU and Aurora.
+Chrysalis and Frontier came back clean — exact cores on Chrysalis, and four
+concurrent launches with disjoint cores and disjoint GPUs on Frontier. The
+two problems it found are the `--env-remove` rejection and the `gpu_bind =
+none` GPU loss, both described above and both now changed. Neither change is
+confirmed until a machine says so, and the memory figures in the shipped
+configs are all still estimates. What remains:
+
+- **Aurora, everything downstream of the rejected command.** Nothing there
+  got past `--env-remove`, so whether the placement is honored at all,
+  whether `--env VAR=VAL` is accepted, and whether an empty `ZE_AFFINITY_MASK`
+  means "no devices" or "no mask" are all still unknown. This is the one to
+  rerun first, since it is a whole machine's placement path with no evidence
+  behind it.
+- **Perlmutter GPU, without `gpu_bind = none`.** One rerun confirms or kills
+  the hypothesis that the flag is what cost three of four concurrent launches
+  their GPUs.
+- **Perlmutter CPU.** Not yet run.
+- **`memory_per_node` on every machine.** Still unmeasured everywhere, and
+  now known to be a figure a machine will enforce rather than ignore.

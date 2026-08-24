@@ -517,9 +517,18 @@ a login node neither has that much nor hands out what it does have.
 
 ```{note}
 Memory is machine description only. Nothing in `get_parallel_command()` reads
-it, and a `ResourcePlacement` deliberately does not carry it: on the machines
-measured, a memory request in a launch command reserved nothing and prevented
-nothing, so carrying one would imply a guarantee that `mache` cannot make.
-Deciding how much memory each piece of work may take is the caller's, because
-only the caller knows what else it is running.
+it, and a `ResourcePlacement` deliberately does not carry it. A memory figure
+in a launch command is not harmless decoration: a step given `--mem=1024M`
+and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and on
+Frontier, while on Chrysalis, whose Slurm is older, it reaches 4 GB and exits
+0. A figure carried in a placement would therefore be an enforced cap on some
+machines and inert on others, and work that under-declared would be killed
+rather than merely mis-scheduled. Deciding how much memory each piece of work
+may take is the caller's, because only the caller knows what else it is
+running.
+
+Saying nothing about memory does not repeat the trap that saying nothing
+about GPUs sets. An unstated memory requirement is not read as a claim on the
+node's memory: four concurrent launches that say nothing about it start
+together and run, on both GPU machines measured.
 ```
