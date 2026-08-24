@@ -300,6 +300,15 @@ it wants to run two inside the same allocation, the two launches are given
 overlapping resources or, more often, the second waits until the first has
 finished.
 
+```{note}
+`placement`, `memory_cap` and `memory_per_node` are new in v3.12.0. A tool
+that depends on them should require at least that version rather than test
+for the capability: on an older `mache`, `get_parallel_command()` takes no
+`placement` at all, and a launch that expected to be confined to part of a
+node would instead be free to use the whole allocation -- which looks like a
+working run right up until two of them collide.
+```
+
 An optional `placement` says where a launch should run:
 
 ```python
