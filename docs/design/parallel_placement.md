@@ -251,9 +251,27 @@ statement and is what Slurm is given; a PALS placement that asks for GPUs
 without naming them is an error, not an invitation to choose.
 
 The variable is set on the command line rather than exported, so a value
-cannot leak from the parent into a later launch that meant to set its own,
-and it is removed first for the same reason. This follows what E3SM's own
-`config_machines.xml` already does on these machines.
+cannot leak from the parent into a later launch that meant to set its own.
+This follows what E3SM's own `config_machines.xml` already does on these
+machines.
+
+Setting it is all that is done. Removing it first as well, so that nothing
+inherited could survive, is what the first implementation did — and Aurora's
+PALS `mpiexec` has no `--env-remove`, rejects the whole command when given
+one, and so failed every placed launch on the machine before any of them
+started. The removal was belt and braces to begin with, since `--env` sets
+the variable explicitly and that already overrides whatever was inherited.
+It would only have mattered if setting an *empty* value differed from not
+setting one, which is the open question below rather than something the
+removal answered.
+
+The variable is given as two arguments, `--env VAR=VAL`, which is the form
+PALS's usage text describes. Whether `--env=VAR=VAL` would also be accepted
+is not known: the Aurora command was rejected at `--env-remove` before its
+parser reached the `--env` after it. The two-argument form is the one with
+evidence behind it, because every other option `mache` renders for PALS —
+`--depth`, `--hosts`, `--cpu-bind list:` — is rendered that way and did get
+past that parser.
 
 ### A machine's memory
 

@@ -412,13 +412,10 @@ def test_pals_renders_the_visible_devices_variable(monkeypatch):
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
-    # a value on the command line cannot leak from the parent, and the remove
-    # makes sure an inherited one does not survive
-    assert '--env-remove=ZE_AFFINITY_MASK' in args
-    assert '--env=ZE_AFFINITY_MASK=1.0,1.1' in args
-    assert args.index('--env-remove=ZE_AFFINITY_MASK') < args.index(
-        '--env=ZE_AFFINITY_MASK=1.0,1.1'
-    )
+    # a value on the command line cannot leak from the parent
+    assert _get_flag_value(args, '--env') == 'ZE_AFFINITY_MASK=1.0,1.1'
+    # PALS has no --env-remove, and rejects the whole command if given one
+    assert not any(arg.startswith('--env-remove') for arg in args)
 
 
 def test_pals_numbers_devices_from_zero_by_default(monkeypatch):
@@ -433,7 +430,7 @@ def test_pals_numbers_devices_from_zero_by_default(monkeypatch):
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
-    assert '--env=CUDA_VISIBLE_DEVICES=3' in args
+    assert _get_flag_value(args, '--env') == 'CUDA_VISIBLE_DEVICES=3'
 
 
 def test_pals_makes_no_gpus_explicit(monkeypatch):
@@ -446,7 +443,7 @@ def test_pals_makes_no_gpus_explicit(monkeypatch):
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
-    assert '--env=CUDA_VISIBLE_DEVICES=' in args
+    assert _get_flag_value(args, '--env') == 'CUDA_VISIBLE_DEVICES='
 
 
 def test_pals_refuses_to_choose_gpus(monkeypatch):

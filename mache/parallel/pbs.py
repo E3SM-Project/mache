@@ -407,7 +407,14 @@ class PbsSystem(ParallelSystem):
         visible-device variable, which is the documented approach on these
         machines. It is set on the command line rather than exported, so that
         a value cannot leak from the parent into a later launch that meant to
-        set its own, and removed first for the same reason.
+        set its own.
+
+        Setting the variable is all that is done. An earlier version removed
+        it first as well, with ``--env-remove``, which Aurora's PALS
+        ``mpiexec`` rejects as an unrecognized option -- and rejects the whole
+        command with it, so every placed launch on Aurora failed to start.
+        The removal was belt and braces to begin with: ``--env`` sets the
+        variable explicitly, which already overrides whatever was inherited.
         """
         variable = self.get_config('gpu_visible_devices_var')
         if variable is None or variable == '':
@@ -448,7 +455,14 @@ class PbsSystem(ParallelSystem):
                     )
             value = ','.join(devices[gpu_id] for gpu_id in placement.gpu_ids)
 
-        return [f'--env-remove={variable}', f'--env={variable}={value}']
+        # `--env VAR=VAL` as two arguments, which is the form PALS's usage
+        # text describes.  The `--env=VAR=VAL` form has never got as far as
+        # being tried: on Aurora the command was rejected at `--env-remove`
+        # before the parser reached it.  Every option mache renders in the
+        # two-argument form -- `--depth`, `--hosts`, `--cpu-bind list:` --
+        # did get past that parser, so this is the form with evidence behind
+        # it.
+        return ['--env', f'{variable}={value}']
 
     def _get_devices(self) -> List[str]:
         """
