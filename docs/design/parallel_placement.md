@@ -467,17 +467,27 @@ What came back is that **no shipped value was wrong**: every one sat at or
 below what the nodes reported, which is the direction estimates are asked to
 err in. Three have now been raised to the measured figure.
 
-| machine | shipped | measured | nodes | standing |
+| machine | shipped | measured | evidence | standing |
 | --- | --- | --- | --- | --- |
-| Chrysalis | 253000 | 253000 | partition-wide | surveyed, and agrees; unchanged |
-| Perlmutter CPU | 515100 | 515100 | `nid004394`, `nid006473` | raised from 480000; sampled |
-| Perlmutter GPU | 257200 | 257200 | `nid002328`, `nid002993` | raised from 240000; sampled |
+| Chrysalis | 253000 | 253000 | every node in the partition | surveyed, and agrees; unchanged |
+| Perlmutter CPU | 515100 | 515100 | every `cpu` node group, and `nid004394`, `nid006473` | raised from 480000; surveyed |
+| Perlmutter GPU | 257200 | 257200 | every `gpu` node group, and `nid002328`, `nid002993` | raised from 240000; surveyed |
 | Frontier | 512000 | 512000 | `frontier01793`, `03091`, `08884` | raised from 480000; sampled |
 | Aurora | 960000 | — | none | never measured |
 
-Every sampled figure came from `sinfo -h -o "%m" -n <node>` on the node the
+Each sampled figure came from `sinfo -h -o "%m" -n <node>` on the node the
 job actually ran on, which is what the site says a job may use rather than
-what the hardware holds.
+what the hardware holds. The surveys used the same field across every node
+group at once, and returned exactly what the samples had — so on Perlmutter
+the raise cost nothing after all, and the two figures now rest on the whole
+machine rather than on the nodes a scheduler happened to hand out.
+
+**Perlmutter had to be surveyed on a different axis.** It separates CPU from
+GPU nodes by constraint, not by partition, so `sinfo -p <partition>` there
+mixes the two and returns whichever type has less — quietly, and looking
+exactly like a correct answer. The query has to select on the feature column
+instead. Which axis a machine uses is visible in its own `mache` config:
+`constraints` rather than `partitions`.
 
 **Raising them spends the margin the estimates carried, deliberately.** A
 value 7% low is not harmless here: Polaris derives every step's default
@@ -488,14 +498,18 @@ Polaris reads what its assigned nodes report once it is inside the
 allocation and accounts against those. So the cost of being slightly high is
 now bounded in a way the cost of being persistently low is not.
 
-What it buys is worth stating plainly all the same: three of these four now
-*equal* a sample rather than sit below one. If any node in those partitions
-is smaller, the value is above the partition minimum, which is the side that
-kills a job rather than the side that wastes a node. Nothing suggests those
-partitions are mixed, and no machine `mache` ships a config for is known to
-differ in memory between its nodes — but nothing has ruled it out either.
-The `sinfo -h -o "%m" -p <partition>` that would settle all three costs no
-allocation and has not been run.
+What it buys is worth stating plainly all the same, and **Frontier is where
+it is still owed.** Its figure equals a sample of three nodes rather than
+sitting below one, so if any node in `batch` or `extended` reports less, the
+value is above the partition minimum — the side that kills a job rather than
+the side that wastes a node. Nothing suggests those partitions are mixed,
+and the two Perlmutter surveys both came back agreeing with their samples,
+which is weak evidence that the others will too. But weak evidence is what
+it is. The query costs no allocation and runs from a login node:
+
+```bash
+sinfo -h -o "%m" -p batch,extended | sort -n | head -1
+```
 
 **Aurora is the real gap**, and the way its measurement failed is a trap for
 whoever tries next. The `pbsnodes` output parsed to no
