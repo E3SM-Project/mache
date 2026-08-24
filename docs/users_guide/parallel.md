@@ -519,10 +519,9 @@ a login node neither has that much nor hands out what it does have.
 `memory_per_node` describes the machine, and a `ResourcePlacement`
 deliberately does not carry memory: a placement says *where* a launch runs,
 and how much memory it may use is a separate statement, made with a separate
-argument -- see [Capping the memory a launch may
-use](#users-parallel-memory-cap). Deciding how much each piece of work may
-take remains the caller's, because only the caller knows what else it is
-running.
+argument -- see {ref}`users-parallel-memory-cap`. Deciding how much each
+piece of work may take remains the caller's, because only the caller knows
+what else it is running.
 ```
 
 (users-parallel-memory-cap)=
