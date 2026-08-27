@@ -60,6 +60,20 @@
 <li class="toctree-l2"><a class="reference internal" href="#requesting-a-specific-queue-partition-or-qos">Requesting a specific queue, partition or QOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requesting-a-target-without-naming-its-axis">Requesting a target without naming its axis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wall-clock-limits-that-depend-on-job-size">Wall-clock limits that depend on job size</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#placing-concurrent-launches-within-one-allocation">Placing concurrent launches within one allocation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#checking-what-a-machine-supports">Checking what a machine supports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gpus-are-a-total-not-a-count-per-task">GPUs are a total, not a count per task</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#which-cores-are-honored">Which cores are honored</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#assigning-gpus-on-pbs-with-pals">Assigning GPUs on PBS with PALS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-a-placement-overrides">What a placement overrides</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-much-memory-a-machine-has">How much memory a machine has</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#capping-the-memory-a-launch-may-use">Capping the memory a launch may use</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#where-a-cap-is-worth-anything">Where a cap is worth anything</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-a-placement-does-not-do-about-memory">What a placement does not do about memory</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
@@ -118,7 +132,8 @@ workloads based on each machine’s config file.</p>
 <ol class="arabic simple">
 <li><p>Load machine config with <code class="docutils literal notranslate"><span class="pre">MachineInfo</span></code>.</p></li>
 <li><p>Build a parallel-system object with <code class="docutils literal notranslate"><span class="pre">get_parallel_system()</span></code>.</p></li>
-<li><p>Query available resources (<code class="docutils literal notranslate"><span class="pre">cores</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus</span></code>, and <code class="docutils literal notranslate"><span class="pre">mpi_allowed</span></code>).</p></li>
+<li><p>Query available resources (<code class="docutils literal notranslate"><span class="pre">cores</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, <code class="docutils literal notranslate"><span class="pre">gpus</span></code>, <code class="docutils literal notranslate"><span class="pre">memory</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">mpi_allowed</span></code>).</p></li>
 <li><p>Build a machine-correct launcher command with <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code>.</p></li>
 <li><p>Use the command for either generated job scripts or direct subprocess calls.</p></li>
 </ol>
@@ -225,6 +240,13 @@ behavior from <code class="docutils literal notranslate"><span class="pre">mache
 <p>If both are present, <code class="docutils literal notranslate"><span class="pre">distribution</span></code> takes precedence. Prefer <code class="docutils literal notranslate"><span class="pre">distribution</span></code>
 for machines whose documented Slurm usage relies on explicit values like
 <code class="docutils literal notranslate"><span class="pre">block:cyclic</span></code> rather than the older <code class="docutils literal notranslate"><span class="pre">plane=&lt;tasks&gt;</span></code> form.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">placement</span></code> config option here is the Slurm task distribution and is
+unrelated to the <code class="docutils literal notranslate"><span class="pre">placement</span></code> argument to <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> described in
+<a class="reference internal" href="#users-parallel-placement"><span class="std std-ref">Placing concurrent launches within one allocation</span></a>. Passing that argument drops this config
+option from the command.</p>
+</div>
 </section>
 <section id="selecting-scheduler-options-by-node-count">
 <h2>Selecting scheduler options by node count<a class="headerlink" href="#selecting-scheduler-options-by-node-count" title="Link to this heading"></a></h2>
@@ -365,6 +387,298 @@ resolved node count:</p>
 </div>
 <p>When both a partition and a QOS set a limit, the more restrictive of the two
 is reported, and that is also the limit <code class="docutils literal notranslate"><span class="pre">wall_time</span></code> is capped at.</p>
+</section>
+<section id="placing-concurrent-launches-within-one-allocation">
+<span id="users-parallel-placement"></span><h2>Placing concurrent launches within one allocation<a class="headerlink" href="#placing-concurrent-launches-within-one-allocation" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> normally asks for resources in the abstract – this
+many tasks, this many CPUs each – and lets the machine decide where the work
+runs. That is enough while a tool runs one piece of work at a time. As soon as
+it wants to run two inside the same allocation, the two launches are given
+overlapping resources or, more often, the second waits until the first has
+finished.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">placement</span></code>, <code class="docutils literal notranslate"><span class="pre">memory_cap</span></code> and <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> are new in v3.12.0. A tool
+that depends on them should require at least that version rather than test
+for the capability: on an older <code class="docutils literal notranslate"><span class="pre">mache</span></code>, <code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> takes no
+<code class="docutils literal notranslate"><span class="pre">placement</span></code> at all, and a launch that expected to be confined to part of a
+node would instead be free to use the whole allocation – which looks like a
+working run right up until two of them collide.</p>
+</div>
+<p>An optional <code class="docutils literal notranslate"><span class="pre">placement</span></code> says where a launch should run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourcePlacement</span><span class="p">,</span> <span class="n">get_parallel_system</span>
+
+<span class="n">parallel_system</span> <span class="o">=</span> <span class="n">get_parallel_system</span><span class="p">(</span><span class="n">MachineInfo</span><span class="p">()</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+<span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="p">[</span><span class="s2">"nid001373"</span><span class="p">],</span>
+    <span class="n">cores</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">)),</span>
+<span class="p">)</span>
+<span class="n">command</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">get_parallel_command</span><span class="p">(</span>
+    <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s2">"./run_step.py"</span><span class="p">],</span>
+    <span class="n">ntasks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">cpus_per_task</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">placement</span><span class="o">=</span><span class="n">placement</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>A placement carries three things: the nodes the launch may use, the cores it
+may use on each of them, and how many GPUs it needs in total. mache renders
+them into whatever the machine’s launcher needs, so callers do not have to
+know which flags a given site takes.</p>
+<p>A call without a placement produces exactly the command it produced before
+this feature existed.</p>
+<section id="checking-what-a-machine-supports">
+<h3>Checking what a machine supports<a class="headerlink" href="#checking-what-a-machine-supports" title="Link to this heading"></a></h3>
+<p>Not every machine can confine a launch. Check before running things
+concurrently, rather than discovering the answer as a hang or as silent
+oversubscription:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlacementSupport</span>
+
+<span class="n">support</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">placement_support</span>
+<span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"this machine cannot place launches; run steps one at a time"</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"placement is by CPU binding, which the work itself could ignore"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The three values are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PlacementSupport.SCHEDULER</span></code> – the batch system reserves what each launch
+asks for, so a launch cannot exceed what it was given. This is Slurm 20.11
+and newer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PlacementSupport.CPU_BINDING</span></code> – the launcher binds each task to specific
+cores, which keeps concurrent launches apart but reserves nothing. Work
+that rebinds itself is not prevented from doing so. This is Slurm before
+20.11, PBS with PALS, and <code class="docutils literal notranslate"><span class="pre">single_node</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PlacementSupport.NONE</span></code> – there is no mechanism here. Passing a placement
+raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> rather than producing a command that would be accepted
+and then silently do nothing.</p></li>
+</ul>
+<p>This is determined at run time from the launcher actually present, not from
+the machine’s config, because a site can be upgraded without its mache config
+changing.</p>
+</section>
+<section id="gpus-are-a-total-not-a-count-per-task">
+<h3>GPUs are a total, not a count per task<a class="headerlink" href="#gpus-are-a-total-not-a-count-per-task" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ResourcePlacement.gpus</span></code> is the number of GPUs for the whole launch. This is
+deliberately unlike <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code>: asking for a number of GPUs <em>per task</em>
+was measured not to confine a launch on either of the GPU machines mache
+supports, while a per-launch total does.</p>
+<p><code class="docutils literal notranslate"><span class="pre">gpus</span></code> defaults to 0, and 0 is rendered as an explicit request for <em>no</em> GPUs.
+On Slurm this matters more than it sounds: a launch that says nothing about
+GPUs is read as claiming every one on the node, so the next launch waits.
+Callers whose work uses no GPUs – most of them – get correct behavior
+without having to know GPUs were ever a consideration.</p>
+<p>On PALS the same request is belt and braces rather than the mechanism that
+makes concurrency work, since nothing there reserves a GPU in the first
+place. See <a class="reference internal" href="#users-parallel-pals-gpus"><span class="std std-ref">Assigning GPUs on PBS with PALS</span></a>.</p>
+</section>
+<section id="which-cores-are-honored">
+<h3>Which cores are honored<a class="headerlink" href="#which-cores-are-honored" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">cores</span></code> is an explicit set rather than a count, because the usable cores on a
+node may not be contiguous and may not start at zero – Aurora reserves core 0
+and cores 49-52 – and because a count cannot say <em>which</em> cores.</p>
+<p>How much of that set is honored depends on the mechanism:</p>
+<ul class="simple">
+<li><p>where the scheduler reserves resources, only the size of the set is used;
+Slurm is asked for that many cores and picks which ones itself, and an
+explicit core list is rejected outright alongside <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></li>
+<li><p>where placement is by CPU binding, the set is used exactly as given, in
+order, split into one contiguous chunk of <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> cores per task</p></li>
+</ul>
+<p>Either way, mache raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the set is too small for
+<code class="docutils literal notranslate"><span class="pre">ntasks</span> <span class="pre">x</span> <span class="pre">cpus_per_task</span></code>.</p>
+</section>
+<section id="assigning-gpus-on-pbs-with-pals">
+<span id="users-parallel-pals-gpus"></span><h3>Assigning GPUs on PBS with PALS<a class="headerlink" href="#assigning-gpus-on-pbs-with-pals" title="Link to this heading"></a></h3>
+<p>PALS has no scheduler to hand out GPUs, so isolation there is by the vendor’s
+visible-device variable – <code class="docutils literal notranslate"><span class="pre">ZE_AFFINITY_MASK</span></code> on Aurora,
+<code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> on Polaris. mache renders it into the <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> command
+and needs to be told <em>which</em> devices to name:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="p">[</span><span class="s2">"x4401c1s0b0n0"</span><span class="p">],</span>
+    <span class="n">cores</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)),</span>
+    <span class="n">gpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">gpu_ids</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> are indices from 0 to <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span> <span class="pre">-</span> <span class="pre">1</span></code>; mache maps them to
+whatever form the machine’s variable takes, including Aurora’s <code class="docutils literal notranslate"><span class="pre">device.tile</span></code>
+addressing. Only the caller knows about every launch running at that moment,
+so only the caller can assign disjoint GPUs – mache renders what it is given
+and never guesses. A placement with <code class="docutils literal notranslate"><span class="pre">gpus</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> and no <code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> raises on
+PALS, and <code class="docutils literal notranslate"><span class="pre">len(gpu_ids)</span></code> must equal <code class="docutils literal notranslate"><span class="pre">gpus</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> is ignored where the scheduler assigns GPUs itself, which is every
+Slurm machine.</p>
+<p>A placement with no GPUs sets the variable to an empty value. Note that this
+is weaker than the equivalent on Slurm: PALS reserves nothing, so a launch
+that stays quiet about GPUs does not block the next one, and how much an
+empty value actually hides has not been measured. An empty
+<code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> means “no devices”, but an empty <code class="docutils literal notranslate"><span class="pre">ZE_AFFINITY_MASK</span></code>
+may instead mean “no mask”, which is every tile. Do not rely on it to keep a
+GPU launch and a CPU launch off the same device – give the GPU launch
+explicit <code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> instead.</p>
+<p>Two config options support this, both already set on the machines that need
+them: <code class="docutils literal notranslate"><span class="pre">gpu_visible_devices_var</span></code> names the variable, and the ordered
+<code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">list:...</span></code> binding list, where a machine has one, says how its
+devices are named.</p>
+</section>
+<section id="what-a-placement-overrides">
+<h3>What a placement overrides<a class="headerlink" href="#what-a-placement-overrides" title="Link to this heading"></a></h3>
+<p>A placement is the authority on which resources a launch gets, so it
+supersedes the machine’s config options that describe spreading a launch over
+a whole node:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">distribution</span></code> and the legacy <code class="docutils literal notranslate"><span class="pre">placement</span></code> config option are dropped, since
+the placement has already said which nodes and how many cores the launch
+gets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> and <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code> are dropped when they name specific
+cores or devices, as Aurora’s do</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code> is also dropped wherever the placement renders its own binding</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> is dropped when the placement asks for no GPUs, and also when it
+is <code class="docutils literal notranslate"><span class="pre">none</span></code>, which asks for no binding at all</p></li>
+</ul>
+<p>A binding <em>policy</em> such as <code class="docutils literal notranslate"><span class="pre">cpu_bind</span> <span class="pre">=</span> <span class="pre">cores</span></code> or <code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">closest</span></code> is kept
+where it does not conflict, since it still applies within whatever the launch
+was given.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">none</span></code> is dropped because keeping it appears to cost a placement
+its GPUs. Of four concurrent placed launches on Perlmutter GPU asking for one
+GPU each, one was given a GPU and the other three got none, ran anyway and
+exited 0. Frontier, whose <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> is <code class="docutils literal notranslate"><span class="pre">closest</span></code>, gave all four disjoint
+GPUs from a nearly identical command. Dropping <code class="docutils literal notranslate"><span class="pre">none</span></code> takes nothing away,
+since Slurm does not bind tasks to GPUs without the option either.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Verifying GPU placement from inside a launch needs the scheduler’s global GPU
+identifiers, such as <code class="docutils literal notranslate"><span class="pre">SLURM_STEP_GPUS</span></code>. <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> is renumbered
+per launch, so four launches on four different GPUs all report device <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</div>
+</section>
+</section>
+<section id="how-much-memory-a-machine-has">
+<span id="users-parallel-memory"></span><h2>How much memory a machine has<a class="headerlink" href="#how-much-memory-a-machine-has" title="Link to this heading"></a></h2>
+<p>A caller deciding how many pieces of work fit inside one allocation needs to
+know how much memory it has to divide up. <code class="docutils literal notranslate"><span class="pre">mache</span></code> reports it beside the core
+and GPU counts:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_parallel_system</span>
+
+<span class="n">parallel_system</span> <span class="o">=</span> <span class="n">get_parallel_system</span><span class="p">(</span><span class="n">MachineInfo</span><span class="p">()</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">parallel_system</span><span class="o">.</span><span class="n">memory_per_node</span><span class="p">)</span>  <span class="c1"># MB on one node</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">parallel_system</span><span class="o">.</span><span class="n">memory</span><span class="p">)</span>  <span class="c1"># MB across the whole allocation</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">memory</span></code> is <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> times the node count, exactly as <code class="docutils literal notranslate"><span class="pre">cores</span></code> is
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> times the node count. Both are in <strong>MB</strong>, which is the unit
+Slurm’s memory options default to.</p>
+<p>The figure is the memory a job may actually use – what the site reports as
+available, rounded down – not the hardware capacity of a node. On a Slurm
+machine that is the <code class="docutils literal notranslate"><span class="pre">MEMORY</span></code> column of <code class="docutils literal notranslate"><span class="pre">sinfo</span></code>, which is already net of what
+the operating system and the site’s own services hold back. The two differ by
+several percent, and the whole point of the number is that a caller can pack
+up to it.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Most shipped values are still estimates, rounded down from the node memory
+each site documents, because the figure that matters can only be read off the
+machine itself. A config whose value has not been measured there says so in a
+comment above the option. Estimates err low on purpose: packing less work than
+a node could hold is wasteful, while packing more is a job killed for
+exhausting the node.</p>
+</div>
+<p>A machine whose config does not set <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> reports <code class="docutils literal notranslate"><span class="pre">None</span></code> for both,
+rather than <code class="docutils literal notranslate"><span class="pre">0</span></code>, since no machine has no memory. Every machine <code class="docutils literal notranslate"><span class="pre">mache</span></code> ships a
+config for sets it; a site-specific or user config may not. The login-node
+system always reports <code class="docutils literal notranslate"><span class="pre">None</span></code>: <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> describes a compute node, and
+a login node neither has that much nor hands out what it does have.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> describes the machine, and a <code class="docutils literal notranslate"><span class="pre">ResourcePlacement</span></code>
+deliberately does not carry memory: a placement says <em>where</em> a launch runs,
+and how much memory it may use is a separate statement, made with a separate
+argument – see <a class="reference internal" href="#users-parallel-memory-cap"><span class="std std-ref">Capping the memory a launch may use</span></a>. Deciding how much each
+piece of work may take remains the caller’s, because only the caller knows
+what else it is running.</p>
+</div>
+</section>
+<section id="capping-the-memory-a-launch-may-use">
+<span id="users-parallel-memory-cap"></span><h2>Capping the memory a launch may use<a class="headerlink" href="#capping-the-memory-a-launch-may-use" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> takes an optional <code class="docutils literal notranslate"><span class="pre">memory_cap</span></code>, in MB, which is the
+most memory the launch may use on each node it runs on:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">command</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">get_parallel_command</span><span class="p">(</span>
+    <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s1">'./run.py'</span><span class="p">],</span>
+    <span class="n">ntasks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">cpus_per_task</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">placement</span><span class="o">=</span><span class="n">placement</span><span class="p">,</span>
+    <span class="n">memory_cap</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>It is absent by default. Without it, nothing about memory is rendered and the
+command is exactly what it would have been – which is also what every
+existing caller gets.</p>
+<p>The unit and the per-node denomination match <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code>, since that is
+the figure a caller divides up between the launches it runs at once.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">memory_cap</span></code> is a <strong>cap, not a reservation</strong>. Nothing measured suggests it
+sets memory aside for the launch, so staying under a cap does not protect a
+launch from a concurrent one that ignores its own. What it does do, where the
+batch system acts on it, is kill the launch for exceeding it: a step allowed
+1024 MB and told to allocate 4 GB is killed at 960 MB on Perlmutter GPU and
+on Frontier.</p>
+</div>
+<section id="where-a-cap-is-worth-anything">
+<h3>Where a cap is worth anything<a class="headerlink" href="#where-a-cap-is-worth-anything" title="Link to this heading"></a></h3>
+<p>Not every machine will hold a launch to a cap, so <code class="docutils literal notranslate"><span class="pre">mache</span></code> renders one only
+where it will be acted on, and reports which kind of machine this is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryCapSupport</span>
+
+<span class="k">if</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">memory_cap_support</span> <span class="ow">is</span> <span class="n">MemoryCapSupport</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'memory caps are not enforced here'</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MemoryCapSupport.ENFORCED</span></code> – the batch system holds the launch to its cap
+and kills it for exceeding it. Slurm 20.11 and newer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MemoryCapSupport.NONE</span></code> – nothing here will hold a launch to a cap, so
+<code class="docutils literal notranslate"><span class="pre">mache</span></code> renders none. Either the launcher has no memory option at all, as
+PALS on Aurora does not, or it accepts one and does not act on it, as
+Chrysalis’s Slurm does with <code class="docutils literal notranslate"><span class="pre">--mem</span></code>.</p></li>
+</ul>
+<p>Passing a cap to a machine that reports <code class="docutils literal notranslate"><span class="pre">NONE</span></code> is not an error and does not
+raise: the work still runs correctly, it is simply unprotected. This differs
+from passing a placement to a machine that cannot honor one, which does
+raise, because that means concurrent launches collide rather than merely go
+unguarded. Check <code class="docutils literal notranslate"><span class="pre">memory_cap_support</span></code> when it matters that the cap is real.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> renders nothing on a machine that will not act on a cap, rather than
+rendering an option the machine accepts and ignores. A figure on the command
+line that nothing keeps reads to anyone who sees the command as a safety net
+that is not there.</p>
+</div>
+</section>
+<section id="what-a-placement-does-not-do-about-memory">
+<h3>What a placement does not do about memory<a class="headerlink" href="#what-a-placement-does-not-do-about-memory" title="Link to this heading"></a></h3>
+<p>A placement does not cap memory on its own. A placed single-core launch and
+an unplaced control, neither mentioning memory, both allocated twice what a
+single core’s proportional share of the node would be, and neither was
+touched – measured on Perlmutter CPU and Frontier. Asking Slurm for exactly
+the cores a launch needs does not hand it a slice of the node’s memory to go
+with them.</p>
+<p>The reassuring half of the same result is that saying nothing about memory
+does not repeat the trap that saying nothing about GPUs sets. An unstated
+memory requirement is not read as a claim on the node’s memory: four
+concurrent launches that say nothing about it start together and run.</p>
+</section>
 </section>
 </section>
 

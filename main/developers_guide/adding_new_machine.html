@@ -146,6 +146,7 @@ section with:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gpus_per_node</span></code> (if GPUs are available)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">max_mpi_tasks_per_node</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpus_per_task_flag</span></code> (primarily for PBS launchers)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">placement</span></code> (optional launcher tuning)</p></li>
@@ -160,6 +161,46 @@ Downstream projects that intentionally want hyperthreading can override these
 settings in their own config to use hardware-thread counts and thread binding.
 In other words, these config fields are the hyperthreading controls rather
 than a dedicated boolean option.</p>
+<p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> is the usable memory of one compute node in <strong>MB</strong> – what
+the site reports as available to a job, not the hardware capacity. On a Slurm
+machine, read it off the machine itself:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sinfo<span class="w"> </span>--noheader<span class="w"> </span>--format<span class="o">=</span><span class="s2">"%m"</span><span class="w"> </span>--partition<span class="o">=</span>&lt;the<span class="w"> </span>machine<span class="err">'</span>s<span class="w"> </span>default<span class="w"> </span>partition&gt;
+</pre></div>
+</div>
+<p>That prints one figure per node group, so <strong>take the smallest</strong>. The value
+has to be one no node falls below, and a figure read off whichever node you
+happen to be on is evidence about that node rather than about the partition.
+Where the config offers more than one partition, the figure has to hold for
+all of them, so pass them all: <code class="docutils literal notranslate"><span class="pre">--partition=batch,extended</span></code>.</p>
+<p>Not every machine separates its node types by partition. Perlmutter selects
+between CPU and GPU nodes with a <em>constraint</em>, so a partition-wide query there
+mixes the two and the smallest figure comes back from whichever type has less.
+Select on the feature column instead:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sinfo<span class="w"> </span>--noheader<span class="w"> </span>--format<span class="o">=</span><span class="s2">"%m %f"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">'$2 ~ /(^|,)cpu(,|$)/ {print $1}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-n<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+</pre></div>
+</div>
+<p>Check which axis a machine uses before trusting the answer – if its config
+sets <code class="docutils literal notranslate"><span class="pre">constraints</span></code> rather than <code class="docutils literal notranslate"><span class="pre">partitions</span></code>, this is the query it needs.</p>
+<p>On a PBS machine the same figure is <code class="docutils literal notranslate"><span class="pre">resources_available.mem</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pbsnodes<span class="w"> </span>-a<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>resources_available.mem
+</pre></div>
+</div>
+<p>Take the smallest of those too. If the field is missing, do <strong>not</strong> fall back
+to the kernel’s <code class="docutils literal notranslate"><span class="pre">MemTotal</span></code> from <code class="docutils literal notranslate"><span class="pre">/proc/meminfo</span></code>. That reports what the
+hardware holds, which is larger than what the site hands a job, and the
+distance between the two is the whole reason this option exists – copying it
+in makes the value too high in exactly the direction that gets a job killed.
+Leave the estimate in place and say in the comment that the measurement was
+attempted and produced nothing, as Aurora’s config does.</p>
+<p>A test fails if any shipped config omits it, since a machine without it works
+for everything else and the omission would only surface as a downstream tool
+unable to decide how much work fits on a node. Nothing in CI can check that
+the value is right, so say in a comment above the option where the figure
+came from – a survey of the partition, a sample of one or two nodes, or the
+site’s documentation – as the shipped configs do. If you had to estimate it,
+round it down: too low wastes some of a node, while too high gets a job
+killed for exhausting one.</p>
 <p>Compiler-specific overrides can be provided in optional
 <code class="docutils literal notranslate"><span class="pre">[parallel.&lt;compiler&gt;]</span></code> sections, e.g. <code class="docutils literal notranslate"><span class="pre">[parallel.gnu]</span></code>.</p>
 <p>For machines with scheduler-target policy limits, you can also define optional

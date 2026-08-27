@@ -98,6 +98,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">fcntl</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -1369,7 +1370,71 @@
             <span class="sa">f</span><span class="s1">'JIGSAW build output repodata not found: </span><span class="si">{</span><span class="n">repodata</span><span class="si">}</span><span class="s1">'</span>
         <span class="p">)</span>
 
+    <span class="n">_drop_repodata_revisions</span><span class="p">(</span><span class="n">channel_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">output_dir</span><span class="o">.</span><span class="n">as_uri</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_drop_repodata_revisions</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">channel_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove ``info.repodata_revisions`` from a local channel's repodata.</span>
+
+<span class="sd">    rattler-build 0.75.0 began writing this key as a map, but the rattler</span>
+<span class="sd">    bundled in older pixi (0.70.2, for one) expects a sequence there and</span>
+<span class="sd">    fails to parse ``repodata.json`` at all, so the channel is unusable::</span>
+
+<span class="sd">        failed to parse repodata.json</span>
+<span class="sd">        invalid type: map, expected a sequence at line 1 column 50</span>
+
+<span class="sd">    mache picks the rattler-build that does the build but not the pixi that</span>
+<span class="sd">    reads the result, so the only fix it can make stick is on the file it</span>
+<span class="sd">    writes. The key is purely informational for a channel holding one</span>
+<span class="sd">    locally built package.</span>
+
+<span class="sd">    This runs on the cache-hit path too, since a slot built by an earlier</span>
+<span class="sd">    mache is poisoned in exactly the same way and is reused as-is.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">repodata</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">channel_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">'*/repodata.json'</span><span class="p">)):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">repodata</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="c1"># Let whoever reads the channel report what is wrong with it.</span>
+            <span class="k">continue</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'info'</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">'repodata_revisions'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">del</span> <span class="n">info</span><span class="p">[</span><span class="s1">'repodata_revisions'</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_write_json_replacing</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">repodata</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'Warning: could not rewrite </span><span class="si">{</span><span class="n">repodata</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">); '</span>
+                <span class="s1">'pixi versions older than 0.77 will fail to parse it.'</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_json_replacing</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Replace a JSON file atomically, so no reader sees it half-written.</span>
+
+<span class="sd">    Concurrent deploys share the cache and any of them may sanitize a slot.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">'w'</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">,</span>
+        <span class="nb">dir</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">.'</span><span class="p">,</span>
+        <span class="n">suffix</span><span class="o">=</span><span class="s1">'.tmp'</span><span class="p">,</span>
+        <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">temp_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_handle</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">file_handle</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">temp_path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="n">temp_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">raise</span>
 </pre></div>
 
            </div>

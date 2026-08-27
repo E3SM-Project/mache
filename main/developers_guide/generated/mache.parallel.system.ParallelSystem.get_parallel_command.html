@@ -19,7 +19,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.system.ParallelSystem.get_scheduler_target" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html" />
+    <link rel="next" title="mache.parallel.system.ParallelSystem.placement_support" href="mache.parallel.system.ParallelSystem.placement_support.html" />
     <link rel="prev" title="mache.parallel.system.ParallelSystem" href="mache.parallel.system.ParallelSystem.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -76,19 +76,26 @@
 <li class="toctree-l4"><a class="reference internal" href="#mache.parallel.system.ParallelSystem.get_parallel_command"><code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.placement.PlacementSupport.html">mache.parallel.placement.PlacementSupport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.placement.ResourcePlacement.html">mache.parallel.placement.ResourcePlacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.memory.MemoryCapSupport.html">mache.parallel.memory.MemoryCapSupport</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.get_slurm_version.html">mache.parallel.slurm.get_slurm_version</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.is_pals_launcher.html">mache.parallel.pbs.is_pals_launcher</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#spack">spack</a></li>
@@ -133,7 +140,7 @@
 <h1>mache.parallel.system.ParallelSystem.get_parallel_command<a class="headerlink" href="#mache-parallel-system-parallelsystem-get-parallel-command" title="Link to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="mache.parallel.system.ParallelSystem.get_parallel_command">
-<span class="sig-prename descclassname"><span class="pre">ParallelSystem.</span></span><span class="sig-name descname"><span class="pre">get_parallel_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpus_per_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#ParallelSystem.get_parallel_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.ParallelSystem.get_parallel_command" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">ParallelSystem.</span></span><span class="sig-name descname"><span class="pre">get_parallel_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntasks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpus_per_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placement</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mache.parallel.placement.ResourcePlacement.html#mache.parallel.placement.ResourcePlacement" title="mache.parallel.placement.ResourcePlacement"><span class="pre">ResourcePlacement</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_cap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#ParallelSystem.get_parallel_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.ParallelSystem.get_parallel_command" title="Link to this definition"></a></dt>
 <dd><p>Get the parallel execution command for the current system.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -141,7 +148,30 @@
 <li><p><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The command-line arguments for the parallel execution.</p></li>
 <li><p><strong>ntasks</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The total number of tasks to run in parallel.</p></li>
 <li><p><strong>cpus_per_task</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The number of CPUs to allocate per task.</p></li>
-<li><p><strong>gpus_per_task</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The number of GPUs to allocate per task.</p></li>
+<li><p><strong>gpus_per_task</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The number of GPUs to allocate per task. Ignored when
+<code class="docutils literal notranslate"><span class="pre">placement</span></code> is given, which expresses GPUs as a total for the
+launch instead.</p></li>
+<li><p><strong>placement</strong> (<em>mache.parallel.ResourcePlacement</em><em>, </em><em>optional</em>) – <p>Which nodes, cores and GPUs to confine this launch to, for
+callers running several launches at once inside one allocation.
+When it is not given, the command is exactly what it would have
+been without this argument.</p>
+<p>A placement supersedes the machine’s <code class="docutils literal notranslate"><span class="pre">distribution</span></code>,
+<code class="docutils literal notranslate"><span class="pre">placement</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> and <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code> config options,
+which describe how to spread a launch over a whole node.</p>
+</p></li>
+<li><p><strong>memory_cap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – <p>The most memory, in MB, this launch may use on each node it runs
+on. Absent by default, in which case nothing about memory is
+rendered and the launch may use whatever the node has.</p>
+<p>It is a <em>cap</em>, not a reservation. Nothing measured suggests it
+sets memory aside, so a launch that stays under its cap is not
+protected from a concurrent one that does not. It is rendered
+only where the batch system will act on it; check
+<code class="docutils literal notranslate"><span class="pre">memory_cap_support</span></code> to find out whether this machine is one
+of those.</p>
+<p>The unit and the per-node denomination match <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code>,
+which is the figure a caller divides up between the launches it
+runs at once.</p>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -157,7 +187,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="mache.parallel.system.ParallelSystem.html" class="btn btn-neutral float-left" title="mache.parallel.system.ParallelSystem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.system.ParallelSystem.get_scheduler_target.html" class="btn btn-neutral float-right" title="mache.parallel.system.ParallelSystem.get_scheduler_target" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.system.ParallelSystem.placement_support.html" class="btn btn-neutral float-right" title="mache.parallel.system.ParallelSystem.placement_support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

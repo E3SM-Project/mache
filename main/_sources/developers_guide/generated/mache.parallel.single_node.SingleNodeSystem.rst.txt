@@ -24,4 +24,11 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SingleNodeSystem.memory_cap_support
+      ~SingleNodeSystem.placement_support
+   
    

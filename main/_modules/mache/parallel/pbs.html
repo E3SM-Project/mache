@@ -95,7 +95,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.parallel.pbs</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -103,10 +104,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BINDING_OPTIONS</span><span class="p">,</span>
+    <span class="n">PlacementSupport</span><span class="p">,</span>
+    <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">names_resources</span><span class="p">,</span>
+    <span class="n">split_cores</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ParallelSystem</span><span class="p">,</span>
     <span class="n">_ceil_division</span><span class="p">,</span>
     <span class="n">_combine_reasons</span><span class="p">,</span>
+    <span class="n">_get_subprocess_str</span><span class="p">,</span>
     <span class="n">_normalize_requested</span><span class="p">,</span>
     <span class="n">cap_wall_time</span><span class="p">,</span>
 <span class="p">)</span>
@@ -167,6 +176,41 @@
 
 
 
+<div class="viewcode-block" id="is_pals_launcher">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.is_pals_launcher.html#mache.parallel.pbs.is_pals_launcher">[docs]</a>
+<span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_pals_launcher</span><span class="p">(</span><span class="n">executable</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Check whether a launcher is PALS, which can place concurrent launches.</span>
+
+<span class="sd">    PALS is the only PBS launcher mache has a placement mechanism for, and</span>
+<span class="sd">    the other launchers on PBS machines -- Open MPI's ``mpirun`` on Improv,</span>
+<span class="sd">    for example -- take none of its options. The launcher is asked directly</span>
+<span class="sd">    rather than trusting the machine's config, since a site can change it</span>
+<span class="sd">    without its mache config changing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    executable : str</span>
+<span class="sd">        The launcher to ask, which is the first word of the machine's</span>
+<span class="sd">        ``parallel_executable``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    is_pals : bool</span>
+<span class="sd">        Whether the launcher identified itself as PALS.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">_get_subprocess_str</span><span class="p">([</span><span class="n">executable</span><span class="p">,</span> <span class="s1">'--version'</span><span class="p">])</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># PALS reports e.g. "mpiexec version 1.8.0 revision ...", where Hydra</span>
+    <span class="c1"># reports "HYDRA build details:" and Open MPI reports "mpiexec (OpenRTE)"</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">'mpiexec version \d'</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+
 <div class="viewcode-block" id="PbsSystem">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PbsSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
@@ -182,7 +226,10 @@
                 <span class="s1">'to "pbs".'</span>
             <span class="p">)</span>
 
-        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'cores_per_node'</span><span class="p">)</span>
+        <span class="c1"># default=None so an absent option reaches the check below:</span>
+        <span class="c1"># get_config_int defaults to 0, which would leave the machine</span>
+        <span class="c1"># reporting no cores instead of raising</span>
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'cores_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">'cores_per_node must be set in the config for the pbs system.'</span>
@@ -196,10 +243,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'gpus_per_node'</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">gpus_per_node</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
+        <span class="c1"># 0 rather than None here: a machine that says nothing about GPUs</span>
+        <span class="c1"># has none, which is an answer and not a gap</span>
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'gpus_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="n">gpus_per_node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="n">gpus_per_node</span> <span class="o">*</span> <span class="n">nodes</span>
+
+        <span class="n">memory_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'memory_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">memory_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">=</span> <span class="n">memory_per_node</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="n">memory_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
 
 
 <div class="viewcode-block" id="PbsSystem.resolve_pbs_options">
@@ -345,13 +398,35 @@
         <span class="p">)</span></div>
 
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The placement mechanism available on this machine.</span>
+
+<span class="sd">        PALS supports concurrent launches within one PBS job and places them</span>
+<span class="sd">        by naming hosts and CPU lists explicitly. That binds each task to</span>
+<span class="sd">        given cores but does not reserve them from the batch system, so it is</span>
+<span class="sd">        the weaker of the two mechanisms. Other PBS launchers have no</span>
+<span class="sd">        placement mechanism at all.</span>
+<span class="sd">        """</span>
+        <span class="n">parallel_executable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'parallel_executable'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parallel_executable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">parallel_executable</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="n">executable</span> <span class="o">=</span> <span class="n">parallel_executable</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">is_pals_launcher</span><span class="p">(</span><span class="n">executable</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span>
+        <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement_supported</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+
         <span class="c1"># PBS mpiexec/mpirun options are launcher's responsibility, so the</span>
         <span class="c1"># flag used for CPUs per task is configurable per machine</span>
         <span class="n">cpus_per_task_flag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'cpus_per_task_flag'</span><span class="p">)</span>
@@ -364,13 +439,24 @@
         <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Node count is not set for the pbs system.'</span><span class="p">)</span>
 
-        <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'max_mpi_tasks_per_node'</span><span class="p">)</span>
+        <span class="c1"># default=None so an absent option reaches the check below:</span>
+        <span class="c1"># get_config_int defaults to 0, which would cap the launch at no</span>
+        <span class="c1"># tasks at all instead of raising</span>
+        <span class="n">max_mpi_tasks_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span>
+            <span class="s1">'max_mpi_tasks_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">max_mpi_tasks_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">'max_mpi_tasks_per_node must be set in the config for the pbs '</span>
                 <span class="s1">'system.'</span>
             <span class="p">)</span>
-        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">available_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">available_nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+
+        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="n">_ceil_division</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">available_nodes</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">tasks_per_node</span> <span class="o">&gt;</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s1">'Calculated tasks_per_node (</span><span class="si">{</span><span class="n">tasks_per_node</span><span class="si">}</span><span class="s1">) exceeds the '</span>
@@ -387,23 +473,139 @@
             <span class="n">cpus_per_task_flag</span><span class="p">,</span>
             <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
         <span class="p">]</span>
-        <span class="k">if</span> <span class="p">(</span>
+
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_placement_args</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">placement</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
             <span class="n">gpus_per_task</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="ow">and</span> <span class="n">gpus_per_task_flag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="n">gpus_per_task_flag</span> <span class="o">!=</span> <span class="s1">''</span>
         <span class="p">):</span>
             <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">gpus_per_task_flag</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">gpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
 
-        <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">'cpu_bind'</span><span class="p">:</span> <span class="s1">'--cpu-bind'</span><span class="p">,</span>
-            <span class="s1">'gpu_bind'</span><span class="p">:</span> <span class="s1">'--gpu-bind'</span><span class="p">,</span>
-            <span class="s1">'mem_bind'</span><span class="p">:</span> <span class="s1">'--mem-bind'</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">option</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">BINDING_OPTIONS</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">:</span>
-                <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">flag</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">names_resources</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">option</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'cpu_bind'</span><span class="p">,</span> <span class="s1">'gpu_bind'</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="c1"># the placement is the authority on which cores and devices</span>
+                <span class="c1"># this launch gets: it renders its own --cpu-bind, sets GPU</span>
+                <span class="c1"># visibility instead of binding it, and a whole-node binding</span>
+                <span class="c1"># list would contradict it</span>
+                <span class="k">continue</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">'--</span><span class="si">{</span><span class="n">option</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-"</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_placement_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the arguments that confine a launch to a placement."""</span>
+        <span class="n">placement_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--hosts'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
+
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">split_cores</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+        <span class="n">core_list</span> <span class="o">=</span> <span class="s1">':'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">core</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span>
+        <span class="p">)</span>
+        <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--cpu-bind'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'list:</span><span class="si">{</span><span class="n">core_list</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
+
+        <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_visible_devices_args</span><span class="p">(</span><span class="n">placement</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">placement_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_visible_devices_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get the arguments that confine a launch to given GPUs.</span>
+
+<span class="sd">        PALS does not reserve GPUs, so isolation is by the vendor's</span>
+<span class="sd">        visible-device variable, which is the documented approach on these</span>
+<span class="sd">        machines. It is set on the command line rather than exported, so that</span>
+<span class="sd">        a value cannot leak from the parent into a later launch that meant to</span>
+<span class="sd">        set its own.</span>
+
+<span class="sd">        Setting the variable is all that is done. An earlier version removed</span>
+<span class="sd">        it first as well, with ``--env-remove``, which Aurora's PALS</span>
+<span class="sd">        ``mpiexec`` rejects as an unrecognized option -- and rejects the whole</span>
+<span class="sd">        command with it, so every placed launch on Aurora failed to start.</span>
+<span class="sd">        The removal was belt and braces to begin with: ``--env`` sets the</span>
+<span class="sd">        variable explicitly, which already overrides whatever was inherited.</span>
+<span class="sd">        """</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpu_visible_devices_var'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">variable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">variable</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">'The placement asks for </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1"> gpus but this '</span>
+                    <span class="sa">f</span><span class="s1">'machine does not set gpu_visible_devices_var, so mache '</span>
+                    <span class="sa">f</span><span class="s1">'has no way to confine a launch to some of its GPUs.'</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># An explicit "no GPUs".  Unlike --gres=none on Slurm, this is</span>
+            <span class="c1"># not the thing that makes concurrency work here: PALS reserves</span>
+            <span class="c1"># nothing, so a launch that says nothing about GPUs does not</span>
+            <span class="c1"># block the next one.  It is belt and braces, and how much it</span>
+            <span class="c1"># actually hides has not been measured.  An empty</span>
+            <span class="c1"># CUDA_VISIBLE_DEVICES means "no devices", but an empty</span>
+            <span class="c1"># ZE_AFFINITY_MASK may instead mean "no mask", which is every</span>
+            <span class="c1"># tile.  Settling that takes two placed CPU-only launches on</span>
+            <span class="c1"># Aurora reporting what Level Zero sees.</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s1">''</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">'The placement asks for </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1"> gpus but does '</span>
+                    <span class="sa">f</span><span class="s1">'not say which. This machine has no scheduler to assign '</span>
+                    <span class="sa">f</span><span class="s1">'them, so the caller -- which is the only thing that '</span>
+                    <span class="sa">f</span><span class="s1">'knows about every concurrent launch -- must set '</span>
+                    <span class="sa">f</span><span class="s1">'gpu_ids.'</span>
+                <span class="p">)</span>
+            <span class="n">devices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_devices</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">gpu_id</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">'The placement asks for GPU </span><span class="si">{</span><span class="n">gpu_id</span><span class="si">}</span><span class="s1"> but this '</span>
+                        <span class="sa">f</span><span class="s1">'machine has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span><span class="si">}</span><span class="s1"> per node.'</span>
+                    <span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">devices</span><span class="p">[</span><span class="n">gpu_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span><span class="p">)</span>
+
+        <span class="c1"># `--env VAR=VAL` as two arguments, which is the form PALS's usage</span>
+        <span class="c1"># text describes.  The `--env=VAR=VAL` form has never got as far as</span>
+        <span class="c1"># being tried: on Aurora the command was rejected at `--env-remove`</span>
+        <span class="c1"># before the parser reached it.  Every option mache renders in the</span>
+        <span class="c1"># two-argument form -- `--depth`, `--hosts`, `--cpu-bind list:` --</span>
+        <span class="c1"># did get past that parser, so this is the form with evidence behind</span>
+        <span class="c1"># it.</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">'--env'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get the node's GPUs, in order, as the vendor's variable names them.</span>
+
+<span class="sd">        A machine whose devices are not simply numbered from zero -- Aurora</span>
+<span class="sd">        addresses a tile as ``0.1`` -- already lists them in order in its</span>
+<span class="sd">        ``gpu_bind`` binding list, so that is used when it is present.</span>
+<span class="sd">        """</span>
+        <span class="n">gpu_bind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpu_bind'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gpu_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gpu_bind</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">gpu_bind</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)</span>
+
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span>
+        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'gpus_per_node must be set in the config to place GPUs on '</span>
+                <span class="s1">'the pbs system.'</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">gpus_per_node</span><span class="p">)]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_node_count_from_qstat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Try to determine node count from qstat output."""</span>

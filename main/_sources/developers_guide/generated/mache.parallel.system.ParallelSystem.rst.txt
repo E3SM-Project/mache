@@ -24,4 +24,11 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ParallelSystem.memory_cap_support
+      ~ParallelSystem.placement_support
+   
    

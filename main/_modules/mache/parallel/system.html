@@ -98,7 +98,10 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryCapSupport</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlacementSupport</span><span class="p">,</span> <span class="n">ResourcePlacement</span>
 
 <span class="c1"># the config option in [parallel] that lists each type of scheduler target</span>
 <span class="n">TARGET_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -173,6 +176,15 @@
 <span class="sd">    gpus_per_node : int</span>
 <span class="sd">        The number of GPUs available per node.</span>
 
+<span class="sd">    memory : int</span>
+<span class="sd">        The total memory available on the system in MB, or ``None`` if the</span>
+<span class="sd">        machine's config does not describe it.</span>
+
+<span class="sd">    memory_per_node : int</span>
+<span class="sd">        The memory available per node in MB, or ``None`` if the machine's</span>
+<span class="sd">        config does not describe it. This is the memory a job may actually</span>
+<span class="sd">        use, which is smaller than the hardware capacity of a node.</span>
+
 <span class="sd">    nodes : int</span>
 <span class="sd">        The total number of nodes available on the system.</span>
 
@@ -196,9 +208,46 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The placement mechanism available on this machine.</span>
+
+<span class="sd">        A caller that wants to run several launches at once inside one</span>
+<span class="sd">        allocation should check this first: on a machine that reports</span>
+<span class="sd">        ``PlacementSupport.NONE``, concurrent launches will oversubscribe or</span>
+<span class="sd">        serialize rather than run side by side.</span>
+
+<span class="sd">        This is determined from the launcher actually present rather than</span>
+<span class="sd">        from the machine's config, since a site can be upgraded across a</span>
+<span class="sd">        launcher change without its mache config changing, and a stale</span>
+<span class="sd">        assumption there fails in the worst way -- the command is accepted</span>
+<span class="sd">        and the placement silently does nothing.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">memory_cap_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MemoryCapSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Whether this machine will hold a launch to a memory cap.</span>
+
+<span class="sd">        A caller passing ``memory_cap`` to</span>
+<span class="sd">        :py:meth:`get_parallel_command` should check this first, so that it</span>
+<span class="sd">        can say in a log that caps are not enforced here rather than believe</span>
+<span class="sd">        it has a safety net it does not have.</span>
+
+<span class="sd">        Unlike a placement, an unenforceable cap is not an error: the work</span>
+<span class="sd">        still runs correctly, it is only unprotected. A placement that</span>
+<span class="sd">        cannot be honored, by contrast, means concurrent launches collide,</span>
+<span class="sd">        so that one raises.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">MemoryCapSupport</span><span class="o">.</span><span class="n">NONE</span>
 
 <div class="viewcode-block" id="ParallelSystem.get_parallel_command">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command">[docs]</a>
@@ -208,6 +257,8 @@
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">memory_cap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get the parallel execution command for the current system.</span>
@@ -224,19 +275,50 @@
 <span class="sd">            The number of CPUs to allocate per task.</span>
 
 <span class="sd">        gpus_per_task : int, optional</span>
-<span class="sd">            The number of GPUs to allocate per task.</span>
+<span class="sd">            The number of GPUs to allocate per task. Ignored when</span>
+<span class="sd">            ``placement`` is given, which expresses GPUs as a total for the</span>
+<span class="sd">            launch instead.</span>
+
+<span class="sd">        placement : mache.parallel.ResourcePlacement, optional</span>
+<span class="sd">            Which nodes, cores and GPUs to confine this launch to, for</span>
+<span class="sd">            callers running several launches at once inside one allocation.</span>
+<span class="sd">            When it is not given, the command is exactly what it would have</span>
+<span class="sd">            been without this argument.</span>
+
+<span class="sd">            A placement supersedes the machine's ``distribution``,</span>
+<span class="sd">            ``placement``, ``gpu_bind`` and ``mem_bind`` config options,</span>
+<span class="sd">            which describe how to spread a launch over a whole node.</span>
+
+<span class="sd">        memory_cap : int, optional</span>
+<span class="sd">            The most memory, in MB, this launch may use on each node it runs</span>
+<span class="sd">            on. Absent by default, in which case nothing about memory is</span>
+<span class="sd">            rendered and the launch may use whatever the node has.</span>
+
+<span class="sd">            It is a *cap*, not a reservation. Nothing measured suggests it</span>
+<span class="sd">            sets memory aside, so a launch that stays under its cap is not</span>
+<span class="sd">            protected from a concurrent one that does not. It is rendered</span>
+<span class="sd">            only where the batch system will act on it; check</span>
+<span class="sd">            ``memory_cap_support`` to find out whether this machine is one</span>
+<span class="sd">            of those.</span>
+
+<span class="sd">            The unit and the per-node denomination match ``memory_per_node``,</span>
+<span class="sd">            which is the figure a caller divides up between the launches it</span>
+<span class="sd">            runs at once.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        command : list of str</span>
 <span class="sd">            The complete command to execute the parallel job.</span>
 <span class="sd">        """</span>
+        <span class="n">_check_memory_cap</span><span class="p">(</span><span class="n">memory_cap</span><span class="p">)</span>
         <span class="n">parallel_executable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'parallel_executable'</span><span class="p">)</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="n">parallel_executable</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_command_prefix</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parallel_executable</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">))</span>
         <span class="n">parallel_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_parallel_args</span><span class="p">(</span>
-            <span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">gpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span>
+            <span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">gpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">placement</span>
         <span class="p">)</span>
         <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parallel_args</span><span class="p">)</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_memory_args</span><span class="p">(</span><span class="n">memory_cap</span><span class="p">))</span>
         <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">command</span></div>
 
@@ -246,16 +328,59 @@
         <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_memory_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_cap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the arguments that hold a launch to a memory cap."""</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_command_prefix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get anything that has to come before the parallel executable."""</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_placement_supported</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise if a placement was given but cannot be honored here."""</span>
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'This machine cannot place a launch: no placement mechanism '</span>
+                <span class="sa">f</span><span class="s1">'was found for the "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">"parallel_executable"</span><span class="p">)</span><span class="si">}</span><span class="s1">"'</span>
+                <span class="sa">f</span><span class="s1">' launcher. Check placement_support before passing a '</span>
+                <span class="sa">f</span><span class="s1">'placement.'</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get a config value from the parallel configs."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parallel_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Get an integer config value from the parallel configs."""</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get an integer config value from the parallel configs.</span>
+
+<span class="sd">        The default is ``0``, so an absent key is indistinguishable from one</span>
+<span class="sd">        set to zero unless the caller says otherwise. A caller that needs to</span>
+<span class="sd">        tell "the config does not say" from "the config says none" must pass</span>
+<span class="sd">        ``default=None`` explicitly, and the overloads above make that the</span>
+<span class="sd">        only way to get a ``None`` back -- so a check for one against any</span>
+<span class="sd">        other default is dead code rather than the safeguard it looks like.</span>
+<span class="sd">        """</span>
         <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
@@ -940,6 +1065,22 @@
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">return</span> <span class="n">hours</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">+</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="n">seconds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_memory_cap</span><span class="p">(</span><span class="n">memory_cap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check that a memory cap is a number of MB that means something."""</span>
+    <span class="k">if</span> <span class="n">memory_cap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">memory_cap</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'memory_cap is the MB a launch may use, so it must be positive, '</span>
+            <span class="sa">f</span><span class="s1">'but it is </span><span class="si">{</span><span class="n">memory_cap</span><span class="si">}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+    <span class="c1"># deliberately not checked against memory_per_node: that figure is a</span>
+    <span class="c1"># planning estimate, low on purpose and on every machine but Chrysalis a</span>
+    <span class="c1"># sample rather than a survey.  It has measured below what a node</span>
+    <span class="c1"># actually reported on Perlmutter and on Frontier, so refusing a cap for</span>
+    <span class="c1"># exceeding it would reject caps the node can honor.</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ceil_division</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>

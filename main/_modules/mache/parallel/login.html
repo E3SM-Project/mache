@@ -99,6 +99,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourcePlacement</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>
 
 
@@ -111,7 +112,10 @@
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.login.LoginSystem.html#mache.parallel.login.LoginSystem.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="n">login_cores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_cores'</span><span class="p">)</span>
+        <span class="c1"># default=None so an absent option reaches the check below:</span>
+        <span class="c1"># get_config_int defaults to 0, which would leave the login node</span>
+        <span class="c1"># reporting no cores instead of raising</span>
+        <span class="n">login_cores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_cores'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">login_cores</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">'login_cores must be set in the config for the login system.'</span>
@@ -119,9 +123,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="n">login_cores</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_gpus'</span><span class="p">)</span>
+        <span class="c1"># 0 rather than None here: a machine that says nothing about GPUs</span>
+        <span class="c1"># has none, which is an answer and not a gap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'login_gpus'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span>
 
+        <span class="c1"># memory stays None: memory_per_node describes a compute node, and a</span>
+        <span class="c1"># login node neither has that much nor hands out what it does have</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">False</span></div>
 
@@ -131,6 +139,7 @@
         <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
         <span class="c1"># Not supported for login system</span>

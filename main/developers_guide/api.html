@@ -79,19 +79,26 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.SubmissionResolution.html">mache.parallel.system.SubmissionResolution</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.placement.PlacementSupport.html">mache.parallel.placement.PlacementSupport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.placement.ResourcePlacement.html">mache.parallel.placement.ResourcePlacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.memory.MemoryCapSupport.html">mache.parallel.memory.MemoryCapSupport</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.slurm.get_slurm_version.html">mache.parallel.slurm.get_slurm_version</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.pbs.is_pals_launcher.html">mache.parallel.pbs.is_pals_launcher</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#spack">spack</a><ul>
@@ -240,6 +247,12 @@ documentation.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command" title="mache.parallel.system.ParallelSystem.get_parallel_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command</span></code></a>(args, ntasks)</p></td>
 <td><p>Get the parallel execution command for the current system.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.placement_support.html#mache.parallel.system.ParallelSystem.placement_support" title="mache.parallel.system.ParallelSystem.placement_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.placement_support</span></code></a></p></td>
+<td><p>The placement mechanism available on this machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.memory_cap_support.html#mache.parallel.system.ParallelSystem.memory_cap_support" title="mache.parallel.system.ParallelSystem.memory_cap_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.memory_cap_support</span></code></a></p></td>
+<td><p>Whether this machine will hold a launch to a memory cap.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target" title="mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target</span></code></a>(config, ...)</p></td>
 <td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
 </tr>
@@ -248,6 +261,23 @@ documentation.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html#mache.parallel.system.cap_wall_time" title="mache.parallel.system.cap_wall_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cap_wall_time</span></code></a>(desired, max_wallclock)</p></td>
 <td><p>Cap a desired wall time at a scheduler target's maximum.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.placement.PlacementSupport.html#mache.parallel.placement.PlacementSupport" title="mache.parallel.placement.PlacementSupport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlacementSupport</span></code></a>(*values)</p></td>
+<td><p>The mechanism a machine has for confining a launch to given resources.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.placement.ResourcePlacement.html#mache.parallel.placement.ResourcePlacement" title="mache.parallel.placement.ResourcePlacement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResourcePlacement</span></code></a>(nodes, cores[, gpus, gpu_ids])</p></td>
+<td><p>Where a single parallel launch should run.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.memory.MemoryCapSupport.html#mache.parallel.memory.MemoryCapSupport" title="mache.parallel.memory.MemoryCapSupport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MemoryCapSupport</span></code></a>(*values)</p></td>
+<td><p>Whether a machine will hold a launch to a memory cap.</p></td>
 </tr>
 </tbody>
 </table>
@@ -279,6 +309,9 @@ documentation.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlurmSystem.resolve_slurm_options</span></code></a>(config, nodes)</p></td>
 <td><p>Get Slurm submission options for a requested node count.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.slurm.get_slurm_version.html#mache.parallel.slurm.get_slurm_version" title="mache.parallel.slurm.get_slurm_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_slurm_version</span></code></a>()</p></td>
+<td><p>Get the major and minor version of the Slurm installed on this machine.</p></td>
+</tr>
 </tbody>
 </table>
 <table class="autosummary longtable docutils align-default">
@@ -294,6 +327,9 @@ documentation.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PbsSystem.resolve_pbs_options</span></code></a>(config, nodes)</p></td>
 <td><p>Get PBS submission options for a requested node count.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.pbs.is_pals_launcher.html#mache.parallel.pbs.is_pals_launcher" title="mache.parallel.pbs.is_pals_launcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_pals_launcher</span></code></a>(executable)</p></td>
+<td><p>Check whether a launcher is PALS, which can place concurrent launches.</p></td>
 </tr>
 </tbody>
 </table>

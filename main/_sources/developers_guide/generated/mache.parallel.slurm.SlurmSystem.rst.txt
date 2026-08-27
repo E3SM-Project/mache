@@ -26,4 +26,11 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SlurmSystem.memory_cap_support
+      ~SlurmSystem.placement_support
+   
    

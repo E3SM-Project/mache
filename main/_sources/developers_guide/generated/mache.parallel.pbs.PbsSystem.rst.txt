@@ -26,4 +26,11 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PbsSystem.memory_cap_support
+      ~PbsSystem.placement_support
+   
    

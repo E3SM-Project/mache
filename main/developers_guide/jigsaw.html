@@ -67,6 +67,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-layout">Module layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#build-and-install-pipeline">Build and install pipeline</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#cache-layout-and-invariants">Cache layout and invariants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#repodata-the-driving-pixi-can-read">Repodata the driving pixi can read</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#backend-specific-notes">Backend-specific notes</a><ul>
@@ -217,6 +218,24 @@ key; sharing it would let one worktree clobber another’s.</p></li>
 can deploy concurrently. The sentinel <code class="docutils literal notranslate"><span class="pre">&lt;cache_key&gt;/.jigsaw_cache_key</span></code> is
 written <em>after</em> the build finishes, so a slot mid-build never reads as a cache
 hit — that ordering is what lets the cache-hit path skip the lock entirely.</p>
+</section>
+<section id="repodata-the-driving-pixi-can-read">
+<h3>Repodata the driving pixi can read<a class="headerlink" href="#repodata-the-driving-pixi-can-read" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">_get_local_channel_uri()</span></code> strips <code class="docutils literal notranslate"><span class="pre">info.repodata_revisions</span></code> from every
+<code class="docutils literal notranslate"><span class="pre">repodata.json</span></code> in a slot before the channel is handed to pixi or conda.
+rattler-build 0.75.0 began writing that key as a map, and the rattler
+bundled in older pixi (0.70.2, for one) expects a sequence there, so it
+fails to parse the file at all and the deploy dies with <code class="docutils literal notranslate"><span class="pre">invalid</span> <span class="pre">type:</span> <span class="pre">map,</span> <span class="pre">expected</span> <span class="pre">a</span> <span class="pre">sequence</span></code>.</p>
+<p>mache chooses the rattler-build that fills a slot but not the pixi that
+reads it — <code class="docutils literal notranslate"><span class="pre">pixi_exe</span></code> is whatever it was handed — so the file mache writes
+is the only place it can fix this. The key is purely informational for a
+channel holding one locally built package.</p>
+<p>That it happens in <code class="docutils literal notranslate"><span class="pre">_get_local_channel_uri()</span></code> rather than at the end of the
+build is the point: a slot filled by an older mache is poisoned in exactly
+the same way and still validates as a cache hit, because
+<code class="docutils literal notranslate"><span class="pre">_is_cached_jigsaw_build_valid()</span></code> only asks whether the repodata exists.
+Sanitizing on the path that both a fresh build and a cache hit take is what
+reaches those slots.</p>
 <p>The install step:</p>
 <ul class="simple">
 <li><p>Uses pixi when the backend resolves to <code class="docutils literal notranslate"><span class="pre">pixi</span></code>.</p></li>

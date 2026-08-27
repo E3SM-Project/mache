@@ -96,10 +96,19 @@
              
   <h1>Source code for mache.parallel.single_node</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PlacementSupport</span><span class="p">,</span>
+    <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">format_core_ranges</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>
+
+<span class="c1"># the command used to confine a launch to a set of cores</span>
+<span class="n">TASKSET</span> <span class="o">=</span> <span class="s1">'taskset'</span>
 
 
 <div class="viewcode-block" id="SingleNodeSystem">
@@ -112,7 +121,10 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigParser</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">cores_detected</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
-        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'cores_per_node'</span><span class="p">)</span>
+        <span class="c1"># default=None so an absent option is distinguishable from a</span>
+        <span class="c1"># configured zero: get_config_int defaults to 0, and min() against</span>
+        <span class="c1"># that would report a machine with no cores at all</span>
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'cores_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_detected</span>
         <span class="k">else</span><span class="p">:</span>
@@ -121,19 +133,83 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">cores_per_node</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'gpus_per_node'</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span></div>
+        <span class="c1"># 0 rather than None here: a machine that says nothing about GPUs</span>
+        <span class="c1"># has none, which is an answer and not a gap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span><span class="s1">'gpus_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span>
+        <span class="c1"># unlike cores, memory is not detected from the machine itself: the</span>
+        <span class="c1"># figure that matters is the memory a job may use, which only the</span>
+        <span class="c1"># config knows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config_int</span><span class="p">(</span>
+            <span class="s1">'memory_per_node'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span></div>
 
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The placement mechanism available on this machine.</span>
+
+<span class="sd">        There is no batch system to reserve anything, so a launch is confined</span>
+<span class="sd">        to its cores with ``taskset``, which the whole process tree inherits.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">TASKSET</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">return</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_parallel_args</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">gpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the parallel command-line arguments related to resources."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement_supported</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">)</span>
         <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-n'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'-c'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">parallel_args</span></div>
+        <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_command_prefix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get anything that has to come before the parallel executable."""</span>
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement_supported</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">TASKSET</span><span class="p">,</span> <span class="s1">'-c'</span><span class="p">,</span> <span class="n">format_core_ranges</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_placement</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that a placement is one this system can honor."""</span>
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'The placement names </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span><span class="si">}</span><span class="s1"> nodes but the '</span>
+                <span class="sa">f</span><span class="s1">'single_node system has only one.'</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'The placement asks for </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1"> gpus but the '</span>
+                <span class="sa">f</span><span class="s1">'single_node system has no mechanism for confining a launch '</span>
+                <span class="sa">f</span><span class="s2">"to some of a machine's GPUs."</span>
+            <span class="p">)</span>
+
+        <span class="n">needed</span> <span class="o">=</span> <span class="n">ntasks</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'The placement has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> cores but '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1"> tasks x </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1"> cpus per task '</span>
+                <span class="sa">f</span><span class="s1">'need </span><span class="si">{</span><span class="n">needed</span><span class="si">}</span><span class="s1">.'</span>
+            <span class="p">)</span></div>
 
 </pre></div>
 

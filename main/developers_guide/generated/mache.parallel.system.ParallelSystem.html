@@ -76,19 +76,26 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html">mache.parallel.system.ParallelSystem.resolve_submission</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.placement.PlacementSupport.html">mache.parallel.placement.PlacementSupport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.placement.ResourcePlacement.html">mache.parallel.placement.ResourcePlacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.memory.MemoryCapSupport.html">mache.parallel.memory.MemoryCapSupport</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.get_slurm_version.html">mache.parallel.slurm.get_slurm_version</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.is_pals_launcher.html">mache.parallel.pbs.is_pals_launcher</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#spack">spack</a></li>
@@ -144,6 +151,11 @@ section and the parallel.{compiler} section, if any.</p></li>
 <li><p><strong>cores_per_node</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The number of CPU cores available per node.</p></li>
 <li><p><strong>gpus</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The total number of GPUs available on the system.</p></li>
 <li><p><strong>gpus_per_node</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The number of GPUs available per node.</p></li>
+<li><p><strong>memory</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The total memory available on the system in MB, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+machine’s config does not describe it.</p></li>
+<li><p><strong>memory_per_node</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The memory available per node in MB, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the machine’s
+config does not describe it. This is the memory a job may actually
+use, which is smaller than the hardware capacity of a node.</p></li>
 <li><p><strong>nodes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The total number of nodes available on the system.</p></li>
 <li><p><strong>mpi_allowed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether MPI execution is allowed on the system.</p></li>
 </ul>
@@ -169,7 +181,8 @@ section and the parallel.{compiler} section, if any.</p></li>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config</span></code>(key[, default])</p></td>
 <td><p>Get a config value from the parallel configs.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_int</span></code>(key[, default])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_int</span></code>(-&gt; int
+ -&gt; int)</p></td>
 <td><p>Get an integer config value from the parallel configs.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html#mache.parallel.system.ParallelSystem.get_parallel_command" title="mache.parallel.system.ParallelSystem.get_parallel_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_command</span></code></a>(args, ntasks[, ...])</p></td>
@@ -180,6 +193,17 @@ section and the parallel.{compiler} section, if any.</p></li>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_submission</span></code></a>(config, nodes, target_type)</p></td>
 <td><p>Resolve a scheduler target and effective node count.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html#mache.parallel.system.ParallelSystem.memory_cap_support" title="mache.parallel.system.ParallelSystem.memory_cap_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">memory_cap_support</span></code></a></p></td>
+<td><p>Whether this machine will hold a launch to a memory cap.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html#mache.parallel.system.ParallelSystem.placement_support" title="mache.parallel.system.ParallelSystem.placement_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">placement_support</span></code></a></p></td>
+<td><p>The placement mechanism available on this machine.</p></td>
 </tr>
 </tbody>
 </table>

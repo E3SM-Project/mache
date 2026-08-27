@@ -98,7 +98,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.login</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginSystem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.memory</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MemoryCapSupport</span> <span class="k">as</span> <span class="n">MemoryCapSupport</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.pbs</span><span class="w"> </span><span class="kn">import</span> <span class="n">PbsSystem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PlacementSupport</span> <span class="k">as</span> <span class="n">PlacementSupport</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResourcePlacement</span> <span class="k">as</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.single_node</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleNodeSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>

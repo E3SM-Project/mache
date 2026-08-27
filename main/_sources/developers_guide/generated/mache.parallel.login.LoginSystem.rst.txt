@@ -24,4 +24,11 @@
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LoginSystem.memory_cap_support
+      ~LoginSystem.placement_support
+   
    
