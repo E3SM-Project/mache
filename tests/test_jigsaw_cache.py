@@ -9,6 +9,7 @@ tests build real (tiny) git repositories in ``tmp_path``.
 from __future__ import annotations
 
 import errno
+import json
 import shutil
 import subprocess
 import sys
@@ -341,6 +342,35 @@ def test_second_build_in_same_clone_hits_cache(monkeypatch, tmp_path: Path):
 
     assert second.cache_hit is True
     assert len(builds) == 1
+
+
+def test_cache_hit_cleans_repodata_built_by_older_mache(
+    monkeypatch, tmp_path: Path
+):
+    """
+    A slot built before mache stripped ``info.repodata_revisions`` is still
+    a valid cache hit, so the fix has to reach it on reuse; the cache key
+    says nothing about the rattler-build that filled the slot.
+    """
+    clone = _make_clone(tmp_path / 'clone')
+    builds = _fake_out_build(monkeypatch)
+
+    slot = _slot(clone / '.mache_cache' / 'jigsaw', 'a' * 64)
+    channel = slot / _platform_name()
+    channel.mkdir(parents=True)
+    (channel / 'repodata.json').write_text(
+        '{"info": {"subdir": "linux-64", "repodata_revisions": '
+        '{"v0": {"n_packages": 1}}}, "packages": {}}',
+        encoding='utf-8',
+    )
+    jigsaw._write_jigsaw_cache_key(slot_dir=slot, cache_key='a' * 64)
+
+    result = _build(clone)
+
+    assert result.cache_hit is True
+    assert builds == []
+    data = json.loads((channel / 'repodata.json').read_text(encoding='utf-8'))
+    assert 'repodata_revisions' not in data['info']
 
 
 def test_distinct_keys_get_distinct_slots(monkeypatch, tmp_path: Path):
