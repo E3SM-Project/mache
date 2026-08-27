@@ -55,6 +55,20 @@ if [[ -z "${BASH_VERSION:-}" ]]; then
   return 1
 fi
 
+# Bash started as `sh` (e.g. Python's `subprocess` with `shell=True`, `make`,
+# cron or CI runners) sets BASH_VERSION but runs in POSIX mode, where process
+# substitution is a syntax error.  Pixi activation sources files that use it,
+# and the error would occur inside `eval`, a POSIX special builtin, so the
+# whole shell would exit rather than just this script failing.  Turn POSIX mode
+# off for the rest of this script and restore it at the end.  Paths that return
+# early on error leave POSIX mode off; a failed load is not expected to leave a
+# usable shell behind either way.
+_mache_deploy_restore_posix=0
+if [[ -o posix ]]; then
+  _mache_deploy_restore_posix=1
+  set +o posix
+fi
+
 # Verify this script is sourced.
 if ! (return 0 2>/dev/null); then
   echo "ERROR: this script must be sourced: 'source load_*.sh'" >&2
@@ -231,3 +245,10 @@ if [[ -n "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET:-}" \
   source "${MACHE_DEPLOY_TARGET_LOAD_SNIPPET}"
   echo "   ${MACHE_DEPLOY_TARGET_SOFTWARE} environment variables loaded."
 fi
+
+# Restore the caller's POSIX mode.  This must stay last: everything above,
+# including the target load snippet, may need non-POSIX bash.
+if [[ "${_mache_deploy_restore_posix:-0}" == "1" ]]; then
+  set -o posix
+fi
+unset _mache_deploy_restore_posix
