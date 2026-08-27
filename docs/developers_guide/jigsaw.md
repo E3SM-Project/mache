@@ -111,6 +111,27 @@ can deploy concurrently. The sentinel `<cache_key>/.jigsaw_cache_key` is
 written *after* the build finishes, so a slot mid-build never reads as a cache
 hit — that ordering is what lets the cache-hit path skip the lock entirely.
 
+### Repodata the driving pixi can read
+
+`_get_local_channel_uri()` strips `info.repodata_revisions` from every
+`repodata.json` in a slot before the channel is handed to pixi or conda.
+rattler-build 0.75.0 began writing that key as a map, and the rattler
+bundled in older pixi (0.70.2, for one) expects a sequence there, so it
+fails to parse the file at all and the deploy dies with `invalid type: map,
+expected a sequence`.
+
+mache chooses the rattler-build that fills a slot but not the pixi that
+reads it — `pixi_exe` is whatever it was handed — so the file mache writes
+is the only place it can fix this. The key is purely informational for a
+channel holding one locally built package.
+
+That it happens in `_get_local_channel_uri()` rather than at the end of the
+build is the point: a slot filled by an older mache is poisoned in exactly
+the same way and still validates as a cache hit, because
+`_is_cached_jigsaw_build_valid()` only asks whether the repodata exists.
+Sanitizing on the path that both a fresh build and a cache hit take is what
+reaches those slots.
+
 The install step:
 
 - Uses pixi when the backend resolves to `pixi`.
