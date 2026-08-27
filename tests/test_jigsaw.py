@@ -1,3 +1,4 @@
+import json
 from functools import partial
 from pathlib import Path
 
@@ -408,6 +409,82 @@ def test_resolve_pixi_manifest_directory_requires_known_filenames(
 
 def test_format_pixi_jigsaw_spec_uses_built_series_pin():
     assert jigsaw._format_pixi_jigsaw_spec('1.1.0') == 'jigsawpy=1.1.0.*'
+
+
+def test_local_channel_uri_drops_repodata_revisions(tmp_path: Path):
+    """
+    rattler-build 0.75.0 writes ``info.repodata_revisions`` as a map, which
+    the rattler in older pixi cannot parse. Every subdir of the channel has
+    to be cleaned, since pixi reads noarch as well as the platform.
+    """
+    channel = tmp_path / 'jigsaw'
+    revisions = {'v0': {'n_packages': 1, 'oldest': 1787842954028, 'newest': 0}}
+    for subdir in (_platform_name(), 'noarch'):
+        path = channel / subdir
+        path.mkdir(parents=True)
+        (path / 'repodata.json').write_text(
+            json.dumps(
+                {
+                    'info': {
+                        'subdir': subdir,
+                        'repodata_revisions': revisions,
+                    },
+                    'packages': {},
+                    'packages.conda': {'jigsawpy-1.1.0-0.conda': {}},
+                }
+            ),
+            encoding='utf-8',
+        )
+
+    uri = jigsaw._get_local_channel_uri(output_dir=channel)
+
+    assert uri == channel.as_uri()
+    for subdir in (_platform_name(), 'noarch'):
+        data = json.loads(
+            (channel / subdir / 'repodata.json').read_text(encoding='utf-8')
+        )
+        assert 'repodata_revisions' not in data['info']
+        # Only that key goes; the channel still has to describe its package.
+        assert data['info']['subdir'] == subdir
+        assert data['packages.conda'] == {'jigsawpy-1.1.0-0.conda': {}}
+
+
+def test_local_channel_uri_leaves_clean_repodata_alone(tmp_path: Path):
+    """
+    Repodata without the key must not be rewritten at all, so a channel a
+    working pixi already parsed is left byte-for-byte as rattler-build
+    wrote it.
+    """
+    channel = tmp_path / 'jigsaw'
+    (channel / _platform_name()).mkdir(parents=True)
+    repodata = channel / _platform_name() / 'repodata.json'
+    text = '{"info": {"subdir": "linux-64"}, "packages": {}}\n'
+    repodata.write_text(text, encoding='utf-8')
+
+    jigsaw._get_local_channel_uri(output_dir=channel)
+
+    assert repodata.read_text(encoding='utf-8') == text
+
+
+def test_local_channel_uri_tolerates_unreadable_repodata(tmp_path: Path):
+    """
+    Sanitizing is a fix-up, not a validation step: repodata mache cannot
+    parse is left for whoever reads the channel to complain about.
+    """
+    channel = tmp_path / 'jigsaw'
+    (channel / _platform_name()).mkdir(parents=True)
+    (channel / _platform_name() / 'repodata.json').write_text(
+        'not json', encoding='utf-8'
+    )
+
+    assert jigsaw._get_local_channel_uri(output_dir=channel) == (
+        channel.as_uri()
+    )
+
+
+def _platform_name() -> str:
+    platform_name, _ = jigsaw._get_conda_platform_and_system()
+    return platform_name
 
 
 def _fake_build_result(channel_uri: str, tmp_path: Path):

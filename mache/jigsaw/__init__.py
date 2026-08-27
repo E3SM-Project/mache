@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fcntl
 import hashlib
+import json
 import os
 import platform
 import re
@@ -1258,4 +1259,68 @@ def _get_local_channel_uri(*, output_dir: Path) -> str:
             f'JIGSAW build output repodata not found: {repodata}'
         )
 
+    _drop_repodata_revisions(channel_dir=output_dir)
+
     return output_dir.as_uri()
+
+
+def _drop_repodata_revisions(*, channel_dir: Path) -> None:
+    """Remove ``info.repodata_revisions`` from a local channel's repodata.
+
+    rattler-build 0.75.0 began writing this key as a map, but the rattler
+    bundled in older pixi (0.70.2, for one) expects a sequence there and
+    fails to parse ``repodata.json`` at all, so the channel is unusable::
+
+        failed to parse repodata.json
+        invalid type: map, expected a sequence at line 1 column 50
+
+    mache picks the rattler-build that does the build but not the pixi that
+    reads the result, so the only fix it can make stick is on the file it
+    writes. The key is purely informational for a channel holding one
+    locally built package.
+
+    This runs on the cache-hit path too, since a slot built by an earlier
+    mache is poisoned in exactly the same way and is reused as-is.
+    """
+    for repodata in sorted(channel_dir.glob('*/repodata.json')):
+        try:
+            data = json.loads(repodata.read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            # Let whoever reads the channel report what is wrong with it.
+            continue
+
+        info = data.get('info') if isinstance(data, dict) else None
+        if not isinstance(info, dict) or 'repodata_revisions' not in info:
+            continue
+
+        del info['repodata_revisions']
+        try:
+            _write_json_replacing(path=repodata, data=data)
+        except OSError as e:
+            print(
+                f'Warning: could not rewrite {repodata} ({e.strerror}); '
+                'pixi versions older than 0.77 will fail to parse it.'
+            )
+
+
+def _write_json_replacing(*, path: Path, data: dict) -> None:
+    """Replace a JSON file atomically, so no reader sees it half-written.
+
+    Concurrent deploys share the cache and any of them may sanitize a slot.
+    """
+    with tempfile.NamedTemporaryFile(
+        mode='w',
+        encoding='utf-8',
+        dir=path.parent,
+        prefix=f'{path.name}.',
+        suffix='.tmp',
+        delete=False,
+    ) as file_handle:
+        temp_path = Path(file_handle.name)
+        json.dump(data, file_handle)
+
+    try:
+        temp_path.replace(path)
+    except OSError:
+        temp_path.unlink(missing_ok=True)
+        raise
