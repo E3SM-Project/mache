@@ -1,5 +1,7 @@
 import argparse
 import configparser
+import shlex
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -1469,3 +1471,98 @@ def test_get_deployed_spack_env_paths_includes_library_and_software_envs():
     ) == [
         '/opt/spack',
     ]
+
+
+_BASH = shutil.which('bash')
+_requires_bash = pytest.mark.skipif(
+    _BASH is None, reason='bash is not available'
+)
+
+
+def _write_posix_probe_load_script(tmp_path: Path) -> Path:
+    """Render a load script whose activation needs non-POSIX bash."""
+
+    prefix = tmp_path / 'compute'
+    (prefix / '.pixi' / 'envs' / 'default' / 'conda-meta').mkdir(parents=True)
+    (prefix / '.pixi' / 'envs' / 'default' / 'conda-meta' / 'pixi').write_text(
+        '{}\n', encoding='utf-8'
+    )
+
+    # A stand-in for pixi whose `shell-hook` output uses process substitution,
+    # the way the bash-completion files in a real deployed environment do.
+    pixi = tmp_path / 'bin' / 'pixi'
+    pixi.parent.mkdir(parents=True, exist_ok=True)
+    pixi.write_text(
+        '#!/bin/bash\n'
+        "printf '%s\\n' 'while read -r _line; do :; done "
+        '< <(printf "hook\\\\n")\'\n',
+        encoding='utf-8',
+    )
+    pixi.chmod(0o755)
+
+    script_path = deploy_run._write_load_script(
+        prefix=str(prefix),
+        login_env=None,
+        pixi_exe=str(pixi),
+        branch_path=None,
+        load_script_pixi_exe=_explicit_load_script_pixi(str(pixi)),
+        software='polaris',
+        software_version='1.0.0',
+        runtime_version_cmd=None,
+        machine='chrysalis',
+        compute_pixi_mpi='nompi',
+        toolchain_compiler=None,
+        toolchain_mpi=None,
+        spack_library_view=None,
+        spack_activation='',
+    )
+    return Path(script_path).resolve()
+
+
+def _source_load_script(
+    script_path: Path, *, posix: bool
+) -> subprocess.CompletedProcess:
+    command = [str(_BASH)]
+    if posix:
+        command.append('--posix')
+    command += [
+        '-c',
+        f'source {shlex.quote(str(script_path))} && echo SOURCE-OK && '
+        'if [[ -o posix ]]; then echo POSIX-ON; else echo POSIX-OFF; fi',
+    ]
+    return subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@_requires_bash
+def test_load_script_survives_being_sourced_in_posix_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+    script_path = _write_posix_probe_load_script(tmp_path)
+
+    result = _source_load_script(script_path, posix=True)
+
+    assert result.returncode == 0, result.stderr
+    assert 'SOURCE-OK' in result.stdout
+    # The caller started in POSIX mode, so the script must hand it back that
+    # way.
+    assert 'POSIX-ON' in result.stdout
+
+
+@_requires_bash
+def test_load_script_leaves_posix_mode_off_when_caller_had_it_off(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+    script_path = _write_posix_probe_load_script(tmp_path)
+
+    result = _source_load_script(script_path, posix=False)
+
+    assert result.returncode == 0, result.stderr
+    assert 'SOURCE-OK' in result.stdout
+    assert 'POSIX-OFF' in result.stdout
