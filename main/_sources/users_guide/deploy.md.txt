@@ -893,3 +893,22 @@ Cause:
 Fix:
 
 - Use `source load_<software>*.sh` from `bash`.
+
+### The load script cannot be found when sourced from `/bin/sh`
+
+Cause:
+
+- Bash started as `sh` runs in POSIX mode, where `source` no longer searches
+  the current directory for a name without a slash in it. This happens in
+  Python's `subprocess` with `shell=True`, which always uses `/bin/sh`, and in
+  `make` recipes, cron jobs and CI runners.
+
+Fix:
+
+- Source the script by path, e.g. `source ./load_<software>*.sh`, or pass
+  `executable='/bin/bash'` to `subprocess`.
+
+The load script itself turns POSIX mode off while it runs, because pixi
+activation sources files that use bash-only syntax, and restores the caller's
+setting at the end. Only finding the script in the first place needs the fix
+above.

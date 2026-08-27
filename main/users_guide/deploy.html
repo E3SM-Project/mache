@@ -90,6 +90,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#spack-is-enabled-but-deployment-fails-because-spack-path-is-missing">Spack is enabled but deployment fails because <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> is missing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#project-version-is-still-dynamic"><code class="docutils literal notranslate"><span class="pre">project.version</span></code> is still <code class="docutils literal notranslate"><span class="pre">dynamic</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-generated-load-script-fails-when-executed">The generated load script fails when executed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-load-script-cannot-be-found-when-sourced-from-bin-sh">The load script cannot be found when sourced from <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -970,6 +971,25 @@ a standalone executable.</p></li>
 <ul class="simple">
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">load_&lt;software&gt;*.sh</span></code> from <code class="docutils literal notranslate"><span class="pre">bash</span></code>.</p></li>
 </ul>
+</section>
+<section id="the-load-script-cannot-be-found-when-sourced-from-bin-sh">
+<h3>The load script cannot be found when sourced from <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code><a class="headerlink" href="#the-load-script-cannot-be-found-when-sourced-from-bin-sh" title="Link to this heading"></a></h3>
+<p>Cause:</p>
+<ul class="simple">
+<li><p>Bash started as <code class="docutils literal notranslate"><span class="pre">sh</span></code> runs in POSIX mode, where <code class="docutils literal notranslate"><span class="pre">source</span></code> no longer searches
+the current directory for a name without a slash in it. This happens in
+Python’s <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> with <code class="docutils literal notranslate"><span class="pre">shell=True</span></code>, which always uses <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code>, and in
+<code class="docutils literal notranslate"><span class="pre">make</span></code> recipes, cron jobs and CI runners.</p></li>
+</ul>
+<p>Fix:</p>
+<ul class="simple">
+<li><p>Source the script by path, e.g. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">./load_&lt;software&gt;*.sh</span></code>, or pass
+<code class="docutils literal notranslate"><span class="pre">executable='/bin/bash'</span></code> to <code class="docutils literal notranslate"><span class="pre">subprocess</span></code>.</p></li>
+</ul>
+<p>The load script itself turns POSIX mode off while it runs, because pixi
+activation sources files that use bash-only syntax, and restores the caller’s
+setting at the end. Only finding the script in the first place needs the fix
+above.</p>
 </section>
 </section>
 </section>
