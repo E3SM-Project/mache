@@ -1,4 +1,5 @@
 import functools
+import getpass
 import os
 import re
 import subprocess
@@ -121,6 +122,77 @@ def get_slurm_version() -> tuple[int, int] | None:
     if match is None:
         return None
     return int(match.group(1)), int(match.group(2))
+
+
+# Job states in which the allocation still exists and can run job steps.
+# Anything else, COMPLETING included, means the nodes are already on their
+# way back to the scheduler, whatever the environment still says.
+LIVE_JOB_STATES = frozenset({'CONFIGURING', 'RESIZING', 'RUNNING'})
+
+
+def get_slurm_job_state(job_id: str) -> str | None:
+    """
+    Get the state of a Slurm job.
+
+    ``-t all`` is not optional here. Squeue's default state filter hides
+    jobs that have finished, so without it a job that ended within
+    ``MinJobAge`` comes back as an empty listing that reports success, and
+    that cannot be told apart from a healthy query with nothing to say.
+
+    Parameters
+    ----------
+    job_id : str
+        The job id to look up, normally the value of ``SLURM_JOB_ID``.
+
+    Returns
+    -------
+    state : str or None
+        The job's state, such as ``'RUNNING'`` or ``'TIMEOUT'``, or
+        ``None`` if the scheduler has no record of the job id.
+
+    Raises
+    ------
+    RuntimeError
+        If squeue could not be run or could not reach the controller, so
+        that a live job cannot be ruled out.
+    """
+    args = ['squeue', '--noheader', '-t', 'all', '-j', job_id, '-o', '%T']
+    try:
+        process = subprocess.run(
+            args, capture_output=True, text=True, check=False
+        )
+    except OSError as exception:
+        raise RuntimeError(
+            f'Could not run squeue to check whether SLURM job {job_id} is '
+            f'still running: {exception}'
+        ) from exception
+
+    if process.returncode == 0:
+        # a heterogeneous job reports one row per component, and the
+        # components share a fate, so the first row answers the question
+        return process.stdout.strip().split('\n')[0].strip() or None
+
+    # A nonzero exit is either a job id the scheduler has purged or squeue
+    # itself failing, and the exit status alone does not tell those apart.
+    # Asking squeue something that does not mention the job id does: if
+    # that succeeds, squeue is healthy and the job id really is gone.
+    if _squeue_is_responsive():
+        return None
+
+    raise RuntimeError(
+        f'Could not determine whether SLURM job {job_id} is still '
+        f'running. squeue said: {process.stderr.strip()}'
+    )
+
+
+def _squeue_is_responsive() -> bool:
+    """Whether squeue can reach the Slurm controller at all."""
+    args = ['squeue', '--noheader', '-u', getpass.getuser(), '-o', '%i']
+    try:
+        subprocess.run(args, capture_output=True, check=True)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return True
 
 
 class SlurmSystem(ParallelSystem):
