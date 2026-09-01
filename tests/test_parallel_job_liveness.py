@@ -1,8 +1,23 @@
 import subprocess
+from configparser import ConfigParser
 
 import pytest
 
-from mache.parallel.slurm import get_slurm_job_state
+from mache.parallel import get_parallel_system
+from mache.parallel.login import LoginSystem
+from mache.parallel.slurm import SlurmSystem, get_slurm_job_state
+
+
+def _get_config() -> ConfigParser:
+    config = ConfigParser()
+    config.add_section('build')
+    config.set('build', 'compiler', 'gnu')
+    config.add_section('parallel')
+    config.set('parallel', 'system', 'slurm')
+    config.set('parallel', 'parallel_executable', 'srun')
+    config.set('parallel', 'cores_per_node', '128')
+    config.set('parallel', 'login_cores', '4')
+    return config
 
 
 class _FakeProcess:
@@ -36,6 +51,13 @@ class _FakeSqueue:
         if not self.responsive:
             raise subprocess.CalledProcessError(1, args)
         return _FakeProcess(0)
+
+
+class _NoSqueue:
+    """Stand-in for ``subprocess.run`` that fails if it is ever called."""
+
+    def __call__(self, args, **kwargs):
+        raise AssertionError(f'squeue should not have been run: {args}')
 
 
 def _patch_squeue(monkeypatch, fake) -> None:
@@ -108,3 +130,63 @@ def test_job_state_squeue_missing(monkeypatch):
 
     with pytest.raises(RuntimeError, match='Could not run squeue'):
         get_slurm_job_state('12345')
+
+
+def test_parallel_system_live_allocation(monkeypatch):
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    _patch_squeue(monkeypatch, _FakeSqueue(_FakeProcess(0, stdout='RUNNING')))
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 4
+    )
+
+    system = get_parallel_system(_get_config())
+
+    assert isinstance(system, SlurmSystem)
+    assert system.nodes == 4
+
+
+def test_parallel_system_expired_allocation(monkeypatch):
+    """This is cbegeman's case: a salloc shell outliving its allocation."""
+    monkeypatch.setenv('SLURM_JOB_ID', '1278760')
+    _patch_squeue(monkeypatch, _FakeSqueue(_FakeProcess(0, stdout='TIMEOUT')))
+
+    with pytest.warns(UserWarning, match='1278760.*TIMEOUT'):
+        system = get_parallel_system(_get_config())
+
+    assert isinstance(system, LoginSystem)
+    assert not system.mpi_allowed
+
+
+def test_parallel_system_purged_allocation(monkeypatch):
+    monkeypatch.setenv('SLURM_JOB_ID', '1278760')
+    _patch_squeue(
+        monkeypatch,
+        _FakeSqueue(_FakeProcess(1, stderr='Invalid job id specified')),
+    )
+
+    with pytest.warns(UserWarning, match='no record of that job'):
+        system = get_parallel_system(_get_config())
+
+    assert isinstance(system, LoginSystem)
+
+
+def test_parallel_system_squeue_unreachable(monkeypatch):
+    """Do not quietly demote a real allocation when squeue cannot answer."""
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    _patch_squeue(
+        monkeypatch,
+        _FakeSqueue(
+            _FakeProcess(1, stderr='Unable to contact slurm controller'),
+            responsive=False,
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match='Unable to contact'):
+        get_parallel_system(_get_config())
+
+
+def test_parallel_system_no_job_id_does_not_ask(monkeypatch):
+    monkeypatch.delenv('SLURM_JOB_ID', raising=False)
+    _patch_squeue(monkeypatch, _NoSqueue())
+
+    assert isinstance(get_parallel_system(_get_config()), LoginSystem)
