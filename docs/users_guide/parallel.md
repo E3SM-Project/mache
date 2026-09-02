@@ -41,6 +41,13 @@ machine's configured launcher and resource flags. On login nodes for `slurm`
 or `pbs` systems, `get_parallel_system()` falls back to `login`, where MPI is
 intentionally disabled.
 
+For `slurm` systems, `get_parallel_system()` also falls back to `login` when
+`SLURM_JOB_ID` is set but the allocation it names has already ended. `salloc`
+does not kill its shell when the allocation is revoked, so that shell keeps the
+variable and goes on claiming nodes it no longer has. mache asks the scheduler
+and warns before falling back. If the scheduler cannot be reached at all, it
+raises instead, rather than quietly demoting a real allocation to a login node.
+
 ## GPU-per-task flags
 
 When `gpus_per_task > 0` is passed to `get_parallel_command()`:

@@ -103,6 +103,7 @@ documentation.
     SlurmSystem.get_slurm_options
     SlurmSystem.resolve_slurm_options
     get_slurm_version
+    get_slurm_job_state
 ```
 
 ```{eval-rst}
