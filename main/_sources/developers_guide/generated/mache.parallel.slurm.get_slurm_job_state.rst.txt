@@ -1,0 +1,6 @@
+﻿mache.parallel.slurm.get\_slurm\_job\_state
+===========================================
+
+.. currentmodule:: mache.parallel.slurm
+
+.. autofunction:: get_slurm_job_state

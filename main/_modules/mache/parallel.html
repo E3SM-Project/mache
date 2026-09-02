@@ -95,6 +95,7 @@
              
   <h1>Source code for mache.parallel</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.login</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginSystem</span>
@@ -109,7 +110,11 @@
     <span class="n">ResourcePlacement</span> <span class="k">as</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.single_node</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleNodeSystem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmSystem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LIVE_JOB_STATES</span><span class="p">,</span>
+    <span class="n">SlurmSystem</span><span class="p">,</span>
+    <span class="n">get_slurm_job_state</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>
 
 <span class="n">JOB_ENV_VARS</span> <span class="o">=</span> <span class="p">{</span>
@@ -127,6 +132,15 @@
             <span class="n">system</span> <span class="o">=</span> <span class="s1">'login'</span>
             <span class="k">break</span>
 
+    <span class="c1"># SLURM_JOB_ID only says a job id was handed out at some point. salloc</span>
+    <span class="c1"># does not kill its shell when the allocation ends, so that shell keeps</span>
+    <span class="c1"># the variable and goes on claiming an allocation it no longer has.</span>
+    <span class="c1"># Only the scheduler can settle it.</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'slurm'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_slurm_job_is_active</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'SLURM_JOB_ID'</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="s1">'login'</span>
+
     <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'slurm'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SlurmSystem</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'pbs'</span><span class="p">:</span>
@@ -138,6 +152,26 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Unexpected parallel system: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_slurm_job_is_active</span><span class="p">(</span><span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether the job still holds an allocation, warning if it does not."""</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">get_slurm_job_state</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">LIVE_JOB_STATES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="s1">'the scheduler has no record of that job'</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'that job is </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s1">'</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'SLURM_JOB_ID=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s1"> is set but </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s1">. This shell has '</span>
+        <span class="sa">f</span><span class="s1">'outlived its allocation, so mache is falling back to the login '</span>
+        <span class="sa">f</span><span class="s1">'system. Start a new allocation, or unset SLURM_JOB_ID to '</span>
+        <span class="sa">f</span><span class="s1">'silence this warning.'</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 
            </div>

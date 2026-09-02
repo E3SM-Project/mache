@@ -161,6 +161,12 @@ workloads based on each machine’s config file.</p>
 machine’s configured launcher and resource flags. On login nodes for <code class="docutils literal notranslate"><span class="pre">slurm</span></code>
 or <code class="docutils literal notranslate"><span class="pre">pbs</span></code> systems, <code class="docutils literal notranslate"><span class="pre">get_parallel_system()</span></code> falls back to <code class="docutils literal notranslate"><span class="pre">login</span></code>, where MPI is
 intentionally disabled.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">slurm</span></code> systems, <code class="docutils literal notranslate"><span class="pre">get_parallel_system()</span></code> also falls back to <code class="docutils literal notranslate"><span class="pre">login</span></code> when
+<code class="docutils literal notranslate"><span class="pre">SLURM_JOB_ID</span></code> is set but the allocation it names has already ended. <code class="docutils literal notranslate"><span class="pre">salloc</span></code>
+does not kill its shell when the allocation is revoked, so that shell keeps the
+variable and goes on claiming nodes it no longer has. mache asks the scheduler
+and warns before falling back. If the scheduler cannot be reached at all, it
+raises instead, rather than quietly demoting a real allocation to a login node.</p>
 </section>
 <section id="gpu-per-task-flags">
 <h2>GPU-per-task flags<a class="headerlink" href="#gpu-per-task-flags" title="Link to this heading"></a></h2>

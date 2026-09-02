@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mache.parallel.pbs.PbsSystem</title>
+  <title>mache.parallel.slurm.get_slurm_job_state</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.pbs.PbsSystem.get_pbs_options" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html" />
-    <link rel="prev" title="mache.parallel.pbs.PbsOptions" href="mache.parallel.pbs.PbsOptions.html" />
+    <link rel="next" title="mache.parallel.pbs.PbsOptions" href="mache.parallel.pbs.PbsOptions.html" />
+    <link rel="prev" title="mache.parallel.slurm.get_slurm_version" href="mache.parallel.slurm.get_slurm_version.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -88,12 +88,12 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.get_slurm_version.html">mache.parallel.slurm.get_slurm_version</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.get_slurm_job_state.html">mache.parallel.slurm.get_slurm_job_state</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.pbs.PbsSystem</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.pbs.PbsSystem"><code class="docutils literal notranslate"><span class="pre">PbsSystem</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.slurm.get_slurm_job_state</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.slurm.get_slurm_job_state"><code class="docutils literal notranslate"><span class="pre">get_slurm_job_state()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsOptions.html">mache.parallel.pbs.PbsOptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.html">mache.parallel.pbs.PbsSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html">mache.parallel.pbs.PbsSystem.get_pbs_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html">mache.parallel.pbs.PbsSystem.resolve_pbs_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.pbs.is_pals_launcher.html">mache.parallel.pbs.is_pals_launcher</a></li>
@@ -127,9 +127,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../api.html">API reference</a></li>
-      <li class="breadcrumb-item active">mache.parallel.pbs.PbsSystem</li>
+      <li class="breadcrumb-item active">mache.parallel.slurm.get_slurm_job_state</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/developers_guide/generated/mache.parallel.pbs.PbsSystem.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/developers_guide/generated/mache.parallel.slurm.get_slurm_job_state.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -137,63 +137,29 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mache-parallel-pbs-pbssystem">
-<h1>mache.parallel.pbs.PbsSystem<a class="headerlink" href="#mache-parallel-pbs-pbssystem" title="Link to this heading"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="mache.parallel.pbs.PbsSystem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mache.parallel.pbs.</span></span><span class="sig-name descname"><span class="pre">PbsSystem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/parallel/pbs.html#PbsSystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.pbs.PbsSystem" title="Link to this definition"></a></dt>
-<dd><p>PBS resource manager for parallel jobs.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="mache.parallel.pbs.PbsSystem.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/parallel/pbs.html#PbsSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.pbs.PbsSystem.__init__" title="Link to this definition"></a></dt>
-<dd><p>Set available resources for the parallel system based on the config.</p>
+  <section id="mache-parallel-slurm-get-slurm-job-state">
+<h1>mache.parallel.slurm.get_slurm_job_state<a class="headerlink" href="#mache-parallel-slurm-get-slurm-job-state" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="mache.parallel.slurm.get_slurm_job_state">
+<span class="sig-prename descclassname"><span class="pre">mache.parallel.slurm.</span></span><span class="sig-name descname"><span class="pre">get_slurm_job_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../../_modules/mache/parallel/slurm.html#get_slurm_job_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.slurm.get_slurm_job_state" title="Link to this definition"></a></dt>
+<dd><p>Get the state of a Slurm job.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">all</span></code> is not optional here. Squeue’s default state filter hides
+jobs that have finished, so without it a job that ended within
+<code class="docutils literal notranslate"><span class="pre">MinJobAge</span></code> comes back as an empty listing that reports success, and
+that cannot be told apart from a healthy query with nothing to say.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<em>ConfigParser</em>) – The configuration parser containing the parallel system options.</p>
+<dd class="field-odd"><p><strong>job_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The job id to look up, normally the value of <code class="docutils literal notranslate"><span class="pre">SLURM_JOB_ID</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>state</strong> (<em>str or None</em>) – The job’s state, such as <code class="docutils literal notranslate"><span class="pre">'RUNNING'</span></code> or <code class="docutils literal notranslate"><span class="pre">'TIMEOUT'</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if the scheduler has no record of the job id.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If squeue could not be run or could not reach the controller, so
+    that a live job cannot be ruled out.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<p class="rubric">Methods</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#mache.parallel.pbs.PbsSystem.__init__" title="mache.parallel.pbs.PbsSystem.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(config)</p></td>
-<td><p>Set available resources for the parallel system based on the config.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config</span></code>(key[, default])</p></td>
-<td><p>Get a config value from the parallel configs.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_int</span></code>(key[, default])</p></td>
-<td><p>Get an integer config value from the parallel configs.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_command</span></code>(args, ntasks[, ...])</p></td>
-<td><p>Get the parallel execution command for the current system.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.pbs.PbsSystem.get_pbs_options.html#mache.parallel.pbs.PbsSystem.get_pbs_options" title="mache.parallel.pbs.PbsSystem.get_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
-<td><p>Get PBS submission options for a requested node count.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scheduler_target</span></code>(config, target_type, nodes)</p></td>
-<td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options" title="mache.parallel.pbs.PbsSystem.resolve_pbs_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_pbs_options</span></code></a>(config, nodes[, ...])</p></td>
-<td><p>Get PBS submission options for a requested node count.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_submission</span></code>(config, nodes, target_type)</p></td>
-<td><p>Resolve a scheduler target and effective node count.</p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">memory_cap_support</span></code></p></td>
-<td><p>Whether this machine will hold a launch to a memory cap.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">placement_support</span></code></p></td>
-<td><p>The placement mechanism available on this machine.</p></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </section>
@@ -202,8 +168,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="mache.parallel.pbs.PbsOptions.html" class="btn btn-neutral float-left" title="mache.parallel.pbs.PbsOptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.pbs.PbsSystem.get_pbs_options.html" class="btn btn-neutral float-right" title="mache.parallel.pbs.PbsSystem.get_pbs_options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.slurm.get_slurm_version.html" class="btn btn-neutral float-left" title="mache.parallel.slurm.get_slurm_version" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mache.parallel.pbs.PbsOptions.html" class="btn btn-neutral float-right" title="mache.parallel.pbs.PbsOptions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

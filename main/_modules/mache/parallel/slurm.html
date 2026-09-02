@@ -96,6 +96,7 @@
              
   <h1>Source code for mache.parallel.slurm</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">getpass</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
@@ -224,6 +225,80 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span></div>
 
+
+
+<span class="c1"># Job states in which the allocation still exists and can run job steps.</span>
+<span class="c1"># Anything else, COMPLETING included, means the nodes are already on their</span>
+<span class="c1"># way back to the scheduler, whatever the environment still says.</span>
+<span class="n">LIVE_JOB_STATES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">'CONFIGURING'</span><span class="p">,</span> <span class="s1">'RESIZING'</span><span class="p">,</span> <span class="s1">'RUNNING'</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="get_slurm_job_state">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.get_slurm_job_state.html#mache.parallel.slurm.get_slurm_job_state">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_slurm_job_state</span><span class="p">(</span><span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Get the state of a Slurm job.</span>
+
+<span class="sd">    ``-t all`` is not optional here. Squeue's default state filter hides</span>
+<span class="sd">    jobs that have finished, so without it a job that ended within</span>
+<span class="sd">    ``MinJobAge`` comes back as an empty listing that reports success, and</span>
+<span class="sd">    that cannot be told apart from a healthy query with nothing to say.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    job_id : str</span>
+<span class="sd">        The job id to look up, normally the value of ``SLURM_JOB_ID``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    state : str or None</span>
+<span class="sd">        The job's state, such as ``'RUNNING'`` or ``'TIMEOUT'``, or</span>
+<span class="sd">        ``None`` if the scheduler has no record of the job id.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If squeue could not be run or could not reach the controller, so</span>
+<span class="sd">        that a live job cannot be ruled out.</span>
+<span class="sd">    """</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'squeue'</span><span class="p">,</span> <span class="s1">'--noheader'</span><span class="p">,</span> <span class="s1">'-t'</span><span class="p">,</span> <span class="s1">'all'</span><span class="p">,</span> <span class="s1">'-j'</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="s1">'-o'</span><span class="p">,</span> <span class="s1">'%T'</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exception</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Could not run squeue to check whether SLURM job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s1"> is '</span>
+            <span class="sa">f</span><span class="s1">'still running: </span><span class="si">{</span><span class="n">exception</span><span class="si">}</span><span class="s1">'</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exception</span>
+
+    <span class="k">if</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># a heterogeneous job reports one row per component, and the</span>
+        <span class="c1"># components share a fate, so the first row answers the question</span>
+        <span class="k">return</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="c1"># A nonzero exit is either a job id the scheduler has purged or squeue</span>
+    <span class="c1"># itself failing, and the exit status alone does not tell those apart.</span>
+    <span class="c1"># Asking squeue something that does not mention the job id does: if</span>
+    <span class="c1"># that succeeds, squeue is healthy and the job id really is gone.</span>
+    <span class="k">if</span> <span class="n">_squeue_is_responsive</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'Could not determine whether SLURM job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s1"> is still '</span>
+        <span class="sa">f</span><span class="s1">'running. squeue said: </span><span class="si">{</span><span class="n">process</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s1">'</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_squeue_is_responsive</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether squeue can reach the Slurm controller at all."""</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'squeue'</span><span class="p">,</span> <span class="s1">'--noheader'</span><span class="p">,</span> <span class="s1">'-u'</span><span class="p">,</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getuser</span><span class="p">(),</span> <span class="s1">'-o'</span><span class="p">,</span> <span class="s1">'</span><span class="si">%i</span><span class="s1">'</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="SlurmSystem">
