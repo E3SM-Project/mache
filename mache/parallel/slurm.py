@@ -282,6 +282,46 @@ def _short_hostname(name: str) -> str:
     return name.strip().split('.')[0]
 
 
+def _get_node_count(job_id: str) -> int:
+    """
+    Get how many nodes a Slurm allocation holds.
+
+    The job's own environment carries the count, so the usual answer costs
+    nothing at all. squeue is the fallback for an environment that has the
+    job id and not the count, and it is a question the controller has to
+    answer -- which matters because a caller that starts a process per unit
+    of work would otherwise ask it once per process, and sites ask that
+    batch-system queries stay to a couple a minute in aggregate.
+
+    Parameters
+    ----------
+    job_id : str
+        The job id to fall back to asking about.
+
+    Returns
+    -------
+    nodes : int
+        The number of nodes in the allocation.
+    """
+    for variable in ('SLURM_JOB_NUM_NODES', 'SLURM_NNODES'):
+        value = os.environ.get(variable)
+        if value is None:
+            continue
+        try:
+            return int(value)
+        except ValueError:
+            # a variable that is set to something unusable is worth saying
+            # so about rather than silently falling back, since the fallback
+            # hides it every time
+            warnings.warn(
+                f'{variable} is set to {value!r}, which is not a node count. '
+                f'Asking squeue instead.',
+                stacklevel=2,
+            )
+    args = ['squeue', '--noheader', '-j', job_id, '-o', '%D']
+    return _get_subprocess_int(args)
+
+
 class SlurmSystem(ParallelSystem):
     """SLURM resource manager for parallel jobs."""
 
@@ -302,8 +342,7 @@ class SlurmSystem(ParallelSystem):
                 'cores_per_node must be set in the config for the slurm '
                 'system.'
             )
-        args = ['squeue', '--noheader', '-j', job_id, '-o', '%D']
-        nodes = _get_subprocess_int(args)
+        nodes = _get_node_count(job_id)
         cores = cores_per_node * nodes
         self.cores = cores
         self.cores_per_node = cores_per_node
@@ -319,6 +358,17 @@ class SlurmSystem(ParallelSystem):
         )
         if self.memory_per_node is not None:
             self.memory = self.memory_per_node * nodes
+
+    def _read_node_names(self) -> List[str] | None:
+        """
+        Read the hostnames of the allocation's nodes.
+
+        This is the same expansion the local liveness check makes, so it
+        shares the helper rather than repeating it. The two want different
+        answers for an allocation that names no nodes: nothing to check
+        against there, and nothing to report here.
+        """
+        return _expand_job_nodelist() or None
 
     @classmethod
     def resolve_slurm_options(

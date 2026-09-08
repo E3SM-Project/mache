@@ -352,6 +352,36 @@ know which flags a given site takes.
 A call without a placement produces exactly the command it produced before
 this feature existed.
 
+### Finding the nodes to place onto
+
+A placement names nodes, so a caller has to know what they are called.
+`node_names` gives the hostnames of the nodes the allocation holds, in the
+order the batch system lists them:
+
+```python
+names = parallel_system.node_names
+if names is None:
+    print("this system does not name its nodes")
+else:
+    print(f"the allocation holds {names}")
+```
+
+It is `None` on a system with no allocation to describe, such as a login
+node. On Slurm it comes from expanding the hostlist expression the job's own
+environment carries; on PBS it comes from the job's node file, with repeats
+dropped where a site writes one line per rank slot; on `single_node` it is
+the machine's own hostname.
+
+The names are read the first time they are asked for rather than when the
+system is built, which matters for a caller that starts a process per unit of
+work: only the process laying out placements pays for it.
+
+For the same reason, the node *count* comes from the job's environment where
+that carries it, and the batch system is asked only when it does not. A
+caller running many short processes inside one allocation would otherwise ask
+the scheduler once per process, and sites ask that batch-system queries stay
+to a couple a minute in aggregate.
+
 ### Checking what a machine supports
 
 Not every machine can confine a launch. Check before running things

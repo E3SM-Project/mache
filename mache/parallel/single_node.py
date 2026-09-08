@@ -1,4 +1,5 @@
 import multiprocessing
+import platform
 import shutil
 from configparser import ConfigParser
 from typing import List
@@ -43,6 +44,17 @@ class SingleNodeSystem(ParallelSystem):
             'memory_per_node', default=None
         )
         self.memory = self.memory_per_node
+
+    def _read_node_names(self) -> List[str] | None:
+        """
+        Read the hostname of the one node this system is.
+
+        There is no batch system to name it, so it names itself. A caller
+        laying out placements does not have to special-case a machine with no
+        scheduler on it.
+        """
+        name = platform.node()
+        return [name] if name != '' else None
 
     @property
     def placement_support(self) -> PlacementSupport:

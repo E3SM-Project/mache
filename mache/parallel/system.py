@@ -1,4 +1,6 @@
+import functools
 import subprocess
+import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Literal, overload
@@ -86,6 +88,10 @@ class ParallelSystem:
     nodes : int
         The total number of nodes available on the system.
 
+    node_names : list of str or None
+        The hostnames of those nodes, or ``None`` where the system does not
+        name them. Read on first use rather than at construction.
+
     mpi_allowed : bool
         Whether MPI execution is allowed on the system.
     """
@@ -108,6 +114,37 @@ class ParallelSystem:
         self.memory_per_node: int | None = None
         self.nodes: int | None = None
         self.mpi_allowed: bool | None = None
+
+    @functools.cached_property
+    def node_names(self) -> List[str] | None:
+        """
+        The hostnames of the nodes this system holds, in the order the batch
+        system lists them, or ``None`` where it does not name them.
+
+        A caller running several launches at once inside one allocation needs
+        the names, because a
+        :py:class:`~mache.parallel.placement.ResourcePlacement` says which
+        nodes a launch may use by name. Nothing else does, so the names are
+        read the first time they are asked for rather than when the system is
+        built: on Slurm reading them costs a subprocess, and a caller that
+        starts a process per unit of work would otherwise pay it once per
+        process.
+        """
+        names = self._read_node_names()
+        if names is not None and self.nodes is not None:
+            if len(names) != self.nodes:
+                warnings.warn(
+                    f'This allocation reports {self.nodes} nodes but names '
+                    f'{len(names)} of them: {names}. Placing launches onto '
+                    f'nodes uses the names, so the count is the one to '
+                    f'distrust.',
+                    stacklevel=2,
+                )
+        return names
+
+    def _read_node_names(self) -> List[str] | None:
+        """Read the hostnames this system holds, or ``None`` if unnamed."""
+        return None
 
     @property
     def placement_support(self) -> PlacementSupport:
