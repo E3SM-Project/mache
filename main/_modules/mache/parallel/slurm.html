@@ -99,6 +99,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">getpass</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
@@ -299,6 +300,95 @@
     <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="running_on_allocated_node">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.running_on_allocated_node.html#mache.parallel.slurm.running_on_allocated_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">running_on_allocated_node</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Whether this process is running on one of its allocation's own nodes.</span>
+
+<span class="sd">    A process cannot still be running on a node of a finished allocation,</span>
+<span class="sd">    because Slurm kills a job's processes before it releases its nodes. So</span>
+<span class="sd">    a host that appears in the job's node list settles that the allocation</span>
+<span class="sd">    is live, and settles it locally: nothing here asks the controller</span>
+<span class="sd">    anything, which matters to a caller that starts a process per unit of</span>
+<span class="sd">    work and would otherwise query once per process.</span>
+
+<span class="sd">    The answer is one way only. ``False`` means the question was not</span>
+<span class="sd">    settled here, not that the allocation has ended. A batch script's node</span>
+<span class="sd">    matches; a login shell still carrying ``SLURM_JOB_ID`` does not, and</span>
+<span class="sd">    only the controller can say whether its allocation survives.</span>
+
+<span class="sd">    There is one window where this and the controller disagree. Slurm</span>
+<span class="sd">    kills a job's processes ``KillWait`` seconds after it starts ending</span>
+<span class="sd">    them, and the job is ``COMPLETING`` throughout, which is not a live</span>
+<span class="sd">    state. A process still alive in that window is on an allocated node</span>
+<span class="sd">    while its job is ending, and this reports it live. It tracks the</span>
+<span class="sd">    site's ``KillWait``: 88.4 s against a configured 90 on Chrysalis, and</span>
+<span class="sd">    27.1 s against a configured 30 on Perlmutter. The process it affects</span>
+<span class="sd">    is one already being torn down and about to be killed outright.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    on_node : bool</span>
+<span class="sd">        ``True`` if this host is one of the allocation's nodes, ``False``</span>
+<span class="sd">        if it is not or if that could not be established locally.</span>
+<span class="sd">    """</span>
+    <span class="c1"># gethostname() rather than getfqdn(): the two disagree on Perlmutter,</span>
+    <span class="c1"># where a compute node calls itself nid005097 but its fully qualified</span>
+    <span class="c1"># names are nid005097-hsn0 and x1105c0s0b0n1h0.chn.perlmutter.nersc.gov</span>
+    <span class="c1"># -- neither of which reduces to what Slurm calls that node.</span>
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">_short_hostname</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hostname</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># slurmd names the node it launched this job on, so a batch script's</span>
+    <span class="c1"># own node is free to check. The hostname comparison is what makes the</span>
+    <span class="c1"># variable trustworthy: a child that inherited it and then moved to</span>
+    <span class="c1"># another host does not match.</span>
+    <span class="n">node_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'SLURMD_NODENAME'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_name</span> <span class="ow">and</span> <span class="n">_short_hostname</span><span class="p">(</span><span class="n">node_name</span><span class="p">)</span> <span class="o">==</span> <span class="n">hostname</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">_short_hostname</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="n">hostname</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_expand_job_nodelist</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_expand_job_nodelist</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Expand the allocation's node list into individual hostnames.</span>
+
+<span class="sd">    Slurm carries the list in the job's own environment, compressed into a</span>
+<span class="sd">    hostlist expression such as ``nid[001-004,007]``. ``scontrol show</span>
+<span class="sd">    hostnames`` expands one without contacting the controller, and it is</span>
+<span class="sd">    given the expression explicitly rather than left to read the</span>
+<span class="sd">    environment itself, so that what was expanded is visible in the code</span>
+<span class="sd">    and in any error.</span>
+<span class="sd">    """</span>
+    <span class="n">nodelist</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'SLURM_JOB_NODELIST'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s1">'SLURM_NODELIST'</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nodelist</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'scontrol'</span><span class="p">,</span> <span class="s1">'show'</span><span class="p">,</span> <span class="s1">'hostnames'</span><span class="p">,</span> <span class="n">nodelist</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">_get_subprocess_str</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_short_hostname</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    The host part of a name, so a short name and an FQDN compare equal.</span>
+
+<span class="sd">    What ``socket.gethostname()`` returns need not be spelled the way</span>
+<span class="sd">    Slurm spells the same node, and the difference is the domain.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="SlurmSystem">

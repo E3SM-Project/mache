@@ -1,0 +1,6 @@
+﻿mache.parallel.slurm.running\_on\_allocated\_node
+=================================================
+
+.. currentmodule:: mache.parallel.slurm
+
+.. autofunction:: running_on_allocated_node

@@ -114,6 +114,7 @@
     <span class="n">LIVE_JOB_STATES</span><span class="p">,</span>
     <span class="n">SlurmSystem</span><span class="p">,</span>
     <span class="n">get_slurm_job_state</span><span class="p">,</span>
+    <span class="n">running_on_allocated_node</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSystem</span>
 
@@ -135,9 +136,17 @@
     <span class="c1"># SLURM_JOB_ID only says a job id was handed out at some point. salloc</span>
     <span class="c1"># does not kill its shell when the allocation ends, so that shell keeps</span>
     <span class="c1"># the variable and goes on claiming an allocation it no longer has.</span>
-    <span class="c1"># Only the scheduler can settle it.</span>
-    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s1">'slurm'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_slurm_job_is_active</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'SLURM_JOB_ID'</span><span class="p">]</span>
+    <span class="c1">#</span>
+    <span class="c1"># Running on one of the allocation's own nodes settles that locally and</span>
+    <span class="c1"># for free, since Slurm kills a job's processes before it releases its</span>
+    <span class="c1"># nodes. That covers a batch job, which is what a caller running a</span>
+    <span class="c1"># process per unit of work is. Anything else -- a login shell that</span>
+    <span class="c1"># still carries the variable, which is the case this check was added</span>
+    <span class="c1"># for -- only the scheduler can settle, so it is asked.</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">system</span> <span class="o">==</span> <span class="s1">'slurm'</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">running_on_allocated_node</span><span class="p">()</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">_slurm_job_is_active</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'SLURM_JOB_ID'</span><span class="p">])</span>
     <span class="p">):</span>
         <span class="n">system</span> <span class="o">=</span> <span class="s1">'login'</span>
 
