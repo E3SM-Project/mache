@@ -2,6 +2,7 @@ import functools
 import getpass
 import os
 import re
+import socket
 import subprocess
 import warnings
 from configparser import ConfigParser
@@ -193,6 +194,79 @@ def _squeue_is_responsive() -> bool:
     except (OSError, subprocess.SubprocessError):
         return False
     return True
+
+
+def running_on_allocated_node() -> bool:
+    """
+    Whether this process is running on one of its allocation's own nodes.
+
+    A process cannot still be running on a node of a finished allocation,
+    because Slurm kills a job's processes before it releases its nodes. So
+    a host that appears in the job's node list settles that the allocation
+    is live, and settles it locally: nothing here asks the controller
+    anything, which matters to a caller that starts a process per unit of
+    work and would otherwise query once per process.
+
+    The answer is one way only. ``False`` means the question was not
+    settled here, not that the allocation has ended. A batch script's node
+    matches; a login shell still carrying ``SLURM_JOB_ID`` does not, and
+    only the controller can say whether its allocation survives.
+
+    Returns
+    -------
+    on_node : bool
+        ``True`` if this host is one of the allocation's nodes, ``False``
+        if it is not or if that could not be established locally.
+    """
+    hostname = _short_hostname(socket.gethostname())
+    if not hostname:
+        return False
+
+    # slurmd names the node it launched this job on, so a batch script's
+    # own node is free to check. The hostname comparison is what makes the
+    # variable trustworthy: a child that inherited it and then moved to
+    # another host does not match.
+    node_name = os.environ.get('SLURMD_NODENAME')
+    if node_name and _short_hostname(node_name) == hostname:
+        return True
+
+    return any(
+        _short_hostname(name) == hostname for name in _expand_job_nodelist()
+    )
+
+
+def _expand_job_nodelist() -> List[str]:
+    """
+    Expand the allocation's node list into individual hostnames.
+
+    Slurm carries the list in the job's own environment, compressed into a
+    hostlist expression such as ``nid[001-004,007]``. ``scontrol show
+    hostnames`` expands one without contacting the controller, and it is
+    given the expression explicitly rather than left to read the
+    environment itself, so that what was expanded is visible in the code
+    and in any error.
+    """
+    nodelist = os.environ.get('SLURM_JOB_NODELIST') or os.environ.get(
+        'SLURM_NODELIST'
+    )
+    if not nodelist:
+        return []
+    args = ['scontrol', 'show', 'hostnames', nodelist]
+    try:
+        output = _get_subprocess_str(args)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return output.split()
+
+
+def _short_hostname(name: str) -> str:
+    """
+    The host part of a name, so a short name and an FQDN compare equal.
+
+    What ``socket.gethostname()`` returns need not be spelled the way
+    Slurm spells the same node, and the difference is the domain.
+    """
+    return name.strip().split('.')[0]
 
 
 class SlurmSystem(ParallelSystem):

@@ -5,7 +5,27 @@ import pytest
 
 from mache.parallel import get_parallel_system
 from mache.parallel.login import LoginSystem
-from mache.parallel.slurm import SlurmSystem, get_slurm_job_state
+from mache.parallel.slurm import (
+    SlurmSystem,
+    get_slurm_job_state,
+    running_on_allocated_node,
+)
+
+# every variable that could make a test look as though it were running on
+# one of an allocation's nodes
+NODE_ENV_VARS = ('SLURMD_NODENAME', 'SLURM_JOB_NODELIST', 'SLURM_NODELIST')
+
+
+@pytest.fixture(autouse=True)
+def off_allocated_nodes(monkeypatch):
+    """
+    Answer the local fast path with "not on a node" unless a test says so.
+
+    Otherwise a suite run from inside an allocation would take the fast
+    path and never reach the squeue behavior these tests are about.
+    """
+    for variable in NODE_ENV_VARS:
+        monkeypatch.delenv(variable, raising=False)
 
 
 def _get_config() -> ConfigParser:
@@ -190,3 +210,143 @@ def test_parallel_system_no_job_id_does_not_ask(monkeypatch):
     _patch_squeue(monkeypatch, _NoSqueue())
 
     assert isinstance(get_parallel_system(_get_config()), LoginSystem)
+
+
+def _fake_hostname(monkeypatch, hostname: str) -> None:
+    monkeypatch.setattr(
+        'mache.parallel.slurm.socket.gethostname', lambda: hostname
+    )
+
+
+def _fake_hostname_expansion(monkeypatch, names: list[str]) -> list[list[str]]:
+    """Stand in for ``scontrol show hostnames``, recording what it expanded."""
+    expanded: list[list[str]] = []
+
+    def fake(args):
+        expanded.append(list(args))
+        return '\n'.join(names)
+
+    monkeypatch.setattr('mache.parallel.slurm._get_subprocess_str', fake)
+    return expanded
+
+
+class _NoExpansion:
+    """Stand-in for the expansion that fails if it is ever called."""
+
+    def __call__(self, args):
+        raise AssertionError(f'scontrol should not have been run: {args}')
+
+
+def test_on_allocated_node_from_slurmd_nodename(monkeypatch):
+    """The node slurmd launched the job on costs nothing to recognize."""
+    monkeypatch.setenv('SLURMD_NODENAME', 'chr-0123')
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'chr-[0123-0125]')
+    _fake_hostname(monkeypatch, 'chr-0123')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_str', _NoExpansion()
+    )
+
+    assert running_on_allocated_node()
+
+
+def test_on_allocated_node_compares_short_names(monkeypatch):
+    """An FQDN from the host and a short name from Slurm are the same node."""
+    monkeypatch.setenv('SLURMD_NODENAME', 'nid001234')
+    _fake_hostname(monkeypatch, 'nid001234.hsn.cm.perlmutter.nersc.gov')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_str', _NoExpansion()
+    )
+
+    assert running_on_allocated_node()
+
+
+def test_on_allocated_node_from_nodelist(monkeypatch):
+    """Without SLURMD_NODENAME the node list is expanded and searched."""
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'nid[001234-001236]')
+    _fake_hostname(monkeypatch, 'nid001236')
+    expanded = _fake_hostname_expansion(
+        monkeypatch, ['nid001234', 'nid001235', 'nid001236']
+    )
+
+    assert running_on_allocated_node()
+    # the expression is passed explicitly, not left to the environment
+    assert expanded == [
+        ['scontrol', 'show', 'hostnames', 'nid[001234-001236]']
+    ]
+
+
+def test_on_allocated_node_falls_back_to_slurm_nodelist(monkeypatch):
+    monkeypatch.setenv('SLURM_NODELIST', 'chr-0123')
+    _fake_hostname(monkeypatch, 'chr-0123')
+    _fake_hostname_expansion(monkeypatch, ['chr-0123'])
+
+    assert running_on_allocated_node()
+
+
+def test_off_allocated_node_with_inherited_nodename(monkeypatch):
+    """
+    A variable inherited on another host must not answer for that host.
+
+    This is the case the check exists to keep working: a shell that carries
+    a job's environment but does not run on any of its nodes.
+    """
+    monkeypatch.setenv('SLURMD_NODENAME', 'chr-0123')
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'chr-[0123-0125]')
+    _fake_hostname(monkeypatch, 'chrlogin1')
+    _fake_hostname_expansion(monkeypatch, ['chr-0123', 'chr-0124', 'chr-0125'])
+
+    assert not running_on_allocated_node()
+
+
+def test_off_allocated_node_without_a_nodelist(monkeypatch):
+    _fake_hostname(monkeypatch, 'chrlogin1')
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_str', _NoExpansion()
+    )
+
+    assert not running_on_allocated_node()
+
+
+def test_off_allocated_node_when_scontrol_is_missing(monkeypatch):
+    """An expansion that cannot be run leaves the question to the scheduler."""
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'nid[001234-001236]')
+    _fake_hostname(monkeypatch, 'nid001236')
+
+    def fake(args):
+        raise FileNotFoundError('no scontrol here')
+
+    monkeypatch.setattr('mache.parallel.slurm._get_subprocess_str', fake)
+
+    assert not running_on_allocated_node()
+
+
+def test_parallel_system_on_allocated_node_does_not_ask(monkeypatch):
+    """A batch job settles its own liveness without a batch-system query."""
+    monkeypatch.setenv('SLURM_JOB_ID', '12345')
+    monkeypatch.setenv('SLURMD_NODENAME', 'chr-0123')
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'chr-[0123-0125]')
+    _fake_hostname(monkeypatch, 'chr-0123')
+    _patch_squeue(monkeypatch, _NoSqueue())
+    monkeypatch.setattr(
+        'mache.parallel.slurm._get_subprocess_int', lambda args: 3
+    )
+
+    system = get_parallel_system(_get_config())
+
+    assert isinstance(system, SlurmSystem)
+    assert system.nodes == 3
+
+
+def test_parallel_system_off_allocated_node_still_asks(monkeypatch):
+    """Off the allocation's nodes, nothing local can answer, so ask."""
+    monkeypatch.setenv('SLURM_JOB_ID', '1278760')
+    monkeypatch.setenv('SLURMD_NODENAME', 'chr-0123')
+    monkeypatch.setenv('SLURM_JOB_NODELIST', 'chr-0123')
+    _fake_hostname(monkeypatch, 'chrlogin1')
+    _fake_hostname_expansion(monkeypatch, ['chr-0123'])
+    _patch_squeue(monkeypatch, _FakeSqueue(_FakeProcess(0, stdout='TIMEOUT')))
+
+    with pytest.warns(UserWarning, match='1278760.*TIMEOUT'):
+        system = get_parallel_system(_get_config())
+
+    assert isinstance(system, LoginSystem)

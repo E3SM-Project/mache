@@ -48,6 +48,14 @@ variable and goes on claiming nodes it no longer has. mache asks the scheduler
 and warns before falling back. If the scheduler cannot be reached at all, it
 raises instead, rather than quietly demoting a real allocation to a login node.
 
+The scheduler is only asked when nothing local can answer. A process running on
+one of the allocation's own nodes -- a batch script and anything it launches --
+is proof that the allocation is live, because Slurm kills a job's processes
+before it releases its nodes. mache recognizes that case from `SLURMD_NODENAME`
+and `SLURM_JOB_NODELIST` and issues no query at all. This matters to callers
+that run many short-lived processes inside one allocation, since a query per
+process is a rate that sites ask jobs to stay well under.
+
 ## GPU-per-task flags
 
 When `gpus_per_task > 0` is passed to `get_parallel_command()`:

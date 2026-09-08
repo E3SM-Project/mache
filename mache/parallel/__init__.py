@@ -18,6 +18,7 @@ from mache.parallel.slurm import (
     LIVE_JOB_STATES,
     SlurmSystem,
     get_slurm_job_state,
+    running_on_allocated_node,
 )
 from mache.parallel.system import ParallelSystem
 
@@ -37,9 +38,17 @@ def get_parallel_system(config: ConfigParser) -> ParallelSystem:
     # SLURM_JOB_ID only says a job id was handed out at some point. salloc
     # does not kill its shell when the allocation ends, so that shell keeps
     # the variable and goes on claiming an allocation it no longer has.
-    # Only the scheduler can settle it.
-    if system == 'slurm' and not _slurm_job_is_active(
-        os.environ['SLURM_JOB_ID']
+    #
+    # Running on one of the allocation's own nodes settles that locally and
+    # for free, since Slurm kills a job's processes before it releases its
+    # nodes. That covers a batch job, which is what a caller running a
+    # process per unit of work is. Anything else -- a login shell that
+    # still carries the variable, which is the case this check was added
+    # for -- only the scheduler can settle, so it is asked.
+    if (
+        system == 'slurm'
+        and not running_on_allocated_node()
+        and not _slurm_job_is_active(os.environ['SLURM_JOB_ID'])
     ):
         system = 'login'
 
