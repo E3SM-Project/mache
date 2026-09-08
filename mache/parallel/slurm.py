@@ -212,6 +212,15 @@ def running_on_allocated_node() -> bool:
     matches; a login shell still carrying ``SLURM_JOB_ID`` does not, and
     only the controller can say whether its allocation survives.
 
+    There is one window where this and the controller disagree. Slurm
+    signals a job's processes and kills them ``KillWait`` seconds later,
+    and the job is ``COMPLETING`` throughout, which is not a live state. A
+    process that survives that signal is therefore still on an allocated
+    node while its job is ending, and this reports it live. It was
+    measured on Chrysalis at 88.4 s against a configured ``KillWait`` of
+    90. It takes a process outliving its own termination signal to reach,
+    and that process is being torn down and about to be killed outright.
+
     Returns
     -------
     on_node : bool
