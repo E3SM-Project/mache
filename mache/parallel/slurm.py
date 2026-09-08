@@ -213,13 +213,13 @@ def running_on_allocated_node() -> bool:
     only the controller can say whether its allocation survives.
 
     There is one window where this and the controller disagree. Slurm
-    signals a job's processes and kills them ``KillWait`` seconds later,
-    and the job is ``COMPLETING`` throughout, which is not a live state. A
-    process that survives that signal is therefore still on an allocated
-    node while its job is ending, and this reports it live. It was
-    measured on Chrysalis at 88.4 s against a configured ``KillWait`` of
-    90. It takes a process outliving its own termination signal to reach,
-    and that process is being torn down and about to be killed outright.
+    kills a job's processes ``KillWait`` seconds after it starts ending
+    them, and the job is ``COMPLETING`` throughout, which is not a live
+    state. A process still alive in that window is on an allocated node
+    while its job is ending, and this reports it live. It tracks the
+    site's ``KillWait``: 88.4 s against a configured 90 on Chrysalis, and
+    27.1 s against a configured 30 on Perlmutter. The process it affects
+    is one already being torn down and about to be killed outright.
 
     Returns
     -------
@@ -227,6 +227,10 @@ def running_on_allocated_node() -> bool:
         ``True`` if this host is one of the allocation's nodes, ``False``
         if it is not or if that could not be established locally.
     """
+    # gethostname() rather than getfqdn(): the two disagree on Perlmutter,
+    # where a compute node calls itself nid005097 but its fully qualified
+    # names are nid005097-hsn0 and x1105c0s0b0n1h0.chn.perlmutter.nersc.gov
+    # -- neither of which reduces to what Slurm calls that node.
     hostname = _short_hostname(socket.gethostname())
     if not hostname:
         return False
