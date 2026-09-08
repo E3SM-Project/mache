@@ -390,7 +390,13 @@ class PbsSystem(ParallelSystem):
                 f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
                 f'likely need to allocate more nodes.'
             )
-        tasks_per_node = min(ntasks, max_mpi_tasks_per_node)
+        if placement is None or len(placement.nodes) == 0:
+            # nothing says which hosts this launch gets, so pack each one as
+            # full as the machine allows and let PBS choose them
+            tasks_per_node = min(ntasks, max_mpi_tasks_per_node)
+        # a placement's core sets are per node, and which cores a task gets
+        # depends on which host it lands on, so a placed launch has to spread
+        # its tasks over the hosts it named rather than filling the first
 
         parallel_args = [
             '-n',

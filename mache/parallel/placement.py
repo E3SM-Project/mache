@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 
 # the machine's binding config options, in the order they are rendered
 BINDING_OPTIONS = ('cpu_bind', 'gpu_bind', 'mem_bind')
@@ -65,16 +65,21 @@ class ResourcePlacement:
         of nodes to the scheduler, which is only useful when nothing else is
         running concurrently.
 
-    cores : tuple of int
-        The cores, on each of ``nodes``, that the launch may use, in the order
-        they should be handed out to tasks. This is an explicit set rather
-        than a count because the usable cores on a node may not be contiguous
-        and may not start at zero.
+    cores : tuple of tuple of int
+        The cores the launch may use, one set per entry in ``nodes``, in the
+        order they should be handed out to the tasks that land on that node.
+        These are node-local core numbers, so two nodes may perfectly well
+        both offer core 0, and each set is an explicit set rather than a count
+        because the usable cores on a node may not be contiguous and may not
+        start at zero.
 
-        Whether the exact set is honored depends on the machine: launchers
-        that bind explicitly use it as given, while a scheduler that reserves
-        resources uses only how many cores there are and picks which ones
-        itself.
+        Where ``nodes`` is empty there is exactly one set, holding the cores
+        for the whole launch, since there is no node to divide them between.
+
+        Whether the exact sets are honored depends on the machine: launchers
+        that bind explicitly use them as given, while a scheduler that
+        reserves resources uses only how many cores there are and picks which
+        ones itself.
 
     gpus : int
         The number of GPUs the launch needs *in total*, not per task. A
@@ -94,7 +99,7 @@ class ResourcePlacement:
     """
 
     nodes: Sequence[str]
-    cores: Sequence[int]
+    cores: Sequence[Sequence[int]]
     gpus: int = 0
     gpu_ids: Sequence[int] | None = None
 
@@ -106,15 +111,17 @@ class ResourcePlacement:
             raise ValueError(f'Placement nodes must be unique, got {nodes}.')
         object.__setattr__(self, 'nodes', nodes)
 
-        cores = tuple(int(core) for core in self.cores)
-        if len(cores) == 0:
-            raise ValueError('A placement must list at least one core.')
-        if any(core < 0 for core in cores):
+        cores = tuple(_check_node_cores(entry) for entry in self.cores)
+        expected = max(len(nodes), 1)
+        if len(cores) != expected:
+            # a placement that names three nodes and two core sets has lost
+            # track of which cores belong to which node, and guessing which
+            # is much worse than saying so
+            named = f'names {len(nodes)} nodes' if nodes else 'names no node'
             raise ValueError(
-                f'Placement cores must not be negative, got {cores}.'
+                f'A placement {named} but gives {len(cores)} core sets. It '
+                f'needs {expected}, one per node.'
             )
-        if len(set(cores)) != len(cores):
-            raise ValueError(f'Placement cores must be unique, got {cores}.')
         object.__setattr__(self, 'cores', cores)
 
         if self.gpus < 0:
@@ -144,12 +151,22 @@ class ResourcePlacement:
             )
         object.__setattr__(self, 'gpu_ids', gpu_ids)
 
+    @property
+    def total_cores(self) -> int:
+        """How many cores this placement gives the launch, over all nodes."""
+        return sum(len(node_cores) for node_cores in self.cores)
+
 
 def split_cores(
     placement: ResourcePlacement, ntasks: int, cpus_per_task: int
 ) -> List[List[int]]:
     """
     Divide a placement's cores into a contiguous chunk per task.
+
+    Tasks are spread over the placement's nodes as evenly as the launchers
+    do it, filling each node in turn, and each task's cores then come from
+    the node it landed on. The chunks come back in task order, which is the
+    order every launcher wants them in.
 
     Parameters
     ----------
@@ -170,17 +187,31 @@ def split_cores(
         One list of cores per task, in task order.
     """
     cpus_per_task = max(cpus_per_task, 1)
-    needed = ntasks * cpus_per_task
-    if needed > len(placement.cores):
-        raise ValueError(
-            f'The placement has {len(placement.cores)} cores but '
-            f'{ntasks} tasks x {cpus_per_task} cpus per task need {needed}.'
-        )
+    node_count = max(len(placement.nodes), 1)
+    tasks_per_node = -(-ntasks // node_count)
 
-    chunks = []
-    for index in range(ntasks):
-        start = index * cpus_per_task
-        chunks.append(list(placement.cores[start : start + cpus_per_task]))
+    chunks: List[List[int]] = []
+    for node_index in range(node_count):
+        first = node_index * tasks_per_node
+        if first >= ntasks:
+            break
+        tasks_here = min(tasks_per_node, ntasks - first)
+        node_cores = placement.cores[node_index]
+        needed = tasks_here * cpus_per_task
+        if needed > len(node_cores):
+            where = (
+                f'node {placement.nodes[node_index]}'
+                if placement.nodes
+                else 'the placement'
+            )
+            raise ValueError(
+                f'The placement gives {where} {len(node_cores)} cores but '
+                f'{tasks_here} tasks x {cpus_per_task} cpus per task need '
+                f'{needed}.'
+            )
+        for task in range(tasks_here):
+            start = task * cpus_per_task
+            chunks.append(list(node_cores[start : start + cpus_per_task]))
     return chunks
 
 
@@ -204,3 +235,28 @@ def cpu_mask(cores: Sequence[int]) -> str:
     for core in cores:
         mask |= 1 << core
     return hex(mask)
+
+
+def _check_node_cores(cores: Sequence[int]) -> Tuple[int, ...]:
+    """Check and normalize the cores a placement gives one node."""
+    if isinstance(cores, (int, str, bytes)):
+        # a flat list of cores was what a placement took before it spoke in
+        # terms of nodes, and it is worth naming that rather than failing
+        # somewhere further in with a confusing message
+        raise ValueError(
+            f'Placement cores are one set of cores per node, so each entry '
+            f'must be a sequence, but one of them is {cores!r}.'
+        )
+    node_cores = tuple(int(core) for core in cores)
+    if len(node_cores) == 0:
+        raise ValueError("Each of a placement's nodes must list a core.")
+    if any(core < 0 for core in node_cores):
+        raise ValueError(
+            f'Placement cores must not be negative, got {node_cores}.'
+        )
+    if len(set(node_cores)) != len(node_cores):
+        raise ValueError(
+            f"A placement's cores must be unique on each node, got "
+            f'{node_cores}.'
+        )
+    return node_cores

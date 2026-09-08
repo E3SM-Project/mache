@@ -88,7 +88,8 @@ class SingleNodeSystem(ParallelSystem):
         if placement is None:
             return []
         self._check_placement_supported(placement)
-        return [TASKSET, '-c', format_core_ranges(placement.cores)]
+        # one node, so one set of cores
+        return [TASKSET, '-c', format_core_ranges(placement.cores[0])]
 
     def _check_placement(
         self,
@@ -114,9 +115,9 @@ class SingleNodeSystem(ParallelSystem):
             )
 
         needed = ntasks * max(cpus_per_task, 1)
-        if needed > len(placement.cores):
+        if needed > placement.total_cores:
             raise ValueError(
-                f'The placement has {len(placement.cores)} cores but '
+                f'The placement has {placement.total_cores} cores but '
                 f'{ntasks} tasks x {max(cpus_per_task, 1)} cpus per task '
                 f'need {needed}.'
             )

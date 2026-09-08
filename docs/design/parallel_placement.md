@@ -276,12 +276,54 @@ the command it produces today.
 ### The placement description
 
 A placement carries three things: the nodes a launch may use, the cores it may
-use, and the number of GPUs it needs in total. Cores are given as an explicit
-set rather than a count, because that is what the non-contiguous case
-requires and because a count cannot express which cores.
+use on each of them, and the number of GPUs it needs in total. Cores are given
+as explicit sets rather than counts, because that is what the non-contiguous
+case requires and because a count cannot express which cores.
 
 `get_parallel_command()` takes it as an optional argument. When it is absent,
 nothing changes.
+
+#### Correction, Sep 8, 2026: cores are per node
+
+*Contributors: Xylar Asay-Davis, Claude*
+
+The first implementation read "the cores it may use on each of them" as one
+flat set for the whole launch, whose members had to be unique. For a launch
+on one node the two readings are the same. For a launch on several they are
+not, and the flat one cannot describe the ordinary case.
+
+Core numbers are node-local. Where the launcher binds cores explicitly --
+Slurm before 20.11, and PALS -- each task's cores are rendered as a mask or a
+core list that its own node interprets, so a launch spanning two nodes
+normally wants the same numbers on both. Requiring them to be unique across
+the placement forbids exactly that, and leaves such a launch expressible only
+while its cores in total fit inside one node's numbering, which is to say not
+usefully at all. Where the scheduler reserves resources, only the counts are
+used, so the flat set worked there and the defect was invisible.
+
+It was invisible in testing too, and worth recording why. Every placement
+rendered on a real machine during the original validation named one node,
+deliberately: sharing a node was the hard case and spreading across them was
+not what anyone was unsure about. The first caller to place a step wider than
+a node found this by reading the renderers.
+
+So `cores` becomes one set per node, aligned with `nodes`, and the sets are
+checked for uniqueness within a node rather than across the placement. Tasks
+fill each node in turn, matching how the launchers distribute them, and each
+task's cores come from the node it landed on.
+
+This is a breaking change to the type, taken rather than adding a second
+field beside the first, because two ways to say where a launch runs would
+drift apart and the first release to carry it is recent enough that its only
+consumer can move with it.
+
+One thing followed from it rather than being chosen. On PALS the tasks per
+node are rendered as `--ppn`, and an unplaced launch asks to pack each host as
+full as the machine allows, which is right for a launch whose hosts the
+scheduler picks. A *placed* launch cannot do that: its core sets say which
+cores a task gets on which host, so its tasks have to be spread over the
+hosts it named. Placed and unplaced now differ there, and the placed one is
+the new answer.
 
 ### Rendering per system
 
