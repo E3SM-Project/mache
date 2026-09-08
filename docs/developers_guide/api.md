@@ -104,6 +104,7 @@ documentation.
     SlurmSystem.resolve_slurm_options
     get_slurm_version
     get_slurm_job_state
+    running_on_allocated_node
 ```
 
 ```{eval-rst}
