@@ -186,11 +186,47 @@ def split_cores(
     chunks : list of list of int
         One list of cores per task, in task order.
     """
+    return [
+        chunk
+        for node_chunks in split_cores_by_node(
+            placement, ntasks, cpus_per_task
+        )
+        for chunk in node_chunks
+    ]
+
+
+def split_cores_by_node(
+    placement: ResourcePlacement, ntasks: int, cpus_per_task: int
+) -> List[List[List[int]]]:
+    """
+    Divide a placement's cores into a chunk per task, grouped by node.
+
+    The same division :py:func:`split_cores` makes, kept in node groups
+    rather than flattened, for the launchers that address a node's tasks by
+    their index *on that node* rather than by their rank in the launch.
+
+    Parameters
+    ----------
+    placement : ResourcePlacement
+        The placement whose cores should be divided.
+
+    ntasks : int
+        The number of tasks to divide the cores between.
+
+    cpus_per_task : int
+        The number of cores each task should get. A value of 0 means one core
+        per task.
+
+    Returns
+    -------
+    by_node : list of list of list of int
+        One list of cores per task, grouped by the node the task lands on.
+    """
     cpus_per_task = max(cpus_per_task, 1)
     node_count = max(len(placement.nodes), 1)
     tasks_per_node = -(-ntasks // node_count)
 
-    chunks: List[List[int]] = []
+    by_node: List[List[List[int]]] = []
     for node_index in range(node_count):
         first = node_index * tasks_per_node
         if first >= ntasks:
@@ -209,10 +245,12 @@ def split_cores(
                 f'{tasks_here} tasks x {cpus_per_task} cpus per task need '
                 f'{needed}.'
             )
+        chunks = []
         for task in range(tasks_here):
             start = task * cpus_per_task
             chunks.append(list(node_cores[start : start + cpus_per_task]))
-    return chunks
+        by_node.append(chunks)
+    return by_node
 
 
 def format_core_ranges(cores: Sequence[int]) -> str:

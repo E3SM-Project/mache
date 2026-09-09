@@ -380,8 +380,8 @@ def test_legacy_slurm_masks_non_contiguous_cores(monkeypatch):
 def test_legacy_slurm_places_the_same_cores_on_two_nodes(monkeypatch):
     """The case a single flat set of unique cores could not express.
 
-    Masks are node-local, so a launch spanning two nodes normally wants the
-    same core numbers on both.  Tasks fill the first node before the second,
+    Masks are node-local, so a launch spanning two nodes has to use the same
+    core numbers on both.  Tasks fill the first node before the second,
     which is what Slurm's block distribution does with ``-N`` and ``-n``.
     """
     system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
@@ -393,23 +393,51 @@ def test_legacy_slurm_places_the_same_cores_on_two_nodes(monkeypatch):
     )
     assert _get_flag_value(args, '-w') == 'chr-0493,chr-0494'
     assert _get_flag_value(args, '-N') == '2'
-    # two tasks per node, each taking two of that node's cores, and the same
-    # pair of masks on each
-    expected = 'mask_cpu:0x3,0xc,0x3,0xc'
+    # one node's worth of masks, which is what Slurm applies to every node.
+    # Repeating them for the second node would say nothing extra: the list
+    # starts again at its beginning on each node either way.
+    expected = 'mask_cpu:0x3,0xc'
     assert _get_flag_value(args, '--cpu-bind') == expected
 
 
-def test_legacy_slurm_places_different_cores_on_each_node(monkeypatch):
-    """Nodes need not offer the same cores, since each set is its own."""
+def test_legacy_slurm_refuses_different_cores_on_each_node(monkeypatch):
+    """
+    What Slurm cannot be told, and used to be told anyway.
+
+    A mask list is applied to each node's tasks by their index on that node,
+    starting again at the beginning for every node, so the second node here
+    would run on cores 0 and 1 -- the first node's -- while the caller and
+    every accounting built on the placement believed it was on 6 and 7.
+    Nothing would fail.  Measured on Chrysalis before this refused.
+    """
     system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
     placement = ResourcePlacement(
         nodes=['chr-0493', 'chr-0494'], cores=[[0, 1], [6, 7]]
     )
-    args = system._get_parallel_args(
-        cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+
+    with pytest.raises(ValueError, match='same core numbers'):
+        system._get_parallel_args(
+            cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+        )
+
+
+def test_legacy_slurm_allows_a_node_with_fewer_tasks(monkeypatch):
+    """
+    Uneven ranks are fine as long as the shorter node is a prefix.
+
+    Three tasks over two nodes puts two on the first and one on the second,
+    and the second takes the first mask of the same list, which is the one
+    it would have been given anyway.
+    """
+    system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
+    placement = ResourcePlacement(
+        nodes=['chr-0493', 'chr-0494'], cores=[[4, 5], [4, 5]]
     )
-    expected = 'mask_cpu:0x1,0x2,0x40,0x80'
-    assert _get_flag_value(args, '--cpu-bind') == expected
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=3, placement=placement
+    )
+
+    assert _get_flag_value(args, '--cpu-bind') == 'mask_cpu:0x10,0x20'
 
 
 def test_legacy_slurm_refuses_to_place_gpus(monkeypatch):
