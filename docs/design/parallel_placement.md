@@ -317,6 +317,13 @@ field beside the first, because two ways to say where a launch runs would
 drift apart and the first release to carry it is recent enough that its only
 consumer can move with it.
 
+Being cheap to break is not the same as not breaking, so the release carrying
+it is v4.0.0. `ResourcePlacement` is public, is named in the API listing and
+the user's guide, and shipped in v3.12.0, so the old shape is released
+API; it now raises rather than being accepted, and there is no opt-in. A
+minor version would say a caller can upgrade without reading anything, and
+that is the one thing this release does not offer.
+
 One thing followed from it rather than being chosen. On PALS the tasks per
 node are rendered as `--ppn`, and an unplaced launch asks to pack each host as
 full as the machine allows, which is right for a launch whose hosts the

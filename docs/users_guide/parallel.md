@@ -325,7 +325,7 @@ working run right up until two of them collide.
 ```
 
 ```{note}
-`ResourcePlacement.cores` changed shape in v3.13.0, from one flat set of
+`ResourcePlacement.cores` changed shape in v4.0.0, from one flat set of
 cores for the whole launch to one set per node. A launch on a single node is
 written `cores=[[0, 1, 2, 3]]` where it used to be `cores=[0, 1, 2, 3]`.
 Passing the old shape raises `ValueError` rather than being misread, and the
