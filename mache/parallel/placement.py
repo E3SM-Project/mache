@@ -224,14 +224,18 @@ def split_cores_by_node(
     """
     cpus_per_task = max(cpus_per_task, 1)
     node_count = max(len(placement.nodes), 1)
-    tasks_per_node = -(-ntasks // node_count)
+    # the launchers *balance* tasks over the nodes they are given rather than
+    # filling each one in turn and leaving the remainder on the last: 800
+    # tasks over 13 nodes is seven nodes of 62 and six of 61, not twelve of
+    # 62 and one of 56.  Measured on Chrysalis, where a node the caller had
+    # sized for 56 tasks was given 61 of them.
+    base, extra = divmod(ntasks, node_count)
 
     by_node: List[List[List[int]]] = []
     for node_index in range(node_count):
-        first = node_index * tasks_per_node
-        if first >= ntasks:
+        tasks_here = base + (1 if node_index < extra else 0)
+        if tasks_here <= 0:
             break
-        tasks_here = min(tasks_per_node, ntasks - first)
         node_cores = placement.cores[node_index]
         needed = tasks_here * cpus_per_task
         if needed > len(node_cores):

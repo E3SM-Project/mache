@@ -4,6 +4,7 @@ import pytest
 
 from mache.parallel import PlacementSupport, ResourcePlacement
 from mache.parallel.pbs import PbsSystem
+from mache.parallel.placement import split_cores_by_node
 from mache.parallel.single_node import SingleNodeSystem
 from mache.parallel.slurm import SlurmSystem
 from mache.parallel.system import ParallelSystem
@@ -723,3 +724,32 @@ def test_placement_needs_enough_cores(monkeypatch, system_name):
             cpus_per_task=2,
             placement=placement,
         )
+
+
+def test_tasks_are_balanced_over_nodes_not_heaped_on_the_first():
+    """
+    The launchers balance; they do not fill each node and leave a remainder.
+
+    800 tasks over 13 nodes is seven nodes of 62 and six of 61.  Filling in
+    turn would say twelve nodes of 62 and one of 56, which asks a caller for
+    62 cores on a node the launcher only puts 61 tasks on -- and refuses a
+    placement that correctly provided 61.  Measured on Chrysalis.
+    """
+    nodes = [f'node{index}' for index in range(13)]
+    cores = [tuple(range(62 if index < 7 else 61)) for index in range(13)]
+    placement = ResourcePlacement(nodes=nodes, cores=cores)
+
+    by_node = split_cores_by_node(placement, ntasks=800, cpus_per_task=1)
+
+    assert [len(chunks) for chunks in by_node] == [62] * 7 + [61] * 6
+    assert sum(len(chunks) for chunks in by_node) == 800
+
+
+def test_an_even_split_is_unchanged():
+    """The case that always worked, and hid the one above."""
+    nodes = ['a', 'b', 'c', 'd']
+    placement = ResourcePlacement(nodes=nodes, cores=[tuple(range(8))] * 4)
+
+    by_node = split_cores_by_node(placement, ntasks=32, cpus_per_task=1)
+
+    assert [len(chunks) for chunks in by_node] == [8, 8, 8, 8]
