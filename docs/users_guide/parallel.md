@@ -324,6 +324,19 @@ node would instead be free to use the whole allocation -- which looks like a
 working run right up until two of them collide.
 ```
 
+```{note}
+`ResourcePlacement.cores` changed shape in v3.13.0, from one flat set of
+cores for the whole launch to one set per node. A launch on a single node is
+written `cores=[[0, 1, 2, 3]]` where it used to be `cores=[0, 1, 2, 3]`.
+Passing the old shape raises `ValueError` rather than being misread, and the
+message says so.
+
+The flat set could not describe a launch spanning nodes anywhere the launcher
+binds cores explicitly, since it required every core number to be unique and
+those numbers are node-local -- so two nodes could not both use core 0, which
+is the ordinary case.
+```
+
 An optional `placement` says where a launch should run:
 
 ```python
@@ -334,7 +347,7 @@ parallel_system = get_parallel_system(MachineInfo().config)
 
 placement = ResourcePlacement(
     nodes=["nid001373"],
-    cores=list(range(8, 16)),
+    cores=[list(range(8, 16))],
 )
 command = parallel_system.get_parallel_command(
     args=["./run_step.py"],
@@ -345,12 +358,45 @@ command = parallel_system.get_parallel_command(
 ```
 
 A placement carries three things: the nodes the launch may use, the cores it
-may use on each of them, and how many GPUs it needs in total. mache renders
-them into whatever the machine's launcher needs, so callers do not have to
-know which flags a given site takes.
+may use on each of them -- one set per node, in the same order -- and how many
+GPUs it needs in total. mache renders them into whatever the machine's
+launcher needs, so callers do not have to know which flags a given site takes.
+
+There is one set of cores even for a launch on one node, and one for a launch
+that names no node at all, which is what `[list(range(8, 16))]` above is.
 
 A call without a placement produces exactly the command it produced before
 this feature existed.
+
+### Finding the nodes to place onto
+
+A placement names nodes, so a caller has to know what they are called.
+`node_names` gives the hostnames of the nodes the allocation holds, in the
+order the batch system lists them:
+
+```python
+names = parallel_system.node_names
+if names is None:
+    print("this system does not name its nodes")
+else:
+    print(f"the allocation holds {names}")
+```
+
+It is `None` on a system with no allocation to describe, such as a login
+node. On Slurm it comes from expanding the hostlist expression the job's own
+environment carries; on PBS it comes from the job's node file, with repeats
+dropped where a site writes one line per rank slot; on `single_node` it is
+the machine's own hostname.
+
+The names are read the first time they are asked for rather than when the
+system is built, which matters for a caller that starts a process per unit of
+work: only the process laying out placements pays for it.
+
+For the same reason, the node *count* comes from the job's environment where
+that carries it, and the batch system is asked only when it does not. A
+caller running many short processes inside one allocation would otherwise ask
+the scheduler once per process, and sites ask that batch-system queries stay
+to a couple a minute in aggregate.
 
 ### Checking what a machine supports
 
@@ -404,20 +450,35 @@ place. See {ref}`users-parallel-pals-gpus`.
 
 ### Which cores are honored
 
-`cores` is an explicit set rather than a count, because the usable cores on a
-node may not be contiguous and may not start at zero -- Aurora reserves core 0
-and cores 49-52 -- and because a count cannot say *which* cores.
+`cores` is a set of explicit core numbers per node rather than a count,
+because the usable cores on a node may not be contiguous and may not start at
+zero -- Aurora reserves core 0 and cores 49-52 -- and because a count cannot
+say *which* cores.
 
-How much of that set is honored depends on the mechanism:
+Core numbers are node-local, so two nodes in the same placement may perfectly
+well both offer core 0, and normally do:
 
-- where the scheduler reserves resources, only the size of the set is used;
-    Slurm is asked for that many cores and picks which ones itself, and an
-    explicit core list is rejected outright alongside `-c`
-- where placement is by CPU binding, the set is used exactly as given, in
+```python
+placement = ResourcePlacement(
+    nodes=["nid001373", "nid001374"],
+    cores=[[0, 1, 2, 3], [0, 1, 2, 3]],
+)
+```
+
+Tasks fill each node in turn, as the launchers distribute them, and each task
+then takes its cores from the node it landed on. `total_cores` says how many
+cores the placement gives the launch in all.
+
+How much of the sets is honored depends on the mechanism:
+
+- where the scheduler reserves resources, only the sizes are used; Slurm is
+    asked for that many cores and picks which ones itself, and an explicit
+    core list is rejected outright alongside `-c`
+- where placement is by CPU binding, the sets are used exactly as given, in
     order, split into one contiguous chunk of `cpus_per_task` cores per task
 
-Either way, mache raises `ValueError` if the set is too small for
-`ntasks x cpus_per_task`.
+Either way, mache raises `ValueError` if a node's set is too small for the
+tasks that land on it, and says which node.
 
 (users-parallel-pals-gpus)=
 

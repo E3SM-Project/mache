@@ -16,7 +16,7 @@ from mache.parallel.placement import (
     ResourcePlacement,
     cpu_mask,
     names_resources,
-    split_cores,
+    split_cores_by_node,
 )
 from mache.parallel.system import (
     ParallelSystem,
@@ -282,6 +282,87 @@ def _short_hostname(name: str) -> str:
     return name.strip().split('.')[0]
 
 
+def _get_node_count(job_id: str) -> int:
+    """
+    Get how many nodes a Slurm allocation holds.
+
+    The job's own environment carries the count, so the usual answer costs
+    nothing at all. squeue is the fallback for an environment that has the
+    job id and not the count, and it is a question the controller has to
+    answer -- which matters because a caller that starts a process per unit
+    of work would otherwise ask it once per process, and sites ask that
+    batch-system queries stay to a couple a minute in aggregate.
+
+    Parameters
+    ----------
+    job_id : str
+        The job id to fall back to asking about.
+
+    Returns
+    -------
+    nodes : int
+        The number of nodes in the allocation.
+    """
+    for variable in ('SLURM_JOB_NUM_NODES', 'SLURM_NNODES'):
+        value = os.environ.get(variable)
+        if value is None:
+            continue
+        try:
+            return int(value)
+        except ValueError:
+            # a variable that is set to something unusable is worth saying
+            # so about rather than silently falling back, since the fallback
+            # hides it every time
+            warnings.warn(
+                f'{variable} is set to {value!r}, which is not a node count. '
+                f'Asking squeue instead.',
+                stacklevel=2,
+            )
+    args = ['squeue', '--noheader', '-j', job_id, '-o', '%D']
+    return _get_subprocess_int(args)
+
+
+def _check_one_mask_list_serves_every_node(
+    by_node: List[List[List[int]]], placement: ResourcePlacement
+) -> None:
+    """
+    Check that one node's masks describe every node's tasks.
+
+    Slurm applies a ``--cpu-bind`` mask list to each node's tasks by their
+    index on that node, starting again at the beginning of the list for
+    every node, so a launch spanning nodes gets the *first* node's masks
+    everywhere.  A placement whose other nodes want different core numbers
+    therefore cannot be expressed here at all, and rendering it anyway would
+    put the launch on cores nobody chose while reporting success.
+
+    Raises
+    ------
+    ValueError
+        If any node's tasks would be given cores the placement did not give
+        them.
+    """
+    first = by_node[0]
+    for index, chunks in enumerate(by_node[1:], start=1):
+        if chunks == first[: len(chunks)]:
+            continue
+        names = placement.nodes
+        here = names[index] if index < len(names) else f'node {index}'
+        there = names[0] if names else 'the first node'
+        wanted = [core for chunk in chunks for core in chunk]
+        given = [core for chunk in first for core in chunk]
+        raise ValueError(
+            f'This placement gives {here} different core numbers from '
+            f'{there}, and Slurm has no way to be told that: it applies one '
+            f'mask list to every node, addressing each task by its index on '
+            f'its own node. So {here} would silently run on the cores of '
+            f'{there}.\n'
+            f'  {there}: {given}\n'
+            f'  {here}: {wanted}\n'
+            f'A launch spanning nodes has to be given the same core numbers '
+            f'on each of them.'
+        )
+
+
 class SlurmSystem(ParallelSystem):
     """SLURM resource manager for parallel jobs."""
 
@@ -302,8 +383,7 @@ class SlurmSystem(ParallelSystem):
                 'cores_per_node must be set in the config for the slurm '
                 'system.'
             )
-        args = ['squeue', '--noheader', '-j', job_id, '-o', '%D']
-        nodes = _get_subprocess_int(args)
+        nodes = _get_node_count(job_id)
         cores = cores_per_node * nodes
         self.cores = cores
         self.cores_per_node = cores_per_node
@@ -319,6 +399,17 @@ class SlurmSystem(ParallelSystem):
         )
         if self.memory_per_node is not None:
             self.memory = self.memory_per_node * nodes
+
+    def _read_node_names(self) -> List[str] | None:
+        """
+        Read the hostnames of the allocation's nodes.
+
+        This is the same expansion the local liveness check makes, so it
+        shares the helper rather than repeating it. The two want different
+        answers for an allocation that names no nodes: nothing to check
+        against there, and nothing to report here.
+        """
+        return _expand_job_nodelist() or None
 
     @classmethod
     def resolve_slurm_options(
@@ -625,7 +716,9 @@ class SlurmSystem(ParallelSystem):
         if len(placement.nodes) > 0:
             parallel_args.extend(['-w', ','.join(placement.nodes)])
 
-        chunks = split_cores(placement, ntasks, cpus_per_task)
+        # divided here for both paths, because it is also what checks that
+        # the placement has the cores its tasks need
+        by_node = split_cores_by_node(placement, ntasks, cpus_per_task)
 
         if self.placement_support is PlacementSupport.CPU_BINDING:
             if placement.gpus > 0:
@@ -643,7 +736,17 @@ class SlurmSystem(ParallelSystem):
             # Before 20.11 steps share a node's cores by default and --exact
             # does not exist, so the cores a launch may use have to be named
             # one mask per task.
-            masks = ','.join(cpu_mask(chunk) for chunk in chunks)
+            #
+            # Slurm hands the list to each node's tasks by their index *on
+            # that node* and starts again at the beginning of the list for
+            # every node, so what goes here is one node's worth of masks and
+            # not the whole launch's.  Sending the whole launch's is not
+            # merely wasteful: every node after the first would silently
+            # apply the first node's masks.  Measured on Chrysalis with three
+            # nodes, where exactly that happened and all three launches
+            # succeeded on the wrong cores.
+            _check_one_mask_list_serves_every_node(by_node, placement)
+            masks = ','.join(cpu_mask(chunk) for chunk in by_node[0])
             parallel_args.append(f'--cpu-bind=mask_cpu:{masks}')
             return parallel_args
 

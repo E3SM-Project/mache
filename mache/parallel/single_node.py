@@ -1,4 +1,5 @@
 import multiprocessing
+import platform
 import shutil
 from configparser import ConfigParser
 from typing import List
@@ -44,6 +45,17 @@ class SingleNodeSystem(ParallelSystem):
         )
         self.memory = self.memory_per_node
 
+    def _read_node_names(self) -> List[str] | None:
+        """
+        Read the hostname of the one node this system is.
+
+        There is no batch system to name it, so it names itself. A caller
+        laying out placements does not have to special-case a machine with no
+        scheduler on it.
+        """
+        name = platform.node()
+        return [name] if name != '' else None
+
     @property
     def placement_support(self) -> PlacementSupport:
         """
@@ -76,7 +88,8 @@ class SingleNodeSystem(ParallelSystem):
         if placement is None:
             return []
         self._check_placement_supported(placement)
-        return [TASKSET, '-c', format_core_ranges(placement.cores)]
+        # one node, so one set of cores
+        return [TASKSET, '-c', format_core_ranges(placement.cores[0])]
 
     def _check_placement(
         self,
@@ -102,9 +115,9 @@ class SingleNodeSystem(ParallelSystem):
             )
 
         needed = ntasks * max(cpus_per_task, 1)
-        if needed > len(placement.cores):
+        if needed > placement.total_cores:
             raise ValueError(
-                f'The placement has {len(placement.cores)} cores but '
+                f'The placement has {placement.total_cores} cores but '
                 f'{ntasks} tasks x {max(cpus_per_task, 1)} cpus per task '
                 f'need {needed}.'
             )

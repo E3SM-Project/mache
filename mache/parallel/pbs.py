@@ -108,6 +108,38 @@ def is_pals_launcher(executable: str) -> bool:
     return re.match(r'mpiexec version \d', output.strip()) is not None
 
 
+def _read_node_file() -> List[str] | None:
+    """
+    Read the hostnames PBS wrote into the job's node file.
+
+    ``PBS_NODEFILE`` holds one line per node on some sites and one per rank
+    slot on others, so repeats are dropped and the first appearance of each
+    name sets the order. Returns ``None`` where there is no node file to
+    read, which is what a caller falls back to qstat for.
+
+    Returns
+    -------
+    names : list of str or None
+        The hostnames, in the order PBS listed them.
+    """
+    path = os.environ.get('PBS_NODEFILE')
+    if not path or not os.path.exists(path):
+        return None
+    names: List[str] = []
+    seen: set[str] = set()
+    try:
+        with open(path) as node_file:
+            for line in node_file:
+                name = line.strip()
+                if name == '' or name in seen:
+                    continue
+                seen.add(name)
+                names.append(name)
+    except OSError:
+        return None
+    return names or None
+
+
 class PbsSystem(ParallelSystem):
     """PBS resource manager for parallel jobs."""
 
@@ -128,8 +160,13 @@ class PbsSystem(ParallelSystem):
                 'cores_per_node must be set in the config for the pbs system.'
             )
 
-        # First, try to get nodes and cores_per_node from qstat
-        nodes = self._get_node_count_from_qstat()
+        # the job's node file names every node it holds, so where PBS
+        # wrote one it answers this without asking the batch system
+        self._node_names = _read_node_file()
+        if self._node_names is not None:
+            nodes = len(self._node_names)
+        else:
+            nodes = self._get_node_count_from_qstat()
 
         self.cores = nodes * cores_per_node
         self.cores_per_node = cores_per_node
@@ -146,6 +183,10 @@ class PbsSystem(ParallelSystem):
         if memory_per_node is not None:
             self.memory_per_node = memory_per_node
             self.memory = memory_per_node * nodes
+
+    def _read_node_names(self) -> List[str] | None:
+        """Read the hostnames of the job's nodes, from its node file."""
+        return self._node_names
 
     @classmethod
     def resolve_pbs_options(
@@ -349,7 +390,13 @@ class PbsSystem(ParallelSystem):
                 f'max_mpi_tasks_per_node ({max_mpi_tasks_per_node}).  You '
                 f'likely need to allocate more nodes.'
             )
-        tasks_per_node = min(ntasks, max_mpi_tasks_per_node)
+        if placement is None or len(placement.nodes) == 0:
+            # nothing says which hosts this launch gets, so pack each one as
+            # full as the machine allows and let PBS choose them
+            tasks_per_node = min(ntasks, max_mpi_tasks_per_node)
+        # a placement's core sets are per node, and which cores a task gets
+        # depends on which host it lands on, so a placed launch has to spread
+        # its tasks over the hosts it named rather than filling the first
 
         parallel_args = [
             '-n',

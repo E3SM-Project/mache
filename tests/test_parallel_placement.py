@@ -4,6 +4,7 @@ import pytest
 
 from mache.parallel import PlacementSupport, ResourcePlacement
 from mache.parallel.pbs import PbsSystem
+from mache.parallel.placement import split_cores_by_node
 from mache.parallel.single_node import SingleNodeSystem
 from mache.parallel.slurm import SlurmSystem
 from mache.parallel.system import ParallelSystem
@@ -88,17 +89,43 @@ def _get_flag_value(args, flag):
 
 
 def test_placement_requires_cores():
-    with pytest.raises(ValueError, match='at least one core'):
-        ResourcePlacement(nodes=['nid001'], cores=[])
+    with pytest.raises(ValueError, match='must list a core'):
+        ResourcePlacement(nodes=['nid001'], cores=[[]])
+
+
+def test_placement_needs_one_core_set_per_node():
+    with pytest.raises(ValueError, match='names 2 nodes but gives 1'):
+        ResourcePlacement(nodes=['nid001', 'nid002'], cores=[[0, 1]])
+
+
+def test_placement_rejects_a_flat_list_of_cores():
+    """What a placement took before its cores were per node.
+
+    mypy rejects the old shape too, which is the better of the two ways to
+    find out.  This is for the caller who is not type checked, and it exists
+    so that they get a message naming the change rather than one about
+    iterating an int.
+    """
+    with pytest.raises(ValueError, match='must be a sequence'):
+        ResourcePlacement(nodes=['nid001'], cores=[0, 1, 2])  # type: ignore[list-item]
 
 
 def test_placement_rejects_duplicate_cores():
-    with pytest.raises(ValueError, match='cores must be unique'):
-        ResourcePlacement(nodes=['nid001'], cores=[0, 1, 1])
+    with pytest.raises(ValueError, match='unique on each node'):
+        ResourcePlacement(nodes=['nid001'], cores=[[0, 1, 1]])
+
+
+def test_placement_allows_a_core_on_more_than_one_node():
+    """Core numbers are node-local, so two nodes both having core 0 is the
+    ordinary case rather than a mistake."""
+    placement = ResourcePlacement(
+        nodes=['nid001', 'nid002'], cores=[[0, 1], [0, 1]]
+    )
+    assert placement.total_cores == 4
 
 
 def test_placement_defaults_to_no_gpus():
-    placement = ResourcePlacement(nodes=['nid001'], cores=[0, 1])
+    placement = ResourcePlacement(nodes=['nid001'], cores=[[0, 1]])
     assert placement.gpus == 0
     assert placement.gpu_ids is None
 
@@ -106,16 +133,16 @@ def test_placement_defaults_to_no_gpus():
 def test_placement_gpu_ids_must_match_the_total():
     """A mismatch is a scheduler bug, caught here rather than hours later."""
     with pytest.raises(ValueError, match='lists 1 gpu_ids but asks for 2'):
-        ResourcePlacement(nodes=['x1'], cores=[0, 1], gpus=2, gpu_ids=[0])
+        ResourcePlacement(nodes=['x1'], cores=[[0, 1]], gpus=2, gpu_ids=[0])
 
 
 def test_placement_normalizes_sequences_to_tuples():
     placement = ResourcePlacement(
-        nodes=['x1'], cores=[5, 4], gpus=1, gpu_ids=[3]
+        nodes=['x1'], cores=[[5, 4]], gpus=1, gpu_ids=[3]
     )
     assert placement.nodes == ('x1',)
     # core order is preserved, since it is the order tasks are given cores in
-    assert placement.cores == (5, 4)
+    assert placement.cores == ((5, 4),)
     assert placement.gpu_ids == (3,)
 
 
@@ -186,7 +213,7 @@ def test_modern_slurm_reports_scheduler_placement(monkeypatch):
 
 def test_modern_slurm_places_on_one_node(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM)
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -206,8 +233,10 @@ def test_modern_slurm_places_on_one_node(monkeypatch):
 
 def test_modern_slurm_places_on_several_nodes(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM)
+    # the same node-local cores on both nodes, which is the ordinary case and
+    # is only expressible because the sets are per node
     placement = ResourcePlacement(
-        nodes=['nid001', 'nid002'], cores=list(range(8))
+        nodes=['nid001', 'nid002'], cores=[list(range(4)), list(range(4))]
     )
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
@@ -220,7 +249,7 @@ def test_modern_slurm_asks_for_a_gpu_total(monkeypatch):
     """A per-task count was measured not to confine a launch."""
     system = _get_slurm_system(monkeypatch, MODERN_SLURM)
     placement = ResourcePlacement(
-        nodes=['nid001'], cores=list(range(8)), gpus=2
+        nodes=['nid001'], cores=[list(range(8))], gpus=2
     )
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=1, ntasks=4, placement=placement
@@ -233,7 +262,7 @@ def test_modern_slurm_asks_for_a_gpu_total(monkeypatch):
 def test_modern_slurm_makes_no_gpus_explicit(monkeypatch):
     """Saying nothing is read as claiming every GPU on the node."""
     system = _get_slurm_system(monkeypatch, MODERN_SLURM)
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -242,7 +271,7 @@ def test_modern_slurm_makes_no_gpus_explicit(monkeypatch):
 
 def test_modern_slurm_keeps_a_binding_policy(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM, cpu_bind='cores')
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -253,7 +282,7 @@ def test_modern_slurm_drops_a_binding_that_names_cpus(monkeypatch):
     system = _get_slurm_system(
         monkeypatch, MODERN_SLURM, cpu_bind='list:0-7:8-15'
     )
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -262,7 +291,7 @@ def test_modern_slurm_drops_a_binding_that_names_cpus(monkeypatch):
 
 def test_modern_slurm_drops_gpu_binding_when_no_gpus(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM, gpu_bind='closest')
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -272,7 +301,7 @@ def test_modern_slurm_drops_gpu_binding_when_no_gpus(monkeypatch):
 def test_modern_slurm_keeps_gpu_binding_when_gpus_asked_for(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM, gpu_bind='closest')
     placement = ResourcePlacement(
-        nodes=['nid001'], cores=list(range(8)), gpus=2
+        nodes=['nid001'], cores=[list(range(8))], gpus=2
     )
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
@@ -284,7 +313,7 @@ def test_modern_slurm_drops_a_gpu_binding_of_none(monkeypatch):
     """A gpu_bind of `none` left three of four pm-gpu launches GPU-less."""
     system = _get_slurm_system(monkeypatch, MODERN_SLURM, gpu_bind='none')
     placement = ResourcePlacement(
-        nodes=['nid001'], cores=list(range(8)), gpus=2
+        nodes=['nid001'], cores=[list(range(8))], gpus=2
     )
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
@@ -300,7 +329,7 @@ def test_placement_supersedes_the_distribution(monkeypatch):
         distribution='block:cyclic',
         placement='plane',
     )
-    placement = ResourcePlacement(nodes=['nid001'], cores=list(range(8)))
+    placement = ResourcePlacement(nodes=['nid001'], cores=[list(range(8))])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
@@ -317,7 +346,7 @@ def test_legacy_slurm_reports_cpu_binding(monkeypatch):
 
 def test_legacy_slurm_places_with_an_explicit_mask(monkeypatch):
     system = _get_slurm_system(monkeypatch, LEGACY_SLURM, cpu_bind='cores')
-    placement = ResourcePlacement(nodes=['chr-0493'], cores=[0, 1, 2, 3])
+    placement = ResourcePlacement(nodes=['chr-0493'], cores=[[0, 1, 2, 3]])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -341,7 +370,7 @@ def test_legacy_slurm_places_with_an_explicit_mask(monkeypatch):
 
 def test_legacy_slurm_masks_non_contiguous_cores(monkeypatch):
     system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
-    placement = ResourcePlacement(nodes=['chr-0493'], cores=[1, 65])
+    placement = ResourcePlacement(nodes=['chr-0493'], cores=[[1, 65]])
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -349,10 +378,73 @@ def test_legacy_slurm_masks_non_contiguous_cores(monkeypatch):
     assert _get_flag_value(args, '--cpu-bind') == expected
 
 
+def test_legacy_slurm_places_the_same_cores_on_two_nodes(monkeypatch):
+    """The case a single flat set of unique cores could not express.
+
+    Masks are node-local, so a launch spanning two nodes has to use the same
+    core numbers on both.  Tasks fill the first node before the second,
+    which is what Slurm's block distribution does with ``-N`` and ``-n``.
+    """
+    system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
+    placement = ResourcePlacement(
+        nodes=['chr-0493', 'chr-0494'], cores=[[0, 1, 2, 3], [0, 1, 2, 3]]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
+    )
+    assert _get_flag_value(args, '-w') == 'chr-0493,chr-0494'
+    assert _get_flag_value(args, '-N') == '2'
+    # one node's worth of masks, which is what Slurm applies to every node.
+    # Repeating them for the second node would say nothing extra: the list
+    # starts again at its beginning on each node either way.
+    expected = 'mask_cpu:0x3,0xc'
+    assert _get_flag_value(args, '--cpu-bind') == expected
+
+
+def test_legacy_slurm_refuses_different_cores_on_each_node(monkeypatch):
+    """
+    What Slurm cannot be told, and used to be told anyway.
+
+    A mask list is applied to each node's tasks by their index on that node,
+    starting again at the beginning for every node, so the second node here
+    would run on cores 0 and 1 -- the first node's -- while the caller and
+    every accounting built on the placement believed it was on 6 and 7.
+    Nothing would fail.  Measured on Chrysalis before this refused.
+    """
+    system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
+    placement = ResourcePlacement(
+        nodes=['chr-0493', 'chr-0494'], cores=[[0, 1], [6, 7]]
+    )
+
+    with pytest.raises(ValueError, match='same core numbers'):
+        system._get_parallel_args(
+            cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+        )
+
+
+def test_legacy_slurm_allows_a_node_with_fewer_tasks(monkeypatch):
+    """
+    Uneven ranks are fine as long as the shorter node is a prefix.
+
+    Three tasks over two nodes puts two on the first and one on the second,
+    and the second takes the first mask of the same list, which is the one
+    it would have been given anyway.
+    """
+    system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
+    placement = ResourcePlacement(
+        nodes=['chr-0493', 'chr-0494'], cores=[[4, 5], [4, 5]]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=3, placement=placement
+    )
+
+    assert _get_flag_value(args, '--cpu-bind') == 'mask_cpu:0x10,0x20'
+
+
 def test_legacy_slurm_refuses_to_place_gpus(monkeypatch):
     system = _get_slurm_system(monkeypatch, LEGACY_SLURM)
     placement = ResourcePlacement(
-        nodes=['chr-0493'], cores=[0, 1], gpus=1, gpu_ids=[0]
+        nodes=['chr-0493'], cores=[[0, 1]], gpus=1, gpu_ids=[0]
     )
     with pytest.raises(ValueError, match='20.11 or newer'):
         system._get_parallel_args(
@@ -370,7 +462,7 @@ def test_slurm_of_unknown_version_reports_no_placement(monkeypatch):
 
 def test_placement_on_an_unplaceable_machine_raises(monkeypatch):
     system = _get_slurm_system(monkeypatch, None)
-    placement = ResourcePlacement(nodes=['nid001'], cores=[0, 1])
+    placement = ResourcePlacement(nodes=['nid001'], cores=[[0, 1]])
     with pytest.raises(ValueError, match='cannot place a launch'):
         system._get_parallel_args(
             cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
@@ -394,7 +486,9 @@ def test_pals_reports_cpu_binding(monkeypatch):
 
 def test_pals_names_hosts_and_cores(monkeypatch):
     system = _get_pbs_system(monkeypatch)
-    placement = ResourcePlacement(nodes=['x4401c1s0b0n0'], cores=[1, 2, 3, 4])
+    placement = ResourcePlacement(
+        nodes=['x4401c1s0b0n0'], cores=[[1, 2, 3, 4]]
+    )
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -405,11 +499,40 @@ def test_pals_names_hosts_and_cores(monkeypatch):
 def test_pals_places_non_contiguous_cores(monkeypatch):
     """Aurora reserves core 0 and cores 49-52, so the set has gaps."""
     system = _get_pbs_system(monkeypatch)
-    placement = ResourcePlacement(nodes=['x1'], cores=[47, 48, 53, 54])
+    placement = ResourcePlacement(nodes=['x1'], cores=[[47, 48, 53, 54]])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=2, placement=placement
     )
     assert _get_flag_value(args, '--cpu-bind') == 'list:47,48:53,54'
+
+
+def test_pals_spreads_a_placed_launch_over_the_hosts_it_named(monkeypatch):
+    """Each host's tasks take that host's cores, so they have to be spread.
+
+    Without a placement PALS is asked to pack each host as full as the
+    machine allows, which is what an unplaced launch wants.  A placed one
+    cannot: its core sets say which cores a task gets on which host, so the
+    tasks have to land on the hosts those sets belong to.
+    """
+    system = _get_pbs_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'], cores=[[1, 2, 3, 4], [1, 2, 3, 4]]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
+    )
+    assert _get_flag_value(args, '--hosts') == 'x1,x2'
+    assert _get_flag_value(args, '--ppn') == '2'
+    assert _get_flag_value(args, '--cpu-bind') == 'list:1,2:3,4:1,2:3,4'
+
+
+def test_pals_packs_an_unplaced_launch_as_before(monkeypatch):
+    """An unplaced launch keeps filling each host as full as it may."""
+    system = _get_pbs_system(monkeypatch)
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=None
+    )
+    assert _get_flag_value(args, '--ppn') == '4'
 
 
 def test_pals_renders_the_visible_devices_variable(monkeypatch):
@@ -420,7 +543,7 @@ def test_pals_renders_the_visible_devices_variable(monkeypatch):
         gpu_visible_devices_var='ZE_AFFINITY_MASK',
     )
     placement = ResourcePlacement(
-        nodes=['x1'], cores=[1, 2], gpus=2, gpu_ids=[2, 3]
+        nodes=['x1'], cores=[[1, 2]], gpus=2, gpu_ids=[2, 3]
     )
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
@@ -438,7 +561,7 @@ def test_pals_numbers_devices_from_zero_by_default(monkeypatch):
         gpu_visible_devices_var='CUDA_VISIBLE_DEVICES',
     )
     placement = ResourcePlacement(
-        nodes=['x1'], cores=[1, 2], gpus=1, gpu_ids=[3]
+        nodes=['x1'], cores=[[1, 2]], gpus=1, gpu_ids=[3]
     )
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
@@ -452,7 +575,7 @@ def test_pals_makes_no_gpus_explicit(monkeypatch):
         gpus_per_node='4',
         gpu_visible_devices_var='CUDA_VISIBLE_DEVICES',
     )
-    placement = ResourcePlacement(nodes=['x1'], cores=[1, 2])
+    placement = ResourcePlacement(nodes=['x1'], cores=[[1, 2]])
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -466,7 +589,7 @@ def test_pals_refuses_to_choose_gpus(monkeypatch):
         gpus_per_node='4',
         gpu_visible_devices_var='CUDA_VISIBLE_DEVICES',
     )
-    placement = ResourcePlacement(nodes=['x1'], cores=[1, 2], gpus=2)
+    placement = ResourcePlacement(nodes=['x1'], cores=[[1, 2]], gpus=2)
     with pytest.raises(ValueError, match='must set gpu_ids'):
         system._get_parallel_args(
             cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
@@ -480,7 +603,7 @@ def test_pals_rejects_a_gpu_the_node_does_not_have(monkeypatch):
         gpu_visible_devices_var='CUDA_VISIBLE_DEVICES',
     )
     placement = ResourcePlacement(
-        nodes=['x1'], cores=[1, 2], gpus=1, gpu_ids=[7]
+        nodes=['x1'], cores=[[1, 2]], gpus=1, gpu_ids=[7]
     )
     with pytest.raises(ValueError, match='asks for GPU 7'):
         system._get_parallel_args(
@@ -491,7 +614,7 @@ def test_pals_rejects_a_gpu_the_node_does_not_have(monkeypatch):
 def test_pals_renders_only_one_cpu_binding(monkeypatch):
     """The placement's core list replaces the machine's binding policy."""
     system = _get_pbs_system(monkeypatch, cpu_bind='cores')
-    placement = ResourcePlacement(nodes=['x1'], cores=[8, 9, 10, 11])
+    placement = ResourcePlacement(nodes=['x1'], cores=[[8, 9, 10, 11]])
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -505,7 +628,7 @@ def test_pals_drops_whole_node_binding_lists(monkeypatch):
         cpu_bind='list:1-8:9-16',
         mem_bind='list:0:0:1:1',
     )
-    placement = ResourcePlacement(nodes=['x1'], cores=[1, 2])
+    placement = ResourcePlacement(nodes=['x1'], cores=[[1, 2]])
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
@@ -531,7 +654,7 @@ def test_single_node_without_taskset_reports_no_placement(monkeypatch):
 
 def test_single_node_confines_a_launch_to_its_cores(monkeypatch):
     system = _get_single_node_system(monkeypatch)
-    placement = ResourcePlacement(nodes=[], cores=[2, 3, 4, 6])
+    placement = ResourcePlacement(nodes=[], cores=[[2, 3, 4, 6]])
     command = system.get_parallel_command(
         args=['./run.py'], ntasks=2, cpus_per_task=2, placement=placement
     )
@@ -550,7 +673,7 @@ def test_single_node_confines_a_launch_to_its_cores(monkeypatch):
 
 def test_single_node_rejects_several_nodes(monkeypatch):
     system = _get_single_node_system(monkeypatch)
-    placement = ResourcePlacement(nodes=['a', 'b'], cores=[0, 1])
+    placement = ResourcePlacement(nodes=['a', 'b'], cores=[[0, 1], [0, 1]])
     with pytest.raises(ValueError, match='has only one'):
         system.get_parallel_command(
             args=['./run.py'], ntasks=2, placement=placement
@@ -559,7 +682,9 @@ def test_single_node_rejects_several_nodes(monkeypatch):
 
 def test_single_node_refuses_to_place_gpus(monkeypatch):
     system = _get_single_node_system(monkeypatch)
-    placement = ResourcePlacement(nodes=[], cores=[0, 1], gpus=1, gpu_ids=[0])
+    placement = ResourcePlacement(
+        nodes=[], cores=[[0, 1]], gpus=1, gpu_ids=[0]
+    )
     with pytest.raises(ValueError, match='no mechanism'):
         system.get_parallel_command(
             args=['./run.py'], ntasks=2, placement=placement
@@ -567,6 +692,18 @@ def test_single_node_refuses_to_place_gpus(monkeypatch):
 
 
 # --- not enough cores ------------------------------------------------------
+
+
+def test_a_node_short_of_cores_is_named(monkeypatch):
+    """Which node is short is the whole of what makes the error useful."""
+    system = _get_slurm_system(monkeypatch, MODERN_SLURM)
+    placement = ResourcePlacement(
+        nodes=['nid001', 'nid002'], cores=[[0, 1, 2, 3], [0]]
+    )
+    with pytest.raises(ValueError, match='node nid002 1 cores'):
+        system._get_parallel_args(
+            cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
+        )
 
 
 @pytest.mark.parametrize('system_name', ['slurm', 'pbs', 'single_node'])
@@ -579,7 +716,7 @@ def test_placement_needs_enough_cores(monkeypatch, system_name):
     else:
         system = _get_single_node_system(monkeypatch)
 
-    placement = ResourcePlacement(nodes=[], cores=[0, 1, 2])
+    placement = ResourcePlacement(nodes=[], cores=[[0, 1, 2]])
     with pytest.raises(ValueError, match='need 4'):
         system.get_parallel_command(
             args=['./run.py'],
@@ -587,3 +724,32 @@ def test_placement_needs_enough_cores(monkeypatch, system_name):
             cpus_per_task=2,
             placement=placement,
         )
+
+
+def test_tasks_are_balanced_over_nodes_not_heaped_on_the_first():
+    """
+    The launchers balance; they do not fill each node and leave a remainder.
+
+    800 tasks over 13 nodes is seven nodes of 62 and six of 61.  Filling in
+    turn would say twelve nodes of 62 and one of 56, which asks a caller for
+    62 cores on a node the launcher only puts 61 tasks on -- and refuses a
+    placement that correctly provided 61.  Measured on Chrysalis.
+    """
+    nodes = [f'node{index}' for index in range(13)]
+    cores = [tuple(range(62 if index < 7 else 61)) for index in range(13)]
+    placement = ResourcePlacement(nodes=nodes, cores=cores)
+
+    by_node = split_cores_by_node(placement, ntasks=800, cpus_per_task=1)
+
+    assert [len(chunks) for chunks in by_node] == [62] * 7 + [61] * 6
+    assert sum(len(chunks) for chunks in by_node) == 800
+
+
+def test_an_even_split_is_unchanged():
+    """The case that always worked, and hid the one above."""
+    nodes = ['a', 'b', 'c', 'd']
+    placement = ResourcePlacement(nodes=nodes, cores=[tuple(range(8))] * 4)
+
+    by_node = split_cores_by_node(placement, ntasks=32, cpus_per_task=1)
+
+    assert [len(chunks) for chunks in by_node] == [8, 8, 8, 8]
