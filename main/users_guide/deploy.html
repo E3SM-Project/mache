@@ -72,6 +72,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#phase-1-deploy-py">Phase 1: <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phase-2-bootstrap">Phase 2: bootstrap</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phase-3-mache-deploy-run">Phase 3: <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-the-pixi-package-cache-goes">Where the pixi package cache goes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#the-command-line-contract">The command-line contract</a><ul>
@@ -757,6 +758,23 @@ deployment completes.</p>
 the login environment on login nodes and the compute environment inside common
 batch jobs such as Slurm, PBS, or Cobalt. Spack activation remains compute-only
 in that split-environment case.</p>
+</section>
+<section id="where-the-pixi-package-cache-goes">
+<h3>Where the pixi package cache goes<a class="headerlink" href="#where-the-pixi-package-cache-goes" title="Link to this heading"></a></h3>
+<p>Both the deployment and the generated load scripts pin <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> when
+it is not already set. Pixi’s own default cache is under the home directory,
+which on HPC machines is usually a network or parallel filesystem that pixi
+redirects part of the cache away from, with a warning on every run. An
+explicit path avoids that and keeps the multi-GB package cache off the home
+quota.</p>
+<p>The default is <code class="docutils literal notranslate"><span class="pre">pixi-cache-$USER</span></code> under the first of <code class="docutils literal notranslate"><span class="pre">$SLURM_TMPDIR</span></code>,
+<code class="docutils literal notranslate"><span class="pre">$PBS_JOBFS</span></code>, <code class="docutils literal notranslate"><span class="pre">$TMPDIR</span></code>, <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> and <code class="docutils literal notranslate"><span class="pre">/var/tmp</span></code> that exists, is writable and
+is not memory-backed (<code class="docutils literal notranslate"><span class="pre">tmpfs</span></code>), since on some login nodes <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> lives in
+RAM and counts against a per-user memory limit. If none qualifies, the cache
+goes to <code class="docutils literal notranslate"><span class="pre">$SCRATCH/pixi-cache</span></code> when <code class="docutils literal notranslate"><span class="pre">$SCRATCH</span></code> is set; otherwise the choice is
+left to pixi.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> before running <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> or sourcing a load script
+to use a different location.</p>
 </section>
 </section>
 <section id="the-command-line-contract">

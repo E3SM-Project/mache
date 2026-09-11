@@ -125,6 +125,19 @@
     <span class="s1">'PIXI_ENVIRONMENT_NAME'</span><span class="p">,</span>
     <span class="s1">'PIXI_IN_SHELL'</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="c1"># Candidate parents for the default pixi cache, in order of preference.</span>
+<span class="c1"># Scheduler-provided per-job scratch comes first, then the usual temp</span>
+<span class="c1"># directories. Any candidate that turns out to be memory-backed (tmpfs) is</span>
+<span class="c1"># skipped so a multi-GB package cache never counts against RAM.</span>
+<span class="n">PIXI_CACHE_DIR_ENV_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'SLURM_TMPDIR'</span><span class="p">,</span> <span class="s1">'PBS_JOBFS'</span><span class="p">,</span> <span class="s1">'TMPDIR'</span><span class="p">)</span>
+<span class="n">PIXI_CACHE_DIR_PATH_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'/tmp'</span><span class="p">,</span> <span class="s1">'/var/tmp'</span><span class="p">)</span>
+<span class="n">MEMORY_BACKED_FILESYSTEMS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'tmpfs'</span><span class="p">,</span> <span class="s1">'ramfs'</span><span class="p">)</span>
+<span class="n">MOUNT_POINT_ESCAPES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">040'</span><span class="p">,</span> <span class="s1">' '</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">011'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">012'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">134'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">),</span>
+<span class="p">)</span>
 <span class="n">BOOTSTRAP_SETUPTOOLS_SPEC</span> <span class="o">=</span> <span class="s1">'&gt;=60'</span>
 <span class="n">BOOTSTRAP_WHEEL_SPEC</span> <span class="o">=</span> <span class="s1">'*'</span>
 <span class="n">CONDA_FORGE_LABEL_ROOT</span> <span class="o">=</span> <span class="s1">'https://conda.anaconda.org/conda-forge/label'</span>
@@ -551,12 +564,97 @@
     <span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="k">if</span> <span class="n">base_env</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">base_env</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">PIXI_ENV_VARS_TO_UNSET</span><span class="p">:</span>
         <span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="c1"># Default PIXI_CACHE_DIR to /tmp to avoid noisy warnings when the home</span>
-    <span class="c1"># directory is on a network/parallel filesystem (common on HPC).</span>
     <span class="k">if</span> <span class="s1">'PIXI_CACHE_DIR'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
-        <span class="n">user</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'USER'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'LOGNAME'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">'pixi'</span>
-        <span class="n">env</span><span class="p">[</span><span class="s1">'PIXI_CACHE_DIR'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'/tmp/pixi-cache-</span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s1">'</span>
+        <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">default_pixi_cache_dir</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">'PIXI_CACHE_DIR'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache_dir</span>
     <span class="k">return</span> <span class="n">env</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">default_pixi_cache_dir</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Choose a default ``PIXI_CACHE_DIR`` for the given environment.</span>
+
+<span class="sd">    Pixi's own default cache lives under the home directory. On HPC machines</span>
+<span class="sd">    that is usually a network/parallel filesystem, where pixi redirects part</span>
+<span class="sd">    of the cache elsewhere and warns about it on every run. Pinning an</span>
+<span class="sd">    explicit path avoids both, and keeps the multi-GB package cache off the</span>
+<span class="sd">    home quota.</span>
+
+<span class="sd">    The candidates are the scheduler's per-job scratch directory, ``TMPDIR``,</span>
+<span class="sd">    ``/tmp`` and ``/var/tmp``, in that order. A candidate is skipped if it</span>
+<span class="sd">    is missing, not writable, or memory-backed (tmpfs), as ``/tmp`` is on</span>
+<span class="sd">    some login nodes. If none qualifies, ``$SCRATCH`` is used when it is</span>
+<span class="sd">    set, since an explicit path is fine on a parallel filesystem.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    env : dict</span>
+<span class="sd">        The environment variables to consult.</span>
+<span class="sd">    mounts : list of (str, str), optional</span>
+<span class="sd">        ``(mount_point, filesystem_type)`` pairs to use instead of reading</span>
+<span class="sd">        ``/proc/self/mounts`` (for tests).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        The cache directory, or ``None`` to leave the choice to pixi.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'USER'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'LOGNAME'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">'pixi'</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">PIXI_CACHE_DIR_ENV_CANDIDATES</span><span class="p">]</span>
+    <span class="n">candidates</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">PIXI_CACHE_DIR_PATH_CANDIDATES</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">_is_memory_backed</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="n">mounts</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'pixi-cache-</span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="n">scratch</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'SCRATCH'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scratch</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">scratch</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scratch</span><span class="p">,</span> <span class="s1">'pixi-cache'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_memory_backed</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether ``path`` lives on a memory-backed filesystem (tmpfs)."""</span>
+    <span class="k">if</span> <span class="n">mounts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mounts</span> <span class="o">=</span> <span class="n">_read_mounts</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">mounts</span><span class="p">:</span>
+        <span class="c1"># Not Linux (or /proc unavailable): nothing else puts /tmp in RAM.</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">real_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">best_point</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="n">best_type</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">for</span> <span class="n">mount_point</span><span class="p">,</span> <span class="n">fs_type</span> <span class="ow">in</span> <span class="n">mounts</span><span class="p">:</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">mount_point</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'/'</span>
+        <span class="k">if</span> <span class="n">real_path</span> <span class="o">!=</span> <span class="n">mount_point</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">real_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mount_point</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_point</span><span class="p">):</span>
+            <span class="n">best_point</span> <span class="o">=</span> <span class="n">mount_point</span>
+            <span class="n">best_type</span> <span class="o">=</span> <span class="n">fs_type</span>
+    <span class="k">return</span> <span class="n">best_type</span> <span class="ow">in</span> <span class="n">MEMORY_BACKED_FILESYSTEMS</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_mounts</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Read ``(mount_point, filesystem_type)`` pairs from ``/proc``."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'/proc/self/mounts'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">mounts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">mount_point</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># The kernel writes these characters in mount points as octal.</span>
+        <span class="k">for</span> <span class="n">escaped</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">MOUNT_POINT_ESCAPES</span><span class="p">:</span>
+            <span class="n">mount_point</span> <span class="o">=</span> <span class="n">mount_point</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">escaped</span><span class="p">,</span> <span class="n">char</span><span class="p">)</span>
+        <span class="n">mounts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mount_point</span><span class="p">,</span> <span class="n">fields</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">mounts</span>
 
 
 <div class="viewcode-block" id="check_location">

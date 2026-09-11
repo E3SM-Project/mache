@@ -682,6 +682,25 @@ the login environment on login nodes and the compute environment inside common
 batch jobs such as Slurm, PBS, or Cobalt. Spack activation remains compute-only
 in that split-environment case.
 
+### Where the pixi package cache goes
+
+Both the deployment and the generated load scripts pin `PIXI_CACHE_DIR` when
+it is not already set. Pixi's own default cache is under the home directory,
+which on HPC machines is usually a network or parallel filesystem that pixi
+redirects part of the cache away from, with a warning on every run. An
+explicit path avoids that and keeps the multi-GB package cache off the home
+quota.
+
+The default is `pixi-cache-$USER` under the first of `$SLURM_TMPDIR`,
+`$PBS_JOBFS`, `$TMPDIR`, `/tmp` and `/var/tmp` that exists, is writable and
+is not memory-backed (`tmpfs`), since on some login nodes `/tmp` lives in
+RAM and counts against a per-user memory limit. If none qualifies, the cache
+goes to `$SCRATCH/pixi-cache` when `$SCRATCH` is set; otherwise the choice is
+left to pixi.
+
+Set `PIXI_CACHE_DIR` before running `./deploy.py` or sourcing a load script
+to use a different location.
+
 ## The command-line contract
 
 There are really two CLIs involved:

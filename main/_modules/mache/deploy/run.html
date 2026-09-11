@@ -1871,9 +1871,10 @@
 
     <span class="n">_write_bootstrap_pixi_config</span><span class="p">(</span><span class="n">bootstrap_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">project_dir</span><span class="p">))</span>
 
-    <span class="c1"># build_pixi_env() sets PIXI_CACHE_DIR=/tmp/pixi-cache-&lt;user&gt; by default</span>
-    <span class="c1"># to suppress parallel-filesystem warnings on HPC. Users/admins can</span>
-    <span class="c1"># override it by setting PIXI_CACHE_DIR before invoking the deploy script.</span>
+    <span class="c1"># build_pixi_env() pins PIXI_CACHE_DIR to a local disk by default (see</span>
+    <span class="c1"># default_pixi_cache_dir()) to suppress parallel-filesystem warnings on</span>
+    <span class="c1"># HPC. Users/admins can override it by setting PIXI_CACHE_DIR before</span>
+    <span class="c1"># invoking the deploy script.</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">pixi_exe</span><span class="p">,</span> <span class="s1">'install'</span><span class="p">]</span>
     <span class="n">check_call</span><span class="p">(</span>
         <span class="n">cmd</span><span class="p">,</span>
