@@ -128,10 +128,43 @@ export PIXI_TOML="${MACHE_DEPLOY_ACTIVE_PIXI_TOML}"
 export MACHE_DEPLOY_TARGET_LOAD_SNIPPET="${MACHE_DEPLOY_ACTIVE_TARGET_LOAD_SNIPPET}"
 export {{ software_upper }}_PIXI_MPI="${MACHE_DEPLOY_ACTIVE_PIXI_MPI}"
 
-# Default PIXI_CACHE_DIR to /tmp to suppress warnings when the home directory
-# is on a network/parallel filesystem (common on HPC machines).
+# Pin PIXI_CACHE_DIR to a local disk by default. Pixi's own cache lives under
+# the home directory, which on HPC machines is usually a network/parallel
+# filesystem that pixi redirects away from with a warning on every run. An
+# explicit path avoids that, but /tmp is memory-backed (tmpfs) on some login
+# nodes, so skip any memory-backed candidate and fall back to $SCRATCH, then
+# to pixi's own defaults. This mirrors default_pixi_cache_dir() in mache.
+_mache_deploy_is_memory_backed() {
+  local fs_type
+  # GNU stat only; other platforms do not put /tmp in RAM.
+  fs_type="$(stat -f -c %T "$1" 2>/dev/null)" || return 1
+  [[ "${fs_type}" == "tmpfs" || "${fs_type}" == "ramfs" ]]
+}
+
+_mache_deploy_default_pixi_cache_dir() {
+  local candidate
+  local user="${USER:-${LOGNAME:-pixi}}"
+  for candidate in "${SLURM_TMPDIR:-}" "${PBS_JOBFS:-}" "${TMPDIR:-}" \
+      /tmp /var/tmp; do
+    [[ -n "${candidate}" && -d "${candidate}" && -w "${candidate}" ]] \
+      || continue
+    _mache_deploy_is_memory_backed "${candidate}" && continue
+    printf '%s\n' "${candidate}/pixi-cache-${user}"
+    return 0
+  done
+  if [[ -n "${SCRATCH:-}" && -d "${SCRATCH}" ]]; then
+    printf '%s\n' "${SCRATCH}/pixi-cache"
+    return 0
+  fi
+  return 1
+}
+
 if [[ -z "${PIXI_CACHE_DIR:-}" ]]; then
-  export PIXI_CACHE_DIR="/tmp/pixi-cache-${USER}"
+  if _mache_deploy_pixi_cache_dir="$(_mache_deploy_default_pixi_cache_dir)"
+  then
+    export PIXI_CACHE_DIR="${_mache_deploy_pixi_cache_dir}"
+  fi
+  unset _mache_deploy_pixi_cache_dir
 fi
 
 _mache_deploy_active_env_prefix() {

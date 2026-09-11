@@ -133,6 +133,153 @@ def test_build_pixi_env_unsets_nested_pixi_variables(monkeypatch):
     assert env['KEEP_ME'] == 'ok'
 
 
+def test_build_pixi_env_pins_default_cache_dir(monkeypatch):
+    monkeypatch.delenv('PIXI_CACHE_DIR', raising=False)
+    monkeypatch.setattr(
+        bootstrap, 'default_pixi_cache_dir', lambda env: '/disk/pixi-cache'
+    )
+
+    env = bootstrap.build_pixi_env()
+
+    assert env['PIXI_CACHE_DIR'] == '/disk/pixi-cache'
+
+
+def test_build_pixi_env_leaves_cache_dir_to_pixi_without_default(
+    monkeypatch,
+):
+    monkeypatch.delenv('PIXI_CACHE_DIR', raising=False)
+    monkeypatch.setattr(bootstrap, 'default_pixi_cache_dir', lambda env: None)
+
+    env = bootstrap.build_pixi_env()
+
+    assert 'PIXI_CACHE_DIR' not in env
+
+
+def test_default_pixi_cache_dir_prefers_scheduler_scratch(tmp_path: Path):
+    job_dir = tmp_path / 'job'
+    job_dir.mkdir()
+    env = {
+        'USER': 'someone',
+        'SLURM_TMPDIR': str(job_dir),
+        'TMPDIR': str(tmp_path),
+    }
+
+    cache_dir = bootstrap.default_pixi_cache_dir(env, mounts=[('/', 'ext4')])
+
+    assert cache_dir == str(job_dir / 'pixi-cache-someone')
+
+
+def test_default_pixi_cache_dir_skips_memory_backed_candidates(
+    tmp_path: Path,
+):
+    ram_dir = tmp_path / 'ram'
+    ram_dir.mkdir()
+    disk_dir = tmp_path / 'disk'
+    disk_dir.mkdir()
+    env = {
+        'LOGNAME': 'someone',
+        'SLURM_TMPDIR': str(ram_dir),
+        'TMPDIR': str(disk_dir),
+    }
+    mounts = [('/', 'ext4'), (str(ram_dir), 'tmpfs')]
+
+    cache_dir = bootstrap.default_pixi_cache_dir(env, mounts=mounts)
+
+    assert cache_dir == str(disk_dir / 'pixi-cache-someone')
+
+
+def test_default_pixi_cache_dir_skips_missing_and_unwritable(
+    tmp_path: Path,
+):
+    unwritable = tmp_path / 'unwritable'
+    unwritable.mkdir(mode=0o500)
+    disk_dir = tmp_path / 'disk'
+    disk_dir.mkdir()
+    env = {
+        'USER': 'someone',
+        'SLURM_TMPDIR': str(tmp_path / 'missing'),
+        'PBS_JOBFS': str(unwritable),
+        'TMPDIR': str(disk_dir),
+    }
+    try:
+        cache_dir = bootstrap.default_pixi_cache_dir(
+            env, mounts=[('/', 'ext4')]
+        )
+    finally:
+        unwritable.chmod(0o700)
+
+    assert cache_dir == str(disk_dir / 'pixi-cache-someone')
+
+
+def test_default_pixi_cache_dir_falls_back_to_scratch(tmp_path: Path):
+    scratch = tmp_path / 'scratch'
+    scratch.mkdir()
+    env = {'USER': 'someone', 'SCRATCH': str(scratch)}
+
+    # Everything is memory-backed, so no local candidate qualifies.
+    cache_dir = bootstrap.default_pixi_cache_dir(env, mounts=[('/', 'tmpfs')])
+
+    assert cache_dir == str(scratch / 'pixi-cache')
+
+
+def test_default_pixi_cache_dir_leaves_choice_to_pixi(tmp_path: Path):
+    env = {'USER': 'someone', 'SCRATCH': str(tmp_path / 'missing')}
+
+    cache_dir = bootstrap.default_pixi_cache_dir(env, mounts=[('/', 'tmpfs')])
+
+    assert cache_dir is None
+
+
+def test_is_memory_backed_uses_longest_mount_prefix(tmp_path: Path):
+    inner = tmp_path / 'inner'
+    inner.mkdir()
+    mounts = [
+        ('/', 'ext4'),
+        (str(tmp_path), 'tmpfs'),
+        (str(inner), 'xfs'),
+    ]
+
+    assert bootstrap._is_memory_backed(str(tmp_path), mounts=mounts)
+    assert not bootstrap._is_memory_backed(str(inner), mounts=mounts)
+    assert not bootstrap._is_memory_backed('/', mounts=mounts)
+
+
+def test_is_memory_backed_without_mount_table():
+    assert not bootstrap._is_memory_backed('/tmp', mounts=[])
+
+
+def test_read_mounts_decodes_escaped_mount_points(monkeypatch, tmp_path: Path):
+    mounts_file = tmp_path / 'mounts'
+    mounts_file.write_text(
+        'tmpfs /tmp tmpfs rw,nosuid 0 0\n'
+        '/dev/sda1 /mnt/with\\040space ext4 rw 0 0\n'
+        'garbage\n',
+        encoding='utf-8',
+    )
+    real_open = open
+
+    def fake_open(path, *args, **kwargs):
+        if path == '/proc/self/mounts':
+            path = mounts_file
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr('builtins.open', fake_open)
+
+    assert bootstrap._read_mounts() == [
+        ('/tmp', 'tmpfs'),
+        ('/mnt/with space', 'ext4'),
+    ]
+
+
+def test_read_mounts_tolerates_missing_proc(monkeypatch):
+    def fake_open(path, *args, **kwargs):
+        raise FileNotFoundError(path)
+
+    monkeypatch.setattr('builtins.open', fake_open)
+
+    assert bootstrap._read_mounts() == []
+
+
 def test_write_bootstrap_pixi_toml_with_mache_includes_platform(
     monkeypatch, tmp_path: Path
 ):

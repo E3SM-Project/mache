@@ -29,6 +29,19 @@ PIXI_ENV_VARS_TO_UNSET = (
     'PIXI_ENVIRONMENT_NAME',
     'PIXI_IN_SHELL',
 )
+# Candidate parents for the default pixi cache, in order of preference.
+# Scheduler-provided per-job scratch comes first, then the usual temp
+# directories. Any candidate that turns out to be memory-backed (tmpfs) is
+# skipped so a multi-GB package cache never counts against RAM.
+PIXI_CACHE_DIR_ENV_CANDIDATES = ('SLURM_TMPDIR', 'PBS_JOBFS', 'TMPDIR')
+PIXI_CACHE_DIR_PATH_CANDIDATES = ('/tmp', '/var/tmp')
+MEMORY_BACKED_FILESYSTEMS = ('tmpfs', 'ramfs')
+MOUNT_POINT_ESCAPES = (
+    ('\\040', ' '),
+    ('\\011', '\t'),
+    ('\\012', '\n'),
+    ('\\134', '\\'),
+)
 BOOTSTRAP_SETUPTOOLS_SPEC = '>=60'
 BOOTSTRAP_WHEEL_SPEC = '*'
 CONDA_FORGE_LABEL_ROOT = 'https://conda.anaconda.org/conda-forge/label'
@@ -449,12 +462,97 @@ def build_pixi_env(base_env=None):
     env = dict(os.environ if base_env is None else base_env)
     for var in PIXI_ENV_VARS_TO_UNSET:
         env.pop(var, None)
-    # Default PIXI_CACHE_DIR to /tmp to avoid noisy warnings when the home
-    # directory is on a network/parallel filesystem (common on HPC).
     if 'PIXI_CACHE_DIR' not in env:
-        user = env.get('USER') or env.get('LOGNAME') or 'pixi'
-        env['PIXI_CACHE_DIR'] = f'/tmp/pixi-cache-{user}'
+        cache_dir = default_pixi_cache_dir(env)
+        if cache_dir is not None:
+            env['PIXI_CACHE_DIR'] = cache_dir
     return env
+
+
+def default_pixi_cache_dir(env, mounts=None):
+    """Choose a default ``PIXI_CACHE_DIR`` for the given environment.
+
+    Pixi's own default cache lives under the home directory. On HPC machines
+    that is usually a network/parallel filesystem, where pixi redirects part
+    of the cache elsewhere and warns about it on every run. Pinning an
+    explicit path avoids both, and keeps the multi-GB package cache off the
+    home quota.
+
+    The candidates are the scheduler's per-job scratch directory, ``TMPDIR``,
+    ``/tmp`` and ``/var/tmp``, in that order. A candidate is skipped if it
+    is missing, not writable, or memory-backed (tmpfs), as ``/tmp`` is on
+    some login nodes. If none qualifies, ``$SCRATCH`` is used when it is
+    set, since an explicit path is fine on a parallel filesystem.
+
+    Parameters
+    ----------
+    env : dict
+        The environment variables to consult.
+    mounts : list of (str, str), optional
+        ``(mount_point, filesystem_type)`` pairs to use instead of reading
+        ``/proc/self/mounts`` (for tests).
+
+    Returns
+    -------
+    str or None
+        The cache directory, or ``None`` to leave the choice to pixi.
+    """
+    user = env.get('USER') or env.get('LOGNAME') or 'pixi'
+    candidates = [env.get(var) for var in PIXI_CACHE_DIR_ENV_CANDIDATES]
+    candidates.extend(PIXI_CACHE_DIR_PATH_CANDIDATES)
+    for candidate in candidates:
+        if not candidate or not os.path.isdir(candidate):
+            continue
+        if not os.access(candidate, os.W_OK):
+            continue
+        if _is_memory_backed(candidate, mounts=mounts):
+            continue
+        return os.path.join(candidate, f'pixi-cache-{user}')
+
+    scratch = env.get('SCRATCH')
+    if scratch and os.path.isdir(scratch):
+        return os.path.join(scratch, 'pixi-cache')
+    return None
+
+
+def _is_memory_backed(path, mounts=None):
+    """Whether ``path`` lives on a memory-backed filesystem (tmpfs)."""
+    if mounts is None:
+        mounts = _read_mounts()
+    if not mounts:
+        # Not Linux (or /proc unavailable): nothing else puts /tmp in RAM.
+        return False
+    real_path = os.path.realpath(path)
+    best_point = ''
+    best_type = ''
+    for mount_point, fs_type in mounts:
+        root = mount_point.rstrip('/') + '/'
+        if real_path != mount_point and not real_path.startswith(root):
+            continue
+        if len(mount_point) >= len(best_point):
+            best_point = mount_point
+            best_type = fs_type
+    return best_type in MEMORY_BACKED_FILESYSTEMS
+
+
+def _read_mounts():
+    """Read ``(mount_point, filesystem_type)`` pairs from ``/proc``."""
+    try:
+        with open('/proc/self/mounts', encoding='utf-8') as handle:
+            lines = handle.read().splitlines()
+    except OSError:
+        return []
+    mounts = []
+    for line in lines:
+        fields = line.split()
+        if len(fields) < 3:
+            continue
+        mount_point = fields[1]
+        # The kernel writes these characters in mount points as octal.
+        for escaped, char in MOUNT_POINT_ESCAPES:
+            mount_point = mount_point.replace(escaped, char)
+        mounts.append((mount_point, fields[2]))
+    return mounts
 
 
 def check_location(software=None):

@@ -1772,9 +1772,10 @@ def _pixi_install(
 
     _write_bootstrap_pixi_config(bootstrap_dir=Path(project_dir))
 
-    # build_pixi_env() sets PIXI_CACHE_DIR=/tmp/pixi-cache-<user> by default
-    # to suppress parallel-filesystem warnings on HPC. Users/admins can
-    # override it by setting PIXI_CACHE_DIR before invoking the deploy script.
+    # build_pixi_env() pins PIXI_CACHE_DIR to a local disk by default (see
+    # default_pixi_cache_dir()) to suppress parallel-filesystem warnings on
+    # HPC. Users/admins can override it by setting PIXI_CACHE_DIR before
+    # invoking the deploy script.
     cmd = [pixi_exe, 'install']
     check_call(
         cmd,
