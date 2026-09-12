@@ -15,23 +15,23 @@ def test_extract_machine_config_requires_full_compiler_match(tmp_path: Path):
         '      <modules>\n'
         '        <command name="load">both-module</command>\n'
         '      </modules>\n'
-        '      <modules compiler="oneapi-ifx">\n'
+        '      <modules compiler="intel">\n'
         '        <command name="load">cpu-module</command>\n'
         '      </modules>\n'
-        '      <modules compiler="oneapi-ifxgpu">\n'
+        '      <modules compiler="intelgpu">\n'
         '        <command name="load">gpu-module</command>\n'
         '      </modules>\n'
         '    </module_system>\n'
         '    <environment_variables>\n'
         '      <env name="BOTH">1</env>\n'
         '    </environment_variables>\n'
-        '    <environment_variables compiler="oneapi-ifx.*">\n'
+        '    <environment_variables compiler="intel.*">\n'
         '      <env name="BOTH_REGEX">1</env>\n'
         '    </environment_variables>\n'
-        '    <environment_variables compiler="oneapi-ifx">\n'
+        '    <environment_variables compiler="intel">\n'
         '      <env name="CPU_ONLY">1</env>\n'
         '    </environment_variables>\n'
-        '    <environment_variables compiler="oneapi-ifxgpu">\n'
+        '    <environment_variables compiler="intelgpu">\n'
         '      <env name="GPU_ONLY">1</env>\n'
         '    </environment_variables>\n'
         '  </machine>\n'
@@ -42,7 +42,7 @@ def test_extract_machine_config_requires_full_compiler_match(tmp_path: Path):
     gpu_config = extract_machine_config(
         xml_file=xml_file,
         machine='test-machine',
-        compiler='oneapi-ifxgpu',
+        compiler='intelgpu',
         mpilib='mpich',
     )
     gpu_script = config_to_shell_script(gpu_config, 'sh')
@@ -58,7 +58,7 @@ def test_extract_machine_config_requires_full_compiler_match(tmp_path: Path):
     cpu_config = extract_machine_config(
         xml_file=xml_file,
         machine='test-machine',
-        compiler='oneapi-ifx',
+        compiler='intel',
         mpilib='mpich',
     )
     cpu_script = config_to_shell_script(cpu_config, 'sh')

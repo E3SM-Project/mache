@@ -84,7 +84,7 @@ def test_machine_config_keeps_e3sm_unified_metadata_out_of_deploy():
     assert cfg.get('e3sm_unified', 'base_path') == (
         '/lus/flare/projects/E3SMinput/soft/e3sm-unified'
     )
-    assert cfg.get('e3sm_unified', 'compiler') == 'oneapi-ifx'
+    assert cfg.get('e3sm_unified', 'compiler') == 'intel'
     assert cfg.get('e3sm_unified', 'mpi') == 'mpich'
     assert cfg.getboolean('e3sm_unified', 'use_e3sm_hdf5_netcdf') is True
     assert not cfg.has_section('deploy')
