@@ -101,7 +101,7 @@ def build_update_report(
 
 
 def render_update_issue(report, run_url=None):
-    """Render the report as a GitHub issue body for Copilot work."""
+    """Render the report as a GitHub issue body for the agent to work from."""
 
     if not report.has_updates:
         lines = [

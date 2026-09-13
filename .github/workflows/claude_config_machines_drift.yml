@@ -1,0 +1,105 @@
+name: Claude config_machines drift fix
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Number of the drift issue for Claude to work on
+        required: true
+
+concurrency:
+  group: claude-config-machines-drift
+  cancel-in-progress: false
+
+env:
+  PIXI_ENV: py314
+
+jobs:
+  fix-drift:
+    # The issue title is spelled out because the env context is not
+    # available in a job-level if.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'claude' &&
+       github.event.issue.title == 'Daily config_machines drift detected')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GH_CLI_TOKEN }}
+
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          pixi-version: v0.62.2
+          cache: ${{ hashFiles('pixi.lock') != '' }}
+          environments: ${{ env.PIXI_ENV }}
+
+      - name: Install mache in the Pixi environment
+        run: |
+          pixi run -e ${PIXI_ENV} python -m pip install --no-deps \
+            --no-build-isolation -e .
+
+      - name: Fix the drift with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GH_CLI_TOKEN }}
+          prompt: |
+            Resolve the config_machines drift reported in issue
+            #${{ github.event.issue.number || inputs.issue_number }} of
+            ${{ github.repository }}, then open a pull request for it.
+
+            Read the issue body first with `gh issue view
+            ${{ github.event.issue.number || inputs.issue_number }}`. It
+            names the affected machines and the upstream E3SM revision, and
+            lists the required work. Treat it as the task definition; the
+            steps below say only how to carry it out here.
+
+            1. Create a branch off main named
+               `claude/config-machines-drift-${{ github.event.issue.number || inputs.issue_number }}`.
+            2. Run `pixi run -e py314 python
+               utils/update_cime_machine_config.py --work-dir .
+               --upstream-revision <sha>` with the revision from the issue.
+               Replace `mache/cime_machine_config/config_machines.xml` with
+               the `upstream_config_machines.xml` that command writes, then
+               delete `upstream_config_machines.xml` so it is never
+               committed.
+            3. Update the Spack templates and version strings the issue
+               calls out, under `mache/spack/templates/<machine>*.yaml`,
+               `<machine>*.sh` and `<machine>*.csh`. Where a prefix or path
+               change is ambiguous, leave a TODO comment for the reviewer
+               rather than guessing at a value.
+            4. Validate with `pixi run -e py314 pre-commit run --files` on
+               the files you changed, and `pixi run -e py314 pytest`. Do not
+               run `workflow_tests/test_deploy_workflow.py`. Fix what they
+               report rather than suppressing it.
+            5. Commit only the files you deliberately changed, naming them
+               explicitly instead of using `git add -A`, and push the
+               branch.
+            6. Write the pull request description to `pr_description.md` at
+               the root of the checkout, following
+               `.github/pull_request_template.md`, and open the pull request
+               with `gh pr create --body-file pr_description.md`. State the
+               upstream E3SM commit hash in the description and include
+               `Closes #${{ github.event.issue.number || inputs.issue_number }}`.
+               Do not commit `pr_description.md`.
+
+            Follow AGENTS.md for style, validation and how to write the pull
+            request description. If something blocks you from finishing,
+            comment on the issue explaining what blocked you instead of
+            opening a partial pull request.
+          claude_args: |
+            --model claude-opus-5
+            --max-turns 80
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(pixi:*),Bash(git:*),Bash(gh:*),Bash(mv:*),Bash(rm:*)"

@@ -7,7 +7,7 @@ import json
 
 import requests
 
-COPILOT_LOGIN = 'copilot-swe-agent[bot]'
+CLAUDE_LABEL = 'claude'
 DEFAULT_API_VERSION = '2022-11-28'
 
 
@@ -22,7 +22,6 @@ def main():
     parser.add_argument('--repository', required=True)
     parser.add_argument('--token', required=True)
     parser.add_argument('--issue-title', required=True)
-    parser.add_argument('--base-branch', required=True)
     parser.add_argument('--primary-assignee', default='')
     args = parser.parse_args()
 
@@ -50,7 +49,6 @@ def main():
             issue_title=args.issue_title,
             body=body,
             primary_assignee=args.primary_assignee,
-            base_branch=args.base_branch,
         )
         return
 
@@ -76,84 +74,41 @@ def create_or_update_issue(
     issue_title,
     body,
     primary_assignee,
-    base_branch,
 ):
-    """Create or update the automation issue, with Copilot fallback."""
+    """Create or update the automation issue and hand it to Claude."""
 
     payload = build_issue_payload(
         issue_title=issue_title,
         body=body,
         primary_assignee=primary_assignee,
-        owner=owner,
-        repo=repo,
-        base_branch=base_branch,
-        assign_copilot=True,
     )
 
-    try:
-        if issue is None:
-            created = _post_issue(
-                session=session,
-                owner=owner,
-                repo=repo,
-                payload=payload,
-            )
-            print(
-                'Created automation issue '
-                f'#{created["number"]} with Copilot assignment.'
-            )
-        else:
-            updated = _patch_issue(
-                session=session,
-                owner=owner,
-                repo=repo,
-                issue_number=issue['number'],
-                payload=payload,
-            )
-            print(
-                'Updated automation issue '
-                f'#{updated["number"]} with Copilot assignment.'
-            )
-        return
-    except requests.HTTPError as error:
-        warning = (
-            'Automation note: Copilot assignment failed. Check that Copilot '
-            'cloud agent is enabled for this repository and that the token '
-            'used by this workflow is a user token with write access to '
-            'actions, contents, issues, and pull requests.\n\n'
-        )
-        fallback_payload = build_issue_payload(
-            issue_title=issue_title,
-            body=warning + body,
-            primary_assignee=primary_assignee,
+    if issue is None:
+        created = _post_issue(
+            session=session,
             owner=owner,
             repo=repo,
-            base_branch=base_branch,
-            assign_copilot=False,
+            payload=payload,
         )
-        if issue is None:
-            created = _post_issue(
-                session=session,
-                owner=owner,
-                repo=repo,
-                payload=fallback_payload,
-            )
-            print(
-                'Created automation issue '
-                f'#{created["number"]} without Copilot assignment: {error}'
-            )
-        else:
-            updated = _patch_issue(
-                session=session,
-                owner=owner,
-                repo=repo,
-                issue_number=issue['number'],
-                payload=fallback_payload,
-            )
-            print(
-                'Updated automation issue '
-                f'#{updated["number"]} without Copilot assignment: {error}'
-            )
+        number = created['number']
+        print(f'Created automation issue #{number} labeled {CLAUDE_LABEL}.')
+        return
+
+    updated = _patch_issue(
+        session=session,
+        owner=owner,
+        repo=repo,
+        issue_number=issue['number'],
+        payload=payload,
+    )
+    number = updated['number']
+    if CLAUDE_LABEL in {label['name'] for label in issue.get('labels', [])}:
+        print(
+            f'Updated automation issue #{number}; it already carries the '
+            f'{CLAUDE_LABEL} label, so Claude was not triggered again.'
+        )
+    else:
+        print(f'Updated automation issue #{number} labeled {CLAUDE_LABEL}.')
 
 
 def close_issue(*, session, owner, repo, issue_number):
@@ -169,56 +124,19 @@ def close_issue(*, session, owner, repo, issue_number):
     )
 
 
-def build_issue_payload(
-    *,
-    issue_title,
-    body,
-    primary_assignee,
-    owner,
-    repo,
-    base_branch,
-    assign_copilot,
-):
+def build_issue_payload(*, issue_title, body, primary_assignee):
     """Build the REST payload for creating or updating the issue."""
 
     assignees = []
     if primary_assignee != '':
         assignees.append(primary_assignee)
-    if assign_copilot:
-        assignees.append(COPILOT_LOGIN)
 
-    payload = {
+    return {
         'title': issue_title,
         'body': body,
         'assignees': assignees,
+        'labels': [CLAUDE_LABEL],
     }
-    if assign_copilot:
-        payload['agent_assignment'] = {
-            'target_repo': f'{owner}/{repo}',
-            'base_branch': base_branch,
-            'custom_instructions': (
-                'Use the issue body as the task definition. Run `pixi run '
-                '-e py314 python utils/update_cime_machine_config.py '
-                '--work-dir .`, replace '
-                'mache/cime_machine_config/config_machines.xml with '
-                'upstream_config_machines.xml, remove '
-                'upstream_config_machines.xml before committing, and state '
-                'the upstream E3SM commit hash in the PR summary. Then '
-                'update the related Spack templates and version strings in '
-                'mache/spack/templates/<machine>*.yaml, '
-                'mache/spack/templates/<machine>*.sh, and '
-                'mache/spack/templates/<machine>*.csh. '
-                'Add TODO comments in the PR when prefix or path changes '
-                'need reviewer confirmation. '
-                'Run `pixi run -e py314 pre-commit run --files '
-                'mache/cime_machine_config/config_machines.xml` and fix '
-                'any issues before committing.'
-            ),
-            'custom_agent': '',
-            'model': '',
-        }
-
-    return payload
 
 
 def _make_session(token):
