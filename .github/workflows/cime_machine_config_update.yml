@@ -56,7 +56,6 @@ jobs:
       - name: Synchronize automation issue
         env:
           GH_CLI_TOKEN: ${{ secrets.GH_CLI_TOKEN }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           if [ -z "${GH_CLI_TOKEN}" ]; then
             echo "GH_CLI_TOKEN is not configured; report generated" \
@@ -71,5 +70,4 @@ jobs:
             --repository ${GITHUB_REPOSITORY} \
             --token ${GH_CLI_TOKEN} \
             --issue-title "${ISSUE_TITLE}" \
-            --base-branch ${DEFAULT_BRANCH} \
             --primary-assignee ${PRIMARY_ASSIGNEE}

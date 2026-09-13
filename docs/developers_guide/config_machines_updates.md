@@ -1,7 +1,7 @@
 # Automated `config_machines.xml` updates
 
 This page describes the automation that watches for upstream changes to
-E3SM's `config_machines.xml`, opens or refreshes a Copilot task when drift is
+E3SM's `config_machines.xml`, hands the work to Claude Code when drift is
 detected, and explains how maintainers are expected to review the resulting
 pull request.
 
@@ -14,8 +14,8 @@ The automation added here does **not** edit that file directly. Instead, it:
 
 1. Compares the copy in `mache` against the current upstream E3SM source.
 2. Produces a structured report describing any drift for supported machines.
-3. Creates or updates one GitHub issue that assigns the work to Copilot.
-4. Lets Copilot open a PR that updates `config_machines.xml` and any related
+3. Creates or updates one GitHub issue and labels it `claude`.
+4. Lets Claude open a PR that updates `config_machines.xml` and any related
    Spack configuration.
 
 This keeps the source-of-truth update in a reviewed pull request rather than a
@@ -39,11 +39,17 @@ The job:
 6. Runs `utils/manage_cime_machine_config_issue.py` when `GH_CLI_TOKEN` is
    configured.
 
-### Copilot environment workflow
+### Drift-fix workflow
 
-`.github/workflows/copilot-setup-steps.yml`
-: Defines the setup steps the Copilot cloud agent can use on the default
-  branch so it starts from a working Pixi environment with `mache` installed.
+`.github/workflows/claude_config_machines_drift.yml`
+: Runs Claude Code when the drift issue gains the `claude` label, or on
+  `workflow_dispatch` with an issue number. It builds the same `py314` Pixi
+  environment the daily workflow uses, then hands Claude the prompt described
+  below.
+
+Claude authenticates with the `CLAUDE_CODE_OAUTH_TOKEN` secret, a long-lived
+subscription token, and acts on GitHub through `GH_CLI_TOKEN` rather than the
+Claude GitHub App.
 
 ### Drift report builder
 
@@ -53,7 +59,7 @@ The job:
   summary, and optionally writes:
 
   - a JSON report for machine-readable automation,
-  - a Markdown issue body for Copilot and human reviewers.
+  - a Markdown issue body for Claude and human reviewers.
 
 `mache/cime_machine_config/report.py`
 : Contains the structured comparison logic. It determines which supported
@@ -69,8 +75,10 @@ If drift exists, it creates or updates the issue.
 
 If no drift exists, it closes the existing issue.
 
-If Copilot assignment fails, it falls back to creating or updating the same
-issue without Copilot assignment so the report is still visible.
+It labels the issue `claude`, which is what starts the drift-fix workflow.
+GitHub only emits the `labeled` event when the label is newly added, so
+refreshing an issue that already carries the label does not start Claude a
+second time while its pull request is still open.
 
 ### Tests
 
@@ -87,8 +95,8 @@ The update path is:
 
 1. The workflow detects drift between the `mache` copy and upstream E3SM.
 2. The workflow creates or refreshes a GitHub issue.
-3. Copilot is assigned to that issue.
-4. Copilot opens a pull request against `main`.
+3. The issue is labeled `claude`, which starts the drift-fix workflow.
+4. Claude opens a pull request against `main`.
 5. That PR replaces `mache/cime_machine_config/config_machines.xml` with the
   latest version from `E3SM-Project/E3SM`, then updates any related Spack
   templates or version strings that the report indicates should be reviewed.
@@ -102,31 +110,20 @@ next run.
 If only part of the drift was resolved, the issue stays open and its body is
 updated to reflect the remaining work.
 
-## What Copilot is told to do
+## What Claude is told to do
 
-Copilot receives instructions from two places.
+Claude receives instructions from two places.
 
-### Fixed API-level instructions
+### The workflow prompt
 
-`utils/manage_cime_machine_config_issue.py` adds the following guidance in the
-`agent_assignment` payload:
+`.github/workflows/claude_config_machines_drift.yml` names the issue as the
+task definition and supplies what the issue body cannot know: the branch to
+create, that validation runs through Pixi, and that Claude opens the pull
+request itself with `gh pr create` and closes the issue with it. Claude reads
+`AGENTS.md` as well, as it does for any work in this repository.
 
-- Use the issue body as the task definition.
-- Run `pixi run -e py314 python utils/update_cime_machine_config.py
-  --work-dir .`.
-- Replace `mache/cime_machine_config/config_machines.xml` with the generated
-  `upstream_config_machines.xml`, then remove that temporary file before
-  committing.
-- State the upstream E3SM commit hash in the PR summary.
-- Then update related Spack templates and version strings under
-  `mache/spack/templates/<machine>*.yaml`,
-  `mache/spack/templates/<machine>*.sh`, and
-  `mache/spack/templates/<machine>*.csh`.
-- Add TODO comments in the PR when prefix or path changes need reviewer
-  confirmation.
-- Run `pixi run -e py314 pre-commit run --files
-  mache/cime_machine_config/config_machines.xml` and fix any issues before
-  committing.
+The prompt also tells Claude to comment on the issue rather than open a
+partial pull request when something blocks it.
 
 ### Generated issue-body instructions
 
@@ -141,7 +138,7 @@ drift and includes:
 - per-machine details such as package groups, prefix or path variables, and
   candidate Spack templates to inspect.
 
-The required work section tells Copilot to:
+The required work section tells Claude to:
 
 - run `pixi run -e py314 python utils/update_cime_machine_config.py
   --work-dir .`,
@@ -193,7 +190,7 @@ A new issue would only be created if one of these is true:
 
 ## Reviewer workflow
 
-When Copilot opens a PR from this issue, the reviewer should check the changes
+When Claude opens a PR from this issue, the reviewer should check the changes
 in this order.
 
 ### 1. `config_machines.xml` changes
@@ -267,13 +264,15 @@ If `GH_CLI_TOKEN` is not configured, the workflow still generates and uploads
 the report artifacts but skips issue synchronization.
 
 That is a safe way to validate the comparison and report rendering logic
-without asking Copilot to act on the result.
+without asking Claude to act on the result.
 
 ## Operational notes
 
 - `GH_CLI_TOKEN` should be a user token with access to create and update
   issues in the repository. A classic PAT with `repo` scope is sufficient.
-- Copilot assignment additionally depends on Copilot cloud agent being enabled
-  for the repository.
+  Claude uses the same token to push its branch and open the pull request, so
+  the resulting PR runs CI.
+- `CLAUDE_CODE_OAUTH_TOKEN` is a one-year token from `claude setup-token` and
+  has to be regenerated before it expires.
 - The workflow uses the repository's current `main` branch as the comparison
-  baseline and as the branch Copilot is asked to target.
+  baseline and as the branch Claude targets.
