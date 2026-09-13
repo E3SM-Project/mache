@@ -62,15 +62,15 @@
 <li class="toctree-l2"><a class="reference internal" href="#goal">Goal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pieces-of-the-automation">Pieces of the automation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#daily-workflow">Daily workflow</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#copilot-environment-workflow">Copilot environment workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#drift-fix-workflow">Drift-fix workflow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#drift-report-builder">Drift report builder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#issue-synchronization">Issue synchronization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#tests">Tests</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#how-config-machines-xml-gets-updated">How <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> gets updated</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#what-copilot-is-told-to-do">What Copilot is told to do</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#fixed-api-level-instructions">Fixed API-level instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-claude-is-told-to-do">What Claude is told to do</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-workflow-prompt">The workflow prompt</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generated-issue-body-instructions">Generated issue-body instructions</a></li>
 </ul>
 </li>
@@ -126,7 +126,7 @@
   <section class="tex2jax_ignore mathjax_ignore" id="automated-config-machines-xml-updates">
 <h1>Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates<a class="headerlink" href="#automated-config-machines-xml-updates" title="Link to this heading"></a></h1>
 <p>This page describes the automation that watches for upstream changes to
-E3SM’s <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, opens or refreshes a Copilot task when drift is
+E3SM’s <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, hands the work to Claude Code when drift is
 detected, and explains how maintainers are expected to review the resulting
 pull request.</p>
 <section id="goal">
@@ -137,8 +137,8 @@ pull request.</p>
 <ol class="arabic simple">
 <li><p>Compares the copy in <code class="docutils literal notranslate"><span class="pre">mache</span></code> against the current upstream E3SM source.</p></li>
 <li><p>Produces a structured report describing any drift for supported machines.</p></li>
-<li><p>Creates or updates one GitHub issue that assigns the work to Copilot.</p></li>
-<li><p>Lets Copilot open a PR that updates <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> and any related
+<li><p>Creates or updates one GitHub issue and labels it <code class="docutils literal notranslate"><span class="pre">claude</span></code>.</p></li>
+<li><p>Lets Claude open a PR that updates <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> and any related
 Spack configuration.</p></li>
 </ol>
 <p>This keeps the source-of-truth update in a reviewed pull request rather than a
@@ -164,13 +164,18 @@ silent CI-side commit.</p>
 configured.</p></li>
 </ol>
 </section>
-<section id="copilot-environment-workflow">
-<h3>Copilot environment workflow<a class="headerlink" href="#copilot-environment-workflow" title="Link to this heading"></a></h3>
+<section id="drift-fix-workflow">
+<h3>Drift-fix workflow<a class="headerlink" href="#drift-fix-workflow" title="Link to this heading"></a></h3>
 <dl class="simple myst">
-<dt><code class="docutils literal notranslate"><span class="pre">.github/workflows/copilot-setup-steps.yml</span></code></dt><dd><p>Defines the setup steps the Copilot cloud agent can use on the default
-branch so it starts from a working Pixi environment with <code class="docutils literal notranslate"><span class="pre">mache</span></code> installed.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">.github/workflows/claude_config_machines_drift.yml</span></code></dt><dd><p>Runs Claude Code when the drift issue gains the <code class="docutils literal notranslate"><span class="pre">claude</span></code> label, or on
+<code class="docutils literal notranslate"><span class="pre">workflow_dispatch</span></code> with an issue number. It builds the same <code class="docutils literal notranslate"><span class="pre">py314</span></code> Pixi
+environment the daily workflow uses, then hands Claude the prompt described
+below.</p>
 </dd>
 </dl>
+<p>Claude authenticates with the <code class="docutils literal notranslate"><span class="pre">CLAUDE_CODE_OAUTH_TOKEN</span></code> secret, a long-lived
+subscription token, and acts on GitHub through <code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> rather than the
+Claude GitHub App.</p>
 </section>
 <section id="drift-report-builder">
 <h3>Drift report builder<a class="headerlink" href="#drift-report-builder" title="Link to this heading"></a></h3>
@@ -180,7 +185,7 @@ branch so it starts from a working Pixi environment with <code class="docutils l
 summary, and optionally writes:</p>
 <ul class="simple">
 <li><p>a JSON report for machine-readable automation,</p></li>
-<li><p>a Markdown issue body for Copilot and human reviewers.</p></li>
+<li><p>a Markdown issue body for Claude and human reviewers.</p></li>
 </ul>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/report.py</span></code></dt><dd><p>Contains the structured comparison logic. It determines which supported
@@ -197,8 +202,10 @@ related package groups, and lists candidate Spack template files to review.</p>
 </dl>
 <p>If drift exists, it creates or updates the issue.</p>
 <p>If no drift exists, it closes the existing issue.</p>
-<p>If Copilot assignment fails, it falls back to creating or updating the same
-issue without Copilot assignment so the report is still visible.</p>
+<p>It labels the issue <code class="docutils literal notranslate"><span class="pre">claude</span></code>, which is what starts the drift-fix workflow.
+GitHub only emits the <code class="docutils literal notranslate"><span class="pre">labeled</span></code> event when the label is newly added, so
+refreshing an issue that already carries the label does not start Claude a
+second time while its pull request is still open.</p>
 </section>
 <section id="tests">
 <h3>Tests<a class="headerlink" href="#tests" title="Link to this heading"></a></h3>
@@ -217,8 +224,8 @@ issue body contains the required maintainer instructions.</p>
 <ol class="arabic simple">
 <li><p>The workflow detects drift between the <code class="docutils literal notranslate"><span class="pre">mache</span></code> copy and upstream E3SM.</p></li>
 <li><p>The workflow creates or refreshes a GitHub issue.</p></li>
-<li><p>Copilot is assigned to that issue.</p></li>
-<li><p>Copilot opens a pull request against <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p></li>
+<li><p>The issue is labeled <code class="docutils literal notranslate"><span class="pre">claude</span></code>, which starts the drift-fix workflow.</p></li>
+<li><p>Claude opens a pull request against <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p></li>
 <li><p>That PR replaces <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the
 latest version from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, then updates any related Spack
 templates or version strings that the report indicates should be reviewed.</p></li>
@@ -231,29 +238,18 @@ next run.</p>
 <p>If only part of the drift was resolved, the issue stays open and its body is
 updated to reflect the remaining work.</p>
 </section>
-<section id="what-copilot-is-told-to-do">
-<h2>What Copilot is told to do<a class="headerlink" href="#what-copilot-is-told-to-do" title="Link to this heading"></a></h2>
-<p>Copilot receives instructions from two places.</p>
-<section id="fixed-api-level-instructions">
-<h3>Fixed API-level instructions<a class="headerlink" href="#fixed-api-level-instructions" title="Link to this heading"></a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">utils/manage_cime_machine_config_issue.py</span></code> adds the following guidance in the
-<code class="docutils literal notranslate"><span class="pre">agent_assignment</span></code> payload:</p>
-<ul class="simple">
-<li><p>Use the issue body as the task definition.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>.</p></li>
-<li><p>Replace <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the generated
-<code class="docutils literal notranslate"><span class="pre">upstream_config_machines.xml</span></code>, then remove that temporary file before
-committing.</p></li>
-<li><p>State the upstream E3SM commit hash in the PR summary.</p></li>
-<li><p>Then update related Spack templates and version strings under
-<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.yaml</span></code>,
-<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.sh</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;*.csh</span></code>.</p></li>
-<li><p>Add TODO comments in the PR when prefix or path changes need reviewer
-confirmation.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">pre-commit</span> <span class="pre">run</span> <span class="pre">--files</span> <span class="pre">mache/cime_machine_config/config_machines.xml</span></code> and fix any issues before
-committing.</p></li>
-</ul>
+<section id="what-claude-is-told-to-do">
+<h2>What Claude is told to do<a class="headerlink" href="#what-claude-is-told-to-do" title="Link to this heading"></a></h2>
+<p>Claude receives instructions from two places.</p>
+<section id="the-workflow-prompt">
+<h3>The workflow prompt<a class="headerlink" href="#the-workflow-prompt" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">.github/workflows/claude_config_machines_drift.yml</span></code> names the issue as the
+task definition and supplies what the issue body cannot know: the branch to
+create, that validation runs through Pixi, and that Claude opens the pull
+request itself with <code class="docutils literal notranslate"><span class="pre">gh</span> <span class="pre">pr</span> <span class="pre">create</span></code> and closes the issue with it. Claude reads
+<code class="docutils literal notranslate"><span class="pre">AGENTS.md</span></code> as well, as it does for any work in this repository.</p>
+<p>The prompt also tells Claude to comment on the issue rather than open a
+partial pull request when something blocks it.</p>
 </section>
 <section id="generated-issue-body-instructions">
 <h3>Generated issue-body instructions<a class="headerlink" href="#generated-issue-body-instructions" title="Link to this heading"></a></h3>
@@ -268,7 +264,7 @@ drift and includes:</p>
 <li><p>per-machine details such as package groups, prefix or path variables, and
 candidate Spack templates to inspect.</p></li>
 </ul>
-<p>The required work section tells Copilot to:</p>
+<p>The required work section tells Claude to:</p>
 <ul class="simple">
 <li><p>run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">-e</span> <span class="pre">py314</span> <span class="pre">python</span> <span class="pre">utils/update_cime_machine_config.py</span> <span class="pre">--work-dir</span> <span class="pre">.</span></code>,</p></li>
 <li><p>if GitHub API access is unavailable, rerun the command with
@@ -319,7 +315,7 @@ issue in the repository.</p></li>
 </section>
 <section id="reviewer-workflow">
 <h2>Reviewer workflow<a class="headerlink" href="#reviewer-workflow" title="Link to this heading"></a></h2>
-<p>When Copilot opens a PR from this issue, the reviewer should check the changes
+<p>When Claude opens a PR from this issue, the reviewer should check the changes
 in this order.</p>
 <section id="config-machines-xml-changes">
 <h3>1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes<a class="headerlink" href="#config-machines-xml-changes" title="Link to this heading"></a></h3>
@@ -381,17 +377,19 @@ rerun with <code class="docutils literal notranslate"><span class="pre">GITHUB_T
 <p>If <code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> is not configured, the workflow still generates and uploads
 the report artifacts but skips issue synchronization.</p>
 <p>That is a safe way to validate the comparison and report rendering logic
-without asking Copilot to act on the result.</p>
+without asking Claude to act on the result.</p>
 </section>
 <section id="operational-notes">
 <h2>Operational notes<a class="headerlink" href="#operational-notes" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">GH_CLI_TOKEN</span></code> should be a user token with access to create and update
-issues in the repository. A classic PAT with <code class="docutils literal notranslate"><span class="pre">repo</span></code> scope is sufficient.</p></li>
-<li><p>Copilot assignment additionally depends on Copilot cloud agent being enabled
-for the repository.</p></li>
+issues in the repository. A classic PAT with <code class="docutils literal notranslate"><span class="pre">repo</span></code> scope is sufficient.
+Claude uses the same token to push its branch and open the pull request, so
+the resulting PR runs CI.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CLAUDE_CODE_OAUTH_TOKEN</span></code> is a one-year token from <code class="docutils literal notranslate"><span class="pre">claude</span> <span class="pre">setup-token</span></code> and
+has to be regenerated before it expires.</p></li>
 <li><p>The workflow uses the repository’s current <code class="docutils literal notranslate"><span class="pre">main</span></code> branch as the comparison
-baseline and as the branch Copilot is asked to target.</p></li>
+baseline and as the branch Claude targets.</p></li>
 </ul>
 </section>
 </section>

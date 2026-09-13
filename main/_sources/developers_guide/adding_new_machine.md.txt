@@ -15,7 +15,7 @@ included in this list, you must contact the E3SM-Project developers to add your
 machine.
 
 For details on the automated workflow that detects upstream drift in this file
-and assigns follow-up work to Copilot, see
+and hands the follow-up work to Claude Code, see
 {doc}`config_machines_updates`.
 :::
 
