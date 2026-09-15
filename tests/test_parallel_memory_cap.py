@@ -99,7 +99,7 @@ def test_modern_slurm_renders_the_cap(monkeypatch):
 
 def test_the_cap_survives_alongside_a_placement(monkeypatch):
     system = _get_slurm_system(monkeypatch, MODERN_SLURM)
-    placement = ResourcePlacement(nodes=['nid001'], cores=[0, 1, 2, 3])
+    placement = ResourcePlacement(nodes=['nid001'], cores=[[0, 1, 2, 3]])
     command = system.get_parallel_command(
         args=['./run.py'],
         ntasks=2,
