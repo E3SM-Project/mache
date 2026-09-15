@@ -513,6 +513,11 @@ def test_pals_spreads_a_placed_launch_over_the_hosts_it_named(monkeypatch):
     machine allows, which is what an unplaced launch wants.  A placed one
     cannot: its core sets say which cores a task gets on which host, so the
     tasks have to land on the hosts those sets belong to.
+
+    The list carries one host's entries, not every task's.  PALS applies
+    it to each host's tasks by their index on that host, starting again
+    for every host, so entries past the first host's are never read.
+    Measured on Aurora.
     """
     system = _get_pbs_system(monkeypatch)
     placement = ResourcePlacement(
@@ -523,7 +528,42 @@ def test_pals_spreads_a_placed_launch_over_the_hosts_it_named(monkeypatch):
     )
     assert _get_flag_value(args, '--hosts') == 'x1,x2'
     assert _get_flag_value(args, '--ppn') == '2'
-    assert _get_flag_value(args, '--cpu-bind') == 'list:1,2:3,4:1,2:3,4'
+    assert _get_flag_value(args, '--cpu-bind') == 'list:1,2:3,4'
+
+
+def test_pals_refuses_different_cores_on_each_node(monkeypatch):
+    """
+    What PALS cannot be told, and used to be told anyway.
+
+    Given ``list:1,2:3,4:61,62:63,64`` across two nodes, Aurora put the
+    second node's ranks on 1,2 and 3,4 -- the first node's -- and every
+    launch exited 0.  Slurm has refused this since it was measured on
+    Chrysalis; PALS rendered it silently until it was measured on Aurora.
+    """
+    system = _get_pbs_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'], cores=[[1, 2, 3, 4], [61, 62, 63, 64]]
+    )
+
+    with pytest.raises(ValueError, match='same core numbers'):
+        system._get_parallel_args(
+            cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
+        )
+
+
+def test_pals_allows_a_node_with_fewer_tasks(monkeypatch):
+    """
+    A node with fewer tasks takes the front of the first node's list,
+    which is what PALS applies to it anyway.
+    """
+    system = _get_pbs_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'], cores=[[1, 2, 3, 4], [1, 2]]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=2, gpus_per_task=0, ntasks=3, placement=placement
+    )
+    assert _get_flag_value(args, '--cpu-bind') == 'list:1,2:3,4'
 
 
 def test_pals_packs_an_unplaced_launch_as_before(monkeypatch):

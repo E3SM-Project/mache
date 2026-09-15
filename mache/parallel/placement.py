@@ -257,6 +257,67 @@ def split_cores_by_node(
     return by_node
 
 
+def check_one_list_serves_every_node(
+    by_node: List[List[List[int]]],
+    placement: ResourcePlacement,
+    launcher: str,
+) -> None:
+    """
+    Check that the first node's core list describes every node's tasks.
+
+    Slurm's ``--cpu-bind=mask_cpu`` and PALS's ``--cpu-bind list`` both
+    hand their list to each node's tasks by the task's index *on that
+    node*, starting again from the beginning of the list for every node.
+    Measured on Chrysalis and on Aurora respectively.  So a launch spanning
+    nodes gets the first node's entries everywhere, and a placement whose
+    other nodes want different core numbers cannot be expressed to either
+    launcher at all.  Rendering it anyway would put the launch on cores
+    nobody chose while reporting success, which is what both did before
+    this refused.
+
+    A node with fewer tasks than the first is fine: its entries are the
+    front of the first node's list, which is what the launcher applies.
+
+    Parameters
+    ----------
+    by_node : list of list of list of int
+        The cores of each task, grouped by node, as
+        :py:func:`split_cores_by_node()` returns them
+
+    placement : ResourcePlacement
+        The placement being rendered, for the names in the message
+
+    launcher : str
+        The launcher's name, for the message
+
+    Raises
+    ------
+    ValueError
+        If any node's tasks would be given cores the placement did not give
+        them.
+    """
+    first = by_node[0]
+    for index, chunks in enumerate(by_node[1:], start=1):
+        if chunks == first[: len(chunks)]:
+            continue
+        names = placement.nodes
+        here = names[index] if index < len(names) else f'node {index}'
+        there = names[0] if names else 'the first node'
+        wanted = [core for chunk in chunks for core in chunk]
+        given = [core for chunk in first for core in chunk]
+        raise ValueError(
+            f'This placement gives {here} different core numbers from '
+            f'{there}, and {launcher} has no way to be told that: it applies '
+            f'one binding list to every node, addressing each task by its '
+            f'index on its own node. So {here} would silently run on the '
+            f'cores of {there}.\n'
+            f'  {there}: {given}\n'
+            f'  {here}: {wanted}\n'
+            f'A launch spanning nodes has to be given the same core numbers '
+            f'on each of them.'
+        )
+
+
 def format_core_ranges(cores: Sequence[int]) -> str:
     """Format cores as a compact ``0-3,8`` list, as ``taskset -c`` takes."""
     ranges: List[str] = []

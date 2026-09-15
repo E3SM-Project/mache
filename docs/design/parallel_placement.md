@@ -307,6 +307,21 @@ deliberately: sharing a node was the hard case and spreading across them was
 not what anyone was unsure about. The first caller to place a step wider than
 a node found this by reading the renderers.
 
+The two explicit-binding launchers turn out to read their lists the same
+way, and both were measured rather than assumed. Slurm's `--cpu-bind=mask_cpu`
+applies its mask list to each node's tasks by their index on that node,
+starting again at the beginning for every node -- measured on Chrysalis,
+where a three-node launch given 48 masks used the first node's 16 on all
+three. PALS's `--cpu-bind list:` does the same -- measured on Aurora
+(2026/09/12, job 8828632), where `list:1,2:3,4:61,62:63,64` across two nodes
+put the second node's ranks on 1,2 and 3,4. Every launch exited 0 in both
+cases. So each renderer emits one node's entries, and each refuses a
+placement whose nodes ask for different core numbers, since neither launcher
+can be told that. Slurm's renderer did this from the Chrysalis measurement;
+PALS's rendered every task's entry and refused nothing until the Aurora one,
+which is the asymmetry the cross-machine runs before v4.0.0 were meant to
+find.
+
 So `cores` becomes one set per node, aligned with `nodes`, and the sets are
 checked for uniqueness within a node rather than across the placement. Tasks
 fill each node in turn, matching how the launchers distribute them, and each

@@ -11,8 +11,9 @@ from mache.parallel.placement import (
     BINDING_OPTIONS,
     PlacementSupport,
     ResourcePlacement,
+    check_one_list_serves_every_node,
     names_resources,
-    split_cores,
+    split_cores_by_node,
 )
 from mache.parallel.system import (
     ParallelSystem,
@@ -444,9 +445,18 @@ class PbsSystem(ParallelSystem):
         if len(placement.nodes) > 0:
             placement_args.extend(['--hosts', ','.join(placement.nodes)])
 
-        chunks = split_cores(placement, ntasks, cpus_per_task)
+        # PALS hands a ``list:`` to each node's tasks by their index *on
+        # that node* and starts again at the beginning for every node, so
+        # what goes here is one node's worth of entries and not the whole
+        # launch's -- the same as Slurm's mask list.  Measured on Aurora
+        # with two nodes: given entries for both, the second node's ranks
+        # took the first node's, and every launch succeeded on the wrong
+        # cores.  The check refuses a placement that cannot be said this
+        # way, rather than rendering it and reporting success.
+        by_node = split_cores_by_node(placement, ntasks, cpus_per_task)
+        check_one_list_serves_every_node(by_node, placement, 'PALS')
         core_list = ':'.join(
-            ','.join(f'{core}' for core in chunk) for chunk in chunks
+            ','.join(f'{core}' for core in chunk) for chunk in by_node[0]
         )
         placement_args.extend(['--cpu-bind', f'list:{core_list}'])
 

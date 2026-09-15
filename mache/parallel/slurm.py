@@ -14,6 +14,7 @@ from mache.parallel.placement import (
     BINDING_OPTIONS,
     PlacementSupport,
     ResourcePlacement,
+    check_one_list_serves_every_node,
     cpu_mask,
     names_resources,
     split_cores_by_node,
@@ -320,47 +321,6 @@ def _get_node_count(job_id: str) -> int:
             )
     args = ['squeue', '--noheader', '-j', job_id, '-o', '%D']
     return _get_subprocess_int(args)
-
-
-def _check_one_mask_list_serves_every_node(
-    by_node: List[List[List[int]]], placement: ResourcePlacement
-) -> None:
-    """
-    Check that one node's masks describe every node's tasks.
-
-    Slurm applies a ``--cpu-bind`` mask list to each node's tasks by their
-    index on that node, starting again at the beginning of the list for
-    every node, so a launch spanning nodes gets the *first* node's masks
-    everywhere.  A placement whose other nodes want different core numbers
-    therefore cannot be expressed here at all, and rendering it anyway would
-    put the launch on cores nobody chose while reporting success.
-
-    Raises
-    ------
-    ValueError
-        If any node's tasks would be given cores the placement did not give
-        them.
-    """
-    first = by_node[0]
-    for index, chunks in enumerate(by_node[1:], start=1):
-        if chunks == first[: len(chunks)]:
-            continue
-        names = placement.nodes
-        here = names[index] if index < len(names) else f'node {index}'
-        there = names[0] if names else 'the first node'
-        wanted = [core for chunk in chunks for core in chunk]
-        given = [core for chunk in first for core in chunk]
-        raise ValueError(
-            f'This placement gives {here} different core numbers from '
-            f'{there}, and Slurm has no way to be told that: it applies one '
-            f'mask list to every node, addressing each task by its index on '
-            f'its own node. So {here} would silently run on the cores of '
-            f'{there}.\n'
-            f'  {there}: {given}\n'
-            f'  {here}: {wanted}\n'
-            f'A launch spanning nodes has to be given the same core numbers '
-            f'on each of them.'
-        )
 
 
 class SlurmSystem(ParallelSystem):
@@ -745,7 +705,7 @@ class SlurmSystem(ParallelSystem):
             # apply the first node's masks.  Measured on Chrysalis with three
             # nodes, where exactly that happened and all three launches
             # succeeded on the wrong cores.
-            _check_one_mask_list_serves_every_node(by_node, placement)
+            check_one_list_serves_every_node(by_node, placement, 'Slurm')
             masks = ','.join(cpu_mask(chunk) for chunk in by_node[0])
             parallel_args.append(f'--cpu-bind=mask_cpu:{masks}')
             return parallel_args
