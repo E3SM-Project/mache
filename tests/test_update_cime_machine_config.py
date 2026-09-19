@@ -51,6 +51,8 @@ def test_get_latest_commit_sha_uses_github_commits_api(monkeypatch):
         captured['timeout'] = timeout
         return FakeResponse()
 
+    monkeypatch.delenv('GITHUB_TOKEN', raising=False)
+    monkeypatch.delenv('GH_TOKEN', raising=False)
     monkeypatch.setattr(update_module.requests, 'get', fake_get)
 
     sha = update_module._get_latest_commit_sha(
