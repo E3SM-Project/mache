@@ -175,7 +175,7 @@ def _get_placements(
     system: ParallelSystem, config: ConfigParser, cores: List[int]
 ) -> List[ResourcePlacement]:
     """Get the placements worth rendering on a machine."""
-    placements = [ResourcePlacement(nodes=['node0'], cores=cores)]
+    placements = [ResourcePlacement(nodes=['node0'], cores=[cores])]
 
     parallel_configs = _get_parallel_configs(config)
     gpus_per_node = int(parallel_configs.get('gpus_per_node', 0))
@@ -185,13 +185,13 @@ def _get_placements(
     if system.placement_support is PlacementSupport.SCHEDULER:
         # the scheduler assigns the GPUs, so only a total is given
         placements.append(
-            ResourcePlacement(nodes=['node0'], cores=cores, gpus=1)
+            ResourcePlacement(nodes=['node0'], cores=[cores], gpus=1)
         )
     elif parallel_configs.get('gpu_visible_devices_var'):
         # PALS has no scheduler to assign them, so the caller names them
         placements.append(
             ResourcePlacement(
-                nodes=['node0'], cores=cores, gpus=1, gpu_ids=[0]
+                nodes=['node0'], cores=[cores], gpus=1, gpu_ids=[0]
             )
         )
 
