@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.resolve\_submission
+========================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. automethod:: ParallelSystem.resolve_submission
