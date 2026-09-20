@@ -95,7 +95,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mache.parallel.system</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span>
@@ -188,6 +190,10 @@
 <span class="sd">    nodes : int</span>
 <span class="sd">        The total number of nodes available on the system.</span>
 
+<span class="sd">    node_names : list of str or None</span>
+<span class="sd">        The hostnames of those nodes, or ``None`` where the system does not</span>
+<span class="sd">        name them. Read on first use rather than at construction.</span>
+
 <span class="sd">    mpi_allowed : bool</span>
 <span class="sd">        Whether MPI execution is allowed on the system.</span>
 <span class="sd">    """</span>
@@ -213,6 +219,40 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mpi_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+
+<div class="viewcode-block" id="ParallelSystem.node_names">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.node_names.html#mache.parallel.system.ParallelSystem.node_names">[docs]</a>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The hostnames of the nodes this system holds, in the order the batch</span>
+<span class="sd">        system lists them, or ``None`` where it does not name them.</span>
+
+<span class="sd">        A caller running several launches at once inside one allocation needs</span>
+<span class="sd">        the names, because a</span>
+<span class="sd">        :py:class:`~mache.parallel.placement.ResourcePlacement` says which</span>
+<span class="sd">        nodes a launch may use by name. Nothing else does, so the names are</span>
+<span class="sd">        read the first time they are asked for rather than when the system is</span>
+<span class="sd">        built: on Slurm reading them costs a subprocess, and a caller that</span>
+<span class="sd">        starts a process per unit of work would otherwise pay it once per</span>
+<span class="sd">        process.</span>
+<span class="sd">        """</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_node_names</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">'This allocation reports </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="si">}</span><span class="s1"> nodes but names '</span>
+                    <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s1"> of them: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s1">. Placing launches onto '</span>
+                    <span class="sa">f</span><span class="s1">'nodes uses the names, so the count is the one to '</span>
+                    <span class="sa">f</span><span class="s1">'distrust.'</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">names</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the hostnames this system holds, or ``None`` if unnamed."""</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>

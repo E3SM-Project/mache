@@ -328,11 +328,67 @@ the command it produces today.</p>
 <section id="the-placement-description">
 <h3>The placement description<a class="headerlink" href="#the-placement-description" title="Link to this heading"></a></h3>
 <p>A placement carries three things: the nodes a launch may use, the cores it may
-use, and the number of GPUs it needs in total. Cores are given as an explicit
-set rather than a count, because that is what the non-contiguous case
-requires and because a count cannot express which cores.</p>
+use on each of them, and the number of GPUs it needs in total. Cores are given
+as explicit sets rather than counts, because that is what the non-contiguous
+case requires and because a count cannot express which cores.</p>
 <p><code class="docutils literal notranslate"><span class="pre">get_parallel_command()</span></code> takes it as an optional argument. When it is absent,
 nothing changes.</p>
+<section id="correction-sep-8-2026-cores-are-per-node">
+<h4>Correction, Sep 8, 2026: cores are per node<a class="headerlink" href="#correction-sep-8-2026-cores-are-per-node" title="Link to this heading"></a></h4>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<p>The first implementation read “the cores it may use on each of them” as one
+flat set for the whole launch, whose members had to be unique. For a launch
+on one node the two readings are the same. For a launch on several they are
+not, and the flat one cannot describe the ordinary case.</p>
+<p>Core numbers are node-local. Where the launcher binds cores explicitly –
+Slurm before 20.11, and PALS – each task’s cores are rendered as a mask or a
+core list that its own node interprets, so a launch spanning two nodes
+normally wants the same numbers on both. Requiring them to be unique across
+the placement forbids exactly that, and leaves such a launch expressible only
+while its cores in total fit inside one node’s numbering, which is to say not
+usefully at all. Where the scheduler reserves resources, only the counts are
+used, so the flat set worked there and the defect was invisible.</p>
+<p>It was invisible in testing too, and worth recording why. Every placement
+rendered on a real machine during the original validation named one node,
+deliberately: sharing a node was the hard case and spreading across them was
+not what anyone was unsure about. The first caller to place a step wider than
+a node found this by reading the renderers.</p>
+<p>The two explicit-binding launchers turn out to read their lists the same
+way, and both were measured rather than assumed. Slurm’s <code class="docutils literal notranslate"><span class="pre">--cpu-bind=mask_cpu</span></code>
+applies its mask list to each node’s tasks by their index on that node,
+starting again at the beginning for every node – measured on Chrysalis,
+where a three-node launch given 48 masks used the first node’s 16 on all
+three. PALS’s <code class="docutils literal notranslate"><span class="pre">--cpu-bind</span> <span class="pre">list:</span></code> does the same – measured on Aurora
+(2026/09/12, job 8828632), where <code class="docutils literal notranslate"><span class="pre">list:1,2:3,4:61,62:63,64</span></code> across two nodes
+put the second node’s ranks on 1,2 and 3,4. Every launch exited 0 in both
+cases. So each renderer emits one node’s entries, and each refuses a
+placement whose nodes ask for different core numbers, since neither launcher
+can be told that. Slurm’s renderer did this from the Chrysalis measurement;
+PALS’s rendered every task’s entry and refused nothing until the Aurora one,
+which is the asymmetry the cross-machine runs before v4.0.0 were meant to
+find.</p>
+<p>So <code class="docutils literal notranslate"><span class="pre">cores</span></code> becomes one set per node, aligned with <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, and the sets are
+checked for uniqueness within a node rather than across the placement. Tasks
+fill each node in turn, matching how the launchers distribute them, and each
+task’s cores come from the node it landed on.</p>
+<p>This is a breaking change to the type, taken rather than adding a second
+field beside the first, because two ways to say where a launch runs would
+drift apart and the first release to carry it is recent enough that its only
+consumer can move with it.</p>
+<p>Being cheap to break is not the same as not breaking, so the release carrying
+it is v4.0.0. <code class="docutils literal notranslate"><span class="pre">ResourcePlacement</span></code> is public, is named in the API listing and
+the user’s guide, and shipped in v3.12.0, so the old shape is released
+API; it now raises rather than being accepted, and there is no opt-in. A
+minor version would say a caller can upgrade without reading anything, and
+that is the one thing this release does not offer.</p>
+<p>One thing followed from it rather than being chosen. On PALS the tasks per
+node are rendered as <code class="docutils literal notranslate"><span class="pre">--ppn</span></code>, and an unplaced launch asks to pack each host as
+full as the machine allows, which is right for a launch whose hosts the
+scheduler picks. A <em>placed</em> launch cannot do that: its core sets say which
+cores a task gets on which host, so its tasks have to be spread over the
+hosts it named. Placed and unplaced now differ there, and the placed one is
+the new answer.</p>
+</section>
 </section>
 <section id="rendering-per-system">
 <h3>Rendering per system<a class="headerlink" href="#rendering-per-system" title="Link to this heading"></a></h3>

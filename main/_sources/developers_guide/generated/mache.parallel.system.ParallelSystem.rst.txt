@@ -29,6 +29,7 @@
    .. autosummary::
    
       ~ParallelSystem.memory_cap_support
+      ~ParallelSystem.node_names
       ~ParallelSystem.placement_support
    
    

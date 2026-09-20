@@ -29,6 +29,7 @@
    .. autosummary::
    
       ~LoginSystem.memory_cap_support
+      ~LoginSystem.node_names
       ~LoginSystem.placement_support
    
    

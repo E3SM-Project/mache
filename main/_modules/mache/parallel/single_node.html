@@ -96,6 +96,7 @@
              
   <h1>Source code for mache.parallel.single_node</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
@@ -146,6 +147,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Read the hostname of the one node this system is.</span>
+
+<span class="sd">        There is no batch system to name it, so it names itself. A caller</span>
+<span class="sd">        laying out placements does not have to special-case a machine with no</span>
+<span class="sd">        scheduler on it.</span>
+<span class="sd">        """</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s1">''</span> <span class="k">else</span> <span class="kc">None</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -178,7 +190,8 @@
         <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_placement_supported</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">TASKSET</span><span class="p">,</span> <span class="s1">'-c'</span><span class="p">,</span> <span class="n">format_core_ranges</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">)]</span>
+        <span class="c1"># one node, so one set of cores</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">TASKSET</span><span class="p">,</span> <span class="s1">'-c'</span><span class="p">,</span> <span class="n">format_core_ranges</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_placement</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -204,9 +217,9 @@
             <span class="p">)</span>
 
         <span class="n">needed</span> <span class="o">=</span> <span class="n">ntasks</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="n">placement</span><span class="o">.</span><span class="n">total_cores</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">'The placement has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> cores but '</span>
+                <span class="sa">f</span><span class="s1">'The placement has </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">total_cores</span><span class="si">}</span><span class="s1"> cores but '</span>
                 <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1"> tasks x </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1"> cpus per task '</span>
                 <span class="sa">f</span><span class="s1">'need </span><span class="si">{</span><span class="n">needed</span><span class="si">}</span><span class="s1">.'</span>
             <span class="p">)</span></div>

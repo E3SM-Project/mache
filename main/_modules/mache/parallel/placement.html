@@ -97,7 +97,7 @@
   <h1>Source code for mache.parallel.placement</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="c1"># the machine's binding config options, in the order they are rendered</span>
 <span class="n">BINDING_OPTIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'cpu_bind'</span><span class="p">,</span> <span class="s1">'gpu_bind'</span><span class="p">,</span> <span class="s1">'mem_bind'</span><span class="p">)</span>
@@ -167,16 +167,21 @@
 <span class="sd">        of nodes to the scheduler, which is only useful when nothing else is</span>
 <span class="sd">        running concurrently.</span>
 
-<span class="sd">    cores : tuple of int</span>
-<span class="sd">        The cores, on each of ``nodes``, that the launch may use, in the order</span>
-<span class="sd">        they should be handed out to tasks. This is an explicit set rather</span>
-<span class="sd">        than a count because the usable cores on a node may not be contiguous</span>
-<span class="sd">        and may not start at zero.</span>
+<span class="sd">    cores : tuple of tuple of int</span>
+<span class="sd">        The cores the launch may use, one set per entry in ``nodes``, in the</span>
+<span class="sd">        order they should be handed out to the tasks that land on that node.</span>
+<span class="sd">        These are node-local core numbers, so two nodes may perfectly well</span>
+<span class="sd">        both offer core 0, and each set is an explicit set rather than a count</span>
+<span class="sd">        because the usable cores on a node may not be contiguous and may not</span>
+<span class="sd">        start at zero.</span>
 
-<span class="sd">        Whether the exact set is honored depends on the machine: launchers</span>
-<span class="sd">        that bind explicitly use it as given, while a scheduler that reserves</span>
-<span class="sd">        resources uses only how many cores there are and picks which ones</span>
-<span class="sd">        itself.</span>
+<span class="sd">        Where ``nodes`` is empty there is exactly one set, holding the cores</span>
+<span class="sd">        for the whole launch, since there is no node to divide them between.</span>
+
+<span class="sd">        Whether the exact sets are honored depends on the machine: launchers</span>
+<span class="sd">        that bind explicitly use them as given, while a scheduler that</span>
+<span class="sd">        reserves resources uses only how many cores there are and picks which</span>
+<span class="sd">        ones itself.</span>
 
 <span class="sd">    gpus : int</span>
 <span class="sd">        The number of GPUs the launch needs *in total*, not per task. A</span>
@@ -196,7 +201,7 @@
 <span class="sd">    """</span>
 
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">cores</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">cores</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
     <span class="n">gpus</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">gpu_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -208,15 +213,17 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Placement nodes must be unique, got </span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s1">.'</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'nodes'</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
 
-        <span class="n">cores</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">core</span><span class="p">)</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'A placement must list at least one core.'</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">core</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">cores</span><span class="p">):</span>
+        <span class="n">cores</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_check_node_cores</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="c1"># a placement that names three nodes and two core sets has lost</span>
+            <span class="c1"># track of which cores belong to which node, and guessing which</span>
+            <span class="c1"># is much worse than saying so</span>
+            <span class="n">named</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'names </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="si">}</span><span class="s1"> nodes'</span> <span class="k">if</span> <span class="n">nodes</span> <span class="k">else</span> <span class="s1">'names no node'</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">'Placement cores must not be negative, got </span><span class="si">{</span><span class="n">cores</span><span class="si">}</span><span class="s1">.'</span>
+                <span class="sa">f</span><span class="s1">'A placement </span><span class="si">{</span><span class="n">named</span><span class="si">}</span><span class="s1"> but gives </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> core sets. It '</span>
+                <span class="sa">f</span><span class="s1">'needs </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s1">, one per node.'</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cores</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Placement cores must be unique, got </span><span class="si">{</span><span class="n">cores</span><span class="si">}</span><span class="s1">.'</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'cores'</span><span class="p">,</span> <span class="n">cores</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -244,7 +251,12 @@
                 <span class="sa">f</span><span class="s1">'Placement lists </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gpu_ids</span><span class="p">)</span><span class="si">}</span><span class="s1"> gpu_ids but asks for '</span>
                 <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1"> gpus. They must agree.'</span>
             <span class="p">)</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'gpu_ids'</span><span class="p">,</span> <span class="n">gpu_ids</span><span class="p">)</span></div>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'gpu_ids'</span><span class="p">,</span> <span class="n">gpu_ids</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""How many cores this placement gives the launch, over all nodes."""</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_cores</span><span class="p">)</span> <span class="k">for</span> <span class="n">node_cores</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span></div>
 
 
 
@@ -253,6 +265,11 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Divide a placement's cores into a contiguous chunk per task.</span>
+
+<span class="sd">    Tasks are spread over the placement's nodes as evenly as the launchers</span>
+<span class="sd">    do it, filling each node in turn, and each task's cores then come from</span>
+<span class="sd">    the node it landed on. The chunks come back in task order, which is the</span>
+<span class="sd">    order every launcher wants them in.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -272,19 +289,136 @@
 <span class="sd">    chunks : list of list of int</span>
 <span class="sd">        One list of cores per task, in task order.</span>
 <span class="sd">    """</span>
-    <span class="n">cpus_per_task</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">needed</span> <span class="o">=</span> <span class="n">ntasks</span> <span class="o">*</span> <span class="n">cpus_per_task</span>
-    <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">'The placement has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> cores but '</span>
-            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1"> tasks x </span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1"> cpus per task need </span><span class="si">{</span><span class="n">needed</span><span class="si">}</span><span class="s1">.'</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">chunk</span>
+        <span class="k">for</span> <span class="n">node_chunks</span> <span class="ow">in</span> <span class="n">split_cores_by_node</span><span class="p">(</span>
+            <span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span>
         <span class="p">)</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">node_chunks</span>
+    <span class="p">]</span>
 
-    <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ntasks</span><span class="p">):</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="n">index</span> <span class="o">*</span> <span class="n">cpus_per_task</span>
-        <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">cpus_per_task</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">chunks</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">split_cores_by_node</span><span class="p">(</span>
+    <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Divide a placement's cores into a chunk per task, grouped by node.</span>
+
+<span class="sd">    The same division :py:func:`split_cores` makes, kept in node groups</span>
+<span class="sd">    rather than flattened, for the launchers that address a node's tasks by</span>
+<span class="sd">    their index *on that node* rather than by their rank in the launch.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    placement : ResourcePlacement</span>
+<span class="sd">        The placement whose cores should be divided.</span>
+
+<span class="sd">    ntasks : int</span>
+<span class="sd">        The number of tasks to divide the cores between.</span>
+
+<span class="sd">    cpus_per_task : int</span>
+<span class="sd">        The number of cores each task should get. A value of 0 means one core</span>
+<span class="sd">        per task.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    by_node : list of list of list of int</span>
+<span class="sd">        One list of cores per task, grouped by the node the task lands on.</span>
+<span class="sd">    """</span>
+    <span class="n">cpus_per_task</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cpus_per_task</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">node_count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># the launchers *balance* tasks over the nodes they are given rather than</span>
+    <span class="c1"># filling each one in turn and leaving the remainder on the last: 800</span>
+    <span class="c1"># tasks over 13 nodes is seven nodes of 62 and six of 61, not twelve of</span>
+    <span class="c1"># 62 and one of 56.  Measured on Chrysalis, where a node the caller had</span>
+    <span class="c1"># sized for 56 tasks was given 61 of them.</span>
+    <span class="n">base</span><span class="p">,</span> <span class="n">extra</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">node_count</span><span class="p">)</span>
+
+    <span class="n">by_node</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">node_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">node_count</span><span class="p">):</span>
+        <span class="n">tasks_here</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">node_index</span> <span class="o">&lt;</span> <span class="n">extra</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tasks_here</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">node_cores</span> <span class="o">=</span> <span class="n">placement</span><span class="o">.</span><span class="n">cores</span><span class="p">[</span><span class="n">node_index</span><span class="p">]</span>
+        <span class="n">needed</span> <span class="o">=</span> <span class="n">tasks_here</span> <span class="o">*</span> <span class="n">cpus_per_task</span>
+        <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_cores</span><span class="p">):</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'node </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_index</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span>
+                <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">nodes</span>
+                <span class="k">else</span> <span class="s1">'the placement'</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'The placement gives </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">node_cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> cores but '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">tasks_here</span><span class="si">}</span><span class="s1"> tasks x </span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1"> cpus per task need '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">needed</span><span class="si">}</span><span class="s1">.'</span>
+            <span class="p">)</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tasks_here</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">task</span> <span class="o">*</span> <span class="n">cpus_per_task</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node_cores</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">cpus_per_task</span><span class="p">]))</span>
+        <span class="n">by_node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">by_node</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_one_list_serves_every_node</span><span class="p">(</span>
+    <span class="n">by_node</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
+    <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">launcher</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Check that the first node's core list describes every node's tasks.</span>
+
+<span class="sd">    Slurm's ``--cpu-bind=mask_cpu`` and PALS's ``--cpu-bind list`` both</span>
+<span class="sd">    hand their list to each node's tasks by the task's index *on that</span>
+<span class="sd">    node*, starting again from the beginning of the list for every node.</span>
+<span class="sd">    Measured on Chrysalis and on Aurora respectively.  So a launch spanning</span>
+<span class="sd">    nodes gets the first node's entries everywhere, and a placement whose</span>
+<span class="sd">    other nodes want different core numbers cannot be expressed to either</span>
+<span class="sd">    launcher at all.  Rendering it anyway would put the launch on cores</span>
+<span class="sd">    nobody chose while reporting success, which is what both did before</span>
+<span class="sd">    this refused.</span>
+
+<span class="sd">    A node with fewer tasks than the first is fine: its entries are the</span>
+<span class="sd">    front of the first node's list, which is what the launcher applies.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    by_node : list of list of list of int</span>
+<span class="sd">        The cores of each task, grouped by node, as</span>
+<span class="sd">        :py:func:`split_cores_by_node()` returns them</span>
+
+<span class="sd">    placement : ResourcePlacement</span>
+<span class="sd">        The placement being rendered, for the names in the message</span>
+
+<span class="sd">    launcher : str</span>
+<span class="sd">        The launcher's name, for the message</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If any node's tasks would be given cores the placement did not give</span>
+<span class="sd">        them.</span>
+<span class="sd">    """</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">by_node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">chunks</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">by_node</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">chunks</span> <span class="o">==</span> <span class="n">first</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)]:</span>
+            <span class="k">continue</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">placement</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="n">here</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">'node </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s1">'</span>
+        <span class="n">there</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">names</span> <span class="k">else</span> <span class="s1">'the first node'</span>
+        <span class="n">wanted</span> <span class="o">=</span> <span class="p">[</span><span class="n">core</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">]</span>
+        <span class="n">given</span> <span class="o">=</span> <span class="p">[</span><span class="n">core</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">first</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'This placement gives </span><span class="si">{</span><span class="n">here</span><span class="si">}</span><span class="s1"> different core numbers from '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">there</span><span class="si">}</span><span class="s1">, and </span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s1"> has no way to be told that: it applies '</span>
+            <span class="sa">f</span><span class="s1">'one binding list to every node, addressing each task by its '</span>
+            <span class="sa">f</span><span class="s1">'index on its own node. So </span><span class="si">{</span><span class="n">here</span><span class="si">}</span><span class="s1"> would silently run on the '</span>
+            <span class="sa">f</span><span class="s1">'cores of </span><span class="si">{</span><span class="n">there</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">there</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">given</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">here</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'A launch spanning nodes has to be given the same core numbers '</span>
+            <span class="sa">f</span><span class="s1">'on each of them.'</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">format_core_ranges</span><span class="p">(</span><span class="n">cores</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -307,6 +441,31 @@
     <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">cores</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">|=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">core</span>
     <span class="k">return</span> <span class="nb">hex</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_node_cores</span><span class="p">(</span><span class="n">cores</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Check and normalize the cores a placement gives one node."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cores</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+        <span class="c1"># a flat list of cores was what a placement took before it spoke in</span>
+        <span class="c1"># terms of nodes, and it is worth naming that rather than failing</span>
+        <span class="c1"># somewhere further in with a confusing message</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Placement cores are one set of cores per node, so each entry '</span>
+            <span class="sa">f</span><span class="s1">'must be a sequence, but one of them is </span><span class="si">{</span><span class="n">cores</span><span class="si">!r}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+    <span class="n">node_cores</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">core</span><span class="p">)</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">cores</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_cores</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Each of a placement's nodes must list a core."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">core</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">node_cores</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Placement cores must not be negative, got </span><span class="si">{</span><span class="n">node_cores</span><span class="si">}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node_cores</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_cores</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"A placement's cores must be unique on each node, got "</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">node_cores</span><span class="si">}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">node_cores</span>
 </pre></div>
 
            </div>

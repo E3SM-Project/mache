@@ -111,9 +111,10 @@
     <span class="n">BINDING_OPTIONS</span><span class="p">,</span>
     <span class="n">PlacementSupport</span><span class="p">,</span>
     <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">check_one_list_serves_every_node</span><span class="p">,</span>
     <span class="n">cpu_mask</span><span class="p">,</span>
     <span class="n">names_resources</span><span class="p">,</span>
-    <span class="n">split_cores</span><span class="p">,</span>
+    <span class="n">split_cores_by_node</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ParallelSystem</span><span class="p">,</span>
@@ -391,6 +392,46 @@
     <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_node_count</span><span class="p">(</span><span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Get how many nodes a Slurm allocation holds.</span>
+
+<span class="sd">    The job's own environment carries the count, so the usual answer costs</span>
+<span class="sd">    nothing at all. squeue is the fallback for an environment that has the</span>
+<span class="sd">    job id and not the count, and it is a question the controller has to</span>
+<span class="sd">    answer -- which matters because a caller that starts a process per unit</span>
+<span class="sd">    of work would otherwise ask it once per process, and sites ask that</span>
+<span class="sd">    batch-system queries stay to a couple a minute in aggregate.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    job_id : str</span>
+<span class="sd">        The job id to fall back to asking about.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nodes : int</span>
+<span class="sd">        The number of nodes in the allocation.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'SLURM_JOB_NUM_NODES'</span><span class="p">,</span> <span class="s1">'SLURM_NNODES'</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># a variable that is set to something unusable is worth saying</span>
+            <span class="c1"># so about rather than silently falling back, since the fallback</span>
+            <span class="c1"># hides it every time</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s1"> is set to </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s1">, which is not a node count. '</span>
+                <span class="sa">f</span><span class="s1">'Asking squeue instead.'</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'squeue'</span><span class="p">,</span> <span class="s1">'--noheader'</span><span class="p">,</span> <span class="s1">'-j'</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="s1">'-o'</span><span class="p">,</span> <span class="s1">'%D'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_get_subprocess_int</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="SlurmSystem">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.html#mache.parallel.slurm.SlurmSystem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SlurmSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
@@ -415,8 +456,7 @@
                 <span class="s1">'cores_per_node must be set in the config for the slurm '</span>
                 <span class="s1">'system.'</span>
             <span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'squeue'</span><span class="p">,</span> <span class="s1">'--noheader'</span><span class="p">,</span> <span class="s1">'-j'</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="s1">'-o'</span><span class="p">,</span> <span class="s1">'%D'</span><span class="p">]</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="n">_get_subprocess_int</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">_get_node_count</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
         <span class="n">cores</span> <span class="o">=</span> <span class="n">cores_per_node</span> <span class="o">*</span> <span class="n">nodes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">cores</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_per_node</span>
@@ -433,6 +473,17 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Read the hostnames of the allocation's nodes.</span>
+
+<span class="sd">        This is the same expansion the local liveness check makes, so it</span>
+<span class="sd">        shares the helper rather than repeating it. The two want different</span>
+<span class="sd">        answers for an allocation that names no nodes: nothing to check</span>
+<span class="sd">        against there, and nothing to report here.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">_expand_job_nodelist</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="SlurmSystem.resolve_slurm_options">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options">[docs]</a>
@@ -745,7 +796,9 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-w'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
 
-        <span class="n">chunks</span> <span class="o">=</span> <span class="n">split_cores</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+        <span class="c1"># divided here for both paths, because it is also what checks that</span>
+        <span class="c1"># the placement has the cores its tasks need</span>
+        <span class="n">by_node</span> <span class="o">=</span> <span class="n">split_cores_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -763,7 +816,17 @@
             <span class="c1"># Before 20.11 steps share a node's cores by default and --exact</span>
             <span class="c1"># does not exist, so the cores a launch may use have to be named</span>
             <span class="c1"># one mask per task.</span>
-            <span class="n">masks</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cpu_mask</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">)</span>
+            <span class="c1">#</span>
+            <span class="c1"># Slurm hands the list to each node's tasks by their index *on</span>
+            <span class="c1"># that node* and starts again at the beginning of the list for</span>
+            <span class="c1"># every node, so what goes here is one node's worth of masks and</span>
+            <span class="c1"># not the whole launch's.  Sending the whole launch's is not</span>
+            <span class="c1"># merely wasteful: every node after the first would silently</span>
+            <span class="c1"># apply the first node's masks.  Measured on Chrysalis with three</span>
+            <span class="c1"># nodes, where exactly that happened and all three launches</span>
+            <span class="c1"># succeeded on the wrong cores.</span>
+            <span class="n">check_one_list_serves_every_node</span><span class="p">(</span><span class="n">by_node</span><span class="p">,</span> <span class="n">placement</span><span class="p">,</span> <span class="s1">'Slurm'</span><span class="p">)</span>
+            <span class="n">masks</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cpu_mask</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">by_node</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--cpu-bind=mask_cpu:</span><span class="si">{</span><span class="n">masks</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">parallel_args</span>
 

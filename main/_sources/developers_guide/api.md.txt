@@ -48,6 +48,7 @@ documentation.
     SubmissionResolution
     ParallelSystem
     ParallelSystem.get_parallel_command
+    ParallelSystem.node_names
     ParallelSystem.placement_support
     ParallelSystem.memory_cap_support
     ParallelSystem.get_scheduler_target

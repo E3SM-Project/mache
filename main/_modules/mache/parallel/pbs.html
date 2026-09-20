@@ -108,8 +108,9 @@
     <span class="n">BINDING_OPTIONS</span><span class="p">,</span>
     <span class="n">PlacementSupport</span><span class="p">,</span>
     <span class="n">ResourcePlacement</span><span class="p">,</span>
+    <span class="n">check_one_list_serves_every_node</span><span class="p">,</span>
     <span class="n">names_resources</span><span class="p">,</span>
-    <span class="n">split_cores</span><span class="p">,</span>
+    <span class="n">split_cores_by_node</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ParallelSystem</span><span class="p">,</span>
@@ -211,6 +212,38 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_node_file</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Read the hostnames PBS wrote into the job's node file.</span>
+
+<span class="sd">    ``PBS_NODEFILE`` holds one line per node on some sites and one per rank</span>
+<span class="sd">    slot on others, so repeats are dropped and the first appearance of each</span>
+<span class="sd">    name sets the order. Returns ``None`` where there is no node file to</span>
+<span class="sd">    read, which is what a caller falls back to qstat for.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    names : list of str or None</span>
+<span class="sd">        The hostnames, in the order PBS listed them.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'PBS_NODEFILE'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">node_file</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">node_file</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">''</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">names</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="PbsSystem">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.html#mache.parallel.pbs.PbsSystem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PbsSystem</span><span class="p">(</span><span class="n">ParallelSystem</span><span class="p">):</span>
@@ -235,8 +268,13 @@
                 <span class="s1">'cores_per_node must be set in the config for the pbs system.'</span>
             <span class="p">)</span>
 
-        <span class="c1"># First, try to get nodes and cores_per_node from qstat</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node_count_from_qstat</span><span class="p">()</span>
+        <span class="c1"># the job's node file names every node it holds, so where PBS</span>
+        <span class="c1"># wrote one it answers this without asking the batch system</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_names</span> <span class="o">=</span> <span class="n">_read_node_file</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_names</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node_count_from_qstat</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cores</span> <span class="o">=</span> <span class="n">nodes</span> <span class="o">*</span> <span class="n">cores_per_node</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="o">=</span> <span class="n">cores_per_node</span>
@@ -254,6 +292,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">memory_per_node</span> <span class="o">=</span> <span class="n">memory_per_node</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="n">memory_per_node</span> <span class="o">*</span> <span class="n">nodes</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the hostnames of the job's nodes, from its node file."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_names</span>
 
 <div class="viewcode-block" id="PbsSystem.resolve_pbs_options">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.pbs.PbsSystem.resolve_pbs_options.html#mache.parallel.pbs.PbsSystem.resolve_pbs_options">[docs]</a>
@@ -463,7 +505,13 @@
                 <span class="sa">f</span><span class="s1">'max_mpi_tasks_per_node (</span><span class="si">{</span><span class="n">max_mpi_tasks_per_node</span><span class="si">}</span><span class="s1">).  You '</span>
                 <span class="sa">f</span><span class="s1">'likely need to allocate more nodes.'</span>
             <span class="p">)</span>
-        <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># nothing says which hosts this launch gets, so pack each one as</span>
+            <span class="c1"># full as the machine allows and let PBS choose them</span>
+            <span class="n">tasks_per_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">max_mpi_tasks_per_node</span><span class="p">)</span>
+        <span class="c1"># a placement's core sets are per node, and which cores a task gets</span>
+        <span class="c1"># depends on which host it lands on, so a placed launch has to spread</span>
+        <span class="c1"># its tasks over the hosts it named rather than filling the first</span>
 
         <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s1">'-n'</span><span class="p">,</span>
@@ -511,9 +559,18 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--hosts'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
 
-        <span class="n">chunks</span> <span class="o">=</span> <span class="n">split_cores</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+        <span class="c1"># PALS hands a ``list:`` to each node's tasks by their index *on</span>
+        <span class="c1"># that node* and starts again at the beginning for every node, so</span>
+        <span class="c1"># what goes here is one node's worth of entries and not the whole</span>
+        <span class="c1"># launch's -- the same as Slurm's mask list.  Measured on Aurora</span>
+        <span class="c1"># with two nodes: given entries for both, the second node's ranks</span>
+        <span class="c1"># took the first node's, and every launch succeeded on the wrong</span>
+        <span class="c1"># cores.  The check refuses a placement that cannot be said this</span>
+        <span class="c1"># way, rather than rendering it and reporting success.</span>
+        <span class="n">by_node</span> <span class="o">=</span> <span class="n">split_cores_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+        <span class="n">check_one_list_serves_every_node</span><span class="p">(</span><span class="n">by_node</span><span class="p">,</span> <span class="n">placement</span><span class="p">,</span> <span class="s1">'PALS'</span><span class="p">)</span>
         <span class="n">core_list</span> <span class="o">=</span> <span class="s1">':'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">core</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span>
+            <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">core</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">core</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">by_node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--cpu-bind'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'list:</span><span class="si">{</span><span class="n">core_list</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
 

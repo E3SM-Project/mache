@@ -25,6 +25,7 @@
    
       ~ResourcePlacement.gpu_ids
       ~ResourcePlacement.gpus
+      ~ResourcePlacement.total_cores
       ~ResourcePlacement.nodes
       ~ResourcePlacement.cores
    

@@ -73,6 +73,7 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.SubmissionResolution.html">mache.parallel.system.SubmissionResolution</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.node_names.html">mache.parallel.system.ParallelSystem.node_names</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
@@ -184,7 +185,10 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">memory_cap_support</span></code></p></td>
 <td><p>Whether this machine will hold a launch to a memory cap.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">placement_support</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">node_names</span></code></p></td>
+<td><p>The hostnames of the nodes this system holds, in the order the batch system lists them, or <code class="docutils literal notranslate"><span class="pre">None</span></code> where it does not name them.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">placement_support</span></code></p></td>
 <td><p>The placement mechanism available on this machine.</p></td>
 </tr>
 </tbody>

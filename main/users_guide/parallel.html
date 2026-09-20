@@ -61,6 +61,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#requesting-a-target-without-naming-its-axis">Requesting a target without naming its axis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wall-clock-limits-that-depend-on-job-size">Wall-clock limits that depend on job size</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#placing-concurrent-launches-within-one-allocation">Placing concurrent launches within one allocation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#finding-the-nodes-to-place-onto">Finding the nodes to place onto</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#checking-what-a-machine-supports">Checking what a machine supports</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#gpus-are-a-total-not-a-count-per-task">GPUs are a total, not a count per task</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#which-cores-are-honored">Which cores are honored</a></li>
@@ -418,6 +419,18 @@ for the capability: on an older <code class="docutils literal notranslate"><span
 node would instead be free to use the whole allocation – which looks like a
 working run right up until two of them collide.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">ResourcePlacement.cores</span></code> changed shape in v4.0.0, from one flat set of
+cores for the whole launch to one set per node. A launch on a single node is
+written <code class="docutils literal notranslate"><span class="pre">cores=[[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]]</span></code> where it used to be <code class="docutils literal notranslate"><span class="pre">cores=[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></code>.
+Passing the old shape raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> rather than being misread, and the
+message says so.</p>
+<p>The flat set could not describe a launch spanning nodes anywhere the launcher
+binds cores explicitly, since it required every core number to be unique and
+those numbers are node-local – so two nodes could not both use core 0, which
+is the ordinary case.</p>
+</div>
 <p>An optional <code class="docutils literal notranslate"><span class="pre">placement</span></code> says where a launch should run:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourcePlacement</span><span class="p">,</span> <span class="n">get_parallel_system</span>
@@ -426,7 +439,7 @@ working run right up until two of them collide.</p>
 
 <span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
     <span class="n">nodes</span><span class="o">=</span><span class="p">[</span><span class="s2">"nid001373"</span><span class="p">],</span>
-    <span class="n">cores</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">)),</span>
+    <span class="n">cores</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">))],</span>
 <span class="p">)</span>
 <span class="n">command</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">get_parallel_command</span><span class="p">(</span>
     <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="s2">"./run_step.py"</span><span class="p">],</span>
@@ -437,11 +450,39 @@ working run right up until two of them collide.</p>
 </pre></div>
 </div>
 <p>A placement carries three things: the nodes the launch may use, the cores it
-may use on each of them, and how many GPUs it needs in total. mache renders
-them into whatever the machine’s launcher needs, so callers do not have to
-know which flags a given site takes.</p>
+may use on each of them – one set per node, in the same order – and how many
+GPUs it needs in total. mache renders them into whatever the machine’s
+launcher needs, so callers do not have to know which flags a given site takes.</p>
+<p>There is one set of cores even for a launch on one node, and one for a launch
+that names no node at all, which is what <code class="docutils literal notranslate"><span class="pre">[list(range(8,</span> <span class="pre">16))]</span></code> above is.</p>
 <p>A call without a placement produces exactly the command it produced before
 this feature existed.</p>
+<section id="finding-the-nodes-to-place-onto">
+<h3>Finding the nodes to place onto<a class="headerlink" href="#finding-the-nodes-to-place-onto" title="Link to this heading"></a></h3>
+<p>A placement names nodes, so a caller has to know what they are called.
+<code class="docutils literal notranslate"><span class="pre">node_names</span></code> gives the hostnames of the nodes the allocation holds, in the
+order the batch system lists them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">node_names</span>
+<span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"this system does not name its nodes"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the allocation holds </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is <code class="docutils literal notranslate"><span class="pre">None</span></code> on a system with no allocation to describe, such as a login
+node. On Slurm it comes from expanding the hostlist expression the job’s own
+environment carries; on PBS it comes from the job’s node file, with repeats
+dropped where a site writes one line per rank slot; on <code class="docutils literal notranslate"><span class="pre">single_node</span></code> it is
+the machine’s own hostname.</p>
+<p>The names are read the first time they are asked for rather than when the
+system is built, which matters for a caller that starts a process per unit of
+work: only the process laying out placements pays for it.</p>
+<p>For the same reason, the node <em>count</em> comes from the job’s environment where
+that carries it, and the batch system is asked only when it does not. A
+caller running many short processes inside one allocation would otherwise ask
+the scheduler once per process, and sites ask that batch-system queries stay
+to a couple a minute in aggregate.</p>
+</section>
 <section id="checking-what-a-machine-supports">
 <h3>Checking what a machine supports<a class="headerlink" href="#checking-what-a-machine-supports" title="Link to this heading"></a></h3>
 <p>Not every machine can confine a launch. Check before running things
@@ -490,19 +531,31 @@ place. See <a class="reference internal" href="#users-parallel-pals-gpus"><span 
 </section>
 <section id="which-cores-are-honored">
 <h3>Which cores are honored<a class="headerlink" href="#which-cores-are-honored" title="Link to this heading"></a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">cores</span></code> is an explicit set rather than a count, because the usable cores on a
-node may not be contiguous and may not start at zero – Aurora reserves core 0
-and cores 49-52 – and because a count cannot say <em>which</em> cores.</p>
-<p>How much of that set is honored depends on the mechanism:</p>
+<p><code class="docutils literal notranslate"><span class="pre">cores</span></code> is a set of explicit core numbers per node rather than a count,
+because the usable cores on a node may not be contiguous and may not start at
+zero – Aurora reserves core 0 and cores 49-52 – and because a count cannot
+say <em>which</em> cores.</p>
+<p>Core numbers are node-local, so two nodes in the same placement may perfectly
+well both offer core 0, and normally do:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="p">[</span><span class="s2">"nid001373"</span><span class="p">,</span> <span class="s2">"nid001374"</span><span class="p">],</span>
+    <span class="n">cores</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Tasks fill each node in turn, as the launchers distribute them, and each task
+then takes its cores from the node it landed on. <code class="docutils literal notranslate"><span class="pre">total_cores</span></code> says how many
+cores the placement gives the launch in all.</p>
+<p>How much of the sets is honored depends on the mechanism:</p>
 <ul class="simple">
-<li><p>where the scheduler reserves resources, only the size of the set is used;
-Slurm is asked for that many cores and picks which ones itself, and an
-explicit core list is rejected outright alongside <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></li>
-<li><p>where placement is by CPU binding, the set is used exactly as given, in
+<li><p>where the scheduler reserves resources, only the sizes are used; Slurm is
+asked for that many cores and picks which ones itself, and an explicit
+core list is rejected outright alongside <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></li>
+<li><p>where placement is by CPU binding, the sets are used exactly as given, in
 order, split into one contiguous chunk of <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> cores per task</p></li>
 </ul>
-<p>Either way, mache raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the set is too small for
-<code class="docutils literal notranslate"><span class="pre">ntasks</span> <span class="pre">x</span> <span class="pre">cpus_per_task</span></code>.</p>
+<p>Either way, mache raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if a node’s set is too small for the
+tasks that land on it, and says which node.</p>
 </section>
 <section id="assigning-gpus-on-pbs-with-pals">
 <span id="users-parallel-pals-gpus"></span><h3>Assigning GPUs on PBS with PALS<a class="headerlink" href="#assigning-gpus-on-pbs-with-pals" title="Link to this heading"></a></h3>
