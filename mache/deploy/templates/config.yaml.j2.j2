@@ -241,7 +241,8 @@ spack:
     env_name: null
 
   # Base path for the spack checkout used for deployment.
-  # If it does not exist, mache will clone the E3SM spack repo.
+  # If it does not exist, mache will clone Spack there.  Use a new path for
+  # each mache major version: a checkout of Spack 0.x is refused.
   #
   # In practice, most target repositories should set this dynamically in the
   # `pre_spack()` hook (e.g., based on machine config) by writing:
@@ -286,6 +287,28 @@ spack:
   # based on merged machine config, for example when [deploy]
   # use_e3sm_hdf5_netcdf = false should map to excluding the bundle.
   exclude_packages: []
+
+  # Optional overrides for the Spack sources pinned by this mache release
+  # (mache/spack/pins.yaml): the Spack tool, the upstream spack-packages
+  # ("builtin") and E3SM's e3sm-spack-packages ("e3sm").  Each override names
+  # a tag, commit or branch for one repository and replaces the pinned ref,
+  # for example to test an unreleased recipe:
+  #   pins:
+  #     repos:
+  #       e3sm:
+  #         branch: my-fix
+  # A pre_spack hook can set ctx.runtime['spack']['pins'] the same way, and
+  # --spack-pins <file> on the command line takes precedence over both.
+  pins: {}
+
+  # How load scripts activate the library environments:
+  #   captured: source an activate.sh captured after the build (fast, runs
+  #             no Spack); the default
+  #   dynamic:  source Spack's setup-env.sh and run `spack env activate`
+  activation: captured
+
+  # Optional number of parallel build jobs for `spack install -j`.
+  build_jobs: null
 
   # Optional spack build settings
   tmpdir: null

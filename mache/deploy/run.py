@@ -33,6 +33,7 @@ from .shared import SharedDeployArtifacts, create_shared_deploy_artifacts
 from .spack import (
     SpackDeployResult,
     SpackSoftwareEnvResult,
+    capture_spack_activations,
     deploy_spack_envs,
     deploy_spack_software_env,
     get_effective_spack_config,
@@ -335,6 +336,8 @@ def run_deploy(args: argparse.Namespace) -> None:
             'env_name': result.env_name,
             'spack_path': result.spack_path,
             'view_path': result.view_path,
+            # the dynamic form (setup-env + spack env activate), which hooks
+            # can source before the activation is captured below
             'activation': result.activation,
         }
         for result in spack_results
@@ -352,6 +355,11 @@ def run_deploy(args: argparse.Namespace) -> None:
         }
 
     hook_registry.run_hook('post_spack', ctx)
+
+    # after post_spack so that hooks' changes to the environments are
+    # reflected in the captured activation the load scripts source
+    if deploy_spack and not spack_disabled_for_run(ctx=ctx):
+        capture_spack_activations(ctx=ctx, results=spack_results)
 
     if install_dev_software:
         _install_software_in_dev_mode(
@@ -1634,7 +1642,7 @@ def _write_load_scripts(
     if spack_results is not None:
         for result in spack_results:
             key = (result.compiler, result.mpi)
-            spack_snippet_by_pair[key] = result.activation
+            spack_snippet_by_pair[key] = result.load_activation
             spack_view_by_pair[key] = result.view_path
 
     paths: list[str] = []
