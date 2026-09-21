@@ -709,7 +709,8 @@ the real deployment.</p>
 <li><p>Resolves the pixi executable, installing pixi if necessary.</p></li>
 <li><p>Creates or refreshes <code class="docutils literal notranslate"><span class="pre">deploy_tmp/bootstrap_pixi</span></code>.</p></li>
 <li><p>Installs <code class="docutils literal notranslate"><span class="pre">mache</span></code> either from a tagged release or from a requested
-fork/branch clone.</p></li>
+fork/branch clone under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/build_mache/mache</span></code>, recording the
+checked-out commit in the log.</p></li>
 <li><p>Leaves logs under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/logs/bootstrap.log</span></code>.</p></li>
 </ol>
 <p>If you pass <code class="docutils literal notranslate"><span class="pre">--bootstrap-only</span></code>, the process stops here and leaves you with an
