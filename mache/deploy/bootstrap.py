@@ -42,6 +42,11 @@ MOUNT_POINT_ESCAPES = (
     ('\\012', '\n'),
     ('\\134', '\\'),
 )
+# ssh forms of GitHub URLs that a deploy fetches over https instead: compute
+# nodes on some machines (Aurora and Polaris at ALCF) reach GitHub only
+# through an http proxy, and downstream .gitmodules mostly use ssh.
+GITHUB_SSH_URL_PREFIXES = ('git@github.com:', 'ssh://git@github.com/')
+GITHUB_HTTPS_URL = 'https://github.com/'
 BOOTSTRAP_SETUPTOOLS_SPEC = '>=60'
 BOOTSTRAP_WHEEL_SPEC = '*'
 CONDA_FORGE_LABEL_ROOT = 'https://conda.anaconda.org/conda-forge/label'
@@ -455,6 +460,45 @@ def build_pixi_shell_hook_prefix(*, pixi_exe: str, pixi_toml: str) -> str:
         f'{shlex.quote(pixi_toml)}'
     )
     return f'eval "$({hook_cmd})" &&'
+
+
+def add_github_https_rewrites(environ=None):
+    """
+    Make every git command fetch GitHub over https for the rest of a deploy.
+
+    A deploy only fetches, and clones over https need no credentials for
+    public repositories, so ssh URLs (``git@github.com:`` and
+    ``ssh://git@github.com/``) are rewritten to ``https://github.com/``
+    through git's environment-scoped configuration (``GIT_CONFIG_COUNT``,
+    ``GIT_CONFIG_KEY_<n>``, ``GIT_CONFIG_VALUE_<n>``, git 2.31 and newer),
+    which every child process inherits: mache's own submodule updates as
+    well as those of downstream hooks.  Entries the caller already set are
+    kept.
+
+    Parameters
+    ----------
+    environ : dict, optional
+        The environment to update (``os.environ`` by default)
+
+    Returns
+    -------
+    environ : dict
+        The updated environment
+    """
+    if environ is None:
+        environ = os.environ
+    try:
+        count = int(environ.get('GIT_CONFIG_COUNT', '0'))
+    except ValueError:
+        count = 0
+    for prefix in GITHUB_SSH_URL_PREFIXES:
+        environ[f'GIT_CONFIG_KEY_{count}'] = (
+            f'url.{GITHUB_HTTPS_URL}.insteadOf'
+        )
+        environ[f'GIT_CONFIG_VALUE_{count}'] = prefix
+        count += 1
+    environ['GIT_CONFIG_COUNT'] = str(count)
+    return environ
 
 
 def build_pixi_env(base_env=None):

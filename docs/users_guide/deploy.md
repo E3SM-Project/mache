@@ -716,6 +716,26 @@ left to pixi.
 Set `PIXI_CACHE_DIR` before running `./deploy.py` or sourcing a load script
 to use a different location.
 
+### Deploying on a compute node
+
+A deploy can run inside a batch job, which is how nightly regression
+testing works on machines whose login nodes are too small to build on. Two
+things make that work on compute nodes that reach the internet only through
+a proxy (Aurora and Polaris at ALCF):
+
+- The job script exports the site's proxy variables (`HTTP_PROXY`,
+  `HTTPS_PROXY` and their lowercase forms). Pixi, pip and the Spack build
+  script all honour them; the Spack build script re-exports them inside its
+  fresh login shell.
+- `mache deploy run` makes every git command fetch GitHub over https for the
+  rest of the deploy, whatever the URL in a `.gitmodules` or remote says
+  (`git@github.com:` and `ssh://git@github.com/` are rewritten to
+  `https://github.com/` through git's environment-scoped configuration,
+  which needs git 2.31 or newer). ssh does not go through an http proxy, and
+  a deploy only fetches from public repositories, so nothing is lost. The
+  rewrite is confined to the deploy process and its children; it does not
+  touch the user's git configuration or affect pushes made elsewhere.
+
 ## The command-line contract
 
 There are really two CLIs involved:

@@ -19,6 +19,7 @@ from mache.permissions import update_permissions
 from .bootstrap import (
     _format_pixi_version_specifier,
     _write_bootstrap_pixi_config,
+    add_github_https_rewrites,
     build_pixi_env,
     build_pixi_shell_hook_prefix,
     check_call,
@@ -61,6 +62,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         pixi path, pixi executable, toolchain values, and Spack options.
     """
     check_location()
+    add_github_https_rewrites()
 
     pins = _read_pins('deploy/pins.cfg')
     platform, system = get_conda_platform_and_system()
