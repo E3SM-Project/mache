@@ -523,7 +523,7 @@ def test_clone_mache_repo_reclones_existing_clone(monkeypatch, tmp_path: Path):
         '--single-branch',
         '-b',
         'feature',
-        'git@github.com:xylar/mache.git',
+        'https://github.com/xylar/mache.git',
         'mache',
     ]
     assert clone_kwargs['cwd'] == str(cloned_repo.parent)

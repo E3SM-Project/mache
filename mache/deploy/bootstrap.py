@@ -1360,8 +1360,9 @@ def _clone_mache_repo(
         )
         return
 
+    # https rather than ssh: forks of mache are public, and compute nodes
+    # that reach GitHub only through an http proxy cannot open ssh
     env = build_pixi_env()
-    env['GIT_SSH_COMMAND'] = 'ssh -oBatchMode=yes'
     commands = [
         'git',
         'clone',
@@ -1370,7 +1371,7 @@ def _clone_mache_repo(
         '--single-branch',
         '-b',
         mache_branch,
-        f'git@github.com:{mache_fork}.git',
+        f'https://github.com/{mache_fork}.git',
         'mache',
     ]
     check_call(
