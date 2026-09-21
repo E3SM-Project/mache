@@ -1,26 +1,33 @@
-{%- set compiler = "oneapi@2025.2.0" %}
+{%- set compiler = "intel-oneapi-compilers@2025.2.0" %}
 {%- set mpi = "openmpi@4.1.8" %}
 spack:
   specs:
-  # don't include {{ compiler }} since there isn't a "oneapi" package
-  - {{ mpi }}%{{ compiler }}
+  - {{ mpi }}
 {%- if e3sm_lapack %}
   - intel-oneapi-mkl
 {%- endif %}
-  - "hdf5%{{ compiler }}"
-  - "netcdf-c%{{ compiler }}"
-  - "netcdf-fortran%{{ compiler }}"
-  - "parallel-netcdf%{{ compiler }}"
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
 {%- for spec in specs %}
-  - "{{ spec }}%{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: true
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}, gcc@11.3.0]
+      require: ["%mache"]
       providers:
-        mpi: [{{ mpi }}%{{ compiler }}]
+        mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
         lapack: [intel-oneapi-mkl@2025.2.0]
 {%- endif %}
@@ -91,30 +98,35 @@ spack:
         modules:
           - perl/5.32.0-bsnc6lt
       buildable: false
-    oneapi:
+    intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
         modules:
         - intel-oneapi-compilers/2025.2.0-mdlxe55
         extra_attributes:
           compilers:
-            c: icx
-            cxx: icpx
-            fortran: ifx
+            c: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/icx
+            cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/icpx
+            fortran: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/ifx
       buildable: false
     gcc:
       externals:
       - spec: gcc@11.3.0
         prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq
+        extra_attributes:
+          compilers:
+            c: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gcc
+            cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/g++
+            fortran: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gfortran
       buildable: false
     gcc-runtime:
       externals:
-      - spec: gcc-runtime@11.3.0%gcc@11.3.0
+      - spec: gcc-runtime@11.3.0
         prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-11.3.0/gcc-runtime-11.3.0-dxemrvv
       buildable: false
     openmpi:
       externals:
-      - spec: {{ mpi }}%{{ compiler }}
+      - spec: {{ mpi }}
         prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/openmpi-4.1.8-nygtpa3
       buildable: false
     intel-oneapi-mkl:
@@ -143,30 +155,3 @@ spack:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
         prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/parallel-netcdf-1.14.1-f2fwvr2
       buildable: false
-  compilers:
-  - compiler:
-      spec: {{ compiler }}
-      paths:
-        cc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/icx
-        cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/icpx
-        f77: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/ifx
-        fc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4/compiler/2025.2/bin/ifx
-      flags: {}
-      operating_system: rhel8
-      target: x86_64
-      modules: []
-      environment: {}
-      extra_rpaths: []
-  - compiler:
-      spec: gcc@11.3.0
-      paths:
-        cc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gcc
-        cxx: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/g++
-        f77: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gfortran
-        fc: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/gcc-8.5.0/gcc-11.3.0-jkpmtgq/bin/gfortran
-      flags: {}
-      operating_system: rhel8
-      target: x86_64
-      modules: []
-      environment: {}
-      extra_rpaths: []

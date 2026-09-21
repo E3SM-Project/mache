@@ -243,6 +243,50 @@ def resolve_e3sm_hdf5_netcdf(
     return True, excluded
 
 
+def validate_spack_env_yaml(yaml_data, source):
+    """
+    Fail fast if a rendered environment YAML still uses the Spack 0.x
+    compiler model.
+
+    Parameters
+    ----------
+    yaml_data : str
+        The rendered ``spack.yaml`` text
+
+    source : str
+        Where the YAML came from, for the error message
+
+    Raises
+    ------
+    ValueError
+        If the YAML has a top-level ``compilers`` section or
+        ``packages:all:compiler``, neither of which Spack 1.x honours
+    """
+    data = safe_load(yaml_data)
+    if not isinstance(data, dict):
+        return
+    spack_data = data.get('spack')
+    if not isinstance(spack_data, dict):
+        return
+
+    problems = []
+    if 'compilers' in spack_data:
+        problems.append('a top-level "compilers" section')
+    packages = spack_data.get('packages')
+    if isinstance(packages, dict):
+        all_data = packages.get('all')
+        if isinstance(all_data, dict) and 'compiler' in all_data:
+            problems.append('"packages:all:compiler"')
+    if problems:
+        raise ValueError(
+            f'The Spack environment template {source} has '
+            f'{" and ".join(problems)}, which Spack 1.x does not use. '
+            'Declare the compiler as an external with '
+            '"extra_attributes:compilers" and select it with a toolchain, '
+            'as in the templates in mache/spack/templates.'
+        )
+
+
 def _extract_spack_package_name(spec):
     if not isinstance(spec, str):
         return None
@@ -327,6 +371,7 @@ def _get_yaml_data(
             importlib_resources.files('mache.spack.templates')
             / template_filename
         )
+        source = f'{template_filename} (packaged with mache)'
         try:
             with open(str(path)) as fp:
                 template = Template(fp.read())
@@ -336,6 +381,7 @@ def _get_yaml_data(
                 f'and {mpi} on {machine}.'
             ) from err
     else:
+        source = str(yaml_template)
         with open(yaml_template) as f:
             template = Template(f.read())
 
@@ -344,4 +390,6 @@ def _get_yaml_data(
         e3sm_lapack=include_e3sm_lapack,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
-    return _filter_yaml_data(yaml_data, exclude_packages)
+    yaml_data = _filter_yaml_data(yaml_data, exclude_packages)
+    validate_spack_env_yaml(yaml_data, source)
+    return yaml_data

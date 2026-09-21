@@ -1,22 +1,29 @@
-{%- set compiler = "oneapi@2025.3.1" %}
+{%- set compiler = "intel-oneapi-compilers@2025.3.1" %}
 {%- set mpi = "mpich@5.0.0" %}
 
 spack:
   specs:
-  # don't include {{ compiler }} since there isn't a "oneapi" package
-  - {{ mpi }}%{{ compiler }}
-  - "hdf5%{{ compiler }}"
-  - "netcdf-c%{{ compiler }}"
-  - "netcdf-fortran%{{ compiler }}"
-  - "parallel-netcdf%{{ compiler }}"
+  - {{ mpi }}
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
 {%- for spec in specs %}
-  - "{{ spec }}%{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: true
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}, gcc@13.3.0]
+      require: ["%mache"]
       providers:
         mpi: [{{ mpi }}]
     bison:
@@ -90,7 +97,7 @@ spack:
         prefix: /usr
       buildable: false
 
-    oneapi:
+    intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
         modules:
@@ -106,15 +113,20 @@ spack:
       - spec: gcc@13.3.0
         modules:
         - gcc/13.3.0
+        extra_attributes:
+          compilers:
+            c: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gcc
+            cxx: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/g++
+            fortran: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gfortran
       buildable: false
     gcc-runtime:
       externals:
-      - spec: gcc-runtime@13.3.0%gcc@13.3.0
+      - spec: gcc-runtime@13.3.0
         prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
       buildable: false
     mpich:
       externals:
-      - spec: {{ mpi }}%{{ compiler }}
+      - spec: {{ mpi }}
         prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/mpich-5.0.0.aurora_test.3c70a61-hlkigtk
       buildable: false
     hdf5:
@@ -137,30 +149,3 @@ spack:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
         prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/parallel-netcdf-1.14.1-44pgfig
       buildable: false
-  compilers:
-  - compiler:
-      spec: {{ compiler }}
-      paths:
-        cc: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/icx
-        cxx: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/icpx
-        f77: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/ifx
-        fc: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/ifx
-      flags: {}
-      operating_system: sles15
-      target: x86_64
-      modules: []
-      environment: {}
-      extra_rpaths: []
-  - compiler:
-      spec: gcc@13.3.0
-      paths:
-        cc:  /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gcc
-        cxx: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/g++
-        f77: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gfortran
-        fc: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gfortran
-      operating_system: sles15
-      target: x86_64
-      modules: [gcc/13.3.0]
-      flags: {}
-      environment: {}
-      extra_rpaths: []
