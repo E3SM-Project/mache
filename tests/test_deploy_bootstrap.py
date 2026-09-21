@@ -460,7 +460,7 @@ def test_merge_pixi_toml_dependencies_merges_runtime_and_dev_deps(
         'channels = ["conda-forge"]\n'
         '\n'
         '[dependencies]\n'
-        'python = ">=3.10,<3.15"\n'
+        'python = ">=3.11,<3.15"\n'
         'lxml = "*"\n'
         'rsync = "*"\n'
         'ruff = "*"\n'
@@ -506,7 +506,7 @@ def test_merge_pixi_toml_dependencies_adds_missing_channels(
         'channels = ["conda-forge", "custom"]\n'
         '\n'
         '[dependencies]\n'
-        'python = ">=3.10,<3.15"\n'
+        'python = ">=3.11,<3.15"\n'
         'requests = "*"\n',
         encoding='utf-8',
     )

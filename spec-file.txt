@@ -1,4 +1,4 @@
-python >=3.10,<3.15
+python >=3.11,<3.15
 importlib_resources
 jinja2
 lxml

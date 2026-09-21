@@ -21,7 +21,7 @@ These instructions apply to the whole repository unless a deeper
   environment `pixi shell` creates, so it is usually the one already
   installed under `.pixi/envs/`.
 - If the `default` environment is not available, fall back to an explicit
-  Python environment such as `pixi run -e py314 <command>` (`py310`
+  Python environment such as `pixi run -e py314 <command>` (`py311`
   through `py314` are defined in `pixi.toml`). Note that selecting an
   environment that is not yet installed will make Pixi solve and install
   it, which can be slow.

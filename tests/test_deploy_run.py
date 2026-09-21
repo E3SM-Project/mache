@@ -588,7 +588,7 @@ def test_copy_mache_pixi_toml_writes_slim_bootstrap_manifest(tmp_path: Path):
         'platforms = ["linux-64", "osx-64"]\n'
         '\n'
         '[dependencies]\n'
-        'python = ">=3.10,<3.15"\n'
+        'python = ">=3.11,<3.15"\n'
         'jinja2 = ">=2.9"\n'
         'pyyaml = "*"\n'
         'rsync = "*"\n'
