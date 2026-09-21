@@ -3,6 +3,12 @@
 # Rendered by mache.spack.install; run with `env -i bash -l`.
 
 {{ prologue }}
+{%- if proxy_exports %}
+
+# Proxy settings of the calling environment, exported here because the login
+# profile above may have unset them.
+{{ proxy_exports }}
+{%- endif %}
 
 set -e
 

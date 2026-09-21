@@ -166,7 +166,11 @@ make_spack_env(
 - Runs the build script in a fresh login shell: it clones or updates Spack
   and the package repositories at their pinned refs, writes the instance's
   `etc/spack/repos.yaml`, isolates the instance from `~/.spack`, recreates
-  the environment and installs it.
+  the environment and installs it. Only the proxy variables (`http_proxy`,
+  `https_proxy`, `ftp_proxy`, `no_proxy` and their uppercase forms) carry
+  over from the calling environment, so a build on a compute node that
+  reaches the network through a proxy works when the job script exports
+  them.
 - Copies `<env_name>.spack.lock` and writes `<env_name>.provenance.yaml`
   (the resolved commit of each source) to the current directory.
 - With `activation='captured'`, captures the environment's activation into

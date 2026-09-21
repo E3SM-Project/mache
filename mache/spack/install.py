@@ -11,6 +11,47 @@ from mache.spack.pins import (
 )
 from mache.version import __version__
 
+# Environment variables that the build script carries over from the calling
+# environment.  Compute nodes on some machines (Aurora and Polaris at ALCF)
+# reach the network only through a proxy that a job script sets with these.
+# The script runs in a fresh login shell, which drops them (`env -i`) and, on
+# SUSE, can unset them again from /etc/profile, so the script exports them
+# itself after the login profile has run.
+PROXY_ENV_VARS = (
+    'http_proxy',
+    'https_proxy',
+    'ftp_proxy',
+    'no_proxy',
+    'HTTP_PROXY',
+    'HTTPS_PROXY',
+    'FTP_PROXY',
+    'NO_PROXY',
+)
+
+
+def proxy_exports(environ=None):
+    """
+    Shell commands that export the proxy variables of the calling environment.
+
+    Parameters
+    ----------
+    environ : dict, optional
+        The calling environment (``os.environ`` by default)
+
+    Returns
+    -------
+    exports : str
+        One ``export`` line per variable in :py:data:`PROXY_ENV_VARS` that is
+        set in ``environ``; empty when none is
+    """
+    if environ is None:
+        environ = os.environ
+    return '\n'.join(
+        f'export {name}={shlex.quote(environ[name])}'
+        for name in PROXY_ENV_VARS
+        if name in environ
+    )
+
 
 def render_install_script(
     *,
@@ -23,6 +64,7 @@ def render_install_script(
     mirror=None,
     custom_spack='',
     build_jobs=None,
+    environ=None,
 ):
     """
     Render the bash script that checks out Spack and builds an environment.
@@ -57,6 +99,10 @@ def render_install_script(
     build_jobs : int, optional
         Passed to ``spack install -j``
 
+    environ : dict, optional
+        The calling environment (``os.environ`` by default); its proxy
+        variables are exported in the script, see :py:func:`proxy_exports`
+
     Returns
     -------
     script : str
@@ -82,6 +128,7 @@ def render_install_script(
         env_name_q=shlex.quote(env_name),
         spack_path_q=shlex.quote(spack_path),
         prologue=prologue.strip(),
+        proxy_exports=proxy_exports(environ),
         spack_checkout=checkout_command(pins['spack'], spack_path),
         spack_patches=spack_patches(),
         spack_git=pins['spack']['git'],

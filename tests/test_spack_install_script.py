@@ -7,6 +7,7 @@ import requests
 
 from mache.spack.install import (
     prologue_path,
+    proxy_exports,
     render_install_script,
     spack_patches,
     write_prologue,
@@ -22,6 +23,7 @@ def _render(pins, **kwargs):
         prologue='module load gcc\nexport TMPDIR=/tmp/build',
         pins=pins,
         work_dir='/work',
+        environ={},
     )
     args.update(kwargs)
     return render_install_script(**args)
@@ -160,3 +162,28 @@ def test_write_prologue(tmp_path: Path):
     assert path == prologue_path(str(tmp_path), 'env')
     assert Path(path).name == 'env.prologue.sh'
     assert Path(path).read_text() == 'module load x\n'
+
+
+def test_proxy_exports_keeps_only_proxy_variables():
+    environ = {
+        'PATH': '/opt/conda/bin:/usr/bin',
+        'CONDA_PREFIX': '/opt/conda',
+        'HTTPS_PROXY': 'http://proxy.alcf.anl.gov:3128',
+        'no_proxy': 'localhost, 127.0.0.1',
+    }
+    assert proxy_exports(environ) == (
+        "export no_proxy='localhost, 127.0.0.1'\n"
+        'export HTTPS_PROXY=http://proxy.alcf.anl.gov:3128'
+    )
+    assert proxy_exports({'PATH': '/usr/bin'}) == ''
+
+
+def test_render_exports_proxy_after_prologue():
+    environ = {'https_proxy': 'http://proxy:3128'}
+    script = _render(load_pins(), environ=environ)
+    prologue_end = script.index('export TMPDIR=/tmp/build')
+    proxy = script.index('export https_proxy=http://proxy:3128')
+    assert prologue_end < proxy < script.index('set -e')
+
+    script = _render(load_pins(), environ={})
+    assert 'proxy' not in script.lower()
