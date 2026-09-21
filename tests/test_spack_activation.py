@@ -119,6 +119,27 @@ def test_rewrite_unset_and_lost_elements(caplog):
     assert 'PATH' in caplog.text
 
 
+def test_rewrite_normalized_old_elements(caplog):
+    # spack runs normpath over every element of a path-like variable, so an
+    # empty MANPATH element from the capturing shell comes back as '.' and a
+    # trailing slash disappears; neither is new and neither is lost
+    raw = [
+        ('export', 'MANPATH', '/view/man:/usr/share/man:.:'),
+        ('export', 'PATH', '/view/bin:/usr/bin'),
+    ]
+    env_before = {
+        'MANPATH': '/usr/share/man/::',
+        'PATH': '/usr/bin/',
+    }
+    with caplog.at_level(logging.WARNING, logger='mache.spack.activation'):
+        modifications = rewrite_modifications(raw, env_before)
+    assert modifications == [
+        ('prepend', 'MANPATH', ['/view/man']),
+        ('prepend', 'PATH', ['/view/bin']),
+    ]
+    assert caplog.text == ''
+
+
 def test_render_sh(fixture_modifications):
     _, _, modifications = fixture_modifications
     text = render_activation(modifications, 'sh', SPACK_PATH)

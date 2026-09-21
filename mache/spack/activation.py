@@ -181,14 +181,21 @@ def rewrite_modifications(raw, env_before):
             # the rendered prepend restores it
             new_elements = new_elements[:-1]
 
+        # spack normalizes every element of the variable (an empty element
+        # becomes '.'), so compare against the normalized old elements too
         old_set = set(old_elements)
+        old_set.update(os.path.normpath(element) for element in old_elements)
         prepend = []
         for element in new_elements:
             if element not in old_set and element not in prepend:
                 prepend.append(element)
 
+        new_set = set(new_elements)
         lost = [
-            element for element in old_elements if element not in new_elements
+            element
+            for element in old_elements
+            if element not in new_set
+            and os.path.normpath(element) not in new_set
         ]
         if lost:
             logger.warning(
