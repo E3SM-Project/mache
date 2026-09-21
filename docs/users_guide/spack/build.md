@@ -139,7 +139,8 @@ make_spack_env(
   machine-provided externals, modules, and related environment variables
   should be removed so Spack can build them instead.  For example, setting
   `exclude_packages=["cmake"]` lets a downstream package build a newer CMake
-  than the system provides.
+  than the system provides.  The template's own root spec for an excluded
+  package is removed too, but a spec for it in `spack_specs` is kept.
 - `e3sm_hdf5_netcdf`: Deprecated compatibility flag for opting into the
   machine-provided HDF5/NetCDF bundle.  New code should prefer
   `exclude_packages=["hdf5_netcdf"]` (or the individual package names

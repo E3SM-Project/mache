@@ -93,6 +93,34 @@ def test_template_exclude_hdf5_netcdf(machine, compiler, mpi):
         assert package not in data['specs']
 
 
+@pytest.mark.parametrize(
+    'machine, compiler, mpi', list_machine_compiler_mpilib()
+)
+def test_template_exclude_keeps_requested_specs(machine, compiler, mpi):
+    """Excluding a machine-provided package must not drop the caller's own
+    request for it: that request is how the caller asks Spack to build it."""
+    requested = [
+        'hdf5@1.14.6+cxx+fortran+hl+mpi+shared',
+        'netcdf-c@4.10.1+mpi~parallel-netcdf',
+        'cmake@3.27:',
+    ]
+    text = _render(
+        machine,
+        compiler,
+        mpi,
+        e3sm_hdf5_netcdf=False,
+        specs=requested,
+        exclude_packages=['hdf5_netcdf', 'cmake'],
+    )
+    data = safe_load(text)['spack']
+    for spec in requested:
+        assert spec in data['specs']
+    # the template's own roots and externals for those packages are gone
+    for package in (*E3SM_HDF5_NETCDF_PACKAGES, 'cmake'):
+        assert package not in data['packages']
+        assert package not in data['specs']
+
+
 def test_validate_rejects_legacy_compiler_model(tmp_path: Path):
     legacy = tmp_path / 'katara_gnu_openmpi.yaml'
     legacy.write_text(

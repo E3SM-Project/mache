@@ -297,10 +297,17 @@ def _extract_spack_package_name(spec):
     return match.group(1).lower()
 
 
-def _filter_yaml_data(yaml_data, exclude_packages):
+def _filter_yaml_data(yaml_data, exclude_packages, requested_specs=()):
+    """Remove excluded packages' root specs, externals and providers.
+
+    Root specs in ``requested_specs`` (what the caller asked for) are kept
+    even when their package is excluded: excluding a machine-provided
+    package is how a caller asks Spack to build the version it requests.
+    """
     excluded = normalize_excluded_packages(exclude_packages)
     if not excluded:
         return yaml_data
+    requested = set(requested_specs)
 
     data = safe_load(yaml_data)
     if not isinstance(data, dict):
@@ -315,7 +322,8 @@ def _filter_yaml_data(yaml_data, exclude_packages):
         spack_data['specs'] = [
             spec
             for spec in specs
-            if _extract_spack_package_name(spec) not in excluded
+            if spec in requested
+            or _extract_spack_package_name(spec) not in excluded
         ]
 
     packages = spack_data.get('packages')
@@ -390,6 +398,8 @@ def _get_yaml_data(
         e3sm_lapack=include_e3sm_lapack,
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     )
-    yaml_data = _filter_yaml_data(yaml_data, exclude_packages)
+    yaml_data = _filter_yaml_data(
+        yaml_data, exclude_packages, requested_specs=specs
+    )
     validate_spack_env_yaml(yaml_data, source)
     return yaml_data
