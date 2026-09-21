@@ -1,12 +1,14 @@
 import functools
+import os
 import subprocess
 import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Literal, overload
+from typing import Any, Dict, List, Literal, Tuple, overload
 
 from mache.parallel.memory import MemoryCapSupport
 from mache.parallel.placement import PlacementSupport, ResourcePlacement
+from mache.parallel.topology import one_thread_per_core
 
 # the config option in [parallel] that lists each type of scheduler target
 TARGET_TYPE_MAP = {
@@ -92,6 +94,11 @@ class ParallelSystem:
         The hostnames of those nodes, or ``None`` where the system does not
         name them. Read on first use rather than at construction.
 
+    usable_core_ids : tuple of int
+        One CPU id per physical core the job may use on a node, in order,
+        ``cores_per_node`` of them. Read on first use rather than at
+        construction.
+
     mpi_allowed : bool
         Whether MPI execution is allowed on the system.
     """
@@ -145,6 +152,79 @@ class ParallelSystem:
     def _read_node_names(self) -> List[str] | None:
         """Read the hostnames this system holds, or ``None`` if unnamed."""
         return None
+
+    @functools.cached_property
+    def usable_core_ids(self) -> Tuple[int, ...]:
+        """
+        One CPU id per physical core the job may use on a node, in order.
+
+        ``cores_per_node`` says how many cores a node has; it does not say
+        which ids they are, and the two differ wherever a site keeps ids
+        back for itself or exposes its hardware threads. A caller giving a
+        :py:class:`~mache.parallel.placement.ResourcePlacement` its cores
+        should take them from here rather than from ``range(cores_per_node)``.
+        That numbering is one thread per core only by accident of the usual
+        Linux enumeration, and on Aurora, which holds back ids 0 and 52 and
+        their siblings, it names a core the job was never given, which PALS
+        refuses.
+
+        The ids are what the kernel allows this process, which is what the
+        job may use on this node, reduced to one per physical core by what
+        the kernel says shares a core, and held to ``cores_per_node``.
+        Nodes in an allocation are taken to be alike, which is the
+        assumption ``cores_per_node`` already makes. A Perlmutter CPU node
+        allows 256 ids and is configured with 128 cores; an Aurora node
+        allows 204 -- ids 1-51, 53-103 and their siblings -- and is
+        configured with 102.
+
+        The machine may offer fewer cores than the config counts, and that
+        is worth a warning, since a placement sized from the config would
+        then ask for a core that is not there. It may also offer more, and
+        that is not: a login node's ``login_cores`` and a ``single_node``
+        override are deliberate caps, and the first ``cores_per_node``
+        cores are used without comment.
+
+        A reading that leaves fewer than half the configured cores is not
+        believed at all. The process may have been started bound to a corner
+        of the node, and numbering the whole allocation from that corner
+        would starve every launch, so ``range(cores_per_node)`` is used
+        instead, with a warning. The same numbering is used, silently, where
+        the process cannot be asked what it is allowed, which is any
+        platform without ``os.sched_getaffinity``.
+
+        The ids are read the first time they are asked for, since reading
+        the topology of every id costs a file read each, and only a caller
+        laying out placements needs them.
+        """
+        if self.cores_per_node is None:
+            raise ValueError(
+                'This system does not say how many cores a node has, so it '
+                'cannot say which ids they are.'
+            )
+        cores_per_node = self.cores_per_node
+        configured = tuple(range(cores_per_node))
+        if not hasattr(os, 'sched_getaffinity'):
+            return configured
+
+        allowed = os.sched_getaffinity(0)
+        cores = one_thread_per_core(allowed)
+        if len(cores) * 2 < cores_per_node:
+            warnings.warn(
+                f'This process is allowed only {len(cores)} of the '
+                f'{cores_per_node} cores a node is configured with, which is '
+                f'too few to describe a node. Numbering cores from zero.',
+                stacklevel=2,
+            )
+            return configured
+        if len(cores) < cores_per_node:
+            warnings.warn(
+                f'A node here has {len(cores)} cores the job may use, on '
+                f'{len(allowed)} hardware threads, but is configured with '
+                f'{cores_per_node}. A placement sized from the config will '
+                f'ask for cores that are not there.',
+                stacklevel=2,
+            )
+        return tuple(cores[:cores_per_node])
 
     @property
     def placement_support(self) -> PlacementSupport:
