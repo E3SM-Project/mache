@@ -37,7 +37,6 @@ CONDA_PLATFORM_MAP = {
 }
 
 PYTHON_VARIANTS = {
-    '3.10': '3.10.* *_cpython',
     '3.11': '3.11.* *_cpython',
     '3.12': '3.12.* *_cpython',
     '3.13': '3.13.* *_cp313',

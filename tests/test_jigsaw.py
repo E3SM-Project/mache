@@ -343,11 +343,11 @@ def test_deploy_jigsawpy_pixi_local_adds_isolated_jigsaw_environment(
         '[workspace]\n'
         'name = "demo"\n'
         '\n'
-        '[feature.py310.dependencies]\n'
-        'python = "3.10.*"\n'
+        '[feature.py311.dependencies]\n'
+        'python = "3.11.*"\n'
         '\n'
         '[environments]\n'
-        'py310 = ["py310"]\n',
+        'py311 = ["py311"]\n',
         encoding='utf-8',
     )
 
