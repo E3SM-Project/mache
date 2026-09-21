@@ -1,3 +1,4 @@
+import re
 import subprocess
 from pathlib import Path
 
@@ -54,7 +55,7 @@ def test_render_with_tags():
 def test_render_applies_spack_patches():
     patches = spack_patches()
     assert [name for name, _ in patches] == [
-        'spack-load-module-already-loaded.patch'
+        'spack-52752-load-module-already-loaded.patch'
     ]
     script = _render(load_pins())
     checkout = script.index('git -C /opt/spack reset --hard')
@@ -67,22 +68,22 @@ def test_render_applies_spack_patches():
 
 
 def test_spack_patches_apply_to_pinned_spack(tmp_path: Path):
-    # The patched file at the pinned tag, fetched read-only from GitHub;
-    # skipped when offline.
+    # Every file a patch touches, at the pinned tag, fetched read-only from
+    # GitHub; skipped when offline.
     pins = load_pins()
     tag = pins['spack']['tag']
-    rel = 'lib/spack/spack/util/module_cmd.py'
-    url = f'https://raw.githubusercontent.com/spack/spack/{tag}/{rel}'
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-    except requests.RequestException:
-        pytest.skip('cannot download the pinned Spack source')
     subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
-    target = tmp_path / rel
-    target.parent.mkdir(parents=True)
-    target.write_text(response.text)
     for _name, content in spack_patches():
+        for rel in re.findall(r'^diff --git a/(\S+) b/', content, re.M):
+            url = f'https://raw.githubusercontent.com/spack/spack/{tag}/{rel}'
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+            except requests.RequestException:
+                pytest.skip('cannot download the pinned Spack source')
+            target = tmp_path / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(response.text)
         subprocess.run(
             ['git', '-C', str(tmp_path), 'apply', '--check', '-'],
             input=content + '\n',

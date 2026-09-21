@@ -1,0 +1,128 @@
+Backport of spack/spack#52752 (c28b22c926, merged 2026-07-22, labelled
+for v1.2.3): load_module treats a module that is already in LOADEDMODULES
+as loaded instead of raising ModuleLoadError.  Spack v1.2.0 (#51957) added
+the LOADEDMODULES-changed check; mache's build script loads the machine's
+modules before Spack runs, and lmod makes re-loading the last of them a
+no-op, so modules-only externals failed to build.
+
+Drop this patch when the pinned Spack release contains #52752.
+
+From c28b22c92656df5625738688665ac5c739b36411 Mon Sep 17 00:00:00 2001
+From: Matt Thompson <matthew.thompson@nasa.gov>
+Date: Tue, 21 Jul 2026 21:50:49 -0400
+Subject: [PATCH] module_cmd: allow loading already-loaded modules (#52752)
+
+## Summary
+
+Make `spack.util.module_cmd.load_module()` return successfully when its
+requested module is already listed in `LOADEDMODULES`.
+
+Add a regression test covering this idempotent module-load behavior.
+
+## Problem
+
+`load_module()` uses a change in `LOADEDMODULES` as evidence that a
+module load succeeded:
+
+1. Record `LOADEDMODULES`.
+2. Run `module load <module>`.
+3. Raise `ModuleLoadError` if `LOADEDMODULES` is unchanged.
+
+That assumption is not valid for an already-loaded module. With Lmod,
+asking to load a module that is already present succeeds as a no-op: the
+command exits with status zero and `LOADEDMODULES` remains unchanged.
+
+For example:
+
+```console
+$ module load comp/intel/2025.3.0 mpi/impi/2021.17
+$ before=$LOADEDMODULES
+$ module load mpi/impi/2021.17
+$ echo $?
+0
+$ test "$before" = "$LOADEDMODULES"; echo $?
+0
+```
+
+Previously, Spack treated this successful no-op as a failed module load.
+
+## Fix
+
+Return successfully when the requested module is already listed in
+`LOADEDMODULES`. The existing unchanged-environment check remains in
+place for modules that were not already loaded, where it continues to
+detect a failed load.
+
+## Context
+
+This was found while investigating an Intel MPI module hierarchy on a
+site system. Correctly configuring module prerequisites is a separate
+concern; this change fixes the general false-failure case when Spack
+retries an already-loaded module.
+
+## Testing
+
+- Added a regression test that verifies an already-loaded module does
+not call module load.
+- Reproduced the successful no-op behavior with both supported
+module-system styles:
+- **Lmod:** reloading `mpi/impi/2021.17` returned exit status 0 and left
+`LOADEDMODULES` unchanged.
+- **Tcl Modules:** reloading `mpi-impi/2021.17` returned exit status 0
+and left `LOADEDMODULES` unchanged.
+
+## Disclosure
+
+This change was developed with assistance from OpenAI GPT-5.6 Terra and
+reviewed by the contributor.
+
+Signed-off-by: Matthew Thompson <matthew.thompson@nasa.gov>
+---
+ lib/spack/spack/test/util/module_cmd.py | 16 ++++++++++++++++
+ lib/spack/spack/util/module_cmd.py      |  6 ++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/lib/spack/spack/test/util/module_cmd.py b/lib/spack/spack/test/util/module_cmd.py
+index d348a1bf4503d9..b47b9f7fcd2341 100644
+--- a/lib/spack/spack/test/util/module_cmd.py
++++ b/lib/spack/spack/test/util/module_cmd.py
+@@ -38,6 +38,22 @@ def mock_module(*args, **kwargs):
+     assert "test_module:test_module_2" in os.environ["LOADEDMODULES"]
+ 
+ 
++@pytest.mark.not_on_windows("Module files are not supported on Windows")
++def test_load_module_already_loaded(monkeypatch, working_env):
++    """Test that loading an already-loaded module succeeds without reloading it."""
++
++    os.environ["LOADEDMODULES"] = "test_module"
++
++    def mock_module(*args, **kwargs):
++        if args[0] == "show":
++            return ""
++        pytest.fail("load should not be called for an already-loaded module")
++
++    monkeypatch.setattr(spack.util.module_cmd, "module", mock_module)
++
++    spack.util.module_cmd.load_module("test_module")
++
++
+ @pytest.mark.not_on_windows("Module files are not supported on Windows")
+ def test_load_module_failure(monkeypatch, working_env):
+     """Test that load_module raises an exception when a module load fails."""
+diff --git a/lib/spack/spack/util/module_cmd.py b/lib/spack/spack/util/module_cmd.py
+index 2aa1187a09dfc5..816cb035a36d57 100644
+--- a/lib/spack/spack/util/module_cmd.py
++++ b/lib/spack/spack/util/module_cmd.py
+@@ -108,6 +108,12 @@ def load_module(mod):
+     # Store the LOADEDMODULES before trying to load the new module
+     loaded_modules_before = os.environ.get("LOADEDMODULES", "")
+ 
++    # Loading a module that is already loaded is a successful no-op for
++    # module systems such as Lmod. In that case LOADEDMODULES is unchanged,
++    # so treating an unchanged value below as a failure would be incorrect.
++    if mod in loaded_modules_before.split(":"):
++        return
++
+     # Load the module now that there are no conflicts
+     # Some module systems use stdout and some use stderr
+     module("load", mod)
