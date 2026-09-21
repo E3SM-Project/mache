@@ -151,6 +151,45 @@ documentation.
     list_machine_compiler_mpilib
 ```
 
+```{eval-rst}
+.. currentmodule:: mache.spack.pins
+
+.. autosummary::
+    :toctree: generated/
+
+    load_pins
+    merge_pins
+    validate_pins
+    render_repos_yaml
+    checkout_command
+    release_pins_are_valid
+```
+
+```{eval-rst}
+.. currentmodule:: mache.spack.install
+
+.. autosummary::
+    :toctree: generated/
+
+    render_install_script
+    write_prologue
+```
+
+```{eval-rst}
+.. currentmodule:: mache.spack.activation
+
+.. autosummary::
+    :toctree: generated/
+
+    capture_activation
+    parse_raw_activation
+    parse_env_before
+    rewrite_modifications
+    render_activation
+    write_activation_files
+    activation_source_line
+```
+
 ## sync
 
 ```{eval-rst}
@@ -301,6 +340,8 @@ documentation.
     deploy_spack_software_env
     load_existing_spack_envs
     load_existing_spack_software_env
+    capture_spack_activations
+    get_spack_activation_mode
 ```
 
 ## MachineInfo

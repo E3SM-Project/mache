@@ -33,6 +33,79 @@ For example: `chicoma-cpu_gnu_mpich.yaml`
 These files are Jinja2 templates, allowing conditional inclusion of packages
 (e.g., LAPACK) based on user options.
 
+### Template skeleton
+
+Templates use the Spack 1.x compiler model: the compiler is an external
+package with `extra_attributes.compilers`, and a toolchain named `mache`,
+required for every package, selects it for `c`, `cxx` and `fortran`. The
+compiler is not a root spec, and no spec carries `%{{ compiler }}`. A minimal
+template:
+
+```yaml
+{%- set compiler = "gcc@11.2.0" %}
+{%- set mpi = "openmpi@4.1.6" %}
+spack:
+  specs:
+  - {{ mpi }}
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
+{%- for spec in specs %}
+  - "{{ spec }}"
+{%- endfor %}
+  concretizer:
+    unify: true
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
+  packages:
+    all:
+      require: ["%mache"]
+      providers:
+        mpi: [{{ mpi }}]
+    gcc:
+      externals:
+      - spec: {{ compiler }}
+        prefix: /path/to/gcc-11.2.0
+        modules:
+        - gcc/11.2.0
+        extra_attributes:
+          compilers:
+            c: /path/to/gcc-11.2.0/bin/gcc
+            cxx: /path/to/gcc-11.2.0/bin/g++
+            fortran: /path/to/gcc-11.2.0/bin/gfortran
+          # optional, as in the old compilers: section
+          environment:
+            prepend_path:
+              PKG_CONFIG_PATH: /path/to/pkgconfig
+      buildable: false
+    openmpi:
+      externals:
+      - spec: {{ mpi }}
+        prefix: /path/to/openmpi-4.1.6
+        modules:
+        - openmpi/4.1.6
+      buildable: false
+    # further externals: hdf5, netcdf-c, cmake, ...
+```
+
+Compiler package names follow `spack-packages`: `gcc`, `nvhpc`, `cce` and
+`intel-oneapi-compilers` (for `icx`/`icpx`/`ifx`). On Cray systems the
+compiler paths can be the wrappers `cc`, `CC` and `ftn`. The Intel classic
+compilers (`icc`/`ifort`) have no package in any `spack-packages` release and
+are not supported.
+
+`mache` rejects a rendered template that still has a top-level `compilers:`
+section or `packages:all:compiler`, so an old-style template or
+`deploy/spack/<machine>_<compiler>_<mpi>.yaml` override fails with a clear
+message before Spack sees it.
+
 Machine-provided HDF5/NetCDF packages should now be listed unconditionally in
 the YAML templates.  Downstream packages can opt out of them, or any other
 machine-provided external such as `cmake`, with `exclude_packages`.  Mache
@@ -47,7 +120,7 @@ filters the rendered YAML after Jinja expansion and removes matching:
 On most HPC systems, the following packages are provided by the system and
 should be marked as `external` in the YAML:
 
-- Compilers (e.g., `gcc`, `intel`, `nvhpc`, `rocmcc`, `oneapi`)
+- Compilers (e.g., `gcc`, `intel-oneapi-compilers`, `nvhpc`, `cce`)
 - MPI libraries (e.g., `cray-mpich`, `openmpi`, `mvapich2`, `intel-mpi`,
   `mpich`)
 - BLAS/LAPACK libraries (e.g., `cray-libsci`, `intel-mkl`, `intel-oneapi-mkl`)
@@ -88,9 +161,9 @@ Specify providers for `mpi` and `lapack` under the `all` section, e.g.:
 
 ```yaml
 all:
-  compiler: [gcc@13.2]
+  require: ["%mache"]
   providers:
-    mpi: [cray-mpich@8.1.31%gcc@13.2]
+    mpi: [cray-mpich@8.1.31]
     lapack: [cray-libsci@24.11.0]
 ```
 
@@ -160,11 +233,25 @@ module names do not match Spack package names exactly.
 
 After adding or modifying YAML templates (or an exceptional shell override):
 
-1. Use `make_spack_env` or `get_spack_script` in `mache.spack` to generate and
+1. Run `pixi run pytest tests/test_spack_templates.py`, which renders every
+   template and checks it against the Spack 1.x model.
+2. Use `make_spack_env` or `get_spack_script` in `mache.spack` to generate and
   test the environment and load scripts.
-2. Confirm that the generated shell snippet includes the expected module loads
+3. Confirm that the generated shell snippet includes the expected module loads
   from the CIME machine config and that Spack detects all external packages.
-3. Build and run a simple test application to verify the environment.
+4. Build and run a simple test application to verify the environment, and
+   compare the captured `activate.sh` in the environment directory with the
+   output of `spack env activate --sh <env>` run by hand.
+
+## Package recipes
+
+Recipes that E3SM needs beyond the pinned `spack-packages` release live in
+[E3SM-Project/e3sm-spack-packages](https://github.com/E3SM-Project/e3sm-spack-packages),
+which `mache` registers ahead of `builtin`. Its README explains how packages
+subclass upstream recipes and how it is tagged. Bumping the Spack,
+`spack-packages` or `e3sm-spack-packages` pin is an ordinary pull request
+that edits `mache/spack/pins.yaml`; a release must pin tags only, which
+`tests/test_spack_pins.py` enforces for non-pre-release versions.
 
 ## Further Reading
 

@@ -24,6 +24,62 @@ downstream packages.
 
 ---
 
+## Spack sources and version pins
+
+`mache` builds environments with an unmodified Spack 1.x release and two
+package repositories, searched in this order:
+
+| Role | Repository | Namespace |
+|------|------------|-----------|
+| E3SM packages and early updates | [E3SM-Project/e3sm-spack-packages](https://github.com/E3SM-Project/e3sm-spack-packages) | `e3sm` |
+| upstream packages | [spack/spack-packages](https://github.com/spack/spack-packages) | `builtin` |
+
+A package in `e3sm` shadows the upstream package of the same name. Each
+`mache` release pins the three sources in `mache/spack/pins.yaml`:
+
+```yaml
+spack:
+  git: https://github.com/spack/spack.git
+  tag: v1.2.2
+repos:
+  e3sm:
+    git: https://github.com/E3SM-Project/e3sm-spack-packages.git
+    tag: v2026.06.0
+  builtin:
+    git: https://github.com/spack/spack-packages.git
+    tag: v2026.06.0
+```
+
+Each entry names exactly one of `tag`, `commit` or `branch`. To build against
+an unreleased recipe, pass overrides in the same schema (a mapping or the path
+to a YAML file) as `pins=` to `make_spack_env`, or `--spack-pins <file>` to
+`mache deploy run`. Overrides merge per repository and replace that
+repository's ref:
+
+```yaml
+repos:
+  e3sm:
+    branch: my-fix
+```
+
+The Spack checkout at `spack_path` holds everything: the two package
+repositories under `var/spack/package_repos/`, the user configuration scope,
+caches and bootstrap store (through `spack isolate --self`), the managed
+environments under `var/spack/environments/` and the install tree. Use a new
+`spack_path` for each major `mache` release; a checkout of Spack 0.x is
+refused rather than converted.
+
+### Spec syntax
+
+Specs from `spack_specs` (or `deploy/spack.yaml.j2`) are passed to Spack
+unchanged; `mache` no longer appends `%<compiler>`. The compiler is selected
+by a toolchain in the machine template, so specs normally need no `%`. If a
+spec does use `%`, remember that in Spack 1.x everything after it applies to
+that dependency: `trilinos %gcc +mpi` asks for `gcc+mpi`, so put variants
+before `%`.
+
+---
+
 ## `make_spack_env`
 
 ```python
@@ -31,7 +87,10 @@ from mache.spack import make_spack_env
 ```
 
 **Purpose:**
-Builds a Spack environment for a specified machine, compiler, and MPI library, using a set of package specs and optional configuration.
+Checks out the pinned Spack sources (see
+[Spack sources and version pins](#spack-sources-and-version-pins)) and builds
+a Spack environment for a specified machine, compiler, and MPI library, using
+a set of package specs and optional configuration.
 
 **Typical usage in downstream packages:**
 
@@ -59,7 +118,10 @@ make_spack_env(
     yaml_template=yaml_template,
     tmpdir=tmpdir,
     spack_mirror=spack_mirror,
-    custom_spack=custom_spack
+    custom_spack=custom_spack,
+    pins=pins,
+    activation='captured',
+    build_jobs=build_jobs,
 )
 ```
 
@@ -87,12 +149,27 @@ make_spack_env(
 - `spack_mirror`: Path to a local Spack mirror (optional).
 - `custom_spack`: Additional Spack commands to run after environment creation
   (optional).
+- `pins`: Overrides for the pinned Spack sources, a mapping or the path to a
+  YAML file (optional).
+- `activation`: `captured` (default) writes `activate.sh` and `activate.csh`
+  into the environment directory after the build; `dynamic` does not (see
+  [`get_spack_script`](#get_spack_script)).
+- `build_jobs`: Number of parallel build jobs for `spack install -j`
+  (optional).
 
 **Behavior:**
 
-- Writes a YAML file describing the environment.
-- Generates and runs a shell script to create the Spack environment.
-- Loads any required modules and sets up environment variables as needed.
+- Writes `<env_name>.yaml`, `build_<env_name>.bash` and
+  `<env_name>.prologue.sh` (the module loads and environment variables the
+  build runs with) to the current directory.
+- Runs the build script in a fresh login shell: it clones or updates Spack
+  and the package repositories at their pinned refs, writes the instance's
+  `etc/spack/repos.yaml`, isolates the instance from `~/.spack`, recreates
+  the environment and installs it.
+- Copies `<env_name>.spack.lock` and writes `<env_name>.provenance.yaml`
+  (the resolved commit of each source) to the current directory.
+- With `activation='captured'`, captures the environment's activation into
+  `activate.sh` and `activate.csh` in the environment directory.
 
 **Recommended pattern for downstream packages:**
 
@@ -156,6 +233,7 @@ spack_script = get_spack_script(
     include_e3sm_lapack=include_e3sm_lapack,
     e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
     exclude_packages=exclude_packages,
+    activation='captured',  # or 'dynamic'
 )
 ```
 
@@ -163,7 +241,22 @@ spack_script = get_spack_script(
 
 The returned snippet is assembled in three steps:
 
-1. Optionally source Spack and activate the requested environment.
+1. Optionally activate the requested environment. By default this is a
+   single line:
+
+   ```bash
+   source <spack_path>/var/spack/environments/<env_name>/activate.sh
+   ```
+
+   `activate.sh` (and `activate.csh`) is captured when the environment is
+   built: `mache` runs `spack env activate` once in a clean shell and
+   rewrites the result so that path-like variables are prepended to, rather
+   than replaced. Sourcing it costs milliseconds and runs no Spack. It also
+   sets `SPACK_ROOT` and `SPACK_ENV` and puts the plain `spack` executable on
+   `PATH`, so `spack find` and `spack config get` work on the loaded
+   environment; for `spack load` or `spack env activate`, source
+   `$SPACK_ROOT/share/spack/setup-env.sh` first. With `activation='dynamic'`
+   the snippet sources `setup-env.sh` and runs `spack env activate` instead.
 2. Auto-generate module loads and environment exports from the E3SM CIME
   machine configuration (`mache/cime_machine_config/config_machines.xml`) for
   the given `(machine, compiler, mpi)` and target shell (`sh` or `csh`).
