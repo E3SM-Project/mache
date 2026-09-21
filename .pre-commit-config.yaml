@@ -7,6 +7,8 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        # blank context lines in a unified diff are a single space
+        exclude: \.patch$
       - id: end-of-file-fixer
 
   # Can run individually with `flynt [file]` or `flynt [source]`

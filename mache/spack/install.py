@@ -83,6 +83,7 @@ def render_install_script(
         spack_path_q=shlex.quote(spack_path),
         prologue=prologue.strip(),
         spack_checkout=checkout_command(pins['spack'], spack_path),
+        spack_patches=spack_patches(),
         spack_git=pins['spack']['git'],
         repo_checkouts=repo_checkouts,
         repo_names=list(pins['repos']),
@@ -99,6 +100,27 @@ def render_install_script(
         custom_spack=custom_spack.strip(),
         build_jobs=build_jobs,
     )
+
+
+def spack_patches():
+    """
+    The patches mache applies to its pinned Spack checkout.
+
+    Each ``*.patch`` file in ``mache/spack/patches`` is a ``git apply``
+    patch against the pinned Spack tag, with a description above the diff
+    saying what it fixes and when it can be dropped.
+
+    Returns
+    -------
+    patches : list of tuple
+        ``(name, content)`` pairs in name order
+    """
+    patches_dir = importlib_resources.files('mache.spack.patches')
+    patches = []
+    for path in sorted(patches_dir.iterdir(), key=lambda p: p.name):
+        if path.name.endswith('.patch'):
+            patches.append((path.name, path.read_text().rstrip('\n')))
+    return patches
 
 
 def write_prologue(work_dir, env_name, prologue):

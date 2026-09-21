@@ -2,10 +2,12 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import requests
 
 from mache.spack.install import (
     prologue_path,
     render_install_script,
+    spack_patches,
     write_prologue,
 )
 from mache.spack.pins import load_pins
@@ -47,6 +49,46 @@ def test_render_with_tags():
     assert script.index('package_repos/e3sm') < script.index(
         'package_repos/builtin'
     )
+
+
+def test_render_applies_spack_patches():
+    patches = spack_patches()
+    assert [name for name, _ in patches] == [
+        'spack-load-module-already-loaded.patch'
+    ]
+    script = _render(load_pins())
+    checkout = script.index('git -C /opt/spack reset --hard')
+    apply = script.index('git -C "$spack_path" apply <<\'PATCH\'')
+    assert checkout < apply < script.index('spack isolate --self')
+    for name, content in patches:
+        assert 'diff --git a/lib/spack/' in content
+        assert content in script
+        assert f'  - {name}' in script
+
+
+def test_spack_patches_apply_to_pinned_spack(tmp_path: Path):
+    # The patched file at the pinned tag, fetched read-only from GitHub;
+    # skipped when offline.
+    pins = load_pins()
+    tag = pins['spack']['tag']
+    rel = 'lib/spack/spack/util/module_cmd.py'
+    url = f'https://raw.githubusercontent.com/spack/spack/{tag}/{rel}'
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException:
+        pytest.skip('cannot download the pinned Spack source')
+    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
+    target = tmp_path / rel
+    target.parent.mkdir(parents=True)
+    target.write_text(response.text)
+    for _name, content in spack_patches():
+        subprocess.run(
+            ['git', '-C', str(tmp_path), 'apply', '--check', '-'],
+            input=content + '\n',
+            text=True,
+            check=True,
+        )
 
 
 def test_render_with_commit_and_branch():

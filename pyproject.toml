@@ -105,6 +105,7 @@ mache = [
     "machines/*.cfg",
     "machines/pre_conda/*.sh",
     "machines/pre_conda/*.csh",
+    "spack/patches/*.patch",
     "spack/pins.yaml",
     "spack/templates/*.yaml",
     "spack/templates/*.j2",

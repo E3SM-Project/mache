@@ -24,6 +24,12 @@ fi
 
 # Spack itself
 {{ spack_checkout }}
+{%- for name, content in spack_patches %}
+# Patch {{ name }}: the checkout above is clean, so this always applies.
+git -C "$spack_path" apply <<'PATCH'
+{{ content }}
+PATCH
+{%- endfor %}
 # Package repositories, in search order
 {%- for name, checkout in repo_checkouts %}
 # {{ name }}
@@ -81,6 +87,12 @@ mache: {{ mache_version }}
 spack:
   git: {{ spack_git }}
   commit: $(git -C "$spack_path" rev-parse HEAD)
+{%- if spack_patches %}
+  patches:
+{%- for name, content in spack_patches %}
+  - {{ name }}
+{%- endfor %}
+{%- endif %}
 repos:
 {%- for name, git, clone_path in repo_provenance %}
   {{ name }}:
