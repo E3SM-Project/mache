@@ -119,11 +119,6 @@ spack:
             cxx: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/g++
             fortran: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gfortran
       buildable: false
-    gcc-runtime:
-      externals:
-      - spec: gcc-runtime@13.3.0
-        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gcc-runtime-13.3.0-ghotoln
-      buildable: false
     mpich:
       externals:
       - spec: {{ mpi }}

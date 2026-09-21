@@ -101,6 +101,12 @@ compiler paths can be the wrappers `cc`, `CC` and `ftn`. The Intel classic
 compilers (`icc`/`ifort`) have no package in any `spack-packages` release and
 are not supported.
 
+Do not list `gcc-runtime` as an external: Spack 1.x always builds it (from
+the `gcc` external) whenever anything else in the environment is built, so
+a `buildable: false` entry makes concretization fail. A template whose
+compiler is `intel-oneapi-compilers` still needs a `gcc` external, because
+`intel-oneapi-runtime` links against `gcc-runtime`.
+
 `mache` rejects a rendered template that still has a top-level `compilers:`
 section or `packages:all:compiler`, so an old-style template or
 `deploy/spack/<machine>_<compiler>_<mpi>.yaml` override fails with a clear
