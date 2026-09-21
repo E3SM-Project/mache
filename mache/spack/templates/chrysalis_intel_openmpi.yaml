@@ -128,6 +128,7 @@ spack:
     intel-oneapi-mkl:
       externals:
       - spec: intel-oneapi-mkl@2025.2.0
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/intel-oneapi-compilers-2025.2.0/intel-oneapi-mkl-2025.2.0-bcimxay
         modules:
         - intel-oneapi-mkl/2025.2.0-bcimxay
       buildable: false

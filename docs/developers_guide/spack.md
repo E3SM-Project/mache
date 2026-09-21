@@ -97,10 +97,11 @@ spack:
 
 Compiler package names follow `spack-packages`: `gcc`, `nvhpc`, `cce` and
 `intel-oneapi-compilers` (for `icx`/`icpx`/`ifx`). On Cray systems the
-compiler paths can be the wrappers `cc`, `CC` and `ftn`. An
-`intel-oneapi-compilers` external needs an explicit `prefix:` that is the
-root of the oneAPI installation (the directory holding `compiler/<version>/`);
-a prefix inferred from `modules:` points inside `compiler/<version>/` and the
+compiler paths can be the wrappers `cc`, `CC` and `ftn`. Every oneAPI
+external (`intel-oneapi-compilers`, `intel-oneapi-mkl`, ...) needs an
+explicit `prefix:` that is the root of the oneAPI installation (the
+directory holding `compiler/<version>/` or `mkl/<version>/`); a prefix
+inferred from `modules:` points inside that component directory and the
 oneAPI build system then fails to find `env/vars.sh`. The Intel classic
 compilers (`icc`/`ifort`) have no package in any `spack-packages` release and
 are not supported.
