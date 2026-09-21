@@ -441,12 +441,96 @@ def test_clone_mache_repo_uses_local_source_override(
         mache_branch='ignored',
         log_filename=str(tmp_path / 'bootstrap.log'),
         quiet=True,
-        recreate=False,
     )
 
     cloned_repo = tmp_path / 'deploy_tmp' / 'build_mache' / 'mache'
     assert cloned_repo.exists()
     assert (cloned_repo / 'pixi.toml').is_file()
+
+
+def test_clone_mache_repo_refreshes_stale_local_snapshot(
+    monkeypatch, tmp_path: Path
+):
+    monkeypatch.chdir(tmp_path)
+
+    source_repo = tmp_path / 'local-mache'
+    source_repo.mkdir()
+    (source_repo / 'pixi.toml').write_text(
+        '[workspace]\nname = "mache-new"\n',
+        encoding='utf-8',
+    )
+    monkeypatch.setenv(bootstrap.LOCAL_MACHE_SOURCE_ENV, str(source_repo))
+
+    # A snapshot left by an earlier run, with content that has since changed
+    # in the source and a file that no longer exists there.
+    cloned_repo = tmp_path / 'deploy_tmp' / 'build_mache' / 'mache'
+    cloned_repo.mkdir(parents=True)
+    (cloned_repo / 'pixi.toml').write_text(
+        '[workspace]\nname = "mache-old"\n',
+        encoding='utf-8',
+    )
+    (cloned_repo / 'stale.txt').write_text('old', encoding='utf-8')
+
+    log_filename = tmp_path / 'bootstrap.log'
+    bootstrap._clone_mache_repo(
+        mache_fork='ignored',
+        mache_branch='ignored',
+        log_filename=str(log_filename),
+        quiet=True,
+    )
+
+    assert 'mache-new' in (cloned_repo / 'pixi.toml').read_text(
+        encoding='utf-8'
+    )
+    assert not (cloned_repo / 'stale.txt').exists()
+    assert 'Replacing existing mache source' in log_filename.read_text(
+        encoding='utf-8'
+    )
+
+
+def test_clone_mache_repo_reclones_existing_clone(monkeypatch, tmp_path: Path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv(bootstrap.LOCAL_MACHE_SOURCE_ENV, raising=False)
+
+    cloned_repo = tmp_path / 'deploy_tmp' / 'build_mache' / 'mache'
+    cloned_repo.mkdir(parents=True)
+    (cloned_repo / 'stale.txt').write_text('old', encoding='utf-8')
+
+    calls = []
+
+    def fake_check_call(commands, log_filename, quiet, **kwargs):
+        calls.append((commands, kwargs))
+        if commands[:2] == ['git', 'clone']:
+            # The clone must not find a leftover directory in its way.
+            assert not cloned_repo.exists()
+            cloned_repo.mkdir()
+
+    monkeypatch.setattr(bootstrap, 'check_call', fake_check_call)
+
+    bootstrap._clone_mache_repo(
+        mache_fork='xylar/mache',
+        mache_branch='feature',
+        log_filename=str(tmp_path / 'bootstrap.log'),
+        quiet=True,
+    )
+
+    clone_cmd, clone_kwargs = calls[0]
+    assert clone_cmd == [
+        'git',
+        'clone',
+        '--depth',
+        '1',
+        '--single-branch',
+        '-b',
+        'feature',
+        'git@github.com:xylar/mache.git',
+        'mache',
+    ]
+    assert clone_kwargs['cwd'] == str(cloned_repo.parent)
+
+    log_cmd, log_kwargs = calls[1]
+    assert log_cmd == ['git', 'log', '-1', '--oneline']
+    assert log_kwargs['cwd'] == str(cloned_repo)
 
 
 def test_merge_pixi_toml_dependencies_merges_runtime_and_dev_deps(
