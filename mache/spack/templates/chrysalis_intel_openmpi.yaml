@@ -101,6 +101,7 @@ spack:
     intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
+        prefix: /gpfs/fs1/soft/chrysalis/spack-latest/opt/spack/linux-rhel8-x86_64/none-none/intel-oneapi-compilers-2025.2.0-f3alqc4
         modules:
         - intel-oneapi-compilers/2025.2.0-mdlxe55
         extra_attributes:
