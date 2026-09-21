@@ -400,3 +400,36 @@ def test_capture_spack_activations_skipped_when_dynamic(tmp_path: Path):
     )
     # would fail if it tried to run anything against /nonexistent
     deploy_spack.capture_spack_activations(ctx=ctx, results=[result])
+
+
+def test_install_spack_env_creates_tmpdir(tmp_path: Path, monkeypatch):
+    commands = []
+    monkeypatch.setattr(
+        deploy_spack,
+        'check_call',
+        lambda cmd, *args, **kwargs: commands.append(cmd),
+    )
+    ctx = _ctx(tmp_path, args=argparse.Namespace())
+    tmpdir = tmp_path / 'spack-tmp'
+
+    deploy_spack._install_spack_env(
+        ctx=ctx,
+        spack_path=str(tmp_path / 'spack'),
+        env_name='demo_gnu_openmpi',
+        yaml_path=str(tmp_path / 'demo_gnu_openmpi.yaml'),
+        compiler='gnu',
+        mpi='openmpi',
+        tmpdir=str(tmpdir),
+        mirror=None,
+        custom_spack='',
+        e3sm_hdf5_netcdf=True,
+        pins=deploy_spack.load_pins(),
+        build_jobs=None,
+        log_filename=str(tmp_path / 'deploy.log'),
+        quiet=True,
+    )
+
+    assert tmpdir.is_dir()
+    script = tmp_path / 'deploy_tmp/spack/build_demo_gnu_openmpi.bash'
+    assert f'export TMPDIR={tmpdir}' in script.read_text()
+    assert len(commands) == 1

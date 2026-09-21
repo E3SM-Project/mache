@@ -1033,6 +1033,9 @@ def _install_spack_env(
         load_spack_env=False,
     )
     if tmpdir is not None:
+        # a TMPDIR that does not exist makes configure scripts fail and
+        # sends Spack's stages back to /tmp
+        os.makedirs(tmpdir, exist_ok=True)
         prologue = f'{prologue}\nexport TMPDIR={tmpdir}'
 
     work = Path(ctx.work_dir) / 'spack'
