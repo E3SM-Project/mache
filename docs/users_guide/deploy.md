@@ -624,7 +624,8 @@ Bootstrap currently:
 1. Resolves the pixi executable, installing pixi if necessary.
 2. Creates or refreshes `deploy_tmp/bootstrap_pixi`.
 3. Installs `mache` either from a tagged release or from a requested
-   fork/branch clone.
+   fork/branch clone under `deploy_tmp/build_mache/mache`, recording the
+   checked-out commit in the log.
 4. Leaves logs under `deploy_tmp/logs/bootstrap.log`.
 
 If you pass `--bootstrap-only`, the process stops here and leaves you with an

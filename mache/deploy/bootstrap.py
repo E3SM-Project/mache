@@ -693,7 +693,6 @@ def _run(log_filename):
             mache_branch=args.mache_branch,
             log_filename=log_filename,
             quiet=quiet,
-            recreate=args.recreate,
         )
 
         # Developer-style install path: use mache's own pixi.toml to create
@@ -1321,17 +1320,27 @@ def _clone_mache_repo(
     mache_branch,
     log_filename,
     quiet,
-    recreate,
 ):
+    """
+    Put a fresh copy of the requested mache source under
+    ``deploy_tmp/build_mache/mache``.
+
+    ``deploy.py`` wipes ``deploy_tmp`` before bootstrap, so normally no copy
+    exists yet.  If one does (bootstrap run by hand), it is replaced rather
+    than reused: it holds no developer edits, since local edits belong in
+    the checkout named by ``MACHE_LOCAL_SOURCE_PATH``, which is snapshotted
+    here.
+    """
     build_root = Path('deploy_tmp/build_mache').resolve()
     repo_dir = build_root / 'mache'
 
-    if recreate and build_root.exists():
-        shutil.rmtree(str(build_root))
-
     if repo_dir.exists():
-        # Avoid clobbering developer edits in an existing clone.
-        return
+        _log_message(
+            f'Replacing existing mache source at {repo_dir}\n',
+            log_filename,
+            quiet,
+        )
+        shutil.rmtree(str(repo_dir))
 
     build_root.mkdir(parents=True, exist_ok=True)
 
@@ -1369,6 +1378,15 @@ def _clone_mache_repo(
         log_filename,
         quiet,
         cwd=str(build_root),
+        env=env,
+    )
+    # Record which commit was checked out so a stale deploy is easy to spot
+    # in the log.
+    check_call(
+        ['git', 'log', '-1', '--oneline'],
+        log_filename,
+        quiet,
+        cwd=str(repo_dir),
         env=env,
     )
 
