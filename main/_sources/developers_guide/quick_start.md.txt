@@ -31,7 +31,7 @@ pixi shell
 
 This creates the default Pixi environment from the root `pixi.toml` and
 includes `mache` in editable mode for local development. The versioned CI
-environments (`py310`-`py314`) intentionally skip this editable install and add
+environments (`py311`-`py314`) intentionally skip this editable install and add
 it explicitly with `pip install -e .` in CI after `pixi install`.
 
 (dev-code-styling)=
