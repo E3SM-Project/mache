@@ -117,7 +117,7 @@ spack:
         - intel/2025.3
         - craype-accel-nvidia80
         - cray-libsci/25.09.0
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         - craype/2.7.35
         - cudatoolkit/12.9
         extra_attributes:
@@ -128,6 +128,11 @@ spack:
           environment:
             prepend_path:
               PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
+              # Spack clears LD_LIBRARY_PATH for builds and the
+              # libfabric module is already loaded, so reloading it as
+              # an external module restores nothing.  The Cray wrappers
+              # link MPI into every executable, so the linker needs it.
+              LD_LIBRARY_PATH: "/opt/cray/libfabric/2.3.1/lib64"
       buildable: false
     cuda:
       externals:
@@ -137,7 +142,7 @@ spack:
         - intel/2025.3
         - craype-accel-nvidia80
         - cray-libsci/25.09.0
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         - craype/2.7.35
         - cudatoolkit/12.9
       buildable: false
@@ -145,7 +150,7 @@ spack:
       externals:
       - spec: {{ mpi }}
         modules:
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         - cray-mpich/9.0.1
       buildable: false
     cray-libsci:
