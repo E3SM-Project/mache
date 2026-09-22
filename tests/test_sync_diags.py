@@ -27,6 +27,7 @@ def test_sync_diags_to_remote_builds_expected_rsync_commands(monkeypatch):
         ),
     }
     _patch_machine_info(monkeypatch, machine_configs)
+    _patch_rsync_available(monkeypatch)
 
     calls = []
     monkeypatch.setattr(
@@ -91,6 +92,7 @@ def test_sync_diags_from_remote_updates_permissions_after_failures(
         ),
     }
     _patch_machine_info(monkeypatch, machine_configs)
+    _patch_rsync_available(monkeypatch)
 
     calls = []
 
@@ -147,6 +149,19 @@ def test_sync_diags_from_remote_updates_permissions_after_failures(
     captured = capsys.readouterr()
     assert 'Warning: Some transfer operations failed' in captured.out
     assert 'Updating permissions on /local/diags:' in captured.out
+
+
+def test_sync_diags_requires_rsync_on_path(monkeypatch):
+    _patch_machine_info(monkeypatch, {})
+    monkeypatch.setattr(diags.shutil, 'which', lambda name: None)
+
+    def _fail(args):
+        raise AssertionError('rsync must not be run when it is missing')
+
+    monkeypatch.setattr(diags.subprocess, 'check_call', _fail)
+
+    with pytest.raises(RuntimeError, match='rsync is required'):
+        diags.sync_diags(other='pm-cpu', direction='to', machine='chrysalis')
 
 
 def test_dispatch_diags_calls_sync_diags(monkeypatch):
@@ -364,3 +379,7 @@ def _patch_machine_info(monkeypatch, machine_configs):
             self.config = machine_configs[machine]
 
     monkeypatch.setattr(diags, 'MachineInfo', _FakeMachineInfo)
+
+
+def _patch_rsync_available(monkeypatch):
+    monkeypatch.setattr(diags.shutil, 'which', lambda name: '/usr/bin/rsync')

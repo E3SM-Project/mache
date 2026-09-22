@@ -1,13 +1,4 @@
-include mache/cime_machine_config/*.xml
-include mache/deploy/templates/*.j2
-include mache/jigsaw/*.j2
-include mache/jigsaw/*.sh
-include mache/machines/*.cfg
-include mache/machines/pre_conda/*.sh
-include mache/machines/pre_conda/*.csh
-include mache/spack/templates/*.yaml
-include mache/spack/templates/*.template
-include mache/spack/templates/*.sh
-include mache/spack/templates/*.csh
-
+# Package data shipped in the wheel is listed under
+# [tool.setuptools.package-data] in pyproject.toml; this only adds files
+# to the sdist.
 include pixi.toml

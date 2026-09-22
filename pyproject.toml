@@ -1,12 +1,15 @@
 [project]
-name = "mache"
+# The import name is still `mache`; `mache` on PyPI belongs to an
+# unrelated project.
+name = "e3sm-mache"
 dynamic = ["version"]
 authors = [
     { name="Xylar Asay-Davis", email="xylar@lanl.gov" },
     { name="Althea Denlinger", email="althea@lanl.gov" }
 ]
 description = "A package for providing configuration data related to E3SM supported machines."
-license = {file = "LICENSE"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
@@ -15,8 +18,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
 ]
 
@@ -85,11 +86,30 @@ max-complexity = 18
 convention = "numpy"
 
 [build-system]
-requires = ["setuptools>=60"]
+# SPDX `license` and `license-files` need setuptools 77
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-exclude = ["docs", "conda", "tests"]
+# Only ship the `mache` package; `find` would otherwise also pick up
+# `conda`, `utils` and `workflow_tests` as top-level packages.
+include = ["mache*"]
+
+[tool.setuptools.package-data]
+mache = [
+    "cime_machine_config/*.xml",
+    "deploy/templates/*.j2",
+    "deploy/templates/*.json",
+    "jigsaw/*.j2",
+    "jigsaw/*.sh",
+    "machines/*.cfg",
+    "machines/pre_conda/*.sh",
+    "machines/pre_conda/*.csh",
+    "spack/templates/*.yaml",
+    "spack/templates/*.template",
+    "spack/templates/*.sh",
+    "spack/templates/*.csh",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "mache.version.__version__" }
@@ -99,5 +119,7 @@ version = { attr = "mache.version.__version__" }
 mache = "mache.__main__:main"
 
 [project.urls]
+Homepage = "https://github.com/E3SM-Project/mache"
 Documentation = "https://docs.e3sm.org/mache"
+"Source Code" = "https://github.com/E3SM-Project/mache"
 "Bug Tracker" = "https://github.com/E3SM-Project/mache/issues"

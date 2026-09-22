@@ -1,7 +1,8 @@
 # Releasing a New Version
 
 This document describes the steps for maintainers to tag and release a new
-version of `mache`, and to update the conda-forge feedstock.
+version of `mache`, and to update the conda-forge feedstock. Releases are
+also published to PyPI automatically when a tag is pushed.
 
 ## Building the Conda Package Locally with Rattler Build
 
@@ -87,6 +88,37 @@ This local build is useful when:
      **Note:** This will only create a tag. No release page will be created on
      GitHub.
 
+## Publishing to PyPI
+
+   - Pushing any tag runs the
+     [publish workflow](https://github.com/E3SM-Project/mache/actions/workflows/publish_workflow.yml),
+     which builds the sdist and wheel, checks that the tag matches
+     `mache/version.py`, and publishes them to PyPI as
+     [`e3sm-mache`](https://pypi.org/project/e3sm-mache/). The name `mache`
+     on PyPI belongs to an unrelated project.
+
+   - Release candidates are published as well. `pip` and `uv` do not install
+     pre-releases unless asked to, so this serves as an end-to-end test of
+     the release before the stable tag.
+
+   - Publishing uses PyPI
+     [trusted publishing](https://docs.pypi.org/trusted-publishers/), so no
+     API token is needed. The trusted publisher registered on PyPI must
+     match this repository, the workflow file name `publish_workflow.yml`,
+     and the `pypi` GitHub environment. Only PyPI owners of `e3sm-mache`
+     can change this.
+
+   - PyPI never allows a file to be uploaded twice, so if a published
+     release is broken, fix it and tag a new version (e.g. `1.31.0rc2`)
+     rather than moving the tag.
+
+   - Check the workflow run in GitHub Actions, then test the release in a
+     clean environment:
+
+     ```bash
+     uvx --from e3sm-mache==<version> mache --help
+     ```
+
 ## Updating the conda-forge Feedstock for a Release Candidate
 
 5. **Manual Feedstock Update (Required for Release Candidates)**
@@ -165,6 +197,9 @@ This local build is useful when:
      ```bash
      conda create -n test-mache -c conda-forge mache=<version>
      ```
+
+     and check that the PyPI release is present at
+     https://pypi.org/project/e3sm-mache/
 
    - Optionally announce the release on relevant communication channels
 

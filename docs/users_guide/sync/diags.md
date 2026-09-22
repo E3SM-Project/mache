@@ -167,6 +167,10 @@ Constraints enforced by the command:
 
 ## Troubleshooting
 
+- `rsync is required by "mache sync diags" but was not found on the path`:
+  - `rsync` is installed automatically with `mache` from conda-forge but not
+    from PyPI. Install it with your system package manager or from
+    conda-forge.
 - You get Duo prompts during rsync:
   - Ensure the control connection is active (`ssh -MNf chrys`) and your
     `Host chrys` alias matches the command you used to connect.
