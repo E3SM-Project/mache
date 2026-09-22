@@ -117,6 +117,17 @@ conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w">
 conda<span class="w"> </span>install<span class="w"> </span>mache
 </pre></div>
 </div>
+<p>You can also install it from PyPI, for example with <code class="docutils literal notranslate"><span class="pre">pip</span></code> or <code class="docutils literal notranslate"><span class="pre">uv</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>e3sm-mache
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>add<span class="w"> </span>e3sm-mache
+</pre></div>
+</div>
+<p>The package name on PyPI is <code class="docutils literal notranslate"><span class="pre">e3sm-mache</span></code> (the name <code class="docutils literal notranslate"><span class="pre">mache</span></code> belongs to an
+unrelated project) but the Python package is still imported as <code class="docutils literal notranslate"><span class="pre">mache</span></code>.
+The PyPI package does not include <code class="docutils literal notranslate"><span class="pre">rsync</span></code>, which <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code> needs,
+so install it with your system package manager if you use that command.</p>
 </section>
 <section id="example-usage">
 <h2>Example usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h2>

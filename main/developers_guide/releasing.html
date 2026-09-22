@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#building-the-conda-package-locally-with-rattler-build">Building the Conda Package Locally with Rattler Build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-bump-and-dependency-updates">Version Bump and Dependency Updates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tagging-and-publishing-a-release-candidate">Tagging and Publishing a Release Candidate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#publishing-to-pypi">Publishing to PyPI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#updating-the-conda-forge-feedstock-for-a-release-candidate">Updating the conda-forge Feedstock for a Release Candidate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#releasing-a-stable-version">Releasing a Stable Version</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#updating-the-conda-forge-feedstock-for-a-stable-release">Updating the conda-forge Feedstock for a Stable Release</a></li>
@@ -108,7 +109,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="releasing-a-new-version">
 <h1>Releasing a New Version<a class="headerlink" href="#releasing-a-new-version" title="Link to this heading"></a></h1>
 <p>This document describes the steps for maintainers to tag and release a new
-version of <code class="docutils literal notranslate"><span class="pre">mache</span></code>, and to update the conda-forge feedstock.</p>
+version of <code class="docutils literal notranslate"><span class="pre">mache</span></code>, and to update the conda-forge feedstock. Releases are
+also published to PyPI automatically when a tag is pushed.</p>
 <section id="building-the-conda-package-locally-with-rattler-build">
 <h2>Building the Conda Package Locally with Rattler Build<a class="headerlink" href="#building-the-conda-package-locally-with-rattler-build" title="Link to this heading"></a></h2>
 <p>Before publishing or updating the feedstock, you can build the local conda
@@ -202,6 +204,35 @@ GitHub.</p>
 </li>
 </ol>
 </section>
+<section id="publishing-to-pypi">
+<h2>Publishing to PyPI<a class="headerlink" href="#publishing-to-pypi" title="Link to this heading"></a></h2>
+<ul>
+<li><p>Pushing any tag runs the
+<a class="reference external" href="https://github.com/E3SM-Project/mache/actions/workflows/publish_workflow.yml">publish workflow</a>,
+which builds the sdist and wheel, checks that the tag matches
+<code class="docutils literal notranslate"><span class="pre">mache/version.py</span></code>, and publishes them to PyPI as
+<a class="reference external" href="https://pypi.org/project/e3sm-mache/"><code class="docutils literal notranslate"><span class="pre">e3sm-mache</span></code></a>. The name <code class="docutils literal notranslate"><span class="pre">mache</span></code>
+on PyPI belongs to an unrelated project.</p></li>
+<li><p>Release candidates are published as well. <code class="docutils literal notranslate"><span class="pre">pip</span></code> and <code class="docutils literal notranslate"><span class="pre">uv</span></code> do not install
+pre-releases unless asked to, so this serves as an end-to-end test of
+the release before the stable tag.</p></li>
+<li><p>Publishing uses PyPI
+<a class="reference external" href="https://docs.pypi.org/trusted-publishers/">trusted publishing</a>, so no
+API token is needed. The trusted publisher registered on PyPI must
+match this repository, the workflow file name <code class="docutils literal notranslate"><span class="pre">publish_workflow.yml</span></code>,
+and the <code class="docutils literal notranslate"><span class="pre">pypi</span></code> GitHub environment. Only PyPI owners of <code class="docutils literal notranslate"><span class="pre">e3sm-mache</span></code>
+can change this.</p></li>
+<li><p>PyPI never allows a file to be uploaded twice, so if a published
+release is broken, fix it and tag a new version (e.g. <code class="docutils literal notranslate"><span class="pre">1.31.0rc2</span></code>)
+rather than moving the tag.</p></li>
+<li><p>Check the workflow run in GitHub Actions, then test the release in a
+clean environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvx<span class="w"> </span>--from<span class="w"> </span>e3sm-mache<span class="o">==</span>&lt;version&gt;<span class="w"> </span>mache<span class="w"> </span>--help
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
 <section id="updating-the-conda-forge-feedstock-for-a-release-candidate">
 <h2>Updating the conda-forge Feedstock for a Release Candidate<a class="headerlink" href="#updating-the-conda-forge-feedstock-for-a-release-candidate" title="Link to this heading"></a></h2>
 <ol class="arabic" start="5">
@@ -294,6 +325,8 @@ branch of the feedstock).</p></li>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>test-mache<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="nv">mache</span><span class="o">=</span>&lt;version&gt;
 </pre></div>
 </div>
+<p>and check that the PyPI release is present at
+https://pypi.org/project/e3sm-mache/</p>
 </li>
 <li><p>Optionally announce the release on relevant communication channels</p></li>
 <li><p>Update any documentation or release notes as needed</p></li>

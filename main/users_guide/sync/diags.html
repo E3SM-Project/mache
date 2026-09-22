@@ -275,6 +275,13 @@ and this wastes bandwidth)</p></li>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rsync</span> <span class="pre">is</span> <span class="pre">required</span> <span class="pre">by</span> <span class="pre">&quot;mache</span> <span class="pre">sync</span> <span class="pre">diags&quot;</span> <span class="pre">but</span> <span class="pre">was</span> <span class="pre">not</span> <span class="pre">found</span> <span class="pre">on</span> <span class="pre">the</span> <span class="pre">path</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">rsync</span></code> is installed automatically with <code class="docutils literal notranslate"><span class="pre">mache</span></code> from conda-forge but not
+from PyPI. Install it with your system package manager or from
+conda-forge.</p></li>
+</ul>
+</li>
 <li><p>You get Duo prompts during rsync:</p>
 <ul>
 <li><p>Ensure the control connection is active (<code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-MNf</span> <span class="pre">chrys</span></code>) and your
