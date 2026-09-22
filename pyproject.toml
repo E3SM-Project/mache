@@ -89,7 +89,25 @@ requires = ["setuptools>=60"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-exclude = ["docs", "conda", "tests"]
+# Only ship the `mache` package; `find` would otherwise also pick up
+# `conda`, `utils` and `workflow_tests` as top-level packages.
+include = ["mache*"]
+
+[tool.setuptools.package-data]
+mache = [
+    "cime_machine_config/*.xml",
+    "deploy/templates/*.j2",
+    "deploy/templates/*.json",
+    "jigsaw/*.j2",
+    "jigsaw/*.sh",
+    "machines/*.cfg",
+    "machines/pre_conda/*.sh",
+    "machines/pre_conda/*.csh",
+    "spack/templates/*.yaml",
+    "spack/templates/*.template",
+    "spack/templates/*.sh",
+    "spack/templates/*.csh",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "mache.version.__version__" }
