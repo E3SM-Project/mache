@@ -1,4 +1,5 @@
 import argparse
+import shutil
 import subprocess
 import sys
 
@@ -28,6 +29,15 @@ def sync_diags(  # noqa: C901
     """
     if direction not in ['to', 'from']:
         raise ValueError('The direction must be one of "to" or "from"')
+
+    # rsync is a conda-forge dependency but cannot come from PyPI, so a
+    # pip-installed mache may not have it
+    if shutil.which('rsync') is None:
+        raise RuntimeError(
+            'rsync is required by "mache sync diags" but was not found on '
+            'the path. Install it with your system package manager or from '
+            'conda-forge.'
+        )
 
     machine_info = MachineInfo(machine=machine)
     machine = machine_info.machine
