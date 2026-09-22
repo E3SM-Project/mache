@@ -149,7 +149,10 @@ recipe is currently <code class="docutils literal notranslate"><span class="pre"
 </ul>
 </li>
 <li><p>Make sure the version follows <a class="reference external" href="https://semver.org/">semantic versioning</a>.
-For release candidates, use versions like <code class="docutils literal notranslate"><span class="pre">1.31.0rc1</span></code>.</p></li>
+For release candidates, use versions like <code class="docutils literal notranslate"><span class="pre">1.31.0rc1</span></code>. The version in
+<code class="docutils literal notranslate"><span class="pre">mache/version.py</span></code> must match the tag exactly, including the <code class="docutils literal notranslate"><span class="pre">rc1</span></code>,
+because it is the version published to PyPI and the publish workflow
+rejects a tag that does not match it.</p></li>
 </ul>
 </li>
 <li><p><strong>Check and Update Dependencies</strong></p>
