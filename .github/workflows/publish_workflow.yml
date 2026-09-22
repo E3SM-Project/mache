@@ -1,0 +1,120 @@
+name: CI/CD Publish Workflow
+
+# Builds the sdist and wheel for every tag and publishes them to PyPI as
+# `e3sm-mache` using trusted publishing (OIDC): no API token is needed, but
+# the `pypi` environment below and this workflow's file name must match the
+# trusted publisher registered on PyPI.
+#
+# Release candidates (e.g. 4.1.0rc1) are published too. pip and uv ignore
+# PEP 440 pre-releases unless they are asked for, so this is safe and gives
+# an end-to-end test of the release before the stable tag.
+
+on:
+  push:
+    tags: ['*']
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  build:
+    name: build sdist and wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Verify tag matches package version
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          FILE_VERSION=$(python -c "import mache.version as v; print(v.__version__)")
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "Tag $TAG_VERSION does not match mache/version.py ($FILE_VERSION)" >&2
+            exit 1
+          fi
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check distribution metadata
+        run: twine check --strict dist/*
+
+      - name: Check wheel contents
+        run: |
+          python - <<'EOF_CHECK'
+          import glob
+          import zipfile
+
+          wheel = glob.glob('dist/*.whl')[0]
+          names = zipfile.ZipFile(wheel).namelist()
+
+          # only the mache package and its metadata belong in the wheel
+          stray = sorted(
+              name for name in names
+              if not name.startswith(('mache/', 'e3sm_mache-'))
+          )
+          assert not stray, f'unexpected files in wheel: {stray}'
+
+          # package data that tests do not exercise on an installed copy
+          required = [
+              'mache/deploy/templates/custom_cli_spec.json',
+              'mache/machines/chrysalis.cfg',
+              'mache/spack/templates/chrysalis_intel_openmpi.yaml',
+          ]
+          missing = [name for name in required if name not in names]
+          assert not missing, f'missing package data in wheel: {missing}'
+          EOF_CHECK
+
+      - name: Install wheel and smoke test
+        run: |
+          python -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          mache --help
+          mache deploy init --help
+          python -c "from mache import MachineInfo, discover_machine"
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          retention-days: 7
+
+  publish-to-pypi:
+    name: publish to PyPI
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/e3sm-mache/${{ github.ref_name }}
+    permissions:
+      # for OIDC trusted publishing
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
