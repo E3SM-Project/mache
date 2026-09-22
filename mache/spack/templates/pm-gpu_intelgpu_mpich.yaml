@@ -92,13 +92,6 @@ spack:
       - spec: perl@5.26.1
         prefix: /usr
       buildable: false
-    python:
-      externals:
-      - spec: python@3.9.7
-        prefix: /global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11
-        modules:
-        - python/3.9-anaconda-2021.11
-      buildable: false
     tar:
       externals:
       - spec: tar@1.34
@@ -142,7 +135,6 @@ spack:
             fortran: ftn
           environment:
             prepend_path:
-              PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"
               # Spack clears LD_LIBRARY_PATH for builds and the
               # libfabric module is already loaded, so reloading it as
               # an external module restores nothing.  The Cray wrappers
