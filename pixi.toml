@@ -37,7 +37,7 @@ sphinx_rtd_theme = "*"
 myst-parser = "*"
 
 [feature.dev.pypi-dependencies]
-mache = { path = ".", editable = true }
+e3sm-mache = { path = ".", editable = true }
 
 # Features and environments for CI
 [feature.py311.dependencies]

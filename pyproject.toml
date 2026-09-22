@@ -1,5 +1,7 @@
 [project]
-name = "mache"
+# The import name is still `mache`; `mache` on PyPI belongs to an
+# unrelated project.
+name = "e3sm-mache"
 dynamic = ["version"]
 authors = [
     { name="Xylar Asay-Davis", email="xylar@lanl.gov" },
