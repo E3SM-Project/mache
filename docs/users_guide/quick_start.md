@@ -12,6 +12,21 @@ conda config --set channel_priority strict
 conda install mache
 ```
 
+You can also install it from PyPI, for example with `pip` or `uv`:
+
+```bash
+pip install e3sm-mache
+```
+
+```bash
+uv add e3sm-mache
+```
+
+The package name on PyPI is `e3sm-mache` (the name `mache` belongs to an
+unrelated project) but the Python package is still imported as `mache`.
+The PyPI package does not include `rsync`, which `mache sync diags` needs,
+so install it with your system package manager if you use that command.
+
 ## Example usage
 
 ```python
