@@ -6,7 +6,8 @@ authors = [
     { name="Althea Denlinger", email="althea@lanl.gov" }
 ]
 description = "A package for providing configuration data related to E3SM supported machines."
-license = {file = "LICENSE"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
@@ -15,8 +16,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
 ]
 
@@ -85,7 +84,8 @@ max-complexity = 18
 convention = "numpy"
 
 [build-system]
-requires = ["setuptools>=60"]
+# SPDX `license` and `license-files` need setuptools 77
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

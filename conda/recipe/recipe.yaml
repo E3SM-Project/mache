@@ -19,7 +19,7 @@ requirements:
   host:
     - python ${{ python_min }}.*
     - pip
-    - setuptools >=60
+    - setuptools >=77
   run:
     - python >=${{ python_min }}
     - importlib_resources
