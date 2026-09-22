@@ -40,12 +40,17 @@ jobs:
           python -m pip install build twine
 
       - name: Verify tag matches package version
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           TAG_VERSION: ${{ github.ref_name }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
-          FILE_VERSION=$(python -c "import mache.version as v; print(v.__version__)")
-          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+          # run version.py on its own: importing mache would need its
+          # dependencies, which are not installed here
+          FILE_VERSION=$(python -c "import runpy; print(runpy.run_path('mache/version.py')['__version__'])")
+          echo "mache/version.py: $FILE_VERSION"
+          if [ "$IS_TAG" != "true" ]; then
+            echo "Not a tag; skipping the comparison."
+          elif [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
             echo "Tag $TAG_VERSION does not match mache/version.py ($FILE_VERSION)" >&2
             exit 1
           fi
