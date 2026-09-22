@@ -109,9 +109,24 @@ spack:
       - spec: xz@5.2.3
         prefix: /usr
       buildable: false
+    gcc:
+      # intel-oneapi-compilers depends on gcc at run time for libstdc++,
+      # and the mache toolchain leaves no other way to satisfy it.
+      externals:
+      - spec: gcc@14.3.0
+        prefix: /opt/cray/pe/gcc-native/14
+        extra_attributes:
+          compilers:
+            c: /opt/cray/pe/gcc-native/14/bin/gcc
+            cxx: /opt/cray/pe/gcc-native/14/bin/g++
+            fortran: /opt/cray/pe/gcc-native/14/bin/gfortran
+      buildable: false
     intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
+        # The prefix is the oneAPI root; one inferred from modules: points
+        # inside a component directory and env/vars.sh is not found there.
+        prefix: /opt/intel/oneapi
         modules:
         - PrgEnv-intel/8.6.0
         - intel/2025.3
