@@ -145,7 +145,7 @@ class ParallelSystem:
                     f'{len(names)} of them: {names}. Placing launches onto '
                     f'nodes uses the names, so the count is the one to '
                     f'distrust.',
-                    stacklevel=2,
+                    stacklevel=3,
                 )
         return names
 
@@ -213,7 +213,7 @@ class ParallelSystem:
                 f'This process is allowed only {len(cores)} of the '
                 f'{cores_per_node} cores a node is configured with, which is '
                 f'too few to describe a node. Numbering cores from zero.',
-                stacklevel=2,
+                stacklevel=3,
             )
             return configured
         if len(cores) < cores_per_node:
@@ -222,7 +222,7 @@ class ParallelSystem:
                 f'{len(allowed)} hardware threads, but is configured with '
                 f'{cores_per_node}. A placement sized from the config will '
                 f'ask for cores that are not there.',
-                stacklevel=2,
+                stacklevel=3,
             )
         return tuple(cores[:cores_per_node])
 
