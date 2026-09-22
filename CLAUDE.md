@@ -1,5 +1,8 @@
 # Claude Code Instructions
 
-Follow the instructions in [AGENTS.md](AGENTS.md). They apply to the whole
-repository and cover the Python environment (Pixi), style, and validation
-requirements.
+The instructions in AGENTS.md apply to the whole repository and cover the
+Python environment (Pixi), style, validation requirements and how to
+write for human readers. They are imported here so that every session
+loads all of them:
+
+@AGENTS.md
