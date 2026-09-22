@@ -43,7 +43,10 @@ This local build is useful when:
      - `conda/recipe/recipe.yaml`
 
    - Make sure the version follows [semantic versioning](https://semver.org/).
-     For release candidates, use versions like `1.31.0rc1`.
+     For release candidates, use versions like `1.31.0rc1`. The version in
+     `mache/version.py` must match the tag exactly, including the `rc1`,
+     because it is the version published to PyPI and the publish workflow
+     rejects a tag that does not match it.
 
 2. **Check and Update Dependencies**
 
