@@ -117,5 +117,7 @@ version = { attr = "mache.version.__version__" }
 mache = "mache.__main__:main"
 
 [project.urls]
+Homepage = "https://github.com/E3SM-Project/mache"
 Documentation = "https://docs.e3sm.org/mache"
+"Source Code" = "https://github.com/E3SM-Project/mache"
 "Bug Tracker" = "https://github.com/E3SM-Project/mache/issues"
