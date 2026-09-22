@@ -62,6 +62,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#wall-clock-limits-that-depend-on-job-size">Wall-clock limits that depend on job size</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#placing-concurrent-launches-within-one-allocation">Placing concurrent launches within one allocation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#finding-the-nodes-to-place-onto">Finding the nodes to place onto</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#finding-the-cores-to-place-onto">Finding the cores to place onto</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#checking-what-a-machine-supports">Checking what a machine supports</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#gpus-are-a-total-not-a-count-per-task">GPUs are a total, not a count per task</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#which-cores-are-honored">Which cores are honored</a></li>
@@ -482,6 +483,39 @@ that carries it, and the batch system is asked only when it does not. A
 caller running many short processes inside one allocation would otherwise ask
 the scheduler once per process, and sites ask that batch-system queries stay
 to a couple a minute in aggregate.</p>
+</section>
+<section id="finding-the-cores-to-place-onto">
+<h3>Finding the cores to place onto<a class="headerlink" href="#finding-the-cores-to-place-onto" title="Link to this heading"></a></h3>
+<p>A placement also names cores, by id, and <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> does not say which
+ids those are. It counts physical cores, and every supported machine exposes
+its hardware threads, so a job may use about twice that many ids; some sites
+also hold ids back for themselves. <code class="docutils literal notranslate"><span class="pre">usable_core_ids</span></code> gives one id per
+physical core the job may use on a node, <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> of them, in order:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ids</span> <span class="o">=</span> <span class="n">parallel_system</span><span class="o">.</span><span class="n">usable_core_ids</span>
+<span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="n">names</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">cores</span><span class="o">=</span><span class="p">[</span><span class="n">ids</span><span class="p">[:</span><span class="mi">8</span><span class="p">]],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Take a placement’s cores from here rather than from <code class="docutils literal notranslate"><span class="pre">range(cores_per_node)</span></code>.
+That numbering is one thread per core only by accident of the usual Linux
+enumeration, and on Aurora, which holds back ids 0 and 52 and their siblings,
+it names a core the job was never given, which PALS refuses. There the ids
+are 1-51 and 53-103; on Perlmutter they are 0-127, and on Frontier 1-7, 9-15
+and so on to 63, with every eighth id held back.</p>
+<p>The ids are what the kernel allows this process, reduced to one per physical
+core by what the kernel says shares a core, and held to <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>.
+Nodes in an allocation are taken to be alike, as <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> already
+assumes. A node offering <em>fewer</em> cores than the config counts is reported
+with a warning, since a placement sized from the config would ask for a core
+that is not there. A node offering more is not: a login node’s <code class="docutils literal notranslate"><span class="pre">login_cores</span></code>
+and a <code class="docutils literal notranslate"><span class="pre">single_node</span></code> override are deliberate caps, and the first
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> cores are used. A reading that leaves fewer than half the
+configured cores is not believed at all – the process may have been started
+bound to a corner of the node – and <code class="docutils literal notranslate"><span class="pre">range(cores_per_node)</span></code> is used instead,
+with a warning.</p>
+<p>Like <code class="docutils literal notranslate"><span class="pre">node_names</span></code>, the ids are read the first time they are asked for.</p>
 </section>
 <section id="checking-what-a-machine-supports">
 <h3>Checking what a machine supports<a class="headerlink" href="#checking-what-a-machine-supports" title="Link to this heading"></a></h3>

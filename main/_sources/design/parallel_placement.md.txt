@@ -267,7 +267,7 @@ the command it produces today.
 
 ## Design
 
-*Date last modified: Aug 23, 2026*
+*Date last modified: Sep 21, 2026*
 
 *Contributors: Xylar Asay-Davis, Claude*
 
@@ -346,6 +346,43 @@ scheduler picks. A *placed* launch cannot do that: its core sets say which
 cores a task gets on which host, so its tasks have to be spread over the
 hosts it named. Placed and unplaced now differ there, and the placed one is
 the new answer.
+
+#### Addition, Sep 21, 2026: which ids are cores
+
+*Contributors: Xylar Asay-Davis, Claude*
+
+A placement's cores are explicit ids, and the requirement above says why:
+the usable set may not be contiguous and may not start at zero. What nothing
+in `mache` said was which ids those are. `cores_per_node` counts physical
+cores, every supported machine exposes its hardware threads, and the
+numbering that makes `range(cores_per_node)` one thread per core is a
+convention of the Linux enumeration rather than a promise. The first caller
+to place by core id worked the ids out for itself, from
+`/sys/devices/system/cpu/cpu<n>/topology/thread_siblings_list`, after
+numbering from zero put forty of 115 steps on Aurora's held-back core 0 and
+had PALS refuse them (job 8828650). Perlmutter, whose ids 0-127 happen to be
+one thread per core, gave no sign.
+
+That knowledge belongs beside `cores_per_node`, so `ParallelSystem` gains
+`usable_core_ids`: what the kernel allows the process, reduced to one id per
+physical core by what the kernel says shares a core, held to
+`cores_per_node`. It is read from the topology rather than assumed from the
+numbering, because a machine that interleaved siblings would otherwise place
+two tasks on one core with no error. A node without the topology files reads
+as having no siblings, which is the behavior before this existed, stated.
+
+Two policies are worth recording. A node offering fewer cores than the
+config counts is reported, since a placement sized from the config will ask
+for a core that is not there; a node offering more is used up to the count
+and not reported, because on a login node and on `single_node`
+`cores_per_node` is a deliberate cap rather than a description of the
+hardware. And a reading that leaves fewer than half the configured cores is
+not believed: the process may have been started bound to a corner of the
+node, and numbering the whole allocation from that corner would starve every
+launch.
+
+The caller's own copy is lifted here as `mache.parallel.topology`, tested
+against Aurora's and Perlmutter's real id sets, and it can now drop it.
 
 ### Rendering per system
 
@@ -614,7 +651,7 @@ placement silently does nothing.
 
 ## Implementation
 
-*Date last modified: Aug 23, 2026*
+*Date last modified: Sep 21, 2026*
 
 *Contributors: Xylar Asay-Davis, Claude*
 
@@ -626,6 +663,8 @@ placement silently does nothing.
 - an optional argument to `ParallelSystem.get_parallel_command()`, and a
   rendering of it in `SlurmSystem`, `PbsSystem` and `SingleNodeSystem`;
 - capability detection, computed once and reported;
+- `usable_core_ids` on `ParallelSystem`, with the topology reading behind
+  it in `mache.parallel.topology`;
 - `SlurmSystem` gains version detection, since its rendering depends on it;
 - `memory_per_node` as a `[parallel]` config option in every shipped machine
   config, with `memory` and `memory_per_node` on `ParallelSystem`;

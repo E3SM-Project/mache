@@ -33,5 +33,6 @@
       ~SlurmSystem.memory_cap_support
       ~SlurmSystem.node_names
       ~SlurmSystem.placement_support
+      ~SlurmSystem.usable_core_ids
    
    

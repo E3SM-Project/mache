@@ -322,7 +322,7 @@ the command it produces today.</p>
 <hr class="docutils" />
 <section id="design">
 <h2>Design<a class="headerlink" href="#design" title="Link to this heading"></a></h2>
-<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Date last modified: Sep 21, 2026</em></p>
 <p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
 <hr class="docutils" />
 <section id="the-placement-description">
@@ -388,6 +388,39 @@ scheduler picks. A <em>placed</em> launch cannot do that: its core sets say whic
 cores a task gets on which host, so its tasks have to be spread over the
 hosts it named. Placed and unplaced now differ there, and the placed one is
 the new answer.</p>
+</section>
+<section id="addition-sep-21-2026-which-ids-are-cores">
+<h4>Addition, Sep 21, 2026: which ids are cores<a class="headerlink" href="#addition-sep-21-2026-which-ids-are-cores" title="Link to this heading"></a></h4>
+<p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
+<p>A placement’s cores are explicit ids, and the requirement above says why:
+the usable set may not be contiguous and may not start at zero. What nothing
+in <code class="docutils literal notranslate"><span class="pre">mache</span></code> said was which ids those are. <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> counts physical
+cores, every supported machine exposes its hardware threads, and the
+numbering that makes <code class="docutils literal notranslate"><span class="pre">range(cores_per_node)</span></code> one thread per core is a
+convention of the Linux enumeration rather than a promise. The first caller
+to place by core id worked the ids out for itself, from
+<code class="docutils literal notranslate"><span class="pre">/sys/devices/system/cpu/cpu&lt;n&gt;/topology/thread_siblings_list</span></code>, after
+numbering from zero put forty of 115 steps on Aurora’s held-back core 0 and
+had PALS refuse them (job 8828650). Perlmutter, whose ids 0-127 happen to be
+one thread per core, gave no sign.</p>
+<p>That knowledge belongs beside <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>, so <code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code> gains
+<code class="docutils literal notranslate"><span class="pre">usable_core_ids</span></code>: what the kernel allows the process, reduced to one id per
+physical core by what the kernel says shares a core, held to
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>. It is read from the topology rather than assumed from the
+numbering, because a machine that interleaved siblings would otherwise place
+two tasks on one core with no error. A node without the topology files reads
+as having no siblings, which is the behavior before this existed, stated.</p>
+<p>Two policies are worth recording. A node offering fewer cores than the
+config counts is reported, since a placement sized from the config will ask
+for a core that is not there; a node offering more is used up to the count
+and not reported, because on a login node and on <code class="docutils literal notranslate"><span class="pre">single_node</span></code>
+<code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> is a deliberate cap rather than a description of the
+hardware. And a reading that leaves fewer than half the configured cores is
+not believed: the process may have been started bound to a corner of the
+node, and numbering the whole allocation from that corner would starve every
+launch.</p>
+<p>The caller’s own copy is lifted here as <code class="docutils literal notranslate"><span class="pre">mache.parallel.topology</span></code>, tested
+against Aurora’s and Perlmutter’s real id sets, and it can now drop it.</p>
 </section>
 </section>
 <section id="rendering-per-system">
@@ -663,7 +696,7 @@ placement silently does nothing.</p>
 <hr class="docutils" />
 <section id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading"></a></h2>
-<p><em>Date last modified: Aug 23, 2026</em></p>
+<p><em>Date last modified: Sep 21, 2026</em></p>
 <p><em>Contributors: Xylar Asay-Davis, Claude</em></p>
 <hr class="docutils" />
 <ul class="simple">
@@ -673,6 +706,8 @@ device indices the caller chose;</p></li>
 <li><p>an optional argument to <code class="docutils literal notranslate"><span class="pre">ParallelSystem.get_parallel_command()</span></code>, and a
 rendering of it in <code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code>, <code class="docutils literal notranslate"><span class="pre">PbsSystem</span></code> and <code class="docutils literal notranslate"><span class="pre">SingleNodeSystem</span></code>;</p></li>
 <li><p>capability detection, computed once and reported;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">usable_core_ids</span></code> on <code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code>, with the topology reading behind
+it in <code class="docutils literal notranslate"><span class="pre">mache.parallel.topology</span></code>;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code> gains version detection, since its rendering depends on it;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> as a <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> config option in every shipped machine
 config, with <code class="docutils literal notranslate"><span class="pre">memory</span></code> and <code class="docutils literal notranslate"><span class="pre">memory_per_node</span></code> on <code class="docutils literal notranslate"><span class="pre">ParallelSystem</span></code>;</p></li>

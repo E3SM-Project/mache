@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mache.parallel.slurm.SlurmSystem</title>
+  <title>mache.parallel.system.ParallelSystem.usable_core_ids</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.slurm.SlurmSystem.get_slurm_options" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html" />
-    <link rel="prev" title="mache.parallel.slurm.SlurmOptions" href="mache.parallel.slurm.SlurmOptions.html" />
+    <link rel="next" title="mache.parallel.system.ParallelSystem.placement_support" href="mache.parallel.system.ParallelSystem.placement_support.html" />
+    <link rel="prev" title="mache.parallel.system.ParallelSystem.node_names" href="mache.parallel.system.ParallelSystem.node_names.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -74,7 +74,10 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.node_names.html">mache.parallel.system.ParallelSystem.node_names</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.usable_core_ids.html">mache.parallel.system.ParallelSystem.usable_core_ids</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.system.ParallelSystem.usable_core_ids</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.system.ParallelSystem.usable_core_ids"><code class="docutils literal notranslate"><span class="pre">ParallelSystem.usable_core_ids</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
@@ -90,10 +93,7 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmOptions.html">mache.parallel.slurm.SlurmOptions</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">mache.parallel.slurm.SlurmSystem</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#mache.parallel.slurm.SlurmSystem"><code class="docutils literal notranslate"><span class="pre">SlurmSystem</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.html">mache.parallel.slurm.SlurmSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html">mache.parallel.slurm.SlurmSystem.get_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html">mache.parallel.slurm.SlurmSystem.resolve_slurm_options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.slurm.get_slurm_version.html">mache.parallel.slurm.get_slurm_version</a></li>
@@ -134,9 +134,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../api.html">API reference</a></li>
-      <li class="breadcrumb-item active">mache.parallel.slurm.SlurmSystem</li>
+      <li class="breadcrumb-item active">mache.parallel.system.ParallelSystem.usable_core_ids</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/developers_guide/generated/mache.parallel.slurm.SlurmSystem.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/developers_guide/generated/mache.parallel.system.ParallelSystem.usable_core_ids.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -144,69 +144,45 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mache-parallel-slurm-slurmsystem">
-<h1>mache.parallel.slurm.SlurmSystem<a class="headerlink" href="#mache-parallel-slurm-slurmsystem" title="Link to this heading"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="mache.parallel.slurm.SlurmSystem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mache.parallel.slurm.</span></span><span class="sig-name descname"><span class="pre">SlurmSystem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/parallel/slurm.html#SlurmSystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.slurm.SlurmSystem" title="Link to this definition"></a></dt>
-<dd><p>SLURM resource manager for parallel jobs.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="mache.parallel.slurm.SlurmSystem.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/configparser.html#configparser.ConfigParser" title="(in Python v3.14)"><span class="pre">ConfigParser</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/parallel/slurm.html#SlurmSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.slurm.SlurmSystem.__init__" title="Link to this definition"></a></dt>
-<dd><p>Set available resources for the parallel system based on the config.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<em>ConfigParser</em>) – The configuration parser containing the parallel system options.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<p class="rubric">Methods</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#mache.parallel.slurm.SlurmSystem.__init__" title="mache.parallel.slurm.SlurmSystem.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(config)</p></td>
-<td><p>Set available resources for the parallel system based on the config.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config</span></code>(key[, default])</p></td>
-<td><p>Get a config value from the parallel configs.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_int</span></code>(key[, default])</p></td>
-<td><p>Get an integer config value from the parallel configs.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_command</span></code>(args, ntasks[, ...])</p></td>
-<td><p>Get the parallel execution command for the current system.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scheduler_target</span></code>(config, target_type, nodes)</p></td>
-<td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
-<td><p>Get Slurm submission options for a requested node count.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
-<td><p>Get Slurm submission options for a requested node count.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_submission</span></code>(config, nodes, target_type)</p></td>
-<td><p>Resolve a scheduler target and effective node count.</p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">memory_cap_support</span></code></p></td>
-<td><p>Whether this machine will hold a launch to a memory cap.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">node_names</span></code></p></td>
-<td><p>The hostnames of the nodes this system holds, in the order the batch system lists them, or <code class="docutils literal notranslate"><span class="pre">None</span></code> where it does not name them.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">placement_support</span></code></p></td>
-<td><p>The placement mechanism available on this machine.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">usable_core_ids</span></code></p></td>
-<td><p>One CPU id per physical core the job may use on a node, in order.</p></td>
-</tr>
-</tbody>
-</table>
+  <section id="mache-parallel-system-parallelsystem-usable-core-ids">
+<h1>mache.parallel.system.ParallelSystem.usable_core_ids<a class="headerlink" href="#mache-parallel-system-parallelsystem-usable-core-ids" title="Link to this heading"></a></h1>
+<dl class="py property">
+<dt class="sig sig-object py" id="mache.parallel.system.ParallelSystem.usable_core_ids">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">ParallelSystem.</span></span><span class="sig-name descname"><span class="pre">usable_core_ids</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><span class="pre">Tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference internal" href="../../_modules/mache/parallel/system.html#ParallelSystem.usable_core_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.parallel.system.ParallelSystem.usable_core_ids" title="Link to this definition"></a></dt>
+<dd><p>One CPU id per physical core the job may use on a node, in order.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> says how many cores a node has; it does not say
+which ids they are, and the two differ wherever a site keeps ids
+back for itself or exposes its hardware threads. A caller giving a
+<a class="reference internal" href="mache.parallel.placement.ResourcePlacement.html#mache.parallel.placement.ResourcePlacement" title="mache.parallel.placement.ResourcePlacement"><code class="xref py py-class docutils literal notranslate"><span class="pre">ResourcePlacement</span></code></a> its cores
+should take them from here rather than from <code class="docutils literal notranslate"><span class="pre">range(cores_per_node)</span></code>.
+That numbering is one thread per core only by accident of the usual
+Linux enumeration, and on Aurora, which holds back ids 0 and 52 and
+their siblings, it names a core the job was never given, which PALS
+refuses.</p>
+<p>The ids are what the kernel allows this process, which is what the
+job may use on this node, reduced to one per physical core by what
+the kernel says shares a core, and held to <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>.
+Nodes in an allocation are taken to be alike, which is the
+assumption <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code> already makes. A Perlmutter CPU node
+allows 256 ids and is configured with 128 cores; an Aurora node
+allows 204 – ids 1-51, 53-103 and their siblings – and is
+configured with 102.</p>
+<p>The machine may offer fewer cores than the config counts, and that
+is worth a warning, since a placement sized from the config would
+then ask for a core that is not there. It may also offer more, and
+that is not: a login node’s <code class="docutils literal notranslate"><span class="pre">login_cores</span></code> and a <code class="docutils literal notranslate"><span class="pre">single_node</span></code>
+override are deliberate caps, and the first <code class="docutils literal notranslate"><span class="pre">cores_per_node</span></code>
+cores are used without comment.</p>
+<p>A reading that leaves fewer than half the configured cores is not
+believed at all. The process may have been started bound to a corner
+of the node, and numbering the whole allocation from that corner
+would starve every launch, so <code class="docutils literal notranslate"><span class="pre">range(cores_per_node)</span></code> is used
+instead, with a warning. The same numbering is used, silently, where
+the process cannot be asked what it is allowed, which is any
+platform without <code class="docutils literal notranslate"><span class="pre">os.sched_getaffinity</span></code>.</p>
+<p>The ids are read the first time they are asked for, since reading
+the topology of every id costs a file read each, and only a caller
+laying out placements needs them.</p>
 </dd></dl>
 
 </section>
@@ -215,8 +191,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="mache.parallel.slurm.SlurmOptions.html" class="btn btn-neutral float-left" title="mache.parallel.slurm.SlurmOptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html" class="btn btn-neutral float-right" title="mache.parallel.slurm.SlurmSystem.get_slurm_options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.parallel.system.ParallelSystem.node_names.html" class="btn btn-neutral float-left" title="mache.parallel.system.ParallelSystem.node_names" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mache.parallel.system.ParallelSystem.placement_support.html" class="btn btn-neutral float-right" title="mache.parallel.system.ParallelSystem.placement_support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

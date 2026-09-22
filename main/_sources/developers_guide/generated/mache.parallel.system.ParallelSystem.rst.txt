@@ -31,5 +31,6 @@
       ~ParallelSystem.memory_cap_support
       ~ParallelSystem.node_names
       ~ParallelSystem.placement_support
+      ~ParallelSystem.usable_core_ids
    
    

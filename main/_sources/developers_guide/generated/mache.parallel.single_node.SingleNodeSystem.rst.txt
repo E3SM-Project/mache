@@ -31,5 +31,6 @@
       ~SingleNodeSystem.memory_cap_support
       ~SingleNodeSystem.node_names
       ~SingleNodeSystem.placement_support
+      ~SingleNodeSystem.usable_core_ids
    
    

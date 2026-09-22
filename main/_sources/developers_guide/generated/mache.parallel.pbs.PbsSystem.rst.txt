@@ -33,5 +33,6 @@
       ~PbsSystem.memory_cap_support
       ~PbsSystem.node_names
       ~PbsSystem.placement_support
+      ~PbsSystem.usable_core_ids
    
    

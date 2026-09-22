@@ -398,6 +398,43 @@ caller running many short processes inside one allocation would otherwise ask
 the scheduler once per process, and sites ask that batch-system queries stay
 to a couple a minute in aggregate.
 
+### Finding the cores to place onto
+
+A placement also names cores, by id, and `cores_per_node` does not say which
+ids those are. It counts physical cores, and every supported machine exposes
+its hardware threads, so a job may use about twice that many ids; some sites
+also hold ids back for themselves. `usable_core_ids` gives one id per
+physical core the job may use on a node, `cores_per_node` of them, in order:
+
+```python
+ids = parallel_system.usable_core_ids
+placement = ResourcePlacement(
+    nodes=names[:1],
+    cores=[ids[:8]],
+)
+```
+
+Take a placement's cores from here rather than from `range(cores_per_node)`.
+That numbering is one thread per core only by accident of the usual Linux
+enumeration, and on Aurora, which holds back ids 0 and 52 and their siblings,
+it names a core the job was never given, which PALS refuses. There the ids
+are 1-51 and 53-103; on Perlmutter they are 0-127, and on Frontier 1-7, 9-15
+and so on to 63, with every eighth id held back.
+
+The ids are what the kernel allows this process, reduced to one per physical
+core by what the kernel says shares a core, and held to `cores_per_node`.
+Nodes in an allocation are taken to be alike, as `cores_per_node` already
+assumes. A node offering *fewer* cores than the config counts is reported
+with a warning, since a placement sized from the config would ask for a core
+that is not there. A node offering more is not: a login node's `login_cores`
+and a `single_node` override are deliberate caps, and the first
+`cores_per_node` cores are used. A reading that leaves fewer than half the
+configured cores is not believed at all -- the process may have been started
+bound to a corner of the node -- and `range(cores_per_node)` is used instead,
+with a warning.
+
+Like `node_names`, the ids are read the first time they are asked for.
+
 ### Checking what a machine supports
 
 Not every machine can confine a launch. Check before running things

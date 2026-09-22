@@ -80,6 +80,7 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.html">mache.parallel.system.ParallelSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.node_names.html">mache.parallel.system.ParallelSystem.node_names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.usable_core_ids.html">mache.parallel.system.ParallelSystem.usable_core_ids</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
@@ -87,6 +88,10 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html">mache.parallel.system.cap_wall_time</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.placement.PlacementSupport.html">mache.parallel.placement.PlacementSupport</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.placement.ResourcePlacement.html">mache.parallel.placement.ResourcePlacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.topology.thread_siblings.html">mache.parallel.topology.thread_siblings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.topology.one_thread_per_core.html">mache.parallel.topology.one_thread_per_core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.topology.physical_cores.html">mache.parallel.topology.physical_cores</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.topology.with_siblings.html">mache.parallel.topology.with_siblings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.memory.MemoryCapSupport.html">mache.parallel.memory.MemoryCapSupport</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.login.LoginSystem.html">mache.parallel.login.LoginSystem</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.parallel.single_node.SingleNodeSystem.html">mache.parallel.single_node.SingleNodeSystem</a></li>
@@ -253,19 +258,22 @@ documentation.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.node_names.html#mache.parallel.system.ParallelSystem.node_names" title="mache.parallel.system.ParallelSystem.node_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.node_names</span></code></a></p></td>
 <td><p>The hostnames of the nodes this system holds, in the order the batch system lists them, or <code class="docutils literal notranslate"><span class="pre">None</span></code> where it does not name them.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.placement_support.html#mache.parallel.system.ParallelSystem.placement_support" title="mache.parallel.system.ParallelSystem.placement_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.placement_support</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.usable_core_ids.html#mache.parallel.system.ParallelSystem.usable_core_ids" title="mache.parallel.system.ParallelSystem.usable_core_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.usable_core_ids</span></code></a></p></td>
+<td><p>One CPU id per physical core the job may use on a node, in order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.placement_support.html#mache.parallel.system.ParallelSystem.placement_support" title="mache.parallel.system.ParallelSystem.placement_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.placement_support</span></code></a></p></td>
 <td><p>The placement mechanism available on this machine.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.memory_cap_support.html#mache.parallel.system.ParallelSystem.memory_cap_support" title="mache.parallel.system.ParallelSystem.memory_cap_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.memory_cap_support</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.memory_cap_support.html#mache.parallel.system.ParallelSystem.memory_cap_support" title="mache.parallel.system.ParallelSystem.memory_cap_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.memory_cap_support</span></code></a></p></td>
 <td><p>Whether this machine will hold a launch to a memory cap.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target" title="mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target</span></code></a>(config, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.get_scheduler_target.html#mache.parallel.system.ParallelSystem.get_scheduler_target" title="mache.parallel.system.ParallelSystem.get_scheduler_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.get_scheduler_target</span></code></a>(config, ...)</p></td>
 <td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission</span></code></a>(config, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.ParallelSystem.resolve_submission.html#mache.parallel.system.ParallelSystem.resolve_submission" title="mache.parallel.system.ParallelSystem.resolve_submission"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParallelSystem.resolve_submission</span></code></a>(config, ...)</p></td>
 <td><p>Resolve a scheduler target and effective node count.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html#mache.parallel.system.cap_wall_time" title="mache.parallel.system.cap_wall_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cap_wall_time</span></code></a>(desired, max_wallclock)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.system.cap_wall_time.html#mache.parallel.system.cap_wall_time" title="mache.parallel.system.cap_wall_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cap_wall_time</span></code></a>(desired, max_wallclock)</p></td>
 <td><p>Cap a desired wall time at a scheduler target's maximum.</p></td>
 </tr>
 </tbody>
@@ -277,6 +285,22 @@ documentation.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.placement.ResourcePlacement.html#mache.parallel.placement.ResourcePlacement" title="mache.parallel.placement.ResourcePlacement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResourcePlacement</span></code></a>(nodes, cores[, gpus, gpu_ids])</p></td>
 <td><p>Where a single parallel launch should run.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.topology.thread_siblings.html#mache.parallel.topology.thread_siblings" title="mache.parallel.topology.thread_siblings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thread_siblings</span></code></a>(cpu_ids)</p></td>
+<td><p>The ids that share a physical core with each of these, itself included.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.topology.one_thread_per_core.html#mache.parallel.topology.one_thread_per_core" title="mache.parallel.topology.one_thread_per_core"><code class="xref py py-obj docutils literal notranslate"><span class="pre">one_thread_per_core</span></code></a>(cpu_ids)</p></td>
+<td><p>Reduce a set of ids to one per physical core, the lowest of each.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.parallel.topology.physical_cores.html#mache.parallel.topology.physical_cores" title="mache.parallel.topology.physical_cores"><code class="xref py py-obj docutils literal notranslate"><span class="pre">physical_cores</span></code></a>(cpu_ids)</p></td>
+<td><p>How many physical cores a set of ids spans.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.parallel.topology.with_siblings.html#mache.parallel.topology.with_siblings" title="mache.parallel.topology.with_siblings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_siblings</span></code></a>(cpu_ids)</p></td>
+<td><p>Every id on the same core as any of these, these included.</p></td>
 </tr>
 </tbody>
 </table>

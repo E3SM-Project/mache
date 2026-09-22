@@ -96,14 +96,16 @@
              
   <h1>Source code for mache.parallel.system</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryCapSupport</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.placement</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlacementSupport</span><span class="p">,</span> <span class="n">ResourcePlacement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.topology</span><span class="w"> </span><span class="kn">import</span> <span class="n">one_thread_per_core</span>
 
 <span class="c1"># the config option in [parallel] that lists each type of scheduler target</span>
 <span class="n">TARGET_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -194,6 +196,11 @@
 <span class="sd">        The hostnames of those nodes, or ``None`` where the system does not</span>
 <span class="sd">        name them. Read on first use rather than at construction.</span>
 
+<span class="sd">    usable_core_ids : tuple of int</span>
+<span class="sd">        One CPU id per physical core the job may use on a node, in order,</span>
+<span class="sd">        ``cores_per_node`` of them. Read on first use rather than at</span>
+<span class="sd">        construction.</span>
+
 <span class="sd">    mpi_allowed : bool</span>
 <span class="sd">        Whether MPI execution is allowed on the system.</span>
 <span class="sd">    """</span>
@@ -245,7 +252,7 @@
                     <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s1"> of them: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s1">. Placing launches onto '</span>
                     <span class="sa">f</span><span class="s1">'nodes uses the names, so the count is the one to '</span>
                     <span class="sa">f</span><span class="s1">'distrust.'</span><span class="p">,</span>
-                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">return</span> <span class="n">names</span></div>
 
@@ -253,6 +260,82 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_node_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read the hostnames this system holds, or ``None`` if unnamed."""</span>
         <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ParallelSystem.usable_core_ids">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.usable_core_ids.html#mache.parallel.system.ParallelSystem.usable_core_ids">[docs]</a>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">usable_core_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        One CPU id per physical core the job may use on a node, in order.</span>
+
+<span class="sd">        ``cores_per_node`` says how many cores a node has; it does not say</span>
+<span class="sd">        which ids they are, and the two differ wherever a site keeps ids</span>
+<span class="sd">        back for itself or exposes its hardware threads. A caller giving a</span>
+<span class="sd">        :py:class:`~mache.parallel.placement.ResourcePlacement` its cores</span>
+<span class="sd">        should take them from here rather than from ``range(cores_per_node)``.</span>
+<span class="sd">        That numbering is one thread per core only by accident of the usual</span>
+<span class="sd">        Linux enumeration, and on Aurora, which holds back ids 0 and 52 and</span>
+<span class="sd">        their siblings, it names a core the job was never given, which PALS</span>
+<span class="sd">        refuses.</span>
+
+<span class="sd">        The ids are what the kernel allows this process, which is what the</span>
+<span class="sd">        job may use on this node, reduced to one per physical core by what</span>
+<span class="sd">        the kernel says shares a core, and held to ``cores_per_node``.</span>
+<span class="sd">        Nodes in an allocation are taken to be alike, which is the</span>
+<span class="sd">        assumption ``cores_per_node`` already makes. A Perlmutter CPU node</span>
+<span class="sd">        allows 256 ids and is configured with 128 cores; an Aurora node</span>
+<span class="sd">        allows 204 -- ids 1-51, 53-103 and their siblings -- and is</span>
+<span class="sd">        configured with 102.</span>
+
+<span class="sd">        The machine may offer fewer cores than the config counts, and that</span>
+<span class="sd">        is worth a warning, since a placement sized from the config would</span>
+<span class="sd">        then ask for a core that is not there. It may also offer more, and</span>
+<span class="sd">        that is not: a login node's ``login_cores`` and a ``single_node``</span>
+<span class="sd">        override are deliberate caps, and the first ``cores_per_node``</span>
+<span class="sd">        cores are used without comment.</span>
+
+<span class="sd">        A reading that leaves fewer than half the configured cores is not</span>
+<span class="sd">        believed at all. The process may have been started bound to a corner</span>
+<span class="sd">        of the node, and numbering the whole allocation from that corner</span>
+<span class="sd">        would starve every launch, so ``range(cores_per_node)`` is used</span>
+<span class="sd">        instead, with a warning. The same numbering is used, silently, where</span>
+<span class="sd">        the process cannot be asked what it is allowed, which is any</span>
+<span class="sd">        platform without ``os.sched_getaffinity``.</span>
+
+<span class="sd">        The ids are read the first time they are asked for, since reading</span>
+<span class="sd">        the topology of every id costs a file read each, and only a caller</span>
+<span class="sd">        laying out placements needs them.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'This system does not say how many cores a node has, so it '</span>
+                <span class="s1">'cannot say which ids they are.'</span>
+            <span class="p">)</span>
+        <span class="n">cores_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_node</span>
+        <span class="n">configured</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cores_per_node</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s1">'sched_getaffinity'</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">configured</span>
+
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sched_getaffinity</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">cores</span> <span class="o">=</span> <span class="n">one_thread_per_core</span><span class="p">(</span><span class="n">allowed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="n">cores_per_node</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'This process is allowed only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> of the '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cores_per_node</span><span class="si">}</span><span class="s1"> cores a node is configured with, which is '</span>
+                <span class="sa">f</span><span class="s1">'too few to describe a node. Numbering cores from zero.'</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">configured</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">cores_per_node</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'A node here has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span><span class="si">}</span><span class="s1"> cores the job may use, on '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">allowed</span><span class="p">)</span><span class="si">}</span><span class="s1"> hardware threads, but is configured with '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cores_per_node</span><span class="si">}</span><span class="s1">. A placement sized from the config will '</span>
+                <span class="sa">f</span><span class="s1">'ask for cores that are not there.'</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">cores</span><span class="p">[:</span><span class="n">cores_per_node</span><span class="p">])</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">placement_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlacementSupport</span><span class="p">:</span>

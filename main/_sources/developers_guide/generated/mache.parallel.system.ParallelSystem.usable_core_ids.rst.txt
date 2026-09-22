@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.usable\_core\_ids
+======================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. autoproperty:: ParallelSystem.usable_core_ids
