@@ -49,6 +49,7 @@ documentation.
     ParallelSystem
     ParallelSystem.get_parallel_command
     ParallelSystem.node_names
+    ParallelSystem.usable_core_ids
     ParallelSystem.placement_support
     ParallelSystem.memory_cap_support
     ParallelSystem.get_scheduler_target
@@ -64,6 +65,18 @@ documentation.
 
     PlacementSupport
     ResourcePlacement
+```
+
+```{eval-rst}
+.. currentmodule:: mache.parallel.topology
+
+.. autosummary::
+    :toctree: generated/
+
+    thread_siblings
+    one_thread_per_core
+    physical_cores
+    with_siblings
 ```
 
 ```{eval-rst}
