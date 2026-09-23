@@ -1,15 +1,17 @@
 import os
 import subprocess
 import warnings
-from importlib import resources as importlib_resources
-
-from jinja2 import Template
-from packaging.version import Version
 
 from mache.machine_info import MachineInfo, discover_machine
+from mache.spack.activation import (
+    ACTIVATION_MODES,
+    capture_activation,
+    write_activation_files,
+)
+from mache.spack.install import render_install_script, write_prologue
+from mache.spack.pins import load_pins
 from mache.spack.script import get_spack_script
 from mache.spack.shared import _get_yaml_data, resolve_e3sm_hdf5_netcdf
-from mache.version import __version__
 
 MPI_COMPILERS = {
     'gnu': {'mpicc': 'mpicc', 'mpicxx': 'mpicxx', 'mpifc': 'mpif90'},
@@ -37,11 +39,16 @@ def make_spack_env(
     tmpdir=None,
     spack_mirror=None,
     custom_spack='',
+    pins=None,
+    activation='captured',
+    build_jobs=None,
 ):
     """
-    Clone the ``spack_for_mache_{{version}}`` branch from
-    `E3SM's spack clone <https://github.com/E3SM-Project/spack>`_ and build
-    a spack environment for the given machine, compiler and MPI library.
+    Check out Spack and the package repositories pinned by this release of
+    mache (see ``mache/spack/pins.yaml``) and build a spack environment for
+    the given machine, compiler and MPI library.  The environment YAML,
+    build script, build prologue, ``spack.lock`` and provenance are written
+    to the current directory.
 
     Parameters
     ----------
@@ -100,6 +107,20 @@ def make_spack_env(
     custom_spack : str, optional
         Spack commands to run at the end of the script after the environment
         has been installed.
+
+    pins : dict or str, optional
+        Overrides for the pinned Spack sources, either a mapping in the
+        ``pins.yaml`` schema or the path to a YAML file holding one.  Each
+        override names a ``tag``, ``commit`` or ``branch`` for one of the
+        pinned repositories.
+
+    activation : {'captured', 'dynamic'}, optional
+        Whether to capture ``spack env activate`` into ``activate.sh`` and
+        ``activate.csh`` in the environment directory after the build, so
+        that load scripts can source them instead of running Spack.
+
+    build_jobs : int, optional
+        The number of parallel build jobs, passed to ``spack install -j``
     """
 
     if include_e3sm_hdf5_netcdf is not None:
@@ -147,13 +168,17 @@ def make_spack_env(
         exclude_packages=exclude_packages,
     )
 
-    yaml_filename = os.path.abspath(f'{env_name}.yaml')
+    if activation not in ACTIVATION_MODES:
+        raise ValueError(
+            f'activation must be one of {ACTIVATION_MODES}, got {activation!r}'
+        )
+
+    work_dir = os.path.abspath(os.getcwd())
+    yaml_filename = os.path.join(work_dir, f'{env_name}.yaml')
     with open(yaml_filename, 'w') as handle:
         handle.write(yaml_data)
 
-    modules = ''
-
-    bash_script = get_spack_script(
+    prologue = get_spack_script(
         spack_path,
         env_name,
         compiler,
@@ -165,44 +190,43 @@ def make_spack_env(
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         exclude_packages=exclude_packages,
     )
-    modules = f'{modules}\n{bash_script}'
-
-    path = (
-        importlib_resources.files('mache.spack.templates')
-        / 'build_spack_env.template'
-    )
-    with open(str(path)) as fp:
-        template = Template(fp.read())
     if tmpdir is not None:
         if not os.path.exists(tmpdir):
             os.mkdir(tmpdir)
+        prologue = f'{prologue}\nexport TMPDIR={tmpdir}'
+    prologue_path = write_prologue(work_dir, env_name, prologue)
 
-        modules = f'{modules}\nexport TMPDIR={tmpdir}'
-
-    # Use PEP 440 parsing to strip any pre/dev/post release tags and keep only
-    # the base release version (e.g., "1.2.3rc1" -> "1.2.3").
-    version = Version(__version__).base_version
-
-    template_args = dict(
-        modules=modules,
-        version=version,
+    build_file = render_install_script(
         spack_path=spack_path,
         env_name=env_name,
-        yaml_filename=yaml_filename,
+        yaml_path=yaml_filename,
+        prologue=prologue,
+        pins=load_pins(pins),
+        work_dir=work_dir,
+        mirror=spack_mirror,
         custom_spack=custom_spack,
+        build_jobs=build_jobs,
     )
-
-    if spack_mirror is not None:
-        template_args['spack_mirror'] = spack_mirror
-
-    build_file = template.render(**template_args)
-    build_filename = f'build_{env_name}.bash'
+    build_filename = os.path.join(work_dir, f'build_{env_name}.bash')
     with open(build_filename, 'w') as handle:
         handle.write(build_file)
 
     # clear environment variables and start fresh with those from login
     # so spack doesn't get confused by conda
     subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+
+    if activation == 'captured':
+        modifications = capture_activation(
+            spack_path=spack_path,
+            env_name=env_name,
+            prologue_path=prologue_path,
+            work_dir=work_dir,
+        )
+        write_activation_files(
+            spack_path=spack_path,
+            env_name=env_name,
+            modifications=modifications,
+        )
 
 
 def get_modules_env_vars_and_mpi_compilers(

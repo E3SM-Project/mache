@@ -198,7 +198,7 @@ def test_get_yaml_data_can_exclude_cmake_external():
 
     assert 'cmake:' not in yaml_text
     assert 'curl:' in yaml_text
-    assert 'trilinos%gcc@12.3' in yaml_text
+    assert '- trilinos' in yaml_text
 
 
 def test_get_yaml_data_can_exclude_e3sm_hdf5_netcdf_bundle():
@@ -217,8 +217,8 @@ def test_get_yaml_data_can_exclude_e3sm_hdf5_netcdf_bundle():
     assert 'netcdf-c:' not in yaml_text
     assert 'netcdf-fortran:' not in yaml_text
     assert 'parallel-netcdf:' not in yaml_text
-    assert 'hdf5%gcc@12.3' not in yaml_text
-    assert 'netcdf-c%gcc@12.3' not in yaml_text
+    assert '- hdf5' not in yaml_text
+    assert '- netcdf-c' not in yaml_text
 
 
 def test_get_spack_script_filters_compy_template_modules():
@@ -257,3 +257,179 @@ def test_get_spack_script_filters_config_machine_cmake_module():
     assert 'PrgEnv-gnu/8.5.0' in script
     assert 'cray-mpich/8.1.28' in script
     assert 'cmake/3.29.6' not in script
+
+
+def test_load_spack_pins_precedence(tmp_path: Path):
+    pins_file = tmp_path / 'pins.yaml'
+    pins_file.write_text('repos:\n  e3sm:\n    commit: fromcli\n')
+    args = argparse.Namespace(spack_pins=str(pins_file), no_spack=False)
+    ctx = _ctx(
+        tmp_path,
+        args=args,
+        config={
+            'spack': {
+                'pins': {
+                    'spack': {'branch': 'fromconfig'},
+                    'repos': {'builtin': {'branch': 'fromconfig'}},
+                }
+            }
+        },
+        runtime={
+            'spack': {'pins': {'repos': {'builtin': {'tag': 'fromruntime'}}}}
+        },
+    )
+
+    pins = deploy_spack._load_spack_pins(ctx=ctx)
+
+    assert pins['spack']['branch'] == 'fromconfig'
+    assert pins['repos']['builtin'] == {
+        'git': 'https://github.com/spack/spack-packages.git',
+        'tag': 'fromruntime',
+    }
+    assert pins['repos']['e3sm']['commit'] == 'fromcli'
+    assert 'tag' not in pins['repos']['e3sm']
+
+
+def test_load_spack_pins_defaults_to_packaged(tmp_path: Path):
+    args = argparse.Namespace(no_spack=False)
+    ctx = _ctx(tmp_path, args=args, config={'spack': {'pins': {}}})
+
+    pins = deploy_spack._load_spack_pins(ctx=ctx)
+
+    assert pins['spack']['tag'] == 'v1.2.2'
+    assert list(pins['repos']) == ['e3sm', 'builtin']
+
+
+def test_spack_activation_mode_and_build_jobs():
+    assert deploy_spack.get_spack_activation_mode({}) == 'captured'
+    assert deploy_spack.get_spack_activation_mode({'activation': None}) == (
+        'captured'
+    )
+    assert (
+        deploy_spack.get_spack_activation_mode({'activation': 'Dynamic'})
+        == 'dynamic'
+    )
+    with pytest.raises(ValueError, match='spack.activation'):
+        deploy_spack.get_spack_activation_mode({'activation': 'lazy'})
+
+    assert deploy_spack._get_build_jobs({}) is None
+    assert deploy_spack._get_build_jobs({'build_jobs': None}) is None
+    assert deploy_spack._get_build_jobs({'build_jobs': 8}) == 8
+    assert deploy_spack._get_build_jobs({'build_jobs': '4'}) == 4
+    with pytest.raises(ValueError, match='build_jobs'):
+        deploy_spack._get_build_jobs({'build_jobs': 0})
+    with pytest.raises(ValueError, match='build_jobs'):
+        deploy_spack._get_build_jobs({'build_jobs': 'many'})
+
+
+def _existing_env(tmp_path: Path, env_name: str, captured: bool) -> str:
+    spack_path = tmp_path / 'spack'
+    env_dir = spack_path / 'var' / 'spack' / 'environments' / env_name
+    env_dir.mkdir(parents=True)
+    if captured:
+        (env_dir / 'activate.sh').write_text('export SPACK_ENV=x\n')
+    return str(spack_path)
+
+
+def test_load_existing_spack_envs_captured(tmp_path: Path):
+    spack_path = _existing_env(tmp_path, 'spack_env_gnu_openmpi', True)
+    args = argparse.Namespace(
+        spack_path=spack_path, deploy_spack=False, no_spack=False
+    )
+    ctx = _ctx(tmp_path, args=args, config={'spack': {'supported': True}})
+
+    results = deploy_spack.load_existing_spack_envs(
+        ctx=ctx, toolchain_pairs=[('gnu', 'openmpi')]
+    )
+
+    assert len(results) == 1
+    result = results[0]
+    assert result.activation.startswith(
+        f'source {spack_path}/share/spack/setup-env.sh\n'
+        'spack env activate spack_env_gnu_openmpi\n'
+    )
+    assert result.load_activation.startswith(
+        f'source {spack_path}/var/spack/environments/spack_env_gnu_openmpi/'
+        'activate.sh\n'
+    )
+    assert result.load_activation != result.activation
+
+
+def test_load_existing_spack_envs_requires_captured_activation(
+    tmp_path: Path,
+):
+    spack_path = _existing_env(tmp_path, 'spack_env_gnu_openmpi', False)
+    args = argparse.Namespace(
+        spack_path=spack_path, deploy_spack=False, no_spack=False
+    )
+    ctx = _ctx(tmp_path, args=args, config={'spack': {'supported': True}})
+
+    with pytest.raises(ValueError, match='redeploy'):
+        deploy_spack.load_existing_spack_envs(
+            ctx=ctx, toolchain_pairs=[('gnu', 'openmpi')]
+        )
+
+    # dynamic activation needs no captured file and uses the same form for
+    # hooks and load scripts
+    ctx = _ctx(
+        tmp_path,
+        args=args,
+        config={'spack': {'supported': True, 'activation': 'dynamic'}},
+    )
+    results = deploy_spack.load_existing_spack_envs(
+        ctx=ctx, toolchain_pairs=[('gnu', 'openmpi')]
+    )
+    assert results[0].load_activation == results[0].activation
+    assert 'spack env activate' in results[0].load_activation
+
+
+def test_capture_spack_activations_skipped_when_dynamic(tmp_path: Path):
+    args = argparse.Namespace(no_spack=False)
+    ctx = _ctx(
+        tmp_path,
+        args=args,
+        config={'spack': {'activation': 'dynamic'}},
+    )
+    result = deploy_spack.SpackDeployResult(
+        compiler='gnu',
+        mpi='openmpi',
+        env_name='spack_env_gnu_openmpi',
+        spack_path='/nonexistent',
+        view_path='/nonexistent/view',
+        activation='',
+    )
+    # would fail if it tried to run anything against /nonexistent
+    deploy_spack.capture_spack_activations(ctx=ctx, results=[result])
+
+
+def test_install_spack_env_creates_tmpdir(tmp_path: Path, monkeypatch):
+    commands = []
+    monkeypatch.setattr(
+        deploy_spack,
+        'check_call',
+        lambda cmd, *args, **kwargs: commands.append(cmd),
+    )
+    ctx = _ctx(tmp_path, args=argparse.Namespace())
+    tmpdir = tmp_path / 'spack-tmp'
+
+    deploy_spack._install_spack_env(
+        ctx=ctx,
+        spack_path=str(tmp_path / 'spack'),
+        env_name='demo_gnu_openmpi',
+        yaml_path=str(tmp_path / 'demo_gnu_openmpi.yaml'),
+        compiler='gnu',
+        mpi='openmpi',
+        tmpdir=str(tmpdir),
+        mirror=None,
+        custom_spack='',
+        e3sm_hdf5_netcdf=True,
+        pins=deploy_spack.load_pins(),
+        build_jobs=None,
+        log_filename=str(tmp_path / 'deploy.log'),
+        quiet=True,
+    )
+
+    assert tmpdir.is_dir()
+    script = tmp_path / 'deploy_tmp/spack/build_demo_gnu_openmpi.bash'
+    assert f'export TMPDIR={tmpdir}' in script.read_text()
+    assert len(commands) == 1

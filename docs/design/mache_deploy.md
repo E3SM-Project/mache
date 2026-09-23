@@ -340,7 +340,6 @@ packaged template, plus an optional downstream-owned
 - `spack.yaml.j2`
 - `hooks.py.j2`
 - `load.sh.j2`
-- `spack_install.bash.j2`
 
 These templates include placeholders for:
 
@@ -412,9 +411,11 @@ mache/deploy/
   ├── pixi.toml.j2.j2
   ├── spack.yaml.j2
   ├── hooks.py.j2
-  ├── load.sh.j2
-  └── spack_install.bash.j2
+  └── load.sh.j2
 ```
+
+The Spack build script template, `spack_install.bash.j2`, lives in
+`mache/spack/templates/` because `mache.spack.make_spack_env` uses it too.
 
 Reusable JIGSAW build/install logic now lives outside `mache.deploy` in:
 

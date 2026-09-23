@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 from pathlib import Path
 
@@ -523,7 +524,7 @@ def test_clone_mache_repo_reclones_existing_clone(monkeypatch, tmp_path: Path):
         '--single-branch',
         '-b',
         'feature',
-        'git@github.com:xylar/mache.git',
+        'https://github.com/xylar/mache.git',
         'mache',
     ]
     assert clone_kwargs['cwd'] == str(cloned_repo.parent)
@@ -858,3 +859,52 @@ def test_run_clears_repodata_cache_between_install_attempts(
             'quiet': True,
         }
     ]
+
+
+def test_add_github_https_rewrites_sets_env_scoped_git_config():
+    environ = bootstrap.add_github_https_rewrites({'PATH': '/usr/bin'})
+    assert environ['GIT_CONFIG_COUNT'] == '2'
+    assert environ['GIT_CONFIG_KEY_0'] == 'url.https://github.com/.insteadOf'
+    assert environ['GIT_CONFIG_VALUE_0'] == 'git@github.com:'
+    assert environ['GIT_CONFIG_KEY_1'] == 'url.https://github.com/.insteadOf'
+    assert environ['GIT_CONFIG_VALUE_1'] == 'ssh://git@github.com/'
+
+
+def test_add_github_https_rewrites_keeps_existing_entries():
+    environ = bootstrap.add_github_https_rewrites(
+        {
+            'GIT_CONFIG_COUNT': '1',
+            'GIT_CONFIG_KEY_0': 'user.name',
+            'GIT_CONFIG_VALUE_0': 'Deploy',
+        }
+    )
+    assert environ['GIT_CONFIG_COUNT'] == '3'
+    assert environ['GIT_CONFIG_KEY_0'] == 'user.name'
+    assert environ['GIT_CONFIG_VALUE_1'] == 'git@github.com:'
+    assert environ['GIT_CONFIG_VALUE_2'] == 'ssh://git@github.com/'
+
+
+def test_add_github_https_rewrites_are_seen_by_git(tmp_path: Path):
+    """git resolves an ssh GitHub remote to https with the rewrites set."""
+    environ = bootstrap.add_github_https_rewrites(dict(os.environ))
+    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
+    subprocess.run(
+        [
+            'git',
+            '-C',
+            str(tmp_path),
+            'remote',
+            'add',
+            'origin',
+            'git@github.com:E3SM-Project/mache.git',
+        ],
+        check=True,
+    )
+    result = subprocess.run(
+        ['git', '-C', str(tmp_path), 'ls-remote', '--get-url', 'origin'],
+        capture_output=True,
+        text=True,
+        check=True,
+        env=environ,
+    )
+    assert result.stdout.strip() == 'https://github.com/E3SM-Project/mache.git'

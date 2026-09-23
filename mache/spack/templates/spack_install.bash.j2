@@ -1,0 +1,113 @@
+#!/bin/bash
+# Build the Spack environment {{ env_name }} with mache {{ mache_version }}.
+# Rendered by mache.spack.install; run with `env -i bash -l`.
+
+{{ prologue }}
+{%- if proxy_exports %}
+
+# Proxy settings of the calling environment, exported here because the login
+# profile above may have unset them.
+{{ proxy_exports }}
+{%- endif %}
+
+set -e
+
+spack_path={{ spack_path_q }}
+env_name={{ env_name_q }}
+
+# Refuse a checkout of Spack older than 1.0: resetting it to a 1.x tag would
+# leave a 0.x database and environments underneath.
+init_py="$spack_path/lib/spack/spack/__init__.py"
+if [ -f "$init_py" ]; then
+  spack_version=$(sed -n 's/^__version__ *= *"\([^"]*\)".*/\1/p' "$init_py")
+  spack_major=${spack_version%%.*}
+  if [ -z "$spack_major" ] || [ "$spack_major" -lt 1 ]; then
+    echo "Error: $spack_path holds Spack ${spack_version:-of unknown version}," >&2
+    echo "which mache {{ mache_version }} cannot reuse.  Choose a new spack_path." >&2
+    exit 1
+  fi
+fi
+
+# Spack itself
+{{ spack_checkout }}
+{%- for name, content in spack_patches %}
+# Patch {{ name }}: the checkout above is clean, so this always applies.
+git -C "$spack_path" apply <<'PATCH'
+{{ content }}
+PATCH
+{%- endfor %}
+# Package repositories, in search order
+{%- for name, checkout in repo_checkouts %}
+# {{ name }}
+{{ checkout }}
+{%- endfor %}
+# Register the package repositories at the instance scope, which outranks
+# the user's own configuration.  This must happen before the first spack
+# command so spack does not clone builtin into ~/.spack.
+cat > "$spack_path/etc/spack/repos.yaml" <<'YAML'
+{{ repos_yaml }}
+YAML
+
+source "$spack_path/share/spack/setup-env.sh"
+
+# Move the user scope, caches, stages and bootstrap store under spack_path.
+# `spack isolate --self` refuses to run twice and --overwrite would discard
+# the bootstrap store, so an existing isolate directory is set aside while
+# the (reset) include.yaml is rewritten, then restored with the fresh config.
+isolate_dir="$spack_path/etc/spack/isolate"
+if [ -d "$isolate_dir" ]; then
+  rm -rf "$isolate_dir.prev"
+  mv "$isolate_dir" "$isolate_dir.prev"
+  spack isolate --self
+  cp "$isolate_dir"/*.yaml "$isolate_dir.prev/"
+  rm -rf "$isolate_dir"
+  mv "$isolate_dir.prev" "$isolate_dir"
+else
+  spack isolate --self
+fi
+
+spack repo list
+{%- for name in repo_names %}
+spack repo list | grep -q "^\[+\] {{ name }} " || { echo "Error: package repository {{ name }} is not available" >&2; exit 1; }
+{%- endfor %}
+{% if mirror %}
+spack mirror remove spack_mirror >& /dev/null || true
+spack mirror add spack_mirror file://{{ mirror }}
+{%- endif %}
+
+env_dir="$spack_path/var/spack/environments/$env_name"
+if [ -e "$env_dir" ]; then
+  spack env remove -y "$env_name" >& /dev/null
+  echo "recreating environment: $env_name"
+else
+  echo "creating new environment: $env_name"
+fi
+spack env create "$env_name" {{ yaml_path_q }}
+spack env activate "$env_name"
+spack install{% if build_jobs %} -j {{ build_jobs }}{% endif %}
+
+# Provenance
+cp "$env_dir/spack.lock" {{ lock_path_q }}
+cat > {{ provenance_path_q }} <<YAML
+mache: {{ mache_version }}
+spack:
+  git: {{ spack_git }}
+  commit: $(git -C "$spack_path" rev-parse HEAD)
+{%- if spack_patches %}
+  patches:
+{%- for name, content in spack_patches %}
+  - {{ name }}
+{%- endfor %}
+{%- endif %}
+repos:
+{%- for name, git, clone_path in repo_provenance %}
+  {{ name }}:
+    git: {{ git }}
+    commit: $(git -C {{ clone_path }} rev-parse HEAD)
+{%- endfor %}
+YAML
+
+{%- if custom_spack %}
+
+{{ custom_spack }}
+{%- endif %}

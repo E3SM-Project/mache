@@ -4,27 +4,44 @@ import os
 import shlex
 from configparser import ConfigParser
 from dataclasses import dataclass
-from importlib import resources
 from pathlib import Path
 
 from jinja2 import Template
-from packaging.version import Version
 from yaml import safe_load
 
 from mache.deploy.bootstrap import check_call
 from mache.deploy.hooks import DeployContext
+from mache.spack.activation import (
+    ACTIVATION_MODES,
+    activation_file_path,
+    capture_activation,
+    write_activation_files,
+)
+from mache.spack.install import (
+    prologue_path,
+    render_install_script,
+    write_prologue,
+)
+from mache.spack.pins import load_pins
 from mache.spack.script import get_spack_script
 from mache.spack.shared import (
     _get_yaml_data,
     normalize_excluded_packages,
     resolve_e3sm_hdf5_netcdf,
 )
-from mache.version import __version__
 
 
 @dataclass(frozen=True)
 class SpackDeployResult:
-    """Result of deploying a Spack environment for one toolchain pair."""
+    """Result of deploying a Spack environment for one toolchain pair.
+
+    ``activation`` is always the dynamic form (``source setup-env.sh`` plus
+    ``spack env activate``), which hooks can run before the captured
+    activation exists.  ``load_activation`` is what the generated load
+    scripts use: a ``source`` of the captured ``activate.sh`` when
+    ``spack.activation`` is ``captured`` (the default), otherwise the same as
+    ``activation``.
+    """
 
     compiler: str
     mpi: str
@@ -32,6 +49,11 @@ class SpackDeployResult:
     spack_path: str
     view_path: str
     activation: str
+    load_activation: str = ''
+
+    def __post_init__(self) -> None:
+        if not self.load_activation:
+            object.__setattr__(self, 'load_activation', self.activation)
 
 
 @dataclass(frozen=True)
@@ -210,6 +232,8 @@ def deploy_spack_software_env(
         mirror=_normalize_optional_token(spack_cfg.get('mirror')),
         custom_spack=str(spack_cfg.get('custom_spack') or ''),
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+        pins=_load_spack_pins(ctx=ctx),
+        build_jobs=_get_build_jobs(spack_cfg),
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -345,6 +369,9 @@ def deploy_spack_envs(
         mirror = None
 
     custom_spack = str(spack_cfg.get('custom_spack') or '')
+    pins = _load_spack_pins(ctx=ctx)
+    build_jobs = _get_build_jobs(spack_cfg)
+    activation_mode = get_spack_activation_mode(spack_cfg)
 
     results: list[SpackDeployResult] = []
 
@@ -382,44 +409,77 @@ def deploy_spack_envs(
             mirror=mirror,
             custom_spack=custom_spack,
             e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+            pins=pins,
+            build_jobs=build_jobs,
             log_filename=log_filename,
             quiet=quiet,
         )
 
-        view_path = os.path.join(
-            spack_path,
-            'var',
-            'spack',
-            'environments',
-            env_name,
-            '.spack-env',
-            'view',
-        )
-
-        activation = get_spack_script(
-            spack_path=spack_path,
-            env_name=env_name,
-            compiler=compiler,
-            mpi=mpi,
-            shell='sh',
-            machine=ctx.machine,
-            include_e3sm_lapack=False,
-            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
-            load_spack_env=True,
-        )
-
         results.append(
-            SpackDeployResult(
+            _make_spack_deploy_result(
+                ctx=ctx,
+                spack_path=spack_path,
+                env_name=env_name,
                 compiler=compiler,
                 mpi=mpi,
-                env_name=env_name,
-                spack_path=spack_path,
-                view_path=view_path,
-                activation=activation,
+                e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+                activation_mode=activation_mode,
             )
         )
 
     return results
+
+
+def capture_spack_activations(
+    *,
+    ctx: DeployContext,
+    results: list[SpackDeployResult],
+) -> None:
+    """Capture the activation of each deployed library environment.
+
+    This runs after the ``post_spack`` hooks, so changes a hook makes to the
+    environment (for example to ``modules:prefix_inspections``) are
+    reflected.  It writes ``activate.sh`` and ``activate.csh`` into each
+    environment directory; ``SpackDeployResult.load_activation`` already
+    sources them.  Nothing happens when ``spack.activation`` is ``dynamic``.
+    """
+
+    spack_cfg = get_effective_spack_config(ctx=ctx)
+    if get_spack_activation_mode(spack_cfg) != 'captured':
+        return
+
+    work = Path(ctx.work_dir) / 'spack'
+    for result in results:
+        ctx.logger.info(
+            f'Capturing activation of Spack environment {result.env_name}'
+        )
+        modifications = capture_activation(
+            spack_path=result.spack_path,
+            env_name=result.env_name,
+            prologue_path=prologue_path(str(work), result.env_name),
+            work_dir=str(work),
+        )
+        write_activation_files(
+            spack_path=result.spack_path,
+            env_name=result.env_name,
+            modifications=modifications,
+        )
+
+
+def get_spack_activation_mode(spack_cfg: dict) -> str:
+    """Return the effective ``spack.activation`` setting."""
+
+    # not _normalize_optional_token(): "dynamic" is a real value here
+    value = spack_cfg.get('activation')
+    mode = str(value).strip().lower() if value is not None else ''
+    if mode in ('', 'none', 'null'):
+        return 'captured'
+    if mode not in ACTIVATION_MODES:
+        raise ValueError(
+            f'spack.activation must be one of {ACTIVATION_MODES}, '
+            f'got {spack_cfg.get("activation")!r}'
+        )
+    return mode
 
 
 def load_existing_spack_envs(
@@ -470,42 +530,27 @@ def load_existing_spack_envs(
     if not env_name_prefix or any(ch.isspace() for ch in env_name_prefix):
         raise ValueError('spack.env_name_prefix must be a non-empty token')
 
+    activation_mode = get_spack_activation_mode(spack_cfg)
+
     results: list[SpackDeployResult] = []
 
     for compiler, mpi in toolchain_pairs:
         env_name = f'{env_name_prefix}_{compiler}_{mpi}'
         _ensure_spack_env_exists(spack_path=spack_path, env_name=env_name)
-
-        view_path = os.path.join(
-            spack_path,
-            'var',
-            'spack',
-            'environments',
-            env_name,
-            '.spack-env',
-            'view',
-        )
-
-        activation = get_spack_script(
-            spack_path=spack_path,
-            env_name=env_name,
-            compiler=compiler,
-            mpi=mpi,
-            shell='sh',
-            machine=ctx.machine,
-            include_e3sm_lapack=False,
-            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
-            load_spack_env=True,
-        )
+        if activation_mode == 'captured':
+            _ensure_spack_activation_exists(
+                spack_path=spack_path, env_name=env_name
+            )
 
         results.append(
-            SpackDeployResult(
+            _make_spack_deploy_result(
+                ctx=ctx,
+                spack_path=spack_path,
+                env_name=env_name,
                 compiler=compiler,
                 mpi=mpi,
-                env_name=env_name,
-                spack_path=spack_path,
-                view_path=view_path,
-                activation=activation,
+                e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+                activation_mode=activation_mode,
             )
         )
 
@@ -588,6 +633,98 @@ def load_existing_spack_software_env(
     )
 
 
+def _make_spack_deploy_result(
+    *,
+    ctx: DeployContext,
+    spack_path: str,
+    env_name: str,
+    compiler: str,
+    mpi: str,
+    e3sm_hdf5_netcdf: bool,
+    activation_mode: str,
+) -> SpackDeployResult:
+    view_path = os.path.join(
+        spack_path,
+        'var',
+        'spack',
+        'environments',
+        env_name,
+        '.spack-env',
+        'view',
+    )
+
+    activations = {}
+    for mode in ACTIVATION_MODES:
+        activations[mode] = get_spack_script(
+            spack_path=spack_path,
+            env_name=env_name,
+            compiler=compiler,
+            mpi=mpi,
+            shell='sh',
+            machine=ctx.machine,
+            include_e3sm_lapack=False,
+            e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
+            load_spack_env=True,
+            activation=mode,
+        )
+
+    return SpackDeployResult(
+        compiler=compiler,
+        mpi=mpi,
+        env_name=env_name,
+        spack_path=spack_path,
+        view_path=view_path,
+        activation=activations['dynamic'],
+        load_activation=activations[activation_mode],
+    )
+
+
+def _load_spack_pins(*, ctx: DeployContext) -> dict:
+    """Load the pinned Spack sources with overrides, lowest precedence first.
+
+    Precedence, highest first: ``--spack-pins <file>``, then
+    ``ctx.runtime['spack']['pins']`` from a hook, then ``spack.pins`` in
+    ``deploy/config.yaml.j2``, then the ``pins.yaml`` packaged with mache.
+    """
+
+    overrides: list = []
+
+    spack_cfg = ctx.config.get('spack', {})
+    if isinstance(spack_cfg, dict) and spack_cfg.get('pins'):
+        overrides.append(spack_cfg['pins'])
+
+    rt_spack_cfg = ctx.runtime.get('spack', {})
+    if isinstance(rt_spack_cfg, dict) and rt_spack_cfg.get('pins'):
+        overrides.append(rt_spack_cfg['pins'])
+
+    cli_pins = _normalize_optional_token(getattr(ctx.args, 'spack_pins', None))
+    if cli_pins is not None:
+        overrides.append(
+            os.path.abspath(os.path.expanduser(os.path.expandvars(cli_pins)))
+        )
+
+    return load_pins(overrides)
+
+
+def _get_build_jobs(spack_cfg: dict) -> int | None:
+    """Read ``spack.build_jobs`` (for ``spack install -j``) if set."""
+
+    value = _normalize_optional_token(spack_cfg.get('build_jobs'))
+    if value is None:
+        return None
+    try:
+        build_jobs = int(value)
+    except ValueError as exc:
+        raise ValueError(
+            f'spack.build_jobs must be a positive integer, got {value!r}'
+        ) from exc
+    if build_jobs < 1:
+        raise ValueError(
+            f'spack.build_jobs must be a positive integer, got {value!r}'
+        )
+    return build_jobs
+
+
 def _normalize_optional_token(value: object) -> str | None:
     """Normalize optional config/runtime values.
 
@@ -648,6 +785,17 @@ def _resolve_spack_path(
             'pass --no-spack.'
         )
     return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
+
+
+def _ensure_spack_activation_exists(*, spack_path: str, env_name: str) -> str:
+    path = activation_file_path(spack_path, env_name, 'sh')
+    if not os.path.isfile(path):
+        raise ValueError(
+            f'Captured activation not found at {path}. The environment was '
+            'built by an older mache or its build did not finish; redeploy '
+            'it with --deploy-spack, or set spack.activation to "dynamic".'
+        )
+    return path
 
 
 def _ensure_spack_env_exists(*, spack_path: str, env_name: str) -> str:
@@ -865,13 +1013,15 @@ def _install_spack_env(
     mirror: str | None,
     custom_spack: str,
     e3sm_hdf5_netcdf: bool,
+    pins: dict,
+    build_jobs: int | None,
     log_filename: str,
     quiet: bool,
 ) -> None:
-    """Create/update a spack checkout and build/install the environment."""
+    """Check out the pinned Spack sources and build/install the environment."""
 
     # Render the module-load / env-var setup snippet (no spack activation)
-    modules = get_spack_script(
+    prologue = get_spack_script(
         spack_path=spack_path,
         env_name=env_name,
         compiler=compiler,
@@ -882,39 +1032,28 @@ def _install_spack_env(
         e3sm_hdf5_netcdf=e3sm_hdf5_netcdf,
         load_spack_env=False,
     )
-
-    env_lines = modules
     if tmpdir is not None:
-        env_lines = f'{env_lines}\nexport TMPDIR={tmpdir}'
-
-    # Use PEP 440 parsing to strip any pre/dev/post release tags and keep only
-    # the base release version.
-    mache_version = Version(__version__).base_version
-
-    # Prefer https clone to avoid requiring GitHub SSH keys.
-    spack_repo = 'https://github.com/E3SM-Project/spack.git'
-    branch = f'spack_for_mache_{mache_version}'
-
-    template_text = (
-        resources.files(__package__)
-        .joinpath('templates/spack_install.bash.j2')
-        .read_text(encoding='utf-8')
-    )
-    script = Template(template_text, keep_trailing_newline=True).render(
-        env_lines=env_lines,
-        spack_path_q=shlex.quote(spack_path),
-        branch=branch,
-        branch_q=shlex.quote(branch),
-        spack_repo_q=shlex.quote(spack_repo),
-        env_name=env_name,
-        env_name_q=shlex.quote(env_name),
-        yaml_path_q=shlex.quote(yaml_path),
-        mirror=mirror,
-        custom_spack=custom_spack.strip(),
-    )
+        # a TMPDIR that does not exist makes configure scripts fail and
+        # sends Spack's stages back to /tmp
+        os.makedirs(tmpdir, exist_ok=True)
+        prologue = f'{prologue}\nexport TMPDIR={tmpdir}'
 
     work = Path(ctx.work_dir) / 'spack'
     work.mkdir(parents=True, exist_ok=True)
+    # kept for the activation capture step, which runs after post_spack hooks
+    write_prologue(str(work), env_name, prologue)
+
+    script = render_install_script(
+        spack_path=spack_path,
+        env_name=env_name,
+        yaml_path=yaml_path,
+        prologue=prologue,
+        pins=pins,
+        work_dir=str(work),
+        mirror=mirror,
+        custom_spack=custom_spack,
+        build_jobs=build_jobs,
+    )
     script_path = work / f'build_{env_name}.bash'
     script_path.write_text(script, encoding='utf-8')
 

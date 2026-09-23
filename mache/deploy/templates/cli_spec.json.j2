@@ -58,6 +58,12 @@
       "route": ["deploy", "run"]
     },
     {
+      "flags": ["--spack-pins"],
+      "dest": "spack_pins",
+      "help": "YAML file overriding the pinned Spack, spack-packages and e3sm-spack-packages sources (a tag, commit or branch per repository), for testing unreleased recipes.",
+      "route": ["deploy", "run"]
+    },
+    {
       "flags": ["--recreate"],
       "dest": "recreate",
       "action": "store_true",

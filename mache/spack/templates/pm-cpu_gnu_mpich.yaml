@@ -2,23 +2,30 @@
 {%- set mpi = "cray-mpich@9.0.1" %}
 spack:
   specs:
-  - {{ compiler }}
-  - {{ mpi }}%{{ compiler }}
+  - {{ mpi }}
   - cray-libsci
-  - "hdf5%{{ compiler }}"
-  - "netcdf-c%{{ compiler }}"
-  - "netcdf-fortran%{{ compiler }}"
-  - "parallel-netcdf%{{ compiler }}"
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
 {%- for spec in specs %}
-  - "{{ spec }}%{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: when_possible
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}]
+      require: ["%mache"]
       providers:
-        mpi: [{{ mpi }}%{{ compiler }}]
+        mpi: [{{ mpi }}]
         lapack: [cray-libsci@25.09.0]
         blas: [cray-libsci@25.09.0]
     bzip2:
@@ -91,13 +98,6 @@ spack:
       - spec: perl@5.26.1
         prefix: /usr
       buildable: false
-    python:
-      externals:
-      - spec: python@3.9.7
-        prefix: /global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11
-        modules:
-        - python/3.9-anaconda-2021.11
-      buildable: false
     tar:
       externals:
       - spec: tar@1.34
@@ -117,18 +117,25 @@ spack:
         - cray-libsci/25.09.0
         - craype-accel-host
         - craype/2.7.35
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         extra_attributes:
           compilers:
             c: cc
             cxx: CC
             fortran: ftn
+          environment:
+            prepend_path:
+              # Spack clears LD_LIBRARY_PATH for builds and the
+              # libfabric module is already loaded, so reloading it as
+              # an external module restores nothing.  The Cray wrappers
+              # link MPI into every executable, so the linker needs it.
+              LD_LIBRARY_PATH: "/opt/cray/libfabric/2.3.1/lib64"
       buildable: false
     cray-mpich:
       externals:
-      - spec: {{ mpi }}%{{ compiler }}
+      - spec: {{ mpi }}
         modules:
-        - libfabric/1.22.0
+        - libfabric/2.3.1
         - cray-mpich/9.0.1
       buildable: false
     cray-libsci:
@@ -157,24 +164,3 @@ spack:
       - spec: netcdf-fortran@4.6.1
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.1/gnu/12.3
       buildable: false
-  compilers:
-  - compiler:
-      spec: {{ compiler }}
-      paths:
-        cc: cc
-        cxx: CC
-        f77: ftn
-        fc: ftn
-      flags: {}
-      operating_system: sles15
-      target: x86_64
-      modules:
-      - PrgEnv-gnu/8.6.0
-      - gcc-native/14
-      - cray-libsci/25.09.0
-      - craype-accel-host
-      - craype/2.7.35
-      - libfabric/1.22.0
-      environment:
-        prepend_path:
-          PKG_CONFIG_PATH: "/opt/cray/xpmem/2.6.2-2.5_2.33__gd067c3f.shasta/lib64/pkgconfig"

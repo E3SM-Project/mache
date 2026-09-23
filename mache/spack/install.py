@@ -1,0 +1,202 @@
+import os
+import shlex
+from importlib import resources as importlib_resources
+
+from jinja2 import Template
+
+from mache.spack.pins import (
+    checkout_command,
+    package_repo_clone_path,
+    render_repos_yaml,
+)
+from mache.version import __version__
+
+# Environment variables that the build script carries over from the calling
+# environment.  Compute nodes on some machines (Aurora and Polaris at ALCF)
+# reach the network only through a proxy that a job script sets with these.
+# The script runs in a fresh login shell, which drops them (`env -i`) and, on
+# SUSE, can unset them again from /etc/profile, so the script exports them
+# itself after the login profile has run.
+PROXY_ENV_VARS = (
+    'http_proxy',
+    'https_proxy',
+    'ftp_proxy',
+    'no_proxy',
+    'HTTP_PROXY',
+    'HTTPS_PROXY',
+    'FTP_PROXY',
+    'NO_PROXY',
+)
+
+
+def proxy_exports(environ=None):
+    """
+    Shell commands that export the proxy variables of the calling environment.
+
+    Parameters
+    ----------
+    environ : dict, optional
+        The calling environment (``os.environ`` by default)
+
+    Returns
+    -------
+    exports : str
+        One ``export`` line per variable in :py:data:`PROXY_ENV_VARS` that is
+        set in ``environ``; empty when none is
+    """
+    if environ is None:
+        environ = os.environ
+    return '\n'.join(
+        f'export {name}={shlex.quote(environ[name])}'
+        for name in PROXY_ENV_VARS
+        if name in environ
+    )
+
+
+def render_install_script(
+    *,
+    spack_path,
+    env_name,
+    yaml_path,
+    prologue,
+    pins,
+    work_dir,
+    mirror=None,
+    custom_spack='',
+    build_jobs=None,
+    environ=None,
+):
+    """
+    Render the bash script that checks out Spack and builds an environment.
+
+    Parameters
+    ----------
+    spack_path : str
+        The Spack checkout (``$SPACK_ROOT``), created if absent
+
+    env_name : str
+        The managed environment to (re)create
+
+    yaml_path : str
+        The rendered ``spack.yaml`` for the environment
+
+    prologue : str
+        Shell commands that load modules and set variables before Spack runs
+
+    pins : dict
+        Validated pins from :py:func:`mache.spack.pins.load_pins`
+
+    work_dir : str
+        Where ``spack.lock`` and ``provenance.yaml`` are copied after the
+        build
+
+    mirror : str, optional
+        A local Spack source mirror
+
+    custom_spack : str, optional
+        Spack commands to run after the environment is installed
+
+    build_jobs : int, optional
+        Passed to ``spack install -j``
+
+    environ : dict, optional
+        The calling environment (``os.environ`` by default); its proxy
+        variables are exported in the script, see :py:func:`proxy_exports`
+
+    Returns
+    -------
+    script : str
+        The rendered bash script
+    """
+    path = (
+        importlib_resources.files('mache.spack.templates')
+        / 'spack_install.bash.j2'
+    )
+    with open(str(path)) as handle:
+        template = Template(handle.read(), keep_trailing_newline=True)
+
+    repo_checkouts = []
+    repo_provenance = []
+    for name, entry in pins['repos'].items():
+        clone_path = package_repo_clone_path(spack_path, name)
+        repo_checkouts.append((name, checkout_command(entry, clone_path)))
+        repo_provenance.append((name, entry['git'], shlex.quote(clone_path)))
+
+    return template.render(
+        mache_version=__version__,
+        env_name=env_name,
+        env_name_q=shlex.quote(env_name),
+        spack_path_q=shlex.quote(spack_path),
+        prologue=prologue.strip(),
+        proxy_exports=proxy_exports(environ),
+        spack_checkout=checkout_command(pins['spack'], spack_path),
+        spack_patches=spack_patches(),
+        spack_git=pins['spack']['git'],
+        repo_checkouts=repo_checkouts,
+        repo_names=list(pins['repos']),
+        repo_provenance=repo_provenance,
+        repos_yaml=render_repos_yaml(spack_path, pins).rstrip(),
+        yaml_path_q=shlex.quote(yaml_path),
+        lock_path_q=shlex.quote(
+            os.path.join(work_dir, f'{env_name}.spack.lock')
+        ),
+        provenance_path_q=shlex.quote(
+            os.path.join(work_dir, f'{env_name}.provenance.yaml')
+        ),
+        mirror=mirror,
+        custom_spack=custom_spack.strip(),
+        build_jobs=build_jobs,
+    )
+
+
+def spack_patches():
+    """
+    The patches mache applies to its pinned Spack checkout.
+
+    Each ``*.patch`` file in ``mache/spack/patches`` is a ``git apply``
+    patch against the pinned Spack tag, with a description above the diff
+    saying what it fixes and when it can be dropped.
+
+    Returns
+    -------
+    patches : list of tuple
+        ``(name, content)`` pairs in name order
+    """
+    patches_dir = importlib_resources.files('mache.spack.patches')
+    patches = []
+    for path in sorted(patches_dir.iterdir(), key=lambda p: p.name):
+        if path.name.endswith('.patch'):
+            patches.append((path.name, path.read_text().rstrip('\n')))
+    return patches
+
+
+def write_prologue(work_dir, env_name, prologue):
+    """
+    Write the build prologue to ``<env_name>.prologue.sh`` in the work
+    directory, for the activation capture step to source.
+
+    Parameters
+    ----------
+    work_dir : str
+        The work directory
+
+    env_name : str
+        The environment the prologue belongs to
+
+    prologue : str
+        Shell commands that load modules and set variables before Spack runs
+
+    Returns
+    -------
+    path : str
+        The path to the prologue
+    """
+    path = prologue_path(work_dir, env_name)
+    with open(path, 'w') as handle:
+        handle.write(f'{prologue.strip()}\n')
+    return path
+
+
+def prologue_path(work_dir, env_name):
+    """The path of the build prologue for an environment."""
+    return os.path.join(work_dir, f'{env_name}.prologue.sh')

@@ -1,0 +1,19 @@
+# Pinned sources for building Spack environments with this release of mache.
+#
+# Each entry names exactly one of `tag`, `commit` or `branch`.  A release of
+# mache pins tags only; a development branch may pin a commit.  Overrides
+# come from `--spack-pins`, a `pre_spack` hook or `spack.pins` in
+# deploy/config.yaml.j2 and merge per repository (see mache.spack.pins).
+#
+# The `repos` entries are in Spack's search order and use the keys of Spack's
+# own repos.yaml, so an entry can be pasted into a Spack configuration.
+spack:
+  git: https://github.com/spack/spack.git
+  tag: v1.2.2
+repos:
+  e3sm:
+    git: https://github.com/E3SM-Project/e3sm-spack-packages.git
+    tag: v2026.06.0
+  builtin:
+    git: https://github.com/spack/spack-packages.git
+    tag: v2026.06.0

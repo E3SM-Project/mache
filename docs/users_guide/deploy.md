@@ -229,9 +229,21 @@ Important settings:
   management.
 - `spack.spack_path`: required when Spack support is enabled and no hook or
   CLI override provides it, unless the user disables Spack for that run with
-  `--no-spack`.
+  `--no-spack`. Use a new path for each major `mache` release: `mache`
+  clones Spack there and refuses a checkout of Spack 0.x.
 - `spack.exclude_packages`: optional list of machine-provided Spack packages
   that the target software wants Spack to build instead.
+- `spack.pins`: optional overrides for the Spack, `spack-packages` and
+  `e3sm-spack-packages` sources pinned by the `mache` release, each a `tag`,
+  `commit` or `branch` per repository (see
+  [Spack sources and version pins](spack/build.md#spack-sources-and-version-pins)).
+  A `pre_spack` hook can set `ctx.runtime['spack']['pins']` the same way, and
+  `--spack-pins <file>` on the command line takes precedence over both.
+- `spack.activation`: `captured` (default) makes load scripts source an
+  `activate.sh` captured after the build; `dynamic` makes them run
+  `spack env activate`.
+- `spack.build_jobs`: optional number of parallel build jobs for
+  `spack install -j`.
 - `jigsaw.enabled`: optional.
 - `hooks`: optional and disabled unless explicitly configured.
 
@@ -506,7 +518,9 @@ them:
 `deploy/spack/<machine>_<compiler>_<mpi>.yaml`
 : Optional per-toolchain Spack environment template overrides used when a
   target repository needs a custom environment skeleton for one machine or
-  toolchain combination.
+  toolchain combination. They follow the same Spack 1.x layout as the
+  templates in `mache/spack/templates/` (see
+  [Adding Spack Support for a New Machine](../developers_guide/spack.md)).
 
 ## Adding a custom CLI flag
 
@@ -701,6 +715,26 @@ left to pixi.
 
 Set `PIXI_CACHE_DIR` before running `./deploy.py` or sourcing a load script
 to use a different location.
+
+### Deploying on a compute node
+
+A deploy can run inside a batch job, which is how nightly regression
+testing works on machines whose login nodes are too small to build on. Two
+things make that work on compute nodes that reach the internet only through
+a proxy (Aurora and Polaris at ALCF):
+
+- The job script exports the site's proxy variables (`HTTP_PROXY`,
+  `HTTPS_PROXY` and their lowercase forms). Pixi, pip and the Spack build
+  script all honour them; the Spack build script re-exports them inside its
+  fresh login shell.
+- `mache deploy run` makes every git command fetch GitHub over https for the
+  rest of the deploy, whatever the URL in a `.gitmodules` or remote says
+  (`git@github.com:` and `ssh://git@github.com/` are rewritten to
+  `https://github.com/` through git's environment-scoped configuration,
+  which needs git 2.31 or newer). ssh does not go through an http proxy, and
+  a deploy only fetches from public repositories, so nothing is lost. The
+  rewrite is confined to the deploy process and its children; it does not
+  touch the user's git configuration or affect pushes made elsewhere.
 
 ## The command-line contract
 

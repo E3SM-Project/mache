@@ -4,6 +4,7 @@ from importlib import resources as importlib_resources
 from jinja2 import Template
 
 from mache.machine_info import discover_machine
+from mache.spack.activation import ACTIVATION_MODES, activation_source_line
 from mache.spack.config_machines import extract_spack_from_config_machines
 from mache.spack.shared import (
     render_env_var,
@@ -26,6 +27,7 @@ def get_spack_script(
     *,
     e3sm_hdf5_netcdf=None,
     exclude_packages=None,
+    activation='captured',
 ):
     """
     Build a snippet of a load script for the given spack environment
@@ -72,6 +74,12 @@ def get_spack_script(
         Whether to load the spack environment at the start of script.
         Must be set to False when initially building the environment
 
+    activation : {'captured', 'dynamic'}, optional
+        How the environment is loaded when ``load_spack_env`` is ``True``:
+        by sourcing the ``activate.<shell>`` file captured when the
+        environment was built, or by sourcing Spack's ``setup-env`` and
+        running ``spack env activate``
+
     Returns
     -------
     load_script : str
@@ -110,13 +118,23 @@ def get_spack_script(
         if machine is None:
             raise ValueError('Unable to discover machine form host name')
 
+    if activation not in ACTIVATION_MODES:
+        raise ValueError(
+            f'activation must be one of {ACTIVATION_MODES}, got {activation!r}'
+        )
+
     load_script_template = ''
 
     if load_spack_env:
-        load_script_template += (
-            f'source {spack_path}/share/spack/setup-env.{shell}\n'
-            f'spack env activate {env_name}'
-        )
+        if activation == 'captured':
+            load_script_template += activation_source_line(
+                spack_path, env_name, shell
+            )
+        else:
+            load_script_template += (
+                f'source {spack_path}/share/spack/setup-env.{shell}\n'
+                f'spack env activate {env_name}'
+            )
 
     # add the shell script from the config_machines.xml for the
     # given machine, compiler, and mpi, if any

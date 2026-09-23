@@ -38,4 +38,6 @@ developers_guide/api
 :maxdepth: 2
 
 design/mache_deploy
+design/parallel_placement
+design/spack_v1
 ```
