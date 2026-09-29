@@ -96,7 +96,7 @@ jobs:
           python -c "from mache import MachineInfo, discover_machine"
 
       - name: Upload distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-package-distributions
           path: dist/
