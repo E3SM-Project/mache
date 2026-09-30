@@ -473,7 +473,9 @@ def add_github_https_rewrites(environ=None):
     ``GIT_CONFIG_KEY_<n>``, ``GIT_CONFIG_VALUE_<n>``, git 2.31 and newer),
     which every child process inherits: mache's own submodule updates as
     well as those of downstream hooks.  Entries the caller already set are
-    kept.
+    kept.  ``GIT_TERMINAL_PROMPT=0`` is also set, unless the caller set it,
+    so a repository that does not exist (or is private) fails instead of
+    waiting at a credential prompt.
 
     Parameters
     ----------
@@ -498,6 +500,7 @@ def add_github_https_rewrites(environ=None):
         environ[f'GIT_CONFIG_VALUE_{count}'] = prefix
         count += 1
     environ['GIT_CONFIG_COUNT'] = str(count)
+    environ.setdefault('GIT_TERMINAL_PROMPT', '0')
     return environ
 
 
@@ -1405,8 +1408,11 @@ def _clone_mache_repo(
         return
 
     # https rather than ssh: forks of mache are public, and compute nodes
-    # that reach GitHub only through an http proxy cannot open ssh
+    # that reach GitHub only through an http proxy cannot open ssh.  A fork
+    # or branch that does not exist fails rather than prompting for
+    # credentials.
     env = build_pixi_env()
+    env.setdefault('GIT_TERMINAL_PROMPT', '0')
     commands = [
         'git',
         'clone',

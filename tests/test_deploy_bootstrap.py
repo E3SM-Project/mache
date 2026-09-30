@@ -528,6 +528,7 @@ def test_clone_mache_repo_reclones_existing_clone(monkeypatch, tmp_path: Path):
         'mache',
     ]
     assert clone_kwargs['cwd'] == str(cloned_repo.parent)
+    assert clone_kwargs['env']['GIT_TERMINAL_PROMPT'] == '0'
 
     log_cmd, log_kwargs = calls[1]
     assert log_cmd == ['git', 'log', '-1', '--oneline']
@@ -868,6 +869,12 @@ def test_add_github_https_rewrites_sets_env_scoped_git_config():
     assert environ['GIT_CONFIG_VALUE_0'] == 'git@github.com:'
     assert environ['GIT_CONFIG_KEY_1'] == 'url.https://github.com/.insteadOf'
     assert environ['GIT_CONFIG_VALUE_1'] == 'ssh://git@github.com/'
+    assert environ['GIT_TERMINAL_PROMPT'] == '0'
+
+
+def test_add_github_https_rewrites_keeps_terminal_prompt():
+    environ = bootstrap.add_github_https_rewrites({'GIT_TERMINAL_PROMPT': '1'})
+    assert environ['GIT_TERMINAL_PROMPT'] == '1'
 
 
 def test_add_github_https_rewrites_keeps_existing_entries():
