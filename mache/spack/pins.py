@@ -213,9 +213,11 @@ def checkout_command(entry, dest):
     """
     Bash commands that make ``dest`` a clean checkout of a pin entry.
 
-    The clone is created if it is absent and fetched otherwise, then
-    detached and hard-reset to the pinned ref, so any local changes (such as
-    the ``etc/spack/include.yaml`` that ``spack isolate`` rewrites) are
+    The clone is created if it is absent.  Otherwise its ``origin`` is
+    pointed at the entry's ``git``, which may have changed since the clone
+    was made (e.g. to a fork), and fetched.  The clone is then detached and
+    hard-reset to the pinned ref, so any local changes (such as the
+    ``etc/spack/include.yaml`` that ``spack isolate`` rewrites) are
     discarded.
 
     Parameters
@@ -236,6 +238,7 @@ def checkout_command(entry, dest):
     ref_q = shlex.quote(checkout_ref(entry))
     return (
         f'if [ -d {dest_q}/.git ]; then\n'
+        f'  git -C {dest_q} remote set-url origin {git_q}\n'
         f'  git -C {dest_q} fetch --tags origin\n'
         f'else\n'
         f'  git clone {git_q} {dest_q}\n'

@@ -158,6 +158,11 @@ def test_checkout_ref_and_command():
         {'git': 'https://example.com/r.git', 'branch': 'main'}, '/opt/r'
     )
     assert 'git clone https://example.com/r.git /opt/r' in commands
+    assert (
+        'git -C /opt/r remote set-url origin https://example.com/r.git'
+        in commands
+    )
+    assert commands.index('set-url') < commands.index('fetch --tags')
     assert 'git -C /opt/r fetch --tags origin' in commands
     assert 'git -C /opt/r checkout --detach' in commands
     assert 'git -C /opt/r reset --hard origin/main' in commands
