@@ -24,7 +24,7 @@ def _base():
         'repos': {
             'e3sm': {
                 'git': 'https://github.com/E3SM-Project/e3sm-spack-packages.git',
-                'tag': 'v2026.06.0',
+                'tag': 'v2026.06.1',
             },
             'builtin': {
                 'git': 'https://github.com/spack/spack-packages.git',
@@ -70,7 +70,7 @@ def test_merge_can_change_git_and_spack():
     }
     assert merged['repos']['e3sm'] == {
         'git': 'https://github.com/xylar/e3sm-spack-packages.git',
-        'tag': 'v2026.06.0',
+        'tag': 'v2026.06.1',
     }
 
 
