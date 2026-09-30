@@ -213,7 +213,7 @@ def make_spack_env(
 
     # clear environment variables and start fresh with those from login
     # so spack doesn't get confused by conda
-    subprocess.check_call(f'env -i bash -l {build_filename}', shell=True)
+    subprocess.check_call(['env', '-i', 'bash', '-l', build_filename])
 
     if activation == 'captured':
         modifications = capture_activation(
