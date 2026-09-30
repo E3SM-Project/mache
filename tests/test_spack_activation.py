@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -179,18 +180,18 @@ def test_render_sh(fixture_modifications):
 def test_render_csh(fixture_modifications):
     _, _, modifications = fixture_modifications
     text = render_activation(modifications, 'csh', SPACK_PATH)
-    assert f'setenv SPACK_ROOT "{SPACK_PATH}"' in text
+    assert f"setenv SPACK_ROOT '{SPACK_PATH}'" in text
     assert (
         'if ($?PATH) then\n'
-        f'  setenv PATH "{VIEW}/bin:$PATH"\n'
+        f'  setenv PATH \'{VIEW}/bin\'":$PATH"\n'
         'else\n'
-        f'  setenv PATH "{VIEW}/bin"\n'
+        f"  setenv PATH '{VIEW}/bin'\n"
         'endif\n'
     ) in text
     assert (
-        f'  setenv MANPATH "/usr/share/man:{VIEW}/share/man:{VIEW}/man:"\n'
+        f"  setenv MANPATH '/usr/share/man:{VIEW}/share/man:{VIEW}/man:'\n"
     ) in text
-    assert 'setenv SPACK_ENV_VIEW "default"' in text
+    assert "setenv SPACK_ENV_VIEW 'default'" in text
 
 
 def test_render_unset_and_quoting():
@@ -205,7 +206,35 @@ def test_render_unset_and_quoting():
     assert 'export PATH="/dir with space/bin${PATH:+:$PATH}"' in sh
     csh = render_activation(modifications, 'csh', '/opt/spack')
     assert 'unsetenv OLD' in csh
-    assert 'setenv MSG "a \\"b\\" \\$c"' in csh
+    assert 'setenv MSG \'a "b" $c\'' in csh
+
+
+@pytest.mark.skipif(shutil.which('tcsh') is None, reason='needs tcsh')
+def test_sourcing_csh_keeps_values_literal(tmp_path: Path):
+    modifications = [
+        ('set', 'MSG', 'a "b" $c \\d `e` !f \'g\''),
+        ('prepend', 'PATH', ['/view/bin']),
+    ]
+    tcsh = shutil.which('tcsh')
+    assert tcsh is not None
+    snippet = tmp_path / 'activate.csh'
+    snippet.write_text(render_activation(modifications, 'csh', '/opt/spack'))
+    result = subprocess.run(
+        [
+            tcsh,
+            '-f',
+            '-c',
+            f'source {snippet}; printenv MSG; printenv PATH',
+        ],
+        capture_output=True,
+        text=True,
+        env={'PATH': '/usr/bin:/bin'},
+        check=True,
+    )
+    assert result.stdout.splitlines() == [
+        'a "b" $c \\d `e` !f \'g\'',
+        '/view/bin:/opt/spack/bin:/usr/bin:/bin',
+    ]
 
 
 def test_sourcing_sh_prepends(tmp_path: Path):
@@ -289,7 +318,7 @@ def test_write_activation_files(tmp_path: Path):
     )
     assert os.path.dirname(paths[0]) == str(env_dir)
     assert 'export A="1"' in Path(paths[0]).read_text()
-    assert 'setenv A "1"' in Path(paths[1]).read_text()
+    assert "setenv A '1'" in Path(paths[1]).read_text()
 
 
 def test_activation_source_line():

@@ -361,13 +361,16 @@ def _sh_quote(value, suffix=''):
 
 
 def _csh_quote(value, suffix=''):
-    """Double-quote a value for csh, with an optional expansion tail."""
-    escaped = (
-        value.replace('\\', '\\\\')
-        .replace('"', '\\"')
-        .replace('$', '\\$')
-        .replace('!', '\\!')
-    )
+    """Quote a value for csh, with an optional expansion tail.
+
+    csh does not honour backslash escapes inside double quotes, so the value
+    is single-quoted, which keeps everything literal except ``!`` (history
+    substitution, escaped with a backslash) and ``'`` itself (closed, given
+    in double quotes, and reopened).  The tail is appended in double quotes
+    so it is expanded.
+    """
+    escaped = value.replace('!', '\\!').replace("'", "'\"'\"'")
+    quoted = f"'{escaped}'"
     if suffix:
-        return f'"{escaped}:{suffix}"'
-    return f'"{escaped}"'
+        return f'{quoted}":{suffix}"'
+    return quoted

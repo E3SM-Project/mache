@@ -696,11 +696,14 @@ env -i bash -l -c '
 
   ```csh
   if ($?PATH) then
-    setenv PATH "/path/to/view/bin:$PATH"
+    setenv PATH '/path/to/view/bin'":$PATH"
   else
-    setenv PATH "/path/to/view/bin"
+    setenv PATH '/path/to/view/bin'
   endif
   ```
+
+  csh values are single-quoted, since csh does not honour backslash escapes
+  inside double quotes.
 
   Elements that were present before and are absent afterwards are ignored
   with a warning in the build log. An empty `X` emits nothing. Spack gives
