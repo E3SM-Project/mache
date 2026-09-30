@@ -433,3 +433,35 @@ def test_install_spack_env_creates_tmpdir(tmp_path: Path, monkeypatch):
     script = tmp_path / 'deploy_tmp/spack/build_demo_gnu_openmpi.bash'
     assert f'export TMPDIR={tmpdir}' in script.read_text()
     assert len(commands) == 1
+
+
+def test_install_spack_env_expands_tmpdir(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        deploy_spack, 'check_call', lambda cmd, *args, **kwargs: None
+    )
+    monkeypatch.setenv('MACHE_TEST_SCRATCH', str(tmp_path / 'scratch'))
+    monkeypatch.chdir(tmp_path)
+    ctx = _ctx(tmp_path, args=argparse.Namespace())
+
+    deploy_spack._install_spack_env(
+        ctx=ctx,
+        spack_path=str(tmp_path / 'spack'),
+        env_name='demo_gnu_openmpi',
+        yaml_path=str(tmp_path / 'demo_gnu_openmpi.yaml'),
+        compiler='gnu',
+        mpi='openmpi',
+        tmpdir='$MACHE_TEST_SCRATCH/spack_tmp',
+        mirror=None,
+        custom_spack='',
+        e3sm_hdf5_netcdf=True,
+        pins=deploy_spack.load_pins(),
+        build_jobs=None,
+        log_filename=str(tmp_path / 'deploy.log'),
+        quiet=True,
+    )
+
+    expanded = tmp_path / 'scratch' / 'spack_tmp'
+    assert expanded.is_dir()
+    assert not (tmp_path / '$MACHE_TEST_SCRATCH').exists()
+    script = tmp_path / 'deploy_tmp/spack/build_demo_gnu_openmpi.bash'
+    assert f'export TMPDIR={expanded}' in script.read_text()
