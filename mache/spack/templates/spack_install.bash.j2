@@ -30,11 +30,22 @@ fi
 
 # Spack itself
 {{ spack_checkout }}
+spack_patches_applied=""
 {%- for name, content in spack_patches %}
-# Patch {{ name }}: the checkout above is clean, so this always applies.
-git -C "$spack_path" apply <<'PATCH'
+# Patch {{ name }}, unless the pinned Spack already has it (the checkout
+# above is clean, so otherwise it applies)
+spack_patch=$(cat <<'PATCH'
 {{ content }}
 PATCH
+)
+if printf '%s\n' "$spack_patch" \
+    | git -C "$spack_path" apply --reverse --check 2>/dev/null; then
+  echo "Spack already contains {{ name }}; not applying it"
+else
+  printf '%s\n' "$spack_patch" | git -C "$spack_path" apply
+  spack_patches_applied="$spack_patches_applied
+  - {{ name }}"
+fi
 {%- endfor %}
 # Package repositories, in search order
 {%- for name, checkout in repo_checkouts %}
@@ -94,10 +105,7 @@ spack:
   git: {{ spack_git }}
   commit: $(git -C "$spack_path" rev-parse HEAD)
 {%- if spack_patches %}
-  patches:
-{%- for name, content in spack_patches %}
-  - {{ name }}
-{%- endfor %}
+  patches:${spack_patches_applied:- []}
 {%- endif %}
 repos:
 {%- for name, git, clone_path in repo_provenance %}

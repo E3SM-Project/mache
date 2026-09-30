@@ -269,12 +269,14 @@ that edits `mache/spack/pins.yaml`; a release must pin tags only, which
 `mache/spack/patches/*.patch` are `git apply` patches that the build script
 applies to the pinned Spack checkout right after resetting it, so they are
 applied exactly once per build and recorded under `spack: patches:` in the
-provenance file. Each patch starts with a description of what it fixes,
+provenance file. A patch that the pinned Spack already contains (for example
+after overriding the `spack` pin with a newer release) is skipped and not
+recorded. Each patch starts with a description of what it fixes,
 the upstream pull request, and when it can be dropped. A patch is a last
 resort for a Spack bug that blocks E3SM builds before the fix is released;
 open the upstream pull request first, and remove the patch when the pin
 moves to a release that contains the fix (the build fails at `git apply`
-if a patch no longer applies). `tests/test_spack_install_script.py` checks
+if a patch neither applies nor is already there). `tests/test_spack_install_script.py` checks
 that every patch still applies to the pinned tag.
 
 ## Further Reading

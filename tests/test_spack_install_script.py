@@ -61,12 +61,14 @@ def test_render_applies_spack_patches():
     ]
     script = _render(load_pins())
     checkout = script.index('git -C /opt/spack reset --hard')
-    apply = script.index('git -C "$spack_path" apply <<\'PATCH\'')
-    assert checkout < apply < script.index('spack isolate --self')
+    check = script.index('git -C "$spack_path" apply --reverse --check')
+    apply = script.index('| git -C "$spack_path" apply\n')
+    assert checkout < check < apply < script.index('spack isolate --self')
+    assert 'patches:${spack_patches_applied:- []}' in script
     for name, content in patches:
         assert 'diff --git a/lib/spack/' in content
         assert content in script
-        assert f'  - {name}' in script
+        assert f'  - {name}"' in script
 
 
 def test_spack_patches_apply_to_pinned_spack(tmp_path: Path):
@@ -92,6 +94,49 @@ def test_spack_patches_apply_to_pinned_spack(tmp_path: Path):
             text=True,
             check=True,
         )
+
+
+def test_rendered_patch_step_skips_applied_patch(tmp_path: Path):
+    # Run the rendered patch step twice against the files it touches at the
+    # pinned tag: the first run applies each patch, the second finds it
+    # already there and skips it.  Skipped when offline.
+    spack_path = tmp_path / 'spack'
+    tag = load_pins()['spack']['tag']
+    subprocess.run(['git', 'init', '-q', str(spack_path)], check=True)
+    for _name, content in spack_patches():
+        for rel in re.findall(r'^diff --git a/(\S+) b/', content, re.M):
+            url = f'https://raw.githubusercontent.com/spack/spack/{tag}/{rel}'
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+            except requests.RequestException:
+                pytest.skip('cannot download the pinned Spack source')
+            target = spack_path / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(response.text)
+
+    script = _render(load_pins())
+    start = script.index('spack_patches_applied=""')
+    end = script.index('# Package repositories')
+    step = (
+        f'set -e\nspack_path={spack_path}\n{script[start:end]}'
+        'echo "applied:${spack_patches_applied:- []}"\n'
+    )
+    names = [name for name, _ in spack_patches()]
+
+    first = subprocess.run(
+        ['bash', '-c', step], capture_output=True, text=True, check=True
+    )
+    for name in names:
+        assert f'  - {name}' in first.stdout
+    assert 'already contains' not in first.stdout
+
+    second = subprocess.run(
+        ['bash', '-c', step], capture_output=True, text=True, check=True
+    )
+    for name in names:
+        assert f'Spack already contains {name}' in second.stdout
+    assert 'applied: []' in second.stdout
 
 
 def test_render_with_commit_and_branch():
