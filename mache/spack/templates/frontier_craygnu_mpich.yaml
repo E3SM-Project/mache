@@ -29,7 +29,7 @@ spack:
       providers:
         mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
-        lapack: [cray-libsci@23.02.1.1]
+        lapack: [cray-libsci@25.09.0]
 {%- endif %}
     autoconf:
       externals:
@@ -158,16 +158,16 @@ spack:
       buildable: false
     libfabric:
       externals:
-      - spec: libfabric@1.22.0
+      - spec: libfabric@2.3.1
         modules:
         - libfabric/2.3.1
       buildable: false
 {%- if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@24.11.0
+      - spec: cray-libsci@25.09.0
         modules:
-        - cray-libsci/24.11.0
+        - cray-libsci/25.09.0
       buildable: false
 {%- endif %}
     hdf5:
