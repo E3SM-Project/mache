@@ -8,6 +8,7 @@ import pytest
 from mache.spack.activation import (
     activation_file_path,
     activation_source_line,
+    capture_activation,
     parse_env_before,
     parse_raw_activation,
     render_activation,
@@ -214,6 +215,47 @@ def test_sourcing_sh_prepends(tmp_path: Path):
     assert env['CMAKE_PREFIX_PATH'] == '/view:/old'
     assert env['SPACK_ENV'] == '/env'
     assert env['SPACK_ROOT'] == '/opt/spack'
+
+
+def test_capture_tolerates_failing_prologue(tmp_path: Path):
+    """A prologue command that fails harmlessly passes the build, so it must
+    not fail the capture either."""
+    spack_path = tmp_path / 'spack'
+    setup_env = spack_path / 'share' / 'spack' / 'setup-env.sh'
+    setup_env.parent.mkdir(parents=True)
+    setup_env.write_text(
+        'spack() { echo "export SPACK_ENV=/env;"; '
+        'echo "export PATH=/view/bin:$PATH;"; }\n'
+    )
+    prologue = tmp_path / 'prologue.sh'
+    prologue.write_text('false\n')
+
+    modifications = capture_activation(
+        spack_path=str(spack_path),
+        env_name='demo',
+        prologue_path=str(prologue),
+        work_dir=str(tmp_path),
+    )
+
+    assert ('set', 'SPACK_ENV', '/env') in modifications
+    assert ('prepend', 'PATH', ['/view/bin']) in modifications
+
+
+def test_capture_reports_spack_failure(tmp_path: Path):
+    spack_path = tmp_path / 'spack'
+    setup_env = spack_path / 'share' / 'spack' / 'setup-env.sh'
+    setup_env.parent.mkdir(parents=True)
+    setup_env.write_text('spack() { return 1; }\n')
+    prologue = tmp_path / 'prologue.sh'
+    prologue.write_text('')
+
+    with pytest.raises(RuntimeError, match='Capturing the activation'):
+        capture_activation(
+            spack_path=str(spack_path),
+            env_name='demo',
+            prologue_path=str(prologue),
+            work_dir=str(tmp_path),
+        )
 
 
 def test_write_activation_files(tmp_path: Path):

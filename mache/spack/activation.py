@@ -48,9 +48,11 @@ def capture_activation(
     env_before_path = os.path.join(work_dir, f'{env_name}.env_before')
     raw_path = os.path.join(work_dir, f'{env_name}.raw_activate.sh')
     setup_env = os.path.join(spack_path, 'share', 'spack', 'setup-env.sh')
+    # the prologue is sourced before `set -e`, as in the build script, so a
+    # module command that returns non-zero harmlessly does not fail here
     commands = (
-        'set -e\n'
         f'source {shlex.quote(prologue_path)}\n'
+        'set -e\n'
         f'source {shlex.quote(setup_env)}\n'
         f'env -0 > {shlex.quote(env_before_path)}\n'
         f'spack env activate --sh {shlex.quote(env_name)} '
