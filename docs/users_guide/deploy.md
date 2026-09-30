@@ -734,7 +734,10 @@ a proxy (Aurora and Polaris at ALCF):
   which needs git 2.31 or newer). ssh does not go through an http proxy, and
   a deploy only fetches from public repositories, so nothing is lost. The
   rewrite is confined to the deploy process and its children; it does not
-  touch the user's git configuration or affect pushes made elsewhere.
+  touch the user's git configuration or affect pushes made elsewhere. It
+  applies on every machine, so a private repository with an ssh URL cannot
+  be fetched during a deploy; git fails rather than prompting for
+  credentials.
 
 ## The command-line contract
 
