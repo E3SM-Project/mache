@@ -120,6 +120,23 @@ def test_rewrite_unset_and_lost_elements(caplog):
     assert 'PATH' in caplog.text
 
 
+def test_rewrite_python_and_suffix_paths():
+    # PYTHONPATH is prepended to even when it was unset before activation;
+    # an unlisted variable is prepended to when its old value is a suffix
+    raw = [
+        ('export', 'PYTHONPATH', '/view/lib/python3.11/site-packages'),
+        ('export', 'MY_PLUGIN_PATH', '/view/plugins:/old/plugins'),
+        ('export', 'MY_SETTING', '/view/share:x'),
+    ]
+    env_before = {'MY_PLUGIN_PATH': '/old/plugins', 'MY_SETTING': 'y'}
+    modifications = rewrite_modifications(raw, env_before)
+    assert modifications == [
+        ('prepend', 'PYTHONPATH', ['/view/lib/python3.11/site-packages']),
+        ('prepend', 'MY_PLUGIN_PATH', ['/view/plugins']),
+        ('set', 'MY_SETTING', '/view/share:x'),
+    ]
+
+
 def test_rewrite_normalized_old_elements(caplog):
     # spack runs normpath over every element of a path-like variable, so an
     # empty MANPATH element from the capturing shell comes back as '.' and a

@@ -684,7 +684,9 @@ env -i bash -l -c '
 
 - `alias` lines are dropped.
 - For a variable in `PATH_LIKE_ENV_VARS` (already defined in
-  `mache/spack/shared.py`), the new value is split on `:` and every element
+  `mache/spack/shared.py`), or one of the extension paths Spack sets such as
+  `PYTHONPATH` and `PERL5LIB`, or any variable whose new value ends with its
+  value before activation, the new value is split on `:` and every element
   not present in the `env_before` value is kept, in order, as `X`. The
   snippet prepends `X`:
 

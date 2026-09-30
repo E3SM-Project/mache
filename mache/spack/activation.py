@@ -6,6 +6,21 @@ import subprocess
 from mache.spack.shared import PATH_LIKE_ENV_VARS
 from mache.version import __version__
 
+# Variables that Spack prepends to during activation, beyond the compiler
+# and loader paths in PATH_LIKE_ENV_VARS, e.g. for Python or Perl extensions
+# in the view.  A variable that is not listed is still treated as a prepend
+# if its activated value ends with its value before activation.
+ACTIVATION_PATH_VARS = PATH_LIKE_ENV_VARS | frozenset(
+    {
+        'PYTHONPATH',
+        'PERL5LIB',
+        'R_LIBS',
+        'CLASSPATH',
+        'XDG_DATA_DIRS',
+        'GI_TYPELIB_PATH',
+    }
+)
+
 #: How load scripts activate a Spack environment: ``captured`` sources a file
 #: written at build time; ``dynamic`` runs ``spack env activate``
 ACTIVATION_MODES = ('captured', 'dynamic')
@@ -147,9 +162,10 @@ def rewrite_modifications(raw, env_before):
     """
     Rewrite raw activation entries relative to the capturing shell.
 
-    A path-like variable (``PATH_LIKE_ENV_VARS``) becomes a prepend of the
-    elements that were not in its value before activation, in order; other
-    variables are set to their literal values.
+    A path-like variable (``ACTIVATION_PATH_VARS``, or any variable whose
+    activated value ends with its non-empty value before activation) becomes
+    a prepend of the elements that were not in its value before activation,
+    in order; other variables are set to their literal values.
 
     Parameters
     ----------
@@ -171,11 +187,11 @@ def rewrite_modifications(raw, env_before):
             modifications.append(entry)
             continue
         _, name, value = entry
-        if name not in PATH_LIKE_ENV_VARS:
+        old_value = env_before.get(name, '')
+        if not _is_path_like(name, value, old_value):
             modifications.append(('set', name, value))
             continue
 
-        old_value = env_before.get(name, '')
         old_elements = old_value.split(os.pathsep) if old_value else []
         new_elements = value.split(os.pathsep)
         if name == 'MANPATH' and new_elements and new_elements[-1] == '':
@@ -292,6 +308,13 @@ def activation_file_path(spack_path, env_name, shell):
 def activation_source_line(spack_path, env_name, shell):
     """The line a load script uses to source the captured activation."""
     return f'source {activation_file_path(spack_path, env_name, shell)}'
+
+
+def _is_path_like(name, value, old_value):
+    """Whether activation prepends to a variable rather than setting it."""
+    if name in ACTIVATION_PATH_VARS:
+        return True
+    return bool(old_value) and value.endswith(f'{os.pathsep}{old_value}')
 
 
 def _render_modification(modification, shell):
