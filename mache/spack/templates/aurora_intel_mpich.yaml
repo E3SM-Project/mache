@@ -1,4 +1,4 @@
-{%- set compiler = "intel-oneapi-compilers@2025.3.1" %}
+{%- set compiler = "intel-oneapi-compilers@2026.1.0" %}
 {%- set mpi = "mpich@5.0.0" %}
 
 spack:
@@ -100,9 +100,12 @@ spack:
     intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
+        # TODO: confirm the oneapi prefix and the compiler paths below for
+        # the 2026.1.0 release; they may move to a new /opt/aurora/<release>
+        # directory.
         prefix: /opt/aurora/26.26.0/oneapi
         modules:
-        - oneapi/release/2025.3.1
+        - oneapi/release/2026.1.0
         extra_attributes:
           compilers:
             c: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/icx
