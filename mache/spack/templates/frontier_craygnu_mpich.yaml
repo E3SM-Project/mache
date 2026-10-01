@@ -1,5 +1,5 @@
-{%- set compiler = "gcc@13.2" %}
-{%- set mpi = "cray-mpich@8.1.31" %}
+{%- set compiler = "gcc@14.2" %}
+{%- set mpi = "cray-mpich@9.0.1" %}
 spack:
   specs:
   - {{ mpi }}
@@ -29,7 +29,7 @@ spack:
       providers:
         mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
-        lapack: [cray-libsci@23.02.1.1]
+        lapack: [cray-libsci@25.09.0]
 {%- endif %}
     autoconf:
       externals:
@@ -127,11 +127,11 @@ spack:
       - spec: {{ compiler }}
         modules:
         - Core/25.03
-        - PrgEnv-gnu
+        - PrgEnv-gnu/8.6.0
         - cpe/25.09
-        - libunwind
+        - libunwind/1.8.3
         - gcc-native/14.2
-        - craype/2.7.33
+        - craype/2.7.35
         - libfabric/2.3.1
         extra_attributes:
           # this needs to be here for gcc because the gcc pacakge looks here
@@ -140,27 +140,34 @@ spack:
             c: cc
             cxx: CC
             fortran: ftn
+          environment:
+            prepend_path:
+              # Spack clears LD_LIBRARY_PATH for builds and the
+              # libfabric module is already loaded, so reloading it as
+              # an external module restores nothing.  The Cray wrappers
+              # link MPI into every executable, so the linker needs it.
+              LD_LIBRARY_PATH: "/opt/cray/libfabric/2.3.1/lib64"
       buildable: false
     cray-mpich:
       externals:
       - spec: {{ mpi }}
         modules:
         - libfabric/2.3.1
-        - libunwind
-        - cray-mpich/8.1.31
+        - libunwind/1.8.3
+        - cray-mpich/9.0.1
       buildable: false
     libfabric:
       externals:
-      - spec: libfabric@1.22.0
+      - spec: libfabric@2.3.1
         modules:
         - libfabric/2.3.1
       buildable: false
 {%- if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@24.11.0
+      - spec: cray-libsci@25.09.0
         modules:
-        - cray-libsci/24.11.0
+        - cray-libsci/25.09.0
       buildable: false
 {%- endif %}
     hdf5:
