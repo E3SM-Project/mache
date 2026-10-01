@@ -19,6 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Design Document: Spack 1.x in mache" href="spack_v1.html" />
+    <link rel="prev" title="Design Document: mache.deploy" href="mache_deploy.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
 </head>
@@ -66,8 +68,48 @@
 <li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Design Document: parallel placement</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background-what-was-measured">Background: what was measured</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-express-placement-without-machine-specific-knowledge">Requirement: Express placement without machine-specific knowledge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-isolation-enforced-by-the-batch-system">Requirement: Isolation enforced by the batch system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-support-both-eras-of-slurm">Requirement: Support both eras of Slurm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-support-pbs-with-pals">Requirement: Support PBS with PALS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-gpus-as-a-per-launch-total">Requirement: GPUs as a per-launch total</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-describe-how-much-memory-a-node-has">Requirement: Describe how much memory a node has</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-placement-says-where-not-how-much-memory">Requirement: A placement says where, not how much memory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-a-memory-cap-is-stated-separately-and-only-on-purpose">Requirement: A memory cap is stated separately, and only on purpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-report-what-the-machine-supports">Requirement: Report what the machine supports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-existing-behavior-unchanged">Requirement: Existing behavior unchanged</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design">Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-placement-description">The placement description</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#correction-sep-8-2026-cores-are-per-node">Correction, Sep 8, 2026: cores are per node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#addition-sep-21-2026-which-ids-are-cores">Addition, Sep 21, 2026: which ids are cores</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#rendering-per-system">Rendering per system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-machine-s-memory">A machine’s memory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-memory-cap-on-a-launch">A memory cap on a launch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-first-values-will-be-estimates-and-must-be-corrected">The first values will be estimates, and must be corrected</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#capability-detection">Capability detection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation">Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-construction">Command construction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#behavior-on-real-machines">Behavior on real machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-validation-found-machine-by-machine">What validation found, machine by machine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-still-open">What is still open</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -826,7 +868,10 @@ not actually ask the question.</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mache_deploy.html" class="btn btn-neutral float-left" title="Design Document: mache.deploy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spack_v1.html" class="btn btn-neutral float-right" title="Design Document: Spack 1.x in mache" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

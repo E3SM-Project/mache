@@ -73,6 +73,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#phase-2-bootstrap">Phase 2: bootstrap</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phase-3-mache-deploy-run">Phase 3: <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#where-the-pixi-package-cache-goes">Where the pixi package cache goes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-on-a-compute-node">Deploying on a compute node</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#the-command-line-contract">The command-line contract</a><ul>
@@ -118,6 +119,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -357,9 +360,21 @@ without making the deployed environment contents group-writable.</p></li>
 management.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.spack_path</span></code>: required when Spack support is enabled and no hook or
 CLI override provides it, unless the user disables Spack for that run with
-<code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">--no-spack</span></code>. Use a new path for each major <code class="docutils literal notranslate"><span class="pre">mache</span></code> release: <code class="docutils literal notranslate"><span class="pre">mache</span></code>
+clones Spack there and refuses a checkout of Spack 0.x.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.exclude_packages</span></code>: optional list of machine-provided Spack packages
 that the target software wants Spack to build instead.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.pins</span></code>: optional overrides for the Spack, <code class="docutils literal notranslate"><span class="pre">spack-packages</span></code> and
+<code class="docutils literal notranslate"><span class="pre">e3sm-spack-packages</span></code> sources pinned by the <code class="docutils literal notranslate"><span class="pre">mache</span></code> release, each a <code class="docutils literal notranslate"><span class="pre">tag</span></code>,
+<code class="docutils literal notranslate"><span class="pre">commit</span></code> or <code class="docutils literal notranslate"><span class="pre">branch</span></code> per repository (see
+<a class="reference internal" href="spack/build.html#spack-sources-and-version-pins"><span class="std std-ref">Spack sources and version pins</span></a>).
+A <code class="docutils literal notranslate"><span class="pre">pre_spack</span></code> hook can set <code class="docutils literal notranslate"><span class="pre">ctx.runtime['spack']['pins']</span></code> the same way, and
+<code class="docutils literal notranslate"><span class="pre">--spack-pins</span> <span class="pre">&lt;file&gt;</span></code> on the command line takes precedence over both.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.activation</span></code>: <code class="docutils literal notranslate"><span class="pre">captured</span></code> (default) makes load scripts source an
+<code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> captured after the build; <code class="docutils literal notranslate"><span class="pre">dynamic</span></code> makes them run
+<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack.build_jobs</span></code>: optional number of parallel build jobs for
+<code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">-j</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jigsaw.enabled</span></code>: optional.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hooks</span></code>: optional and disabled unless explicitly configured.</p></li>
 </ul>
@@ -600,7 +615,9 @@ them:</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">deploy/spack/&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.yaml</span></code></dt><dd><p>Optional per-toolchain Spack environment template overrides used when a
 target repository needs a custom environment skeleton for one machine or
-toolchain combination.</p>
+toolchain combination. They follow the same Spack 1.x layout as the
+templates in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> (see
+<a class="reference internal" href="../developers_guide/spack.html"><span class="std std-doc">Adding Spack Support for a New Machine</span></a>).</p>
 </dd>
 </dl>
 </section>
@@ -776,6 +793,30 @@ goes to <code class="docutils literal notranslate"><span class="pre">$SCRATCH/pi
 left to pixi.</p>
 <p>Set <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> before running <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> or sourcing a load script
 to use a different location.</p>
+</section>
+<section id="deploying-on-a-compute-node">
+<h3>Deploying on a compute node<a class="headerlink" href="#deploying-on-a-compute-node" title="Link to this heading"></a></h3>
+<p>A deploy can run inside a batch job, which is how nightly regression
+testing works on machines whose login nodes are too small to build on. Two
+things make that work on compute nodes that reach the internet only through
+a proxy (Aurora and Polaris at ALCF):</p>
+<ul class="simple">
+<li><p>The job script exports the site’s proxy variables (<code class="docutils literal notranslate"><span class="pre">HTTP_PROXY</span></code>,
+<code class="docutils literal notranslate"><span class="pre">HTTPS_PROXY</span></code> and their lowercase forms). Pixi, pip and the Spack build
+script all honour them; the Spack build script re-exports them inside its
+fresh login shell.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> makes every git command fetch GitHub over https for the
+rest of the deploy, whatever the URL in a <code class="docutils literal notranslate"><span class="pre">.gitmodules</span></code> or remote says
+(<code class="docutils literal notranslate"><span class="pre">git&#64;github.com:</span></code> and <code class="docutils literal notranslate"><span class="pre">ssh://git&#64;github.com/</span></code> are rewritten to
+<code class="docutils literal notranslate"><span class="pre">https://github.com/</span></code> through git’s environment-scoped configuration,
+which needs git 2.31 or newer). ssh does not go through an http proxy, and
+a deploy only fetches from public repositories, so nothing is lost. The
+rewrite is confined to the deploy process and its children; it does not
+touch the user’s git configuration or affect pushes made elsewhere. It
+applies on every machine, so a private repository with an ssh URL cannot
+be fetched during a deploy; git fails rather than prompting for
+credentials.</p></li>
+</ul>
 </section>
 </section>
 <section id="the-command-line-contract">

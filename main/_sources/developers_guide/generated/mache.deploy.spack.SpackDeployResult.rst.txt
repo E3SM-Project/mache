@@ -23,6 +23,7 @@
 
    .. autosummary::
    
+      ~SpackDeployResult.load_activation
       ~SpackDeployResult.compiler
       ~SpackDeployResult.mpi
       ~SpackDeployResult.env_name

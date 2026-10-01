@@ -1,0 +1,6 @@
+﻿mache.spack.pins.render\_repos\_yaml
+====================================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: render_repos_yaml

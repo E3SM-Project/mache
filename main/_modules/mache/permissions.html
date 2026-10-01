@@ -67,6 +67,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -170,7 +172,10 @@
     <span class="n">mask</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXU</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXG</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXO</span>
 
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Updating file permissions (recursively) for: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">recursive</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Updating file permissions (recursively) for: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Updating file permissions for: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
 
         <span class="c1"># start by updating the top level path (file or directory)</span>
         <span class="n">_update</span><span class="p">(</span>

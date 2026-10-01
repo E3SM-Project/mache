@@ -67,6 +67,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -100,36 +102,58 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">configparser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Template</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_load</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_call</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.deploy.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeployContext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.activation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ACTIVATION_MODES</span><span class="p">,</span>
+    <span class="n">activation_file_path</span><span class="p">,</span>
+    <span class="n">capture_activation</span><span class="p">,</span>
+    <span class="n">write_activation_files</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.install</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">prologue_path</span><span class="p">,</span>
+    <span class="n">render_install_script</span><span class="p">,</span>
+    <span class="n">write_prologue</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.pins</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_pins</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.script</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_spack_script</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_yaml_data</span><span class="p">,</span>
     <span class="n">normalize_excluded_packages</span><span class="p">,</span>
     <span class="n">resolve_e3sm_hdf5_netcdf</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">mache.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
 
 
 <div class="viewcode-block" id="SpackDeployResult">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.spack.SpackDeployResult.html#mache.deploy.spack.SpackDeployResult">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SpackDeployResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Result of deploying a Spack environment for one toolchain pair."""</span>
+<span class="w">    </span><span class="sd">"""Result of deploying a Spack environment for one toolchain pair.</span>
+
+<span class="sd">    ``activation`` is always the dynamic form (``source setup-env.sh`` plus</span>
+<span class="sd">    ``spack env activate``), which hooks can run before the captured</span>
+<span class="sd">    activation exists.  ``load_activation`` is what the generated load</span>
+<span class="sd">    scripts use: a ``source`` of the captured ``activate.sh`` when</span>
+<span class="sd">    ``spack.activation`` is ``captured`` (the default), otherwise the same as</span>
+<span class="sd">    ``activation``.</span>
+<span class="sd">    """</span>
 
     <span class="n">compiler</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">mpi</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">env_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">spack_path</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">view_path</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">load_activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">''</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_activation</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'load_activation'</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">)</span></div>
 
 
 
@@ -314,6 +338,8 @@
         <span class="n">mirror</span><span class="o">=</span><span class="n">_normalize_optional_token</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'mirror'</span><span class="p">)),</span>
         <span class="n">custom_spack</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'custom_spack'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">),</span>
         <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+        <span class="n">pins</span><span class="o">=</span><span class="n">_load_spack_pins</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">),</span>
+        <span class="n">build_jobs</span><span class="o">=</span><span class="n">_get_build_jobs</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">),</span>
         <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
     <span class="p">)</span>
@@ -452,6 +478,9 @@
         <span class="n">mirror</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">custom_spack</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'custom_spack'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="n">pins</span> <span class="o">=</span> <span class="n">_load_spack_pins</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">build_jobs</span> <span class="o">=</span> <span class="n">_get_build_jobs</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">)</span>
+    <span class="n">activation_mode</span> <span class="o">=</span> <span class="n">get_spack_activation_mode</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">)</span>
 
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SpackDeployResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -489,44 +518,83 @@
             <span class="n">mirror</span><span class="o">=</span><span class="n">mirror</span><span class="p">,</span>
             <span class="n">custom_spack</span><span class="o">=</span><span class="n">custom_spack</span><span class="p">,</span>
             <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+            <span class="n">pins</span><span class="o">=</span><span class="n">pins</span><span class="p">,</span>
+            <span class="n">build_jobs</span><span class="o">=</span><span class="n">build_jobs</span><span class="p">,</span>
             <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
             <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">view_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">spack_path</span><span class="p">,</span>
-            <span class="s1">'var'</span><span class="p">,</span>
-            <span class="s1">'spack'</span><span class="p">,</span>
-            <span class="s1">'environments'</span><span class="p">,</span>
-            <span class="n">env_name</span><span class="p">,</span>
-            <span class="s1">'.spack-env'</span><span class="p">,</span>
-            <span class="s1">'view'</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">activation</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
-            <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
-            <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
-            <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
-            <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-            <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>
-            <span class="n">machine</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
-            <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
-            <span class="n">load_spack_env</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">SpackDeployResult</span><span class="p">(</span>
+            <span class="n">_make_spack_deploy_result</span><span class="p">(</span>
+                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+                <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
+                <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
                 <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
                 <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-                <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
-                <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
-                <span class="n">view_path</span><span class="o">=</span><span class="n">view_path</span><span class="p">,</span>
-                <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+                <span class="n">activation_mode</span><span class="o">=</span><span class="n">activation_mode</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="capture_spack_activations">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.spack.capture_spack_activations.html#mache.deploy.spack.capture_spack_activations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">capture_spack_activations</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">,</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SpackDeployResult</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Capture the activation of each deployed library environment.</span>
+
+<span class="sd">    This runs after the ``post_spack`` hooks, so changes a hook makes to the</span>
+<span class="sd">    environment (for example to ``modules:prefix_inspections``) are</span>
+<span class="sd">    reflected.  It writes ``activate.sh`` and ``activate.csh`` into each</span>
+<span class="sd">    environment directory; ``SpackDeployResult.load_activation`` already</span>
+<span class="sd">    sources them.  Nothing happens when ``spack.activation`` is ``dynamic``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">get_effective_spack_config</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">get_spack_activation_mode</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">'captured'</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">work</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'spack'</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Capturing activation of Spack environment </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="si">}</span><span class="s1">'</span>
+        <span class="p">)</span>
+        <span class="n">modifications</span> <span class="o">=</span> <span class="n">capture_activation</span><span class="p">(</span>
+            <span class="n">spack_path</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">spack_path</span><span class="p">,</span>
+            <span class="n">env_name</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="p">,</span>
+            <span class="n">prologue_path</span><span class="o">=</span><span class="n">prologue_path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">work</span><span class="p">),</span> <span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="p">),</span>
+            <span class="n">work_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">work</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">write_activation_files</span><span class="p">(</span>
+            <span class="n">spack_path</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">spack_path</span><span class="p">,</span>
+            <span class="n">env_name</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="p">,</span>
+            <span class="n">modifications</span><span class="o">=</span><span class="n">modifications</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_spack_activation_mode">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.deploy.spack.get_spack_activation_mode.html#mache.deploy.spack.get_spack_activation_mode">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_spack_activation_mode</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the effective ``spack.activation`` setting."""</span>
+
+    <span class="c1"># not _normalize_optional_token(): "dynamic" is a real value here</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'activation'</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">''</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">'none'</span><span class="p">,</span> <span class="s1">'null'</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">'captured'</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ACTIVATION_MODES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'spack.activation must be one of </span><span class="si">{</span><span class="n">ACTIVATION_MODES</span><span class="si">}</span><span class="s1">, '</span>
+            <span class="sa">f</span><span class="s1">'got </span><span class="si">{</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"activation"</span><span class="p">)</span><span class="si">!r}</span><span class="s1">'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mode</span></div>
 
 
 
@@ -580,42 +648,27 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">env_name_prefix</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">env_name_prefix</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'spack.env_name_prefix must be a non-empty token'</span><span class="p">)</span>
 
+    <span class="n">activation_mode</span> <span class="o">=</span> <span class="n">get_spack_activation_mode</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">)</span>
+
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SpackDeployResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">mpi</span> <span class="ow">in</span> <span class="n">toolchain_pairs</span><span class="p">:</span>
         <span class="n">env_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name_prefix</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">compiler</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">mpi</span><span class="si">}</span><span class="s1">'</span>
         <span class="n">_ensure_spack_env_exists</span><span class="p">(</span><span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">)</span>
-
-        <span class="n">view_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">spack_path</span><span class="p">,</span>
-            <span class="s1">'var'</span><span class="p">,</span>
-            <span class="s1">'spack'</span><span class="p">,</span>
-            <span class="s1">'environments'</span><span class="p">,</span>
-            <span class="n">env_name</span><span class="p">,</span>
-            <span class="s1">'.spack-env'</span><span class="p">,</span>
-            <span class="s1">'view'</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">activation</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
-            <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
-            <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
-            <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
-            <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-            <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>
-            <span class="n">machine</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
-            <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
-            <span class="n">load_spack_env</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">activation_mode</span> <span class="o">==</span> <span class="s1">'captured'</span><span class="p">:</span>
+            <span class="n">_ensure_spack_activation_exists</span><span class="p">(</span>
+                <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span>
+            <span class="p">)</span>
 
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">SpackDeployResult</span><span class="p">(</span>
+            <span class="n">_make_spack_deploy_result</span><span class="p">(</span>
+                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+                <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
+                <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
                 <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
                 <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
-                <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
-                <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
-                <span class="n">view_path</span><span class="o">=</span><span class="n">view_path</span><span class="p">,</span>
-                <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span>
+                <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+                <span class="n">activation_mode</span><span class="o">=</span><span class="n">activation_mode</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -702,6 +755,98 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_spack_deploy_result</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">,</span>
+    <span class="n">spack_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">env_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">compiler</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">mpi</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">activation_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpackDeployResult</span><span class="p">:</span>
+    <span class="n">view_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">spack_path</span><span class="p">,</span>
+        <span class="s1">'var'</span><span class="p">,</span>
+        <span class="s1">'spack'</span><span class="p">,</span>
+        <span class="s1">'environments'</span><span class="p">,</span>
+        <span class="n">env_name</span><span class="p">,</span>
+        <span class="s1">'.spack-env'</span><span class="p">,</span>
+        <span class="s1">'view'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">activations</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">ACTIVATION_MODES</span><span class="p">:</span>
+        <span class="n">activations</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
+            <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
+            <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
+            <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+            <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+            <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>
+            <span class="n">machine</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">machine</span><span class="p">,</span>
+            <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+            <span class="n">load_spack_env</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">SpackDeployResult</span><span class="p">(</span>
+        <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+        <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+        <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
+        <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
+        <span class="n">view_path</span><span class="o">=</span><span class="n">view_path</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="n">activations</span><span class="p">[</span><span class="s1">'dynamic'</span><span class="p">],</span>
+        <span class="n">load_activation</span><span class="o">=</span><span class="n">activations</span><span class="p">[</span><span class="n">activation_mode</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_spack_pins</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">DeployContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the pinned Spack sources with overrides, lowest precedence first.</span>
+
+<span class="sd">    Precedence, highest first: ``--spack-pins &lt;file&gt;``, then</span>
+<span class="sd">    ``ctx.runtime['spack']['pins']`` from a hook, then ``spack.pins`` in</span>
+<span class="sd">    ``deploy/config.yaml.j2``, then the ``pins.yaml`` packaged with mache.</span>
+<span class="sd">    """</span>
+
+    <span class="n">overrides</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'spack'</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pins'</span><span class="p">):</span>
+        <span class="n">overrides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">[</span><span class="s1">'pins'</span><span class="p">])</span>
+
+    <span class="n">rt_spack_cfg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'spack'</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rt_spack_cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rt_spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pins'</span><span class="p">):</span>
+        <span class="n">overrides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rt_spack_cfg</span><span class="p">[</span><span class="s1">'pins'</span><span class="p">])</span>
+
+    <span class="n">cli_pins</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s1">'spack_pins'</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cli_pins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">overrides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">cli_pins</span><span class="p">)))</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">load_pins</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_build_jobs</span><span class="p">(</span><span class="n">spack_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``spack.build_jobs`` (for ``spack install -j``) if set."""</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">_normalize_optional_token</span><span class="p">(</span><span class="n">spack_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'build_jobs'</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">build_jobs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'spack.build_jobs must be a positive integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s1">'</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">if</span> <span class="n">build_jobs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'spack.build_jobs must be a positive integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s1">'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_jobs</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_optional_token</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Normalize optional config/runtime values.</span>
 
@@ -762,6 +907,17 @@
             <span class="s1">'pass --no-spack.'</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">spack_path</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_spack_activation_exists</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">env_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">activation_file_path</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="s1">'sh'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Captured activation not found at </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">. The environment was '</span>
+            <span class="s1">'built by an older mache or its build did not finish; redeploy '</span>
+            <span class="s1">'it with --deploy-spack, or set spack.activation to "dynamic".'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_spack_env_exists</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">env_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -979,13 +1135,15 @@
     <span class="n">mirror</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">custom_spack</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">e3sm_hdf5_netcdf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">pins</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">build_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Create/update a spack checkout and build/install the environment."""</span>
+<span class="w">    </span><span class="sd">"""Check out the pinned Spack sources and build/install the environment."""</span>
 
     <span class="c1"># Render the module-load / env-var setup snippet (no spack activation)</span>
-    <span class="n">modules</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
+    <span class="n">prologue</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
         <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
         <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
         <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
@@ -996,39 +1154,33 @@
         <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
         <span class="n">load_spack_env</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="n">env_lines</span> <span class="o">=</span> <span class="n">modules</span>
     <span class="k">if</span> <span class="n">tmpdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">env_lines</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_lines</span><span class="si">}</span><span class="se">\n</span><span class="s1">export TMPDIR=</span><span class="si">{</span><span class="n">tmpdir</span><span class="si">}</span><span class="s1">'</span>
-
-    <span class="c1"># Use PEP 440 parsing to strip any pre/dev/post release tags and keep only</span>
-    <span class="c1"># the base release version.</span>
-    <span class="n">mache_version</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span><span class="o">.</span><span class="n">base_version</span>
-
-    <span class="c1"># Prefer https clone to avoid requiring GitHub SSH keys.</span>
-    <span class="n">spack_repo</span> <span class="o">=</span> <span class="s1">'https://github.com/E3SM-Project/spack.git'</span>
-    <span class="n">branch</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'spack_for_mache_</span><span class="si">{</span><span class="n">mache_version</span><span class="si">}</span><span class="s1">'</span>
-
-    <span class="n">template_text</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="n">__package__</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s1">'templates/spack_install.bash.j2'</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">script</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">template_text</span><span class="p">,</span> <span class="n">keep_trailing_newline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
-        <span class="n">env_lines</span><span class="o">=</span><span class="n">env_lines</span><span class="p">,</span>
-        <span class="n">spack_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">spack_path</span><span class="p">),</span>
-        <span class="n">branch</span><span class="o">=</span><span class="n">branch</span><span class="p">,</span>
-        <span class="n">branch_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">branch</span><span class="p">),</span>
-        <span class="n">spack_repo_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">spack_repo</span><span class="p">),</span>
-        <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
-        <span class="n">env_name_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">env_name</span><span class="p">),</span>
-        <span class="n">yaml_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">),</span>
-        <span class="n">mirror</span><span class="o">=</span><span class="n">mirror</span><span class="p">,</span>
-        <span class="n">custom_spack</span><span class="o">=</span><span class="n">custom_spack</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-    <span class="p">)</span>
+        <span class="c1"># expanded here because the directory is created here, not by the</span>
+        <span class="c1"># shell that exports it</span>
+        <span class="n">tmpdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="c1"># a TMPDIR that does not exist makes configure scripts fail and</span>
+        <span class="c1"># sends Spack's stages back to /tmp</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">prologue</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">prologue</span><span class="si">}</span><span class="se">\n</span><span class="s1">export TMPDIR=</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
 
     <span class="n">work</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">work_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'spack'</span>
     <span class="n">work</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># kept for the activation capture step, which runs after post_spack hooks</span>
+    <span class="n">write_prologue</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">work</span><span class="p">),</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">prologue</span><span class="p">)</span>
+
+    <span class="n">script</span> <span class="o">=</span> <span class="n">render_install_script</span><span class="p">(</span>
+        <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_path</span><span class="p">,</span>
+        <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
+        <span class="n">yaml_path</span><span class="o">=</span><span class="n">yaml_path</span><span class="p">,</span>
+        <span class="n">prologue</span><span class="o">=</span><span class="n">prologue</span><span class="p">,</span>
+        <span class="n">pins</span><span class="o">=</span><span class="n">pins</span><span class="p">,</span>
+        <span class="n">work_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">work</span><span class="p">),</span>
+        <span class="n">mirror</span><span class="o">=</span><span class="n">mirror</span><span class="p">,</span>
+        <span class="n">custom_spack</span><span class="o">=</span><span class="n">custom_spack</span><span class="p">,</span>
+        <span class="n">build_jobs</span><span class="o">=</span><span class="n">build_jobs</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">script_path</span> <span class="o">=</span> <span class="n">work</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'build_</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.bash'</span>
     <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
 

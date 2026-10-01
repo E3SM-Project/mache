@@ -87,6 +87,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -219,8 +221,11 @@ That file is target-owned and is not generated from a package template.</p>
 (toolchain-specific form:
 <code class="docutils literal notranslate"><span class="pre">load_&lt;software&gt;_&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.sh</span></code>).</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code></dt><dd><p>Package-owned template used by <code class="docutils literal notranslate"><span class="pre">spack.py</span></code> to create a temporary Spack build
-script under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/spack/</span></code>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">mache/spack/templates/spack_install.bash.j2</span></code></dt><dd><p>Template shared with <code class="docutils literal notranslate"><span class="pre">mache.spack.make_spack_env</span></code>, rendered by
+<code class="docutils literal notranslate"><span class="pre">mache.spack.install</span></code> into a Spack build script under <code class="docutils literal notranslate"><span class="pre">deploy_tmp/spack/</span></code>.
+It checks out the sources pinned in <code class="docutils literal notranslate"><span class="pre">mache/spack/pins.yaml</span></code>, writes the
+instance’s <code class="docutils literal notranslate"><span class="pre">repos.yaml</span></code>, isolates the instance and installs the
+environment.</p>
 </dd>
 </dl>
 </section>
@@ -349,6 +354,13 @@ for reuse or external understanding:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.spack.SpackDeployResult</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mache.deploy.spack.SpackSoftwareEnvResult</span></code></p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">SpackDeployResult.activation</span></code>, which <code class="docutils literal notranslate"><span class="pre">post_spack</span></code> hooks receive as
+<code class="docutils literal notranslate"><span class="pre">ctx.runtime['spack']['results'][...]['activation']</span></code>, is always the dynamic
+form (<code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">setup-env.sh</span></code> plus <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code>), because the captured
+activation is only written after those hooks have run.
+<code class="docutils literal notranslate"><span class="pre">SpackDeployResult.load_activation</span></code> is what the generated load scripts use:
+under the default <code class="docutils literal notranslate"><span class="pre">spack.activation:</span> <span class="pre">captured</span></code> it sources the environment’s
+<code class="docutils literal notranslate"><span class="pre">activate.sh</span></code>.</p>
 <p>Whenever you add or remove a public class or function in <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code>, add
 it to the auto-generated API page and update this guide if its role affects
 template ownership or downstream behavior.</p>

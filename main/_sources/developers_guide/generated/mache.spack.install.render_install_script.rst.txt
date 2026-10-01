@@ -1,0 +1,6 @@
+﻿mache.spack.install.render\_install\_script
+===========================================
+
+.. currentmodule:: mache.spack.install
+
+.. autofunction:: render_install_script

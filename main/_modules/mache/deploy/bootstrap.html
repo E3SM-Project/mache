@@ -67,6 +67,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -138,6 +140,11 @@
     <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">012'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">),</span>
     <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">134'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">),</span>
 <span class="p">)</span>
+<span class="c1"># ssh forms of GitHub URLs that a deploy fetches over https instead: compute</span>
+<span class="c1"># nodes on some machines (Aurora and Polaris at ALCF) reach GitHub only</span>
+<span class="c1"># through an http proxy, and downstream .gitmodules mostly use ssh.</span>
+<span class="n">GITHUB_SSH_URL_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'git@github.com:'</span><span class="p">,</span> <span class="s1">'ssh://git@github.com/'</span><span class="p">)</span>
+<span class="n">GITHUB_HTTPS_URL</span> <span class="o">=</span> <span class="s1">'https://github.com/'</span>
 <span class="n">BOOTSTRAP_SETUPTOOLS_SPEC</span> <span class="o">=</span> <span class="s1">'&gt;=60'</span>
 <span class="n">BOOTSTRAP_WHEEL_SPEC</span> <span class="o">=</span> <span class="s1">'*'</span>
 <span class="n">CONDA_FORGE_LABEL_ROOT</span> <span class="o">=</span> <span class="s1">'https://conda.anaconda.org/conda-forge/label'</span>
@@ -557,6 +564,48 @@
     <span class="p">)</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s1">'eval "$(</span><span class="si">{</span><span class="n">hook_cmd</span><span class="si">}</span><span class="s1">)" &amp;&amp;'</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">add_github_https_rewrites</span><span class="p">(</span><span class="n">environ</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Make every git command fetch GitHub over https for the rest of a deploy.</span>
+
+<span class="sd">    A deploy only fetches, and clones over https need no credentials for</span>
+<span class="sd">    public repositories, so ssh URLs (``git@github.com:`` and</span>
+<span class="sd">    ``ssh://git@github.com/``) are rewritten to ``https://github.com/``</span>
+<span class="sd">    through git's environment-scoped configuration (``GIT_CONFIG_COUNT``,</span>
+<span class="sd">    ``GIT_CONFIG_KEY_&lt;n&gt;``, ``GIT_CONFIG_VALUE_&lt;n&gt;``, git 2.31 and newer),</span>
+<span class="sd">    which every child process inherits: mache's own submodule updates as</span>
+<span class="sd">    well as those of downstream hooks.  Entries the caller already set are</span>
+<span class="sd">    kept.  ``GIT_TERMINAL_PROMPT=0`` is also set, unless the caller set it,</span>
+<span class="sd">    so a repository that does not exist (or is private) fails instead of</span>
+<span class="sd">    waiting at a credential prompt.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    environ : dict, optional</span>
+<span class="sd">        The environment to update (``os.environ`` by default)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    environ : dict</span>
+<span class="sd">        The updated environment</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">environ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'GIT_CONFIG_COUNT'</span><span class="p">,</span> <span class="s1">'0'</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">GITHUB_SSH_URL_PREFIXES</span><span class="p">:</span>
+        <span class="n">environ</span><span class="p">[</span><span class="sa">f</span><span class="s1">'GIT_CONFIG_KEY_</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'url.</span><span class="si">{</span><span class="n">GITHUB_HTTPS_URL</span><span class="si">}</span><span class="s1">.insteadOf'</span>
+        <span class="p">)</span>
+        <span class="n">environ</span><span class="p">[</span><span class="sa">f</span><span class="s1">'GIT_CONFIG_VALUE_</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">environ</span><span class="p">[</span><span class="s1">'GIT_CONFIG_COUNT'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+    <span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'GIT_TERMINAL_PROMPT'</span><span class="p">,</span> <span class="s1">'0'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">environ</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_pixi_env</span><span class="p">(</span><span class="n">base_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1471,8 +1520,12 @@
         <span class="p">)</span>
         <span class="k">return</span>
 
+    <span class="c1"># https rather than ssh: forks of mache are public, and compute nodes</span>
+    <span class="c1"># that reach GitHub only through an http proxy cannot open ssh.  A fork</span>
+    <span class="c1"># or branch that does not exist fails rather than prompting for</span>
+    <span class="c1"># credentials.</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">build_pixi_env</span><span class="p">()</span>
-    <span class="n">env</span><span class="p">[</span><span class="s1">'GIT_SSH_COMMAND'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'ssh -oBatchMode=yes'</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'GIT_TERMINAL_PROMPT'</span><span class="p">,</span> <span class="s1">'0'</span><span class="p">)</span>
     <span class="n">commands</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">'git'</span><span class="p">,</span>
         <span class="s1">'clone'</span><span class="p">,</span>
@@ -1481,7 +1534,7 @@
         <span class="s1">'--single-branch'</span><span class="p">,</span>
         <span class="s1">'-b'</span><span class="p">,</span>
         <span class="n">mache_branch</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s1">'git@github.com:</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'https://github.com/</span><span class="si">{</span><span class="n">mache_fork</span><span class="si">}</span><span class="s1">.git'</span><span class="p">,</span>
         <span class="s1">'mache'</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">check_call</span><span class="p">(</span>

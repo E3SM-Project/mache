@@ -1,0 +1,6 @@
+﻿mache.deploy.spack.get\_spack\_activation\_mode
+===============================================
+
+.. currentmodule:: mache.deploy.spack
+
+.. autofunction:: get_spack_activation_mode

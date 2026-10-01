@@ -67,6 +67,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -115,6 +117,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.bootstrap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_format_pixi_version_specifier</span><span class="p">,</span>
     <span class="n">_write_bootstrap_pixi_config</span><span class="p">,</span>
+    <span class="n">add_github_https_rewrites</span><span class="p">,</span>
     <span class="n">build_pixi_env</span><span class="p">,</span>
     <span class="n">build_pixi_shell_hook_prefix</span><span class="p">,</span>
     <span class="n">check_call</span><span class="p">,</span>
@@ -129,6 +132,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spack</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SpackDeployResult</span><span class="p">,</span>
     <span class="n">SpackSoftwareEnvResult</span><span class="p">,</span>
+    <span class="n">capture_spack_activations</span><span class="p">,</span>
     <span class="n">deploy_spack_envs</span><span class="p">,</span>
     <span class="n">deploy_spack_software_env</span><span class="p">,</span>
     <span class="n">get_effective_spack_config</span><span class="p">,</span>
@@ -158,6 +162,7 @@
 <span class="sd">        pixi path, pixi executable, toolchain values, and Spack options.</span>
 <span class="sd">    """</span>
     <span class="n">check_location</span><span class="p">()</span>
+    <span class="n">add_github_https_rewrites</span><span class="p">()</span>
 
     <span class="n">pins</span> <span class="o">=</span> <span class="n">_read_pins</span><span class="p">(</span><span class="s1">'deploy/pins.cfg'</span><span class="p">)</span>
     <span class="n">platform</span><span class="p">,</span> <span class="n">system</span> <span class="o">=</span> <span class="n">get_conda_platform_and_system</span><span class="p">()</span>
@@ -433,6 +438,8 @@
             <span class="s1">'env_name'</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">env_name</span><span class="p">,</span>
             <span class="s1">'spack_path'</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">spack_path</span><span class="p">,</span>
             <span class="s1">'view_path'</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">view_path</span><span class="p">,</span>
+            <span class="c1"># the dynamic form (setup-env + spack env activate), which hooks</span>
+            <span class="c1"># can source before the activation is captured below</span>
             <span class="s1">'activation'</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">spack_results</span>
@@ -450,6 +457,11 @@
         <span class="p">}</span>
 
     <span class="n">hook_registry</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span><span class="s1">'post_spack'</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+    <span class="c1"># after post_spack so that hooks' changes to the environments are</span>
+    <span class="c1"># reflected in the captured activation the load scripts source</span>
+    <span class="k">if</span> <span class="n">deploy_spack</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">spack_disabled_for_run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">):</span>
+        <span class="n">capture_spack_activations</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">results</span><span class="o">=</span><span class="n">spack_results</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">install_dev_software</span><span class="p">:</span>
         <span class="n">_install_software_in_dev_mode</span><span class="p">(</span>
@@ -1733,7 +1745,7 @@
     <span class="k">if</span> <span class="n">spack_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">spack_results</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">compiler</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">mpi</span><span class="p">)</span>
-            <span class="n">spack_snippet_by_pair</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">activation</span>
+            <span class="n">spack_snippet_by_pair</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">load_activation</span>
             <span class="n">spack_view_by_pair</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">view_path</span>
 
     <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>

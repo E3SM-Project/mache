@@ -117,6 +117,21 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.load_pins.html">mache.spack.pins.load_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.merge_pins.html">mache.spack.pins.merge_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.validate_pins.html">mache.spack.pins.validate_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.render_repos_yaml.html">mache.spack.pins.render_repos_yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.checkout_command.html">mache.spack.pins.checkout_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.pins.release_pins_are_valid.html">mache.spack.pins.release_pins_are_valid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.install.render_install_script.html">mache.spack.install.render_install_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.install.write_prologue.html">mache.spack.install.write_prologue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.capture_activation.html">mache.spack.activation.capture_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.parse_raw_activation.html">mache.spack.activation.parse_raw_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.parse_env_before.html">mache.spack.activation.parse_env_before</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.rewrite_modifications.html">mache.spack.activation.rewrite_modifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.render_activation.html">mache.spack.activation.render_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.write_activation_files.html">mache.spack.activation.write_activation_files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.spack.activation.activation_source_line.html">mache.spack.activation.activation_source_line</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sync">sync</a><ul>
@@ -168,6 +183,8 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.deploy_spack_software_env.html">mache.deploy.spack.deploy_spack_software_env</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_envs.html">mache.deploy.spack.load_existing_spack_envs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_software_env.html">mache.deploy.spack.load_existing_spack_software_env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.capture_spack_activations.html">mache.deploy.spack.capture_spack_activations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.deploy.spack.get_spack_activation_mode.html">mache.deploy.spack.get_spack_activation_mode</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#machineinfo">MachineInfo</a><ul>
@@ -184,6 +201,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -375,7 +394,7 @@ documentation.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.make_spack_env.html#mache.spack.make_spack_env" title="mache.spack.make_spack_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>(spack_path, env_name, ...[, ...])</p></td>
-<td><p>Clone the <code class="docutils literal notranslate"><span class="pre">spack_for_mache_{{version}}</span></code> branch from <a class="reference external" href="https://github.com/E3SM-Project/spack">E3SM's spack clone</a> and build a spack environment for the given machine, compiler and MPI library.</p></td>
+<td><p>Check out Spack and the package repositories pinned by this release of mache (see <code class="docutils literal notranslate"><span class="pre">mache/spack/pins.yaml</span></code>) and build a spack environment for the given machine, compiler and MPI library.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.get_spack_script.html#mache.spack.get_spack_script" title="mache.spack.get_spack_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>(spack_path, env_name, ...)</p></td>
 <td><p>Build a snippet of a load script for the given spack environment</p></td>
@@ -394,6 +413,63 @@ documentation.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.list_machine_compiler_mpilib.html#mache.spack.list_machine_compiler_mpilib" title="mache.spack.list_machine_compiler_mpilib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_machine_compiler_mpilib</span></code></a>()</p></td>
 <td><p>List tuples of machine, compiler, and MPI library parsed from the name of YAML files in the <cite>mache.spack.templates</cite> directory.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.pins.load_pins.html#mache.spack.pins.load_pins" title="mache.spack.pins.load_pins"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_pins</span></code></a>([overrides])</p></td>
+<td><p>Load the packaged <code class="docutils literal notranslate"><span class="pre">pins.yaml</span></code> and apply overrides.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.pins.merge_pins.html#mache.spack.pins.merge_pins" title="mache.spack.pins.merge_pins"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_pins</span></code></a>(base, override)</p></td>
+<td><p>Merge pin overrides into a base set of pins, per repository.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.pins.validate_pins.html#mache.spack.pins.validate_pins" title="mache.spack.pins.validate_pins"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_pins</span></code></a>(pins)</p></td>
+<td><p>Check that pins have the expected structure and one ref per repository.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.pins.render_repos_yaml.html#mache.spack.pins.render_repos_yaml" title="mache.spack.pins.render_repos_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_repos_yaml</span></code></a>(spack_path, pins)</p></td>
+<td><p>Render the <code class="docutils literal notranslate"><span class="pre">repos.yaml</span></code> for a Spack instance from pins.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.pins.checkout_command.html#mache.spack.pins.checkout_command" title="mache.spack.pins.checkout_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">checkout_command</span></code></a>(entry, dest)</p></td>
+<td><p>Bash commands that make <code class="docutils literal notranslate"><span class="pre">dest</span></code> a clean checkout of a pin entry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.pins.release_pins_are_valid.html#mache.spack.pins.release_pins_are_valid" title="mache.spack.pins.release_pins_are_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_pins_are_valid</span></code></a>(pins, version)</p></td>
+<td><p>Whether pins are acceptable for the given mache version.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.install.render_install_script.html#mache.spack.install.render_install_script" title="mache.spack.install.render_install_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_install_script</span></code></a>(*, spack_path, ...[, ...])</p></td>
+<td><p>Render the bash script that checks out Spack and builds an environment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.install.write_prologue.html#mache.spack.install.write_prologue" title="mache.spack.install.write_prologue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_prologue</span></code></a>(work_dir, env_name, prologue)</p></td>
+<td><p>Write the build prologue to <code class="docutils literal notranslate"><span class="pre">&lt;env_name&gt;.prologue.sh</span></code> in the work directory, for the activation capture step to source.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.activation.capture_activation.html#mache.spack.activation.capture_activation" title="mache.spack.activation.capture_activation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture_activation</span></code></a>(*, spack_path, env_name, ...)</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span> <span class="pre">--sh</span></code> for an environment in a fresh login shell and rewrite its output relative to that shell's environment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.activation.parse_raw_activation.html#mache.spack.activation.parse_raw_activation" title="mache.spack.activation.parse_raw_activation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_raw_activation</span></code></a>(text)</p></td>
+<td><p>Parse the output of <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span> <span class="pre">--sh</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.activation.parse_env_before.html#mache.spack.activation.parse_env_before" title="mache.spack.activation.parse_env_before"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_env_before</span></code></a>(data)</p></td>
+<td><p>Parse the NUL-separated output of <code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">-0</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.activation.rewrite_modifications.html#mache.spack.activation.rewrite_modifications" title="mache.spack.activation.rewrite_modifications"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rewrite_modifications</span></code></a>(raw, env_before)</p></td>
+<td><p>Rewrite raw activation entries relative to the capturing shell.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.activation.render_activation.html#mache.spack.activation.render_activation" title="mache.spack.activation.render_activation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_activation</span></code></a>(modifications, shell, ...)</p></td>
+<td><p>Render an activation snippet for a shell.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.spack.activation.write_activation_files.html#mache.spack.activation.write_activation_files" title="mache.spack.activation.write_activation_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_activation_files</span></code></a>(*, spack_path, ...)</p></td>
+<td><p>Write <code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">activate.csh</span></code> into the environment directory.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.spack.activation.activation_source_line.html#mache.spack.activation.activation_source_line" title="mache.spack.activation.activation_source_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">activation_source_line</span></code></a>(spack_path, env_name, ...)</p></td>
+<td><p>The line a load script uses to source the captured activation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -581,6 +657,12 @@ documentation.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.spack.load_existing_spack_software_env.html#mache.deploy.spack.load_existing_spack_software_env" title="mache.deploy.spack.load_existing_spack_software_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_existing_spack_software_env</span></code></a>(*, ctx)</p></td>
 <td><p>Load a pre-existing Spack software environment for load scripts.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.deploy.spack.capture_spack_activations.html#mache.deploy.spack.capture_spack_activations" title="mache.deploy.spack.capture_spack_activations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture_spack_activations</span></code></a>(*, ctx, results)</p></td>
+<td><p>Capture the activation of each deployed library environment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.deploy.spack.get_spack_activation_mode.html#mache.deploy.spack.get_spack_activation_mode" title="mache.deploy.spack.get_spack_activation_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spack_activation_mode</span></code></a>(spack_cfg)</p></td>
+<td><p>Return the effective <code class="docutils literal notranslate"><span class="pre">spack.activation</span></code> setting.</p></td>
 </tr>
 </tbody>
 </table>

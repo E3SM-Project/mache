@@ -19,6 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Design Document: parallel placement" href="parallel_placement.html" />
     <link rel="prev" title="mache.MachineInfo.get_qos_specs" href="../developers_guide/generated/mache.MachineInfo.get_qos_specs.html" />
     <link href="../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -108,6 +109,8 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -481,7 +484,6 @@ generated portion</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.yaml.j2</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hooks.py.j2</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">load.sh.j2</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code></p></li>
 </ul>
 <p>These templates include placeholders for:</p>
 <ul class="simple">
@@ -550,10 +552,11 @@ inside the bootstrap environment</p></li>
   ├── pixi.toml.j2.j2
   ├── spack.yaml.j2
   ├── hooks.py.j2
-  ├── load.sh.j2
-  └── spack_install.bash.j2
+  └── load.sh.j2
 </pre></div>
 </div>
+<p>The Spack build script template, <code class="docutils literal notranslate"><span class="pre">spack_install.bash.j2</span></code>, lives in
+<code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> because <code class="docutils literal notranslate"><span class="pre">mache.spack.make_spack_env</span></code> uses it too.</p>
 <p>Reusable JIGSAW build/install logic now lives outside <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> in:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mache/jigsaw/
 ├── __init__.py         # backend selection + build/install orchestration
@@ -610,6 +613,7 @@ into a shared, documented, and evolvable capability.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../developers_guide/generated/mache.MachineInfo.get_qos_specs.html" class="btn btn-neutral float-left" title="mache.MachineInfo.get_qos_specs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="parallel_placement.html" class="btn btn-neutral float-right" title="Design Document: parallel placement" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

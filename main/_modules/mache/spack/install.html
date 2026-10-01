@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.spack.install</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.spack.install</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.spack.install</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span> <span class="k">as</span> <span class="n">importlib_resources</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Template</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.pins</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">checkout_command</span><span class="p">,</span>
+    <span class="n">package_repo_clone_path</span><span class="p">,</span>
+    <span class="n">render_repos_yaml</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="c1"># Environment variables that the build script carries over from the calling</span>
+<span class="c1"># environment.  Compute nodes on some machines (Aurora and Polaris at ALCF)</span>
+<span class="c1"># reach the network only through a proxy that a job script sets with these.</span>
+<span class="c1"># The script runs in a fresh login shell, which drops them (`env -i`) and, on</span>
+<span class="c1"># SUSE, can unset them again from /etc/profile, so the script exports them</span>
+<span class="c1"># itself after the login profile has run.</span>
+<span class="n">PROXY_ENV_VARS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">'http_proxy'</span><span class="p">,</span>
+    <span class="s1">'https_proxy'</span><span class="p">,</span>
+    <span class="s1">'ftp_proxy'</span><span class="p">,</span>
+    <span class="s1">'no_proxy'</span><span class="p">,</span>
+    <span class="s1">'HTTP_PROXY'</span><span class="p">,</span>
+    <span class="s1">'HTTPS_PROXY'</span><span class="p">,</span>
+    <span class="s1">'FTP_PROXY'</span><span class="p">,</span>
+    <span class="s1">'NO_PROXY'</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">proxy_exports</span><span class="p">(</span><span class="n">environ</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Shell commands that export the proxy variables of the calling environment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    environ : dict, optional</span>
+<span class="sd">        The calling environment (``os.environ`` by default)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    exports : str</span>
+<span class="sd">        One ``export`` line per variable in :py:data:`PROXY_ENV_VARS` that is</span>
+<span class="sd">        set in ``environ``; empty when none is</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">environ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="k">return</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'export </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">environ</span><span class="p">[</span><span class="n">name</span><span class="p">])</span><span class="si">}</span><span class="s1">'</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">PROXY_ENV_VARS</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">environ</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="render_install_script">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.install.render_install_script.html#mache.spack.install.render_install_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_install_script</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">spack_path</span><span class="p">,</span>
+    <span class="n">env_name</span><span class="p">,</span>
+    <span class="n">yaml_path</span><span class="p">,</span>
+    <span class="n">prologue</span><span class="p">,</span>
+    <span class="n">pins</span><span class="p">,</span>
+    <span class="n">work_dir</span><span class="p">,</span>
+    <span class="n">mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">custom_spack</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span>
+    <span class="n">build_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">environ</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Render the bash script that checks out Spack and builds an environment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spack_path : str</span>
+<span class="sd">        The Spack checkout (``$SPACK_ROOT``), created if absent</span>
+
+<span class="sd">    env_name : str</span>
+<span class="sd">        The managed environment to (re)create</span>
+
+<span class="sd">    yaml_path : str</span>
+<span class="sd">        The rendered ``spack.yaml`` for the environment</span>
+
+<span class="sd">    prologue : str</span>
+<span class="sd">        Shell commands that load modules and set variables before Spack runs</span>
+
+<span class="sd">    pins : dict</span>
+<span class="sd">        Validated pins from :py:func:`mache.spack.pins.load_pins`</span>
+
+<span class="sd">    work_dir : str</span>
+<span class="sd">        Where ``spack.lock`` and ``provenance.yaml`` are copied after the</span>
+<span class="sd">        build</span>
+
+<span class="sd">    mirror : str, optional</span>
+<span class="sd">        A local Spack source mirror</span>
+
+<span class="sd">    custom_spack : str, optional</span>
+<span class="sd">        Spack commands to run after the environment is installed</span>
+
+<span class="sd">    build_jobs : int, optional</span>
+<span class="sd">        Passed to ``spack install -j``</span>
+
+<span class="sd">    environ : dict, optional</span>
+<span class="sd">        The calling environment (``os.environ`` by default); its proxy</span>
+<span class="sd">        variables are exported in the script, see :py:func:`proxy_exports`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    script : str</span>
+<span class="sd">        The rendered bash script</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">'mache.spack.templates'</span><span class="p">)</span>
+        <span class="o">/</span> <span class="s1">'spack_install.bash.j2'</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">keep_trailing_newline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">repo_checkouts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">repo_provenance</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">pins</span><span class="p">[</span><span class="s1">'repos'</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">clone_path</span> <span class="o">=</span> <span class="n">package_repo_clone_path</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">repo_checkouts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">checkout_command</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">clone_path</span><span class="p">)))</span>
+        <span class="n">repo_provenance</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">entry</span><span class="p">[</span><span class="s1">'git'</span><span class="p">],</span> <span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">clone_path</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+        <span class="n">mache_version</span><span class="o">=</span><span class="n">__version__</span><span class="p">,</span>
+        <span class="n">env_name</span><span class="o">=</span><span class="n">env_name</span><span class="p">,</span>
+        <span class="n">env_name_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">env_name</span><span class="p">),</span>
+        <span class="n">spack_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">spack_path</span><span class="p">),</span>
+        <span class="n">prologue</span><span class="o">=</span><span class="n">prologue</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+        <span class="n">proxy_exports</span><span class="o">=</span><span class="n">proxy_exports</span><span class="p">(</span><span class="n">environ</span><span class="p">),</span>
+        <span class="n">spack_checkout</span><span class="o">=</span><span class="n">checkout_command</span><span class="p">(</span><span class="n">pins</span><span class="p">[</span><span class="s1">'spack'</span><span class="p">],</span> <span class="n">spack_path</span><span class="p">),</span>
+        <span class="n">spack_patches</span><span class="o">=</span><span class="n">spack_patches</span><span class="p">(),</span>
+        <span class="n">spack_git</span><span class="o">=</span><span class="n">pins</span><span class="p">[</span><span class="s1">'spack'</span><span class="p">][</span><span class="s1">'git'</span><span class="p">],</span>
+        <span class="n">repo_checkouts</span><span class="o">=</span><span class="n">repo_checkouts</span><span class="p">,</span>
+        <span class="n">repo_names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pins</span><span class="p">[</span><span class="s1">'repos'</span><span class="p">]),</span>
+        <span class="n">repo_provenance</span><span class="o">=</span><span class="n">repo_provenance</span><span class="p">,</span>
+        <span class="n">repos_yaml</span><span class="o">=</span><span class="n">render_repos_yaml</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">pins</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span>
+        <span class="n">yaml_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">),</span>
+        <span class="n">lock_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.spack.lock'</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">provenance_path_q</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.provenance.yaml'</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">mirror</span><span class="o">=</span><span class="n">mirror</span><span class="p">,</span>
+        <span class="n">custom_spack</span><span class="o">=</span><span class="n">custom_spack</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+        <span class="n">build_jobs</span><span class="o">=</span><span class="n">build_jobs</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spack_patches</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    The patches mache applies to its pinned Spack checkout.</span>
+
+<span class="sd">    Each ``*.patch`` file in ``mache/spack/patches`` is a ``git apply``</span>
+<span class="sd">    patch against the pinned Spack tag, with a description above the diff</span>
+<span class="sd">    saying what it fixes and when it can be dropped.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    patches : list of tuple</span>
+<span class="sd">        ``(name, content)`` pairs in name order</span>
+<span class="sd">    """</span>
+    <span class="n">patches_dir</span> <span class="o">=</span> <span class="n">importlib_resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s1">'mache.spack.patches'</span><span class="p">)</span>
+    <span class="n">patches</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">patches_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'.patch'</span><span class="p">):</span>
+            <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">patches</span>
+
+
+<div class="viewcode-block" id="write_prologue">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.install.write_prologue.html#mache.spack.install.write_prologue">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_prologue</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">prologue</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Write the build prologue to ``&lt;env_name&gt;.prologue.sh`` in the work</span>
+<span class="sd">    directory, for the activation capture step to source.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    work_dir : str</span>
+<span class="sd">        The work directory</span>
+
+<span class="sd">    env_name : str</span>
+<span class="sd">        The environment the prologue belongs to</span>
+
+<span class="sd">    prologue : str</span>
+<span class="sd">        Shell commands that load modules and set variables before Spack runs</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        The path to the prologue</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">prologue_path</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">env_name</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">prologue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">prologue_path</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">env_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The path of the build prologue for an environment."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.prologue.sh'</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

@@ -63,6 +63,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding Spack Support for a New Machine</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#yaml-template-files">YAML Template Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#template-skeleton">Template skeleton</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#typical-external-packages">Typical External Packages</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#finding-library-paths">Finding Library Paths</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#marking-packages-as-non-buildable">Marking Packages as Non-Buildable</a></li>
@@ -75,6 +76,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#package-recipes">Package recipes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#patches-to-spack">Patches to Spack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -87,6 +90,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -144,6 +149,85 @@ template override when strictly necessary (see below).</p></li>
 <p>For example: <code class="docutils literal notranslate"><span class="pre">chicoma-cpu_gnu_mpich.yaml</span></code></p>
 <p>These files are Jinja2 templates, allowing conditional inclusion of packages
 (e.g., LAPACK) based on user options.</p>
+<section id="template-skeleton">
+<h3>Template skeleton<a class="headerlink" href="#template-skeleton" title="Link to this heading"></a></h3>
+<p>Templates use the Spack 1.x compiler model: the compiler is an external
+package with <code class="docutils literal notranslate"><span class="pre">extra_attributes.compilers</span></code>, and a toolchain named <code class="docutils literal notranslate"><span class="pre">mache</span></code>,
+required for every package, selects it for <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">cxx</span></code> and <code class="docutils literal notranslate"><span class="pre">fortran</span></code>. The
+compiler is not a root spec, and no spec carries <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code>. A minimal
+template:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- set compiler = "gcc@11.2.0" %</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- set mpi = "openmpi@4.1.6" %</span><span class="p p-Indicator">}</span>
+<span class="nt">spack</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">specs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">mpi</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"hdf5"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"netcdf-c"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"netcdf-fortran"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"parallel-netcdf"</span>
+<span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- for spec in specs %</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">spec</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- endfor %</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">concretizer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">unify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">toolchains</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mache</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="s">"%c={{</span><span class="nv"> </span><span class="s">compiler</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"%c"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="s">"%cxx={{</span><span class="nv"> </span><span class="s">compiler</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"%cxx"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="s">"%fortran={{</span><span class="nv"> </span><span class="s">compiler</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"%fortran"</span>
+<span class="w">  </span><span class="nt">packages</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">all</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">require</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"%mache"</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">providers</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">mpi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{{</span><span class="w"> </span><span class="nv">mpi</span><span class="w"> </span><span class="p p-Indicator">}}]</span>
+<span class="w">    </span><span class="nt">gcc</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">externals</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">compiler</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">        </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/gcc-11.2.0</span>
+<span class="w">        </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gcc/11.2.0</span>
+<span class="w">        </span><span class="nt">extra_attributes</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">compilers</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">c</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/gcc-11.2.0/bin/gcc</span>
+<span class="w">            </span><span class="nt">cxx</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/gcc-11.2.0/bin/g++</span>
+<span class="w">            </span><span class="nt">fortran</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/gcc-11.2.0/bin/gfortran</span>
+<span class="w">          </span><span class="c1"># optional, as in the old compilers: section</span>
+<span class="w">          </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">prepend_path</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">PKG_CONFIG_PATH</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/pkgconfig</span>
+<span class="w">      </span><span class="nt">buildable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">openmpi</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">externals</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">mpi</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">        </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/openmpi-4.1.6</span>
+<span class="w">        </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openmpi/4.1.6</span>
+<span class="w">      </span><span class="nt">buildable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="c1"># further externals: hdf5, netcdf-c, cmake, ...</span>
+</pre></div>
+</div>
+<p>Compiler package names follow <code class="docutils literal notranslate"><span class="pre">spack-packages</span></code>: <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, <code class="docutils literal notranslate"><span class="pre">nvhpc</span></code>, <code class="docutils literal notranslate"><span class="pre">cce</span></code> and
+<code class="docutils literal notranslate"><span class="pre">intel-oneapi-compilers</span></code> (for <code class="docutils literal notranslate"><span class="pre">icx</span></code>/<code class="docutils literal notranslate"><span class="pre">icpx</span></code>/<code class="docutils literal notranslate"><span class="pre">ifx</span></code>). On Cray systems the
+compiler paths can be the wrappers <code class="docutils literal notranslate"><span class="pre">cc</span></code>, <code class="docutils literal notranslate"><span class="pre">CC</span></code> and <code class="docutils literal notranslate"><span class="pre">ftn</span></code>. Every oneAPI
+external (<code class="docutils literal notranslate"><span class="pre">intel-oneapi-compilers</span></code>, <code class="docutils literal notranslate"><span class="pre">intel-oneapi-mkl</span></code>, …) needs an
+explicit <code class="docutils literal notranslate"><span class="pre">prefix:</span></code> that is the root of the oneAPI installation (the
+directory holding <code class="docutils literal notranslate"><span class="pre">compiler/&lt;version&gt;/</span></code> or <code class="docutils literal notranslate"><span class="pre">mkl/&lt;version&gt;/</span></code>); a prefix
+inferred from <code class="docutils literal notranslate"><span class="pre">modules:</span></code> points inside that component directory and the
+oneAPI build system then fails to find <code class="docutils literal notranslate"><span class="pre">env/vars.sh</span></code>. The Intel classic
+compilers (<code class="docutils literal notranslate"><span class="pre">icc</span></code>/<code class="docutils literal notranslate"><span class="pre">ifort</span></code>) have no package in any <code class="docutils literal notranslate"><span class="pre">spack-packages</span></code> release and
+are not supported.</p>
+<p>Do not list <code class="docutils literal notranslate"><span class="pre">gcc-runtime</span></code> as an external: Spack 1.x always builds it (from
+the <code class="docutils literal notranslate"><span class="pre">gcc</span></code> external) whenever anything else in the environment is built, so
+a <code class="docutils literal notranslate"><span class="pre">buildable:</span> <span class="pre">false</span></code> entry makes concretization fail. A template whose
+compiler is <code class="docutils literal notranslate"><span class="pre">intel-oneapi-compilers</span></code> still needs a <code class="docutils literal notranslate"><span class="pre">gcc</span></code> external, because
+<code class="docutils literal notranslate"><span class="pre">intel-oneapi-runtime</span></code> links against <code class="docutils literal notranslate"><span class="pre">gcc-runtime</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> rejects a rendered template that still has a top-level <code class="docutils literal notranslate"><span class="pre">compilers:</span></code>
+section or <code class="docutils literal notranslate"><span class="pre">packages:all:compiler</span></code>, so an old-style template or
+<code class="docutils literal notranslate"><span class="pre">deploy/spack/&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.yaml</span></code> override fails with a clear
+message before Spack sees it.</p>
 <p>Machine-provided HDF5/NetCDF packages should now be listed unconditionally in
 the YAML templates.  Downstream packages can opt out of them, or any other
 machine-provided external such as <code class="docutils literal notranslate"><span class="pre">cmake</span></code>, with <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>.  Mache
@@ -153,12 +237,13 @@ filters the rendered YAML after Jinja expansion and removes matching:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">spack.packages.&lt;name&gt;</span></code> external-package sections</p></li>
 <li><p>matching provider specs under <code class="docutils literal notranslate"><span class="pre">spack.packages.all.providers</span></code></p></li>
 </ul>
+</section>
 <section id="typical-external-packages">
 <h3>Typical External Packages<a class="headerlink" href="#typical-external-packages" title="Link to this heading"></a></h3>
 <p>On most HPC systems, the following packages are provided by the system and
 should be marked as <code class="docutils literal notranslate"><span class="pre">external</span></code> in the YAML:</p>
 <ul class="simple">
-<li><p>Compilers (e.g., <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, <code class="docutils literal notranslate"><span class="pre">intel</span></code>, <code class="docutils literal notranslate"><span class="pre">nvhpc</span></code>, <code class="docutils literal notranslate"><span class="pre">rocmcc</span></code>, <code class="docutils literal notranslate"><span class="pre">oneapi</span></code>)</p></li>
+<li><p>Compilers (e.g., <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, <code class="docutils literal notranslate"><span class="pre">intel-oneapi-compilers</span></code>, <code class="docutils literal notranslate"><span class="pre">nvhpc</span></code>, <code class="docutils literal notranslate"><span class="pre">cce</span></code>)</p></li>
 <li><p>MPI libraries (e.g., <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code>, <code class="docutils literal notranslate"><span class="pre">openmpi</span></code>, <code class="docutils literal notranslate"><span class="pre">mvapich2</span></code>, <code class="docutils literal notranslate"><span class="pre">intel-mpi</span></code>,
 <code class="docutils literal notranslate"><span class="pre">mpich</span></code>)</p></li>
 <li><p>BLAS/LAPACK libraries (e.g., <code class="docutils literal notranslate"><span class="pre">cray-libsci</span></code>, <code class="docutils literal notranslate"><span class="pre">intel-mkl</span></code>, <code class="docutils literal notranslate"><span class="pre">intel-oneapi-mkl</span></code>)</p></li>
@@ -196,9 +281,9 @@ should be marked as <code class="docutils literal notranslate"><span class="pre"
 <h3>Providers<a class="headerlink" href="#providers" title="Link to this heading"></a></h3>
 <p>Specify providers for <code class="docutils literal notranslate"><span class="pre">mpi</span></code> and <code class="docutils literal notranslate"><span class="pre">lapack</span></code> under the <code class="docutils literal notranslate"><span class="pre">all</span></code> section, e.g.:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">all</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">compiler</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gcc@13.2</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">require</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"%mache"</span><span class="p p-Indicator">]</span>
 <span class="w">  </span><span class="nt">providers</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">mpi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">cray-mpich@8.1.31%gcc@13.2</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">mpi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">cray-mpich@8.1.31</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">lapack</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">cray-libsci@24.11.0</span><span class="p p-Indicator">]</span>
 </pre></div>
 </div>
@@ -268,12 +353,41 @@ module names do not match Spack package names exactly.</p>
 <h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
 <p>After adding or modifying YAML templates (or an exceptional shell override):</p>
 <ol class="arabic simple">
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run</span> <span class="pre">pytest</span> <span class="pre">tests/test_spack_templates.py</span></code>, which renders every
+template and checks it against the Spack 1.x model.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code> or <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code> in <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> to generate and
 test the environment and load scripts.</p></li>
 <li><p>Confirm that the generated shell snippet includes the expected module loads
 from the CIME machine config and that Spack detects all external packages.</p></li>
-<li><p>Build and run a simple test application to verify the environment.</p></li>
+<li><p>Build and run a simple test application to verify the environment, and
+compare the captured <code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> in the environment directory with the
+output of <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span> <span class="pre">--sh</span> <span class="pre">&lt;env&gt;</span></code> run by hand.</p></li>
 </ol>
+</section>
+<section id="package-recipes">
+<h2>Package recipes<a class="headerlink" href="#package-recipes" title="Link to this heading"></a></h2>
+<p>Recipes that E3SM needs beyond the pinned <code class="docutils literal notranslate"><span class="pre">spack-packages</span></code> release live in
+<a class="reference external" href="https://github.com/E3SM-Project/e3sm-spack-packages">E3SM-Project/e3sm-spack-packages</a>,
+which <code class="docutils literal notranslate"><span class="pre">mache</span></code> registers ahead of <code class="docutils literal notranslate"><span class="pre">builtin</span></code>. Its README explains how packages
+subclass upstream recipes and how it is tagged. Bumping the Spack,
+<code class="docutils literal notranslate"><span class="pre">spack-packages</span></code> or <code class="docutils literal notranslate"><span class="pre">e3sm-spack-packages</span></code> pin is an ordinary pull request
+that edits <code class="docutils literal notranslate"><span class="pre">mache/spack/pins.yaml</span></code>; a release must pin tags only, which
+<code class="docutils literal notranslate"><span class="pre">tests/test_spack_pins.py</span></code> enforces for non-pre-release versions.</p>
+</section>
+<section id="patches-to-spack">
+<h2>Patches to Spack<a class="headerlink" href="#patches-to-spack" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache/spack/patches/*.patch</span></code> are <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">apply</span></code> patches that the build script
+applies to the pinned Spack checkout right after resetting it, so they are
+applied exactly once per build and recorded under <code class="docutils literal notranslate"><span class="pre">spack:</span> <span class="pre">patches:</span></code> in the
+provenance file. A patch that the pinned Spack already contains (for example
+after overriding the <code class="docutils literal notranslate"><span class="pre">spack</span></code> pin with a newer release) is skipped and not
+recorded. Each patch starts with a description of what it fixes,
+the upstream pull request, and when it can be dropped. A patch is a last
+resort for a Spack bug that blocks E3SM builds before the fix is released;
+open the upstream pull request first, and remove the patch when the pin
+moves to a release that contains the fix (the build fails at <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">apply</span></code>
+if a patch neither applies nor is already there). <code class="docutils literal notranslate"><span class="pre">tests/test_spack_install_script.py</span></code> checks
+that every patch still applies to the pinned tag.</p>
 </section>
 <section id="further-reading">
 <h2>Further Reading<a class="headerlink" href="#further-reading" title="Link to this heading"></a></h2>

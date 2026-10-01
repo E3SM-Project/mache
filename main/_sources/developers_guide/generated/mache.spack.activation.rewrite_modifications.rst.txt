@@ -1,0 +1,6 @@
+﻿mache.spack.activation.rewrite\_modifications
+=============================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: rewrite_modifications

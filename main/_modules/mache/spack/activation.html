@@ -1,0 +1,545 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mache.spack.activation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href="../../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../users_guide/sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mache.spack.activation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mache.spack.activation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">PATH_LIKE_ENV_VARS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mache.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="c1"># Variables that Spack prepends to during activation, beyond the compiler</span>
+<span class="c1"># and loader paths in PATH_LIKE_ENV_VARS, e.g. for Python or Perl extensions</span>
+<span class="c1"># in the view.  A variable that is not listed is still treated as a prepend</span>
+<span class="c1"># if its activated value ends with its value before activation.</span>
+<span class="n">ACTIVATION_PATH_VARS</span> <span class="o">=</span> <span class="n">PATH_LIKE_ENV_VARS</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s1">'PYTHONPATH'</span><span class="p">,</span>
+        <span class="s1">'PERL5LIB'</span><span class="p">,</span>
+        <span class="s1">'R_LIBS'</span><span class="p">,</span>
+        <span class="s1">'CLASSPATH'</span><span class="p">,</span>
+        <span class="s1">'XDG_DATA_DIRS'</span><span class="p">,</span>
+        <span class="s1">'GI_TYPELIB_PATH'</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">#: How load scripts activate a Spack environment: ``captured`` sources a file</span>
+<span class="c1">#: written at build time; ``dynamic`` runs ``spack env activate``</span>
+<span class="n">ACTIVATION_MODES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'captured'</span><span class="p">,</span> <span class="s1">'dynamic'</span><span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="capture_activation">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.capture_activation.html#mache.spack.activation.capture_activation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">capture_activation</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">spack_path</span><span class="p">,</span>
+    <span class="n">env_name</span><span class="p">,</span>
+    <span class="n">prologue_path</span><span class="p">,</span>
+    <span class="n">work_dir</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Run ``spack env activate --sh`` for an environment in a fresh login shell</span>
+<span class="sd">    and rewrite its output relative to that shell's environment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spack_path : str</span>
+<span class="sd">        The Spack checkout (``$SPACK_ROOT``)</span>
+
+<span class="sd">    env_name : str</span>
+<span class="sd">        The managed environment to capture</span>
+
+<span class="sd">    prologue_path : str</span>
+<span class="sd">        The shell script with the module loads and variables the environment</span>
+<span class="sd">        was built with</span>
+
+<span class="sd">    work_dir : str</span>
+<span class="sd">        Where ``&lt;env_name&gt;.env_before`` and ``&lt;env_name&gt;.raw_activate.sh`` are</span>
+<span class="sd">        written</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    modifications : list of tuple</span>
+<span class="sd">        The rewritten modifications, see :py:func:`rewrite_modifications`</span>
+<span class="sd">    """</span>
+    <span class="n">env_before_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.env_before'</span><span class="p">)</span>
+    <span class="n">raw_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1">.raw_activate.sh'</span><span class="p">)</span>
+    <span class="n">setup_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="s1">'share'</span><span class="p">,</span> <span class="s1">'spack'</span><span class="p">,</span> <span class="s1">'setup-env.sh'</span><span class="p">)</span>
+    <span class="c1"># the prologue is sourced before `set -e`, as in the build script, so a</span>
+    <span class="c1"># module command that returns non-zero harmlessly does not fail here</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'source </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">prologue_path</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="s1">'set -e</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="sa">f</span><span class="s1">'source </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">setup_env</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="sa">f</span><span class="s1">'env -0 &gt; </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">env_before_path</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="sa">f</span><span class="s1">'spack env activate --sh </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">env_name</span><span class="p">)</span><span class="si">}</span><span class="s1"> '</span>
+        <span class="sa">f</span><span class="s1">'&gt; </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">raw_path</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+    <span class="p">)</span>
+    <span class="c1"># a fresh login shell, as for the build, so nothing from the calling</span>
+    <span class="c1"># environment (conda, pixi) leaks into the captured values</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">'env'</span><span class="p">,</span> <span class="s1">'-i'</span><span class="p">,</span> <span class="s1">'bash'</span><span class="p">,</span> <span class="s1">'-l'</span><span class="p">,</span> <span class="s1">'-c'</span><span class="p">,</span> <span class="n">commands</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Capturing the activation of Spack environment </span><span class="si">{</span><span class="n">env_name</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'failed with exit code </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s1">'</span>
+        <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">env_before_path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">env_before</span> <span class="o">=</span> <span class="n">parse_env_before</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">raw_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">parse_raw_activation</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">rewrite_modifications</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">env_before</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_env_before">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.parse_env_before.html#mache.spack.activation.parse_env_before">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_env_before</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Parse the NUL-separated output of ``env -0``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : bytes</span>
+<span class="sd">        The output of ``env -0``</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    env : dict</span>
+<span class="sd">        Variable names to values</span>
+<span class="sd">    """</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">'</span><span class="se">\0</span><span class="s1">'</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">sep</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="s1">'surrogateescape'</span><span class="p">)</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span>
+            <span class="s1">'='</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sep</span><span class="p">:</span>
+            <span class="n">env</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">env</span></div>
+
+
+
+<div class="viewcode-block" id="parse_raw_activation">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.parse_raw_activation.html#mache.spack.activation.parse_raw_activation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_raw_activation</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Parse the output of ``spack env activate --sh``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    text : str</span>
+<span class="sd">        Lines of the form ``export NAME=VALUE;``, ``unset NAME;`` or</span>
+<span class="sd">        ``alias ...;``</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    raw : list of tuple</span>
+<span class="sd">        ``('export', name, value)`` and ``('unset', name)`` entries in order;</span>
+<span class="sd">        aliases are dropped</span>
+<span class="sd">    """</span>
+    <span class="n">raw</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">';'</span><span class="p">):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">words</span> <span class="ow">or</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'alias'</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'export'</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="s1">'='</span> <span class="ow">in</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">'='</span><span class="p">)</span>
+            <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">'export'</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'unset'</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">'unset'</span><span class="p">,</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'Unexpected line in spack env activate output: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">'</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw</span></div>
+
+
+
+<div class="viewcode-block" id="rewrite_modifications">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.rewrite_modifications.html#mache.spack.activation.rewrite_modifications">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rewrite_modifications</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">env_before</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Rewrite raw activation entries relative to the capturing shell.</span>
+
+<span class="sd">    A path-like variable (``ACTIVATION_PATH_VARS``, or any variable whose</span>
+<span class="sd">    activated value ends with its non-empty value before activation) becomes</span>
+<span class="sd">    a prepend of the elements that were not in its value before activation,</span>
+<span class="sd">    in order; other variables are set to their literal values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    raw : list of tuple</span>
+<span class="sd">        From :py:func:`parse_raw_activation`</span>
+
+<span class="sd">    env_before : dict</span>
+<span class="sd">        From :py:func:`parse_env_before`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    modifications : list of tuple</span>
+<span class="sd">        ``('prepend', name, elements)``, ``('set', name, value)`` and</span>
+<span class="sd">        ``('unset', name)`` entries</span>
+<span class="sd">    """</span>
+    <span class="n">modifications</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'unset'</span><span class="p">:</span>
+            <span class="n">modifications</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="n">old_value</span> <span class="o">=</span> <span class="n">env_before</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_path_like</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">):</span>
+            <span class="n">modifications</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">'set'</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="k">continue</span>
+
+        <span class="n">old_elements</span> <span class="o">=</span> <span class="n">old_value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">old_value</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">new_elements</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">'MANPATH'</span> <span class="ow">and</span> <span class="n">new_elements</span> <span class="ow">and</span> <span class="n">new_elements</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">''</span><span class="p">:</span>
+            <span class="c1"># spack appends a trailing colon so man keeps its default path;</span>
+            <span class="c1"># the rendered prepend restores it</span>
+            <span class="n">new_elements</span> <span class="o">=</span> <span class="n">new_elements</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># spack normalizes every element of the variable (an empty element</span>
+        <span class="c1"># becomes '.'), so compare against the normalized old elements too</span>
+        <span class="n">old_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_elements</span><span class="p">)</span>
+        <span class="n">old_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">old_elements</span><span class="p">)</span>
+        <span class="n">prepend</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">new_elements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">old_set</span> <span class="ow">and</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prepend</span><span class="p">:</span>
+                <span class="n">prepend</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+        <span class="n">new_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_elements</span><span class="p">)</span>
+        <span class="n">lost</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">element</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">old_elements</span>
+            <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_set</span>
+            <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_set</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">lost</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s1">'Activation of the Spack environment removes these elements '</span>
+                <span class="s1">'of </span><span class="si">%s</span><span class="s1">, which the captured activation keeps: </span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lost</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">prepend</span><span class="p">:</span>
+            <span class="n">modifications</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">'prepend'</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">prepend</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">modifications</span></div>
+
+
+
+<div class="viewcode-block" id="render_activation">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.render_activation.html#mache.spack.activation.render_activation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_activation</span><span class="p">(</span><span class="n">modifications</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Render an activation snippet for a shell.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modifications : list of tuple</span>
+<span class="sd">        From :py:func:`rewrite_modifications`</span>
+
+<span class="sd">    shell : {'sh', 'csh'}</span>
+<span class="sd">        The shell to render for</span>
+
+<span class="sd">    spack_path : str</span>
+<span class="sd">        The Spack checkout; the snippet sets ``SPACK_ROOT`` and puts its</span>
+<span class="sd">        ``bin`` on ``PATH`` so the plain ``spack`` executable is available</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The snippet</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">shell</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'sh'</span><span class="p">,</span> <span class="s1">'csh'</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Unexpected shell: </span><span class="si">{</span><span class="n">shell</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">'set'</span><span class="p">,</span> <span class="s1">'SPACK_ROOT'</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'prepend'</span><span class="p">,</span> <span class="s1">'PATH'</span><span class="p">,</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="s1">'bin'</span><span class="p">)]),</span>
+    <span class="p">]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s1">'# Spack environment activation captured by mache </span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s1">.'</span><span class="p">,</span>
+        <span class="s1">'# Sourcing this file replaces `spack env activate`; it prepends to'</span><span class="p">,</span>
+        <span class="s1">'# path-like variables and sets the rest.'</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">modification</span> <span class="ow">in</span> <span class="n">header</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">modifications</span><span class="p">):</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_render_modification</span><span class="p">(</span><span class="n">modification</span><span class="p">,</span> <span class="n">shell</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span></div>
+
+
+
+<div class="viewcode-block" id="write_activation_files">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.write_activation_files.html#mache.spack.activation.write_activation_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_activation_files</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">modifications</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Write ``activate.sh`` and ``activate.csh`` into the environment directory.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spack_path : str</span>
+<span class="sd">        The Spack checkout</span>
+
+<span class="sd">    env_name : str</span>
+<span class="sd">        The managed environment</span>
+
+<span class="sd">    modifications : list of tuple</span>
+<span class="sd">        From :py:func:`rewrite_modifications`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    paths : tuple of str</span>
+<span class="sd">        The paths of the ``sh`` and ``csh`` files</span>
+<span class="sd">    """</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">shell</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'sh'</span><span class="p">,</span> <span class="s1">'csh'</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">activation_file_path</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">shell</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">render_activation</span><span class="p">(</span><span class="n">modifications</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span> <span class="n">spack_path</span><span class="p">))</span>
+        <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">activation_file_path</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">shell</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The path of the captured activation file for a shell."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">spack_path</span><span class="p">,</span>
+        <span class="s1">'var'</span><span class="p">,</span>
+        <span class="s1">'spack'</span><span class="p">,</span>
+        <span class="s1">'environments'</span><span class="p">,</span>
+        <span class="n">env_name</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'activate.</span><span class="si">{</span><span class="n">shell</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="activation_source_line">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.activation.activation_source_line.html#mache.spack.activation.activation_source_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">activation_source_line</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span> <span class="n">env_name</span><span class="p">,</span> <span class="n">shell</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The line a load script uses to source the captured activation."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'source </span><span class="si">{</span><span class="n">activation_file_path</span><span class="p">(</span><span class="n">spack_path</span><span class="p">,</span><span class="w"> </span><span class="n">env_name</span><span class="p">,</span><span class="w"> </span><span class="n">shell</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_path_like</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">old_value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether activation prepends to a variable rather than setting it."""</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ACTIVATION_PATH_VARS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">old_value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="si">}{</span><span class="n">old_value</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_modification</span><span class="p">(</span><span class="n">modification</span><span class="p">,</span> <span class="n">shell</span><span class="p">):</span>
+    <span class="n">kind</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">modification</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">modification</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">'unset'</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">shell</span> <span class="o">==</span> <span class="s1">'sh'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">'unset </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">'</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'unsetenv </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">'set'</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">modification</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">shell</span> <span class="o">==</span> <span class="s1">'sh'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">'export </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">_sh_quote</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'setenv </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">_csh_quote</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">'prepend'</span><span class="p">:</span>
+        <span class="n">joined</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modification</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">shell</span> <span class="o">==</span> <span class="s1">'sh'</span><span class="p">:</span>
+            <span class="c1"># MANPATH keeps a trailing colon when it was unset so man still</span>
+            <span class="c1"># searches its default path</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">'MANPATH'</span><span class="p">:</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="s1">':$</span><span class="si">{MANPATH:-}</span><span class="s1">'</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="s1">'${'</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">':+:$'</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">'}'</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">'export </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">_sh_quote</span><span class="p">(</span><span class="n">joined</span><span class="p">,</span><span class="w"> </span><span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
+        <span class="n">unset_value</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">joined</span><span class="si">}</span><span class="s1">:'</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">'MANPATH'</span> <span class="k">else</span> <span class="n">joined</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'if ($?</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">) then</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'  setenv </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">_csh_quote</span><span class="p">(</span><span class="n">joined</span><span class="p">,</span><span class="w"> </span><span class="n">suffix</span><span class="o">=</span><span class="s2">"$"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'else</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'  setenv </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">_csh_quote</span><span class="p">(</span><span class="n">unset_value</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">'</span>
+            <span class="sa">f</span><span class="s1">'endif'</span>
+        <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Unexpected modification: </span><span class="si">{</span><span class="n">modification</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sh_quote</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">''</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Double-quote a value for sh, with an optional expansion tail."""</span>
+    <span class="n">escaped</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\\\</span><span class="s1">'</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'"'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">"'</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'$'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">$'</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'`'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">`'</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">escaped</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s1">"'</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_csh_quote</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">''</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Quote a value for csh, with an optional expansion tail.</span>
+
+<span class="sd">    csh does not honour backslash escapes inside double quotes, so the value</span>
+<span class="sd">    is single-quoted, which keeps everything literal except ``!`` (history</span>
+<span class="sd">    substitution, escaped with a backslash) and ``'`` itself (closed, given</span>
+<span class="sd">    in double quotes, and reopened).  The tail is appended in double quotes</span>
+<span class="sd">    so it is expanded.</span>
+<span class="sd">    """</span>
+    <span class="n">escaped</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'!'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">!'</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"'</span><span class="se">\"</span><span class="s2">'</span><span class="se">\"</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="n">quoted</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">escaped</span><span class="si">}</span><span class="s2">'"</span>
+    <span class="k">if</span> <span class="n">suffix</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">quoted</span><span class="si">}</span><span class="s1">":</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s1">"'</span>
+    <span class="k">return</span> <span class="n">quoted</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

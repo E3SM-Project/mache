@@ -80,6 +80,21 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.spack.config_to_shell_script.html">mache.spack.config_to_shell_script</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.spack.extract_spack_from_config_machines.html">mache.spack.extract_spack_from_config_machines</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.spack.list_machine_compiler_mpilib.html">mache.spack.list_machine_compiler_mpilib</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.load_pins.html">mache.spack.pins.load_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.merge_pins.html">mache.spack.pins.merge_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.validate_pins.html">mache.spack.pins.validate_pins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.render_repos_yaml.html">mache.spack.pins.render_repos_yaml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.checkout_command.html">mache.spack.pins.checkout_command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.pins.release_pins_are_valid.html">mache.spack.pins.release_pins_are_valid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.install.render_install_script.html">mache.spack.install.render_install_script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.install.write_prologue.html">mache.spack.install.write_prologue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.capture_activation.html">mache.spack.activation.capture_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.parse_raw_activation.html">mache.spack.activation.parse_raw_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.parse_env_before.html">mache.spack.activation.parse_env_before</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.rewrite_modifications.html">mache.spack.activation.rewrite_modifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.render_activation.html">mache.spack.activation.render_activation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.write_activation_files.html">mache.spack.activation.write_activation_files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.spack.activation.activation_source_line.html">mache.spack.activation.activation_source_line</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#sync">sync</a></li>
@@ -92,6 +107,8 @@
 <p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
 </ul>
 
         </div>
@@ -123,7 +140,7 @@
 <h1>mache.spack.get_spack_script<a class="headerlink" href="#mache-spack-get-spack-script" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="mache.spack.get_spack_script">
-<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">get_spack_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spack_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_lapack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_spack_env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_packages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack/script.html#get_spack_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.get_spack_script" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">mache.spack.</span></span><span class="sig-name descname"><span class="pre">get_spack_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spack_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compiler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_lapack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_spack_env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">e3sm_hdf5_netcdf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_packages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'captured'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/spack/script.html#get_spack_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.spack.get_spack_script" title="Link to this definition"></a></dt>
 <dd><p>Build a snippet of a load script for the given spack environment</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -146,6 +163,10 @@ package bundle that affects shell setup is <code class="docutils literal notrans
 module and environment-variable setup.</p></li>
 <li><p><strong>load_spack_env</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to load the spack environment at the start of script.
 Must be set to False when initially building the environment</p></li>
+<li><p><strong>activation</strong> (<em>{'captured'</em><em>, </em><em>'dynamic'}</em><em>, </em><em>optional</em>) – How the environment is loaded when <code class="docutils literal notranslate"><span class="pre">load_spack_env</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>:
+by sourcing the <code class="docutils literal notranslate"><span class="pre">activate.&lt;shell&gt;</span></code> file captured when the
+environment was built, or by sourcing Spack’s <code class="docutils literal notranslate"><span class="pre">setup-env</span></code> and
+running <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
