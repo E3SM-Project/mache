@@ -125,9 +125,12 @@ That file is target-owned and is not generated from a package template.
   (toolchain-specific form:
   `load_<software>_<machine>_<compiler>_<mpi>.sh`).
 
-`spack_install.bash.j2`
-: Package-owned template used by `spack.py` to create a temporary Spack build
-  script under `deploy_tmp/spack/`.
+`mache/spack/templates/spack_install.bash.j2`
+: Template shared with `mache.spack.make_spack_env`, rendered by
+  `mache.spack.install` into a Spack build script under `deploy_tmp/spack/`.
+  It checks out the sources pinned in `mache/spack/pins.yaml`, writes the
+  instance's `repos.yaml`, isolates the instance and installs the
+  environment.
 
 ## Why the double-template files exist
 
@@ -258,6 +261,14 @@ for reuse or external understanding:
 - `mache.deploy.machine.get_machine_config()`
 - `mache.deploy.spack.SpackDeployResult`
 - `mache.deploy.spack.SpackSoftwareEnvResult`
+
+`SpackDeployResult.activation`, which `post_spack` hooks receive as
+`ctx.runtime['spack']['results'][...]['activation']`, is always the dynamic
+form (`source setup-env.sh` plus `spack env activate`), because the captured
+activation is only written after those hooks have run.
+`SpackDeployResult.load_activation` is what the generated load scripts use:
+under the default `spack.activation: captured` it sources the environment's
+`activate.sh`.
 
 Whenever you add or remove a public class or function in `mache.deploy`, add
 it to the auto-generated API page and update this guide if its role affects

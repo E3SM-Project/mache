@@ -2,24 +2,32 @@
 {%- set mpi = "cray-mpich@9.1.0" %}
 spack:
   specs:
-  - {{ mpi }}%{{ compiler }}
+  - {{ mpi }}
 {%- if e3sm_lapack %}
   - cray-libsci
 {%- endif %}
-  - "hdf5%{{ compiler }}"
-  - "netcdf-c%{{ compiler }}"
-  - "netcdf-fortran%{{ compiler }}"
-  - "parallel-netcdf%{{ compiler }}"
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
 {%- for spec in specs %}
-  - "{{ spec }}%{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: when_possible
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}]
+      require: ["%mache"]
       providers:
-        mpi: [{{ mpi }}%{{ compiler }}]
+        mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
         lapack: [cray-libsci@22.12.1.1]
 {%- endif %}
@@ -114,7 +122,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: {{ mpi }}%{{ compiler }}
+      - spec: {{ mpi }}
         modules:
         - libfabric/2.3.1
         - libunwind/1.8.3
@@ -154,31 +162,28 @@ spack:
       - spec: netcdf-fortran@4.6.1
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.3/crayclang/20.0
       buildable: false
-
-  compilers:
-  - compiler:
-      spec: {{ compiler }}
-      paths:
-        cc: cc
-        cxx: CC
-        f77: ftn
-        fc: ftn
-      flags: {}
-      operating_system: sles15
-      target: any
-      modules:
-      - Core/25.03
-      - PrgEnv-cray/8.7.0
-      - cpe/26.03
-      - libunwind/1.8.3
-      - libfabric/2.3.1
-      - craype-accel-amd-gfx90a
-      - rocm/7.2.0
-      # we need to include mpich because an incompatible version of
-      # libmpi_gtl_hsa.so.0 is loaded otherwise and we need to use the mpich
-      # verison (see below)
-      - cray-mpich/9.1.0
-      environment:
-        prepend_path:
-          # needed to prevent loading /opt/cray/pe/lib64/libmpi_gtl_hsa.so.0
-          LD_LIBRARY_PATH: /opt/cray/pe/mpich/9.1.0/gtl/lib
+    cce:
+      externals:
+      - spec: {{ compiler }}
+        modules:
+        - Core/25.03
+        - PrgEnv-cray/8.7.0
+        - cpe/26.03
+        - libunwind/1.8.3
+        - libfabric/2.3.1
+        - craype-accel-amd-gfx90a
+        - rocm/7.2.0
+        # we need to include mpich because an incompatible version of
+        # libmpi_gtl_hsa.so.0 is loaded otherwise and we need to use the mpich
+        # verison (see below)
+        - cray-mpich/9.1.0
+        extra_attributes:
+          compilers:
+            c: cc
+            cxx: CC
+            fortran: ftn
+          environment:
+            prepend_path:
+              # needed to prevent loading /opt/cray/pe/lib64/libmpi_gtl_hsa.so.0
+              LD_LIBRARY_PATH: "/opt/cray/pe/mpich/9.1.0/gtl/lib"
+      buildable: false

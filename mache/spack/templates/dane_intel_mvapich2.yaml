@@ -1,17 +1,25 @@
-{%- set compiler = "oneapi@2023.2.1" %}
+{%- set compiler = "intel-oneapi-compilers@2023.2.1" %}
 {%- set mpi = "mvapich2@2.3.7" %}
 
 spack:
   specs:
   - {{ mpi }}
 {%- for spec in specs %}
-  - "{{ spec }} %{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: true
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}]
+      require: ["%mache"]
       providers:
         mpi: [{{ mpi }}]
     bison:
@@ -88,7 +96,7 @@ spack:
         - mvapich2/2.3.7
         - mvapich2-tce/2.3.7
       buildable: false
-    oneapi:
+    intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
         prefix: /usr/tce/packages/intel/intel-2023.2.1-magic
@@ -111,19 +119,3 @@ spack:
             cxx: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/g++
             fortran: /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran
       buildable: false
-  compilers:
-  - compiler:
-      spec: oneapi@2023.2.1
-      paths:
-        cc: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/icx
-        cxx: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/icpx
-        f77: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/ifx
-        fc: /usr/tce/packages/intel/intel-2023.2.1/compiler/2023.2.1/linux/bin/ifx
-      flags: {}
-      operating_system: rhel8
-      target: x86_64
-      modules:
-      - StdEnv
-      - intel/2023.2.1-magic
-      environment: {}
-      extra_rpaths: []

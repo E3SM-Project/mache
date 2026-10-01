@@ -72,7 +72,10 @@ def update_permissions(  # noqa: C901
     mask = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
 
     for path in paths:
-        print(f'Updating file permissions (recursively) for: {path}')
+        if recursive and not path.is_file():
+            print(f'Updating file permissions (recursively) for: {path}')
+        else:
+            print(f'Updating file permissions for: {path}')
 
         # start by updating the top level path (file or directory)
         _update(

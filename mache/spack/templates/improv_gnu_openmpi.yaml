@@ -2,28 +2,35 @@
 {%- set mpi = "openmpi@4.1.6" %}
 spack:
   specs:
-  - {{ compiler }}
-  - {{ mpi }}%{{ compiler }}
+  - {{ mpi }}
 {%- if e3sm_lapack %}
   - netlib-lapack
 {%- endif %}
-  - "hdf5%{{ compiler }}"
-  - "netcdf-c%{{ compiler }}"
-  - "netcdf-fortran%{{ compiler }}"
-  - "parallel-netcdf%{{ compiler }}"
+  - "hdf5"
+  - "netcdf-c"
+  - "netcdf-fortran"
+  - "parallel-netcdf"
 {%- for spec in specs %}
-  - "{{ spec }}%{{ compiler }}"
+  - "{{ spec }}"
 {%- endfor %}
   concretizer:
     unify: true
   config:
     build_stage:
       - /tmp/$user/spack-stage
+  toolchains:
+    mache:
+    - spec: "%c={{ compiler }}"
+      when: "%c"
+    - spec: "%cxx={{ compiler }}"
+      when: "%cxx"
+    - spec: "%fortran={{ compiler }}"
+      when: "%fortran"
   packages:
     all:
-      compiler: [{{ compiler }}]
+      require: ["%mache"]
       providers:
-        mpi: [{{ mpi }}%{{ compiler }}]
+        mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
         lapack: [netlib-lapack@3.12.0]
 {%- endif %}
@@ -107,10 +114,14 @@ spack:
             c: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gcc
             cxx: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/g++
             fortran: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
+          environment:
+            prepend_path:
+              LIBRARY_PATH: "/lcrc/group/e3sm/soft/improv/szip/2.1.1/gcc-12.3.0/lib:/lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0/openmpi-4.1.6/lib"
+              LD_LIBRARY_PATH: "/opt/pbs/lib"
       buildable: false
     openmpi:
       externals:
-      - spec: {{ mpi }}%{{ compiler }}
+      - spec: {{ mpi }}
         prefix: /lcrc/group/e3sm/soft/improv/openmpi/4.1.6/gcc-12.3.0
       buildable: false
     netlib-lapack:
@@ -138,20 +149,3 @@ spack:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
         prefix: /lcrc/group/e3sm/soft/improv/pnetcdf/1.14.1/gcc-12.3.0/openmpi-4.1.6
       buildable: false
-  compilers:
-  - compiler:
-      spec: {{ compiler }}
-      paths:
-        cc: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gcc
-        cxx: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/g++
-        f77: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
-        fc: /gpfs/fs1/soft/improv/software/spack-built/linux-rhel8-x86_64/gcc-8.5.0/gcc-12.3.0-hsghf4l/bin/gfortran
-      flags: {}
-      operating_system: rhel8
-      target: x86_64
-      modules: []
-      environment:
-        prepend_path:
-          LIBRARY_PATH: "/lcrc/group/e3sm/soft/improv/szip/2.1.1/gcc-12.3.0/lib:/lcrc/group/e3sm/soft/improv/hdf5/1.14.3/gcc-12.3.0/openmpi-4.1.6/lib"
-          LD_LIBRARY_PATH: "/opt/pbs/lib"
-      extra_rpaths: []
