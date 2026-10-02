@@ -39,7 +39,7 @@ spack:
     cmake:
       externals:
       - spec: cmake@3.31.11
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/cmake-3.31.11-pss2phi
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/cmake-3.31.11-k5c7eo2
       buildable: false
     curl:
       externals:
@@ -59,12 +59,12 @@ spack:
     gmake:
       externals:
       - spec: gmake@4.4.1
-        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/gmake-4.4.1-wza7sk4
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/gmake-4.4.1-u7cpklj
       buildable: false
     libxml2:
       externals:
-      - spec: libxml2@2.13.5
-        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/libxml2-2.13.5-dhzcbk4
+      - spec: libxml2@2.13.9
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/libxml2-2.13.9-vcrmrkg
       buildable: false
     openssl:
       externals:
@@ -73,8 +73,8 @@ spack:
       buildable: false
     python:
       externals:
-      - spec: python@3.10.14
-        prefix: /opt/aurora/25.190.0/spack/unified/0.10.1/install/linux-sles15-x86_64/gcc-13.3.0/python-3.10.14-x4dd26d
+      - spec: python@3.12.12
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/python-3.12.12-nfnvk7c
       buildable: false
     re2c:
       externals:
@@ -100,52 +100,49 @@ spack:
     intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
-        # TODO: confirm the oneapi prefix and the compiler paths below for
-        # the 2026.1.0 release; they may move to a new /opt/aurora/<release>
-        # directory.
-        prefix: /opt/aurora/26.26.0/oneapi
+        prefix: /opt/aurora/26.181.0/oneapi
         modules:
         - oneapi/release/2026.1.0
         extra_attributes:
           compilers:
-            c: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/icx
-            cxx: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/icpx
-            fortran: /opt/aurora/26.26.0/oneapi/compiler/latest/bin/ifx
+            c: /opt/aurora/26.181.0/oneapi/compiler/latest/bin/icx
+            cxx: /opt/aurora/26.181.0/oneapi/compiler/latest/bin/icpx
+            fortran: /opt/aurora/26.181.0/oneapi/compiler/latest/bin/ifx
       buildable: false
     gcc:
       externals:
-      - spec: gcc@13.4.0
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p
+      - spec: gcc@14.3.0
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/gcc-14.3.0-siitp7a
         modules:
-        - gcc/13.4.0
+        - gcc/14.3.0
         extra_attributes:
           compilers:
-            c: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gcc
-            cxx: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/g++
-            fortran: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/gcc-13.4.0-hgnyg4p/bin/gfortran
+            c: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/gcc-14.3.0-siitp7a/bin/gcc
+            cxx: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/gcc-14.3.0-siitp7a/bin/g++
+            fortran: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/gcc-14.3.0-siitp7a/bin/gfortran
       buildable: false
     mpich:
       externals:
       - spec: {{ mpi }}
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/mpich-5.0.0.aurora_test.3c70a61-hlkigtk
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/mpich-5.0.0.aurora_test.87e2045-frxgreu
       buildable: false
     hdf5:
       externals:
       - spec: hdf5@1.14.6+cxx+fortran+hl+mpi
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/hdf5-1.14.6-ehlefog
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/hdf5-1.14.6-h7d6au5
       buildable: false
     netcdf-c:
       externals:
-      - spec: netcdf-c@4.9.3+mpi~parallel-netcdf
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/netcdf-c-4.9.3-7nk2whw
+      - spec: netcdf-c@4.9.3+mpi+parallel-netcdf
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/netcdf-c-4.9.3-yzapcro
       buildable: false
     netcdf-fortran:
       externals:
       - spec: netcdf-fortran@4.6.2
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/netcdf-fortran-4.6.2-2eygqoe
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/netcdf-fortran-4.6.2-tidw47c
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.14.1+cxx+fortran
-        prefix: /opt/aurora/26.26.0/spack/unified/1.1.1/install/linux-x86_64/parallel-netcdf-1.14.1-44pgfig
+        prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/parallel-netcdf-1.14.1-j6vaczv
       buildable: false
