@@ -9,6 +9,8 @@ from mache.spack.shared import (
     shell_group_condition,
 )
 
+_MOAB_MODULE_RE = re.compile(r'(^|\s)moab(/|\s|$)', re.IGNORECASE)
+
 
 def extract_machine_config(xml_file, machine, compiler, mpilib):
     """
@@ -95,6 +97,10 @@ def config_to_shell_script(config, shell_type):
             if value:
                 if name != 'unload' and 'python' in value:
                     # we don't want to load E3SM's python module
+                    continue
+                if name != 'unload' and _MOAB_MODULE_RE.search(value):
+                    # the target software provides its own MOAB, which
+                    # E3SM's module would shadow
                     continue
                 group_name = classify_module_command_package_group(value)
                 if group_name is None:
@@ -252,6 +258,9 @@ def _convert_env_vars_to_script_lines(config, shell_type):
             continue
         if name.startswith('OMP_'):
             # OpenMP environment variables cause trouble with ESMF
+            continue
+        if name.startswith('MOAB_'):
+            # the target software provides its own MOAB
             continue
 
         value = re.sub(r'\$ENV{([^}]+)}', r'${\1}', value)

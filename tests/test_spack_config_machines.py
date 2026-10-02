@@ -116,3 +116,40 @@ def test_extract_machine_config_negation_selector(tmp_path: Path):
     assert 'nvidia-only-module' not in intel_script
     assert 'non-nvidia-module' in intel_script
     assert 'common-module' in intel_script
+
+
+def test_config_to_shell_script_skips_moab(tmp_path: Path):
+    xml_file = tmp_path / 'config_machines.xml'
+    xml_file.write_text(
+        '<config_machines>\n'
+        '  <machine MACH="test-machine">\n'
+        '    <module_system type="module">\n'
+        '      <modules>\n'
+        '        <command name="use">/soft/modulefiles</command>\n'
+        '        <command name="load">oneapi/release/2026.1.0</command>\n'
+        '        <command name="load">moab/5.6.0</command>\n'
+        '        <command name="load">cray-libsci</command>\n'
+        '      </modules>\n'
+        '    </module_system>\n'
+        '    <environment_variables>\n'
+        '      <env name="MOAB_ROOT">/soft/moab</env>\n'
+        '      <env name="KEEP_ME">1</env>\n'
+        '    </environment_variables>\n'
+        '  </machine>\n'
+        '</config_machines>\n',
+        encoding='utf-8',
+    )
+
+    config = extract_machine_config(
+        xml_file=xml_file,
+        machine='test-machine',
+        compiler='intel',
+        mpilib='mpich',
+    )
+    script = config_to_shell_script(config, 'sh')
+
+    assert 'moab' not in script.lower()
+    assert '/soft/modulefiles' in script
+    assert 'oneapi/release/2026.1.0' in script
+    assert 'cray-libsci' in script
+    assert "{{ render_env_var('KEEP_ME', '1', 'sh') }}" in script
