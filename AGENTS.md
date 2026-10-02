@@ -25,8 +25,9 @@ These instructions apply to the whole repository unless a deeper
   through `py314` are defined in `pixi.toml`). Note that selecting an
   environment that is not yet installed will make Pixi solve and install
   it, which can be slow.
-- If no Pixi environment is installed at all, ask the user to create one
-  (e.g. `pixi shell`) rather than building a separate virtual environment.
+- If no Pixi environment is installed at all, create the `default` one
+  with `pixi install` from the repo root rather than building a separate
+  virtual environment.
 - Do not treat `pytest: command not found` in a plain shell as a missing
   dependency until you have tried the command through Pixi.
 
