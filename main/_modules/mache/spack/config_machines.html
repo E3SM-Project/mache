@@ -107,6 +107,8 @@
     <span class="n">shell_group_condition</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="n">_MOAB_MODULE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'(^|\s)moab(/|\s|$)'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="extract_machine_config">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.spack.extract_machine_config.html#mache.spack.extract_machine_config">[docs]</a>
@@ -198,6 +200,10 @@
             <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s1">'unload'</span> <span class="ow">and</span> <span class="s1">'python'</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
                     <span class="c1"># we don't want to load E3SM's python module</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s1">'unload'</span> <span class="ow">and</span> <span class="n">_MOAB_MODULE_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="c1"># the target software provides its own MOAB, which</span>
+                    <span class="c1"># E3SM's module would shadow</span>
                     <span class="k">continue</span>
                 <span class="n">group_name</span> <span class="o">=</span> <span class="n">classify_module_command_package_group</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">group_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -359,6 +365,9 @@
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'OMP_'</span><span class="p">):</span>
             <span class="c1"># OpenMP environment variables cause trouble with ESMF</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'MOAB_'</span><span class="p">):</span>
+            <span class="c1"># the target software provides its own MOAB</span>
             <span class="k">continue</span>
 
         <span class="n">value</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">'\$ENV{([^}]+)}'</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'${\1}'</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
