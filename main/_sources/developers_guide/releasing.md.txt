@@ -54,7 +54,8 @@ This local build is useful when:
      consistent in:
      - `conda/recipe/recipe.yaml` (for the local recipe used by `rattler-build`)
      - `pyproject.toml` (for PyPI; used for sanity checks)
-     - `dev-spec.txt` (development dependencies; should be a superset)
+     - `pixi.toml` and `spec-file.txt` (development dependencies; should be
+       a superset)
 
    - Use the GitHub "Compare" feature to check for dependency changes between
      releases:
