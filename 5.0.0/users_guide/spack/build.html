@@ -1,0 +1,518 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building and Using Spack Environments with mache.spack</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ce74c6a2"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Synchronize diagnostics between machines (mache sync diags)" href="../sync/diags.html" />
+    <link rel="prev" title="Parallel execution with mache.parallel" href="../parallel.html" />
+    <link href="../../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spack-sources-and-version-pins">Spack sources and version pins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spec-syntax">Spec syntax</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#make-spack-env"><code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-spack-script"><code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-modules-env-vars-and-mpi-compilers"><code class="docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-how-downstream-packages-use-these-functions">Example: How Downstream Packages Use These Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/users_guide/spack/build.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="building-and-using-spack-environments-with-mache-spack">
+<h1>Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code><a class="headerlink" href="#building-and-using-spack-environments-with-mache-spack" title="Link to this heading"></a></h1>
+<p>This page documents the main public functions in <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> for building
+and using Spack environments, as leveraged by downstream packages such as
+<a class="reference external" href="https://github.com/MPAS-Dev/compass">compass</a>,
+<a class="reference external" href="https://github.com/E3SM-Project/polaris">polaris</a>, and
+<a class="reference external" href="https://github.com/E3SM-Project/e3sm-unified">e3sm-unified</a>.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> module provides three primary functions for Spack
+environment management:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#make-spack-env"><code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code></a>: Build a Spack environment for a given
+machine, compiler, and MPI library.</p></li>
+<li><p><a class="reference internal" href="#get-spack-script"><code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>: Generate a shell script snippet to
+activate a Spack environment.</p></li>
+<li><p><a class="reference internal" href="#get-modules-env-vars-and-mpi-compilers"><code class="docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code></a>:
+Query modules, environment variables, and MPI compiler wrappers for a given
+configuration.</p></li>
+</ul>
+<p>These functions are typically called from bootstrap or deployment scripts in
+downstream packages.</p>
+</section>
+<hr class="docutils" />
+<section id="spack-sources-and-version-pins">
+<h2>Spack sources and version pins<a class="headerlink" href="#spack-sources-and-version-pins" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">mache</span></code> builds environments with an unmodified Spack 1.x release and two
+package repositories, searched in this order:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head"><p>Repository</p></th>
+<th class="head"><p>Namespace</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>E3SM packages and early updates</p></td>
+<td><p><a class="reference external" href="https://github.com/E3SM-Project/e3sm-spack-packages">E3SM-Project/e3sm-spack-packages</a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">e3sm</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>upstream packages</p></td>
+<td><p><a class="reference external" href="https://github.com/spack/spack-packages">spack/spack-packages</a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">builtin</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>A package in <code class="docutils literal notranslate"><span class="pre">e3sm</span></code> shadows the upstream package of the same name. Each
+<code class="docutils literal notranslate"><span class="pre">mache</span></code> release pins the three sources in <code class="docutils literal notranslate"><span class="pre">mache/spack/pins.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">spack</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/spack/spack.git</span>
+<span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.2.2</span>
+<span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">e3sm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/E3SM-Project/e3sm-spack-packages.git</span>
+<span class="w">    </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v2026.06.1</span>
+<span class="w">  </span><span class="nt">builtin</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/spack/spack-packages.git</span>
+<span class="w">    </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v2026.06.0</span>
+</pre></div>
+</div>
+<p>Each entry names exactly one of <code class="docutils literal notranslate"><span class="pre">tag</span></code>, <code class="docutils literal notranslate"><span class="pre">commit</span></code> or <code class="docutils literal notranslate"><span class="pre">branch</span></code>. To build against
+an unreleased recipe, pass overrides in the same schema (a mapping or the path
+to a YAML file) as <code class="docutils literal notranslate"><span class="pre">pins=</span></code> to <code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code>, or <code class="docutils literal notranslate"><span class="pre">--spack-pins</span> <span class="pre">&lt;file&gt;</span></code> to
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>. Overrides merge per repository and replace that
+repository’s ref:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">e3sm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-fix</span>
+</pre></div>
+</div>
+<p>The Spack checkout at <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> holds everything: the two package
+repositories under <code class="docutils literal notranslate"><span class="pre">var/spack/package_repos/</span></code>, the user configuration scope,
+caches and bootstrap store (through <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">isolate</span> <span class="pre">--self</span></code>), the managed
+environments under <code class="docutils literal notranslate"><span class="pre">var/spack/environments/</span></code> and the install tree. Use a new
+<code class="docutils literal notranslate"><span class="pre">spack_path</span></code> for each major <code class="docutils literal notranslate"><span class="pre">mache</span></code> release; a checkout of Spack 0.x is
+refused rather than converted.</p>
+<section id="spec-syntax">
+<h3>Spec syntax<a class="headerlink" href="#spec-syntax" title="Link to this heading"></a></h3>
+<p>Specs from <code class="docutils literal notranslate"><span class="pre">spack_specs</span></code> (or <code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code>) are passed to Spack
+unchanged; <code class="docutils literal notranslate"><span class="pre">mache</span></code> no longer appends <code class="docutils literal notranslate"><span class="pre">%&lt;compiler&gt;</span></code>. The compiler is selected
+by a toolchain in the machine template, so specs normally need no <code class="docutils literal notranslate"><span class="pre">%</span></code>. If a
+spec does use <code class="docutils literal notranslate"><span class="pre">%</span></code>, remember that in Spack 1.x everything after it applies to
+that dependency: <code class="docutils literal notranslate"><span class="pre">trilinos</span> <span class="pre">%gcc</span> <span class="pre">+mpi</span></code> asks for <code class="docutils literal notranslate"><span class="pre">gcc+mpi</span></code>, so put variants
+before <code class="docutils literal notranslate"><span class="pre">%</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="make-spack-env">
+<h2><code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code><a class="headerlink" href="#make-spack-env" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_spack_env</span>
+</pre></div>
+</div>
+<p><strong>Purpose:</strong>
+Checks out the pinned Spack sources (see
+<a class="reference internal" href="#spack-sources-and-version-pins">Spack sources and version pins</a>) and builds
+a Spack environment for a specified machine, compiler, and MPI library, using
+a set of package specs and optional configuration.</p>
+<p><strong>Typical usage in downstream packages:</strong></p>
+<ul class="simple">
+<li><p>Called during environment setup (e.g., in
+<a class="reference external" href="https://github.com/MPAS-Dev/compass/blob/main/conda/bootstrap.py">compass</a>
+<a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/deploy/bootstrap.py">polaris</a>
+or <a class="reference external" href="https://github.com/E3SM-Project/e3sm-unified/blob/main/e3sm_supported_machines/deploy_e3sm_unified.py">e3sm-unified</a>).</p></li>
+<li><p>Used to automate the creation of a Spack environment with the correct
+packages and configuration for the target HPC system.</p></li>
+</ul>
+<p><strong>Example usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">make_spack_env</span><span class="p">(</span>
+    <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_base</span><span class="p">,</span>
+    <span class="n">env_name</span><span class="o">=</span><span class="n">spack_env</span><span class="p">,</span>
+    <span class="n">spack_specs</span><span class="o">=</span><span class="n">specs</span><span class="p">,</span>
+    <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+    <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+    <span class="n">config_file</span><span class="o">=</span><span class="n">machine_config</span><span class="p">,</span>
+    <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
+    <span class="n">yaml_template</span><span class="o">=</span><span class="n">yaml_template</span><span class="p">,</span>
+    <span class="n">tmpdir</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span>
+    <span class="n">spack_mirror</span><span class="o">=</span><span class="n">spack_mirror</span><span class="p">,</span>
+    <span class="n">custom_spack</span><span class="o">=</span><span class="n">custom_spack</span><span class="p">,</span>
+    <span class="n">pins</span><span class="o">=</span><span class="n">pins</span><span class="p">,</span>
+    <span class="n">activation</span><span class="o">=</span><span class="s1">'captured'</span><span class="p">,</span>
+    <span class="n">build_jobs</span><span class="o">=</span><span class="n">build_jobs</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Key arguments:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">spack_path</span></code>: Path to the Spack clone to use.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">env_name</span></code>: Name for the Spack environment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack_specs</span></code>: List of package specs (e.g.,
+<code class="docutils literal notranslate"><span class="pre">[&quot;hdf5&#64;1.12.2+mpi&quot;,</span> <span class="pre">&quot;netcdf-c&#64;4.8.1&quot;]</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code>: Compiler and MPI library names.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">machine</span></code>: Machine name (optional, auto-detected if not provided).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config_file</span></code>: Path to a machine config file (optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include_e3sm_lapack</span></code>: Whether to include E3SM-specific LAPACK packages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>: A package name or list of package names whose
+machine-provided externals, modules, and related environment variables
+should be removed so Spack can build them instead.  For example, setting
+<code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;cmake&quot;]</span></code> lets a downstream package build a newer CMake
+than the system provides.  The template’s own root spec for an excluded
+package is removed too, but a spec for it in <code class="docutils literal notranslate"><span class="pre">spack_specs</span></code> is kept.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code>: Deprecated compatibility flag for opting into the
+machine-provided HDF5/NetCDF bundle.  New code should prefer
+<code class="docutils literal notranslate"><span class="pre">exclude_packages=[&quot;hdf5_netcdf&quot;]</span></code> (or the individual package names
+<code class="docutils literal notranslate"><span class="pre">hdf5</span></code>, <code class="docutils literal notranslate"><span class="pre">netcdf-c</span></code>, <code class="docutils literal notranslate"><span class="pre">netcdf-fortran</span></code>, and <code class="docutils literal notranslate"><span class="pre">parallel-netcdf</span></code>) instead.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yaml_template</span></code>: Path to a custom Jinja2 YAML template (optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tmpdir</span></code>: Temporary directory for builds (optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spack_mirror</span></code>: Path to a local Spack mirror (optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">custom_spack</span></code>: Additional Spack commands to run after environment creation
+(optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pins</span></code>: Overrides for the pinned Spack sources, a mapping or the path to a
+YAML file (optional).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">activation</span></code>: <code class="docutils literal notranslate"><span class="pre">captured</span></code> (default) writes <code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">activate.csh</span></code>
+into the environment directory after the build; <code class="docutils literal notranslate"><span class="pre">dynamic</span></code> does not (see
+<a class="reference internal" href="#get-spack-script"><code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code></a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build_jobs</span></code>: Number of parallel build jobs for <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">-j</span></code>
+(optional).</p></li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Writes <code class="docutils literal notranslate"><span class="pre">&lt;env_name&gt;.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">build_&lt;env_name&gt;.bash</span></code> and
+<code class="docutils literal notranslate"><span class="pre">&lt;env_name&gt;.prologue.sh</span></code> (the module loads and environment variables the
+build runs with) to the current directory.</p></li>
+<li><p>Runs the build script in a fresh login shell: it clones or updates Spack
+and the package repositories at their pinned refs, writes the instance’s
+<code class="docutils literal notranslate"><span class="pre">etc/spack/repos.yaml</span></code>, isolates the instance from <code class="docutils literal notranslate"><span class="pre">~/.spack</span></code>, recreates
+the environment and installs it. Only the proxy variables (<code class="docutils literal notranslate"><span class="pre">http_proxy</span></code>,
+<code class="docutils literal notranslate"><span class="pre">https_proxy</span></code>, <code class="docutils literal notranslate"><span class="pre">ftp_proxy</span></code>, <code class="docutils literal notranslate"><span class="pre">no_proxy</span></code> and their uppercase forms) carry
+over from the calling environment, so a build on a compute node that
+reaches the network through a proxy works when the job script exports
+them.</p></li>
+<li><p>Copies <code class="docutils literal notranslate"><span class="pre">&lt;env_name&gt;.spack.lock</span></code> and writes <code class="docutils literal notranslate"><span class="pre">&lt;env_name&gt;.provenance.yaml</span></code>
+(the resolved commit of each source) to the current directory.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">activation='captured'</span></code>, captures the environment’s activation into
+<code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">activate.csh</span></code> in the environment directory.</p></li>
+</ul>
+<p><strong>Recommended pattern for downstream packages:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">if</span> <span class="n">needs_newer_cmake</span><span class="p">:</span>
+    <span class="n">exclude_packages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"cmake"</span><span class="p">)</span>
+
+<span class="n">make_spack_env</span><span class="p">(</span>
+    <span class="o">...</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>To opt out of the machine-provided HDF5/NetCDF bundle, use either:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span><span class="s2">"hdf5_netcdf"</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>or the individual package names:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">exclude_packages</span><span class="o">=</span><span class="p">[</span>
+    <span class="s2">"hdf5"</span><span class="p">,</span>
+    <span class="s2">"netcdf-c"</span><span class="p">,</span>
+    <span class="s2">"netcdf-fortran"</span><span class="p">,</span>
+    <span class="s2">"parallel-netcdf"</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="get-spack-script">
+<h2><code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code><a class="headerlink" href="#get-spack-script" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_spack_script</span>
+</pre></div>
+</div>
+<p><strong>Purpose:</strong>
+Generates a shell script snippet to activate a Spack environment and load the
+required modules or environment variables.</p>
+<p><strong>Typical usage in downstream packages:</strong></p>
+<ul class="simple">
+<li><p>Used to generate activation scripts for users (e.g., <code class="docutils literal notranslate"><span class="pre">load_compass.sh</span></code>,
+<code class="docutils literal notranslate"><span class="pre">load_polaris.sh</span></code>, <code class="docutils literal notranslate"><span class="pre">load_e3sm_unified.sh</span></code>).</p></li>
+<li><p>Ensures that the correct modules are loaded and the Spack environment is
+activated in the user’s shell.</p></li>
+</ul>
+<p><strong>Example usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">spack_script</span> <span class="o">=</span> <span class="n">get_spack_script</span><span class="p">(</span>
+    <span class="n">spack_path</span><span class="o">=</span><span class="n">spack_base</span><span class="p">,</span>
+    <span class="n">env_name</span><span class="o">=</span><span class="n">spack_env</span><span class="p">,</span>
+    <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+    <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+    <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>  <span class="c1"># or 'csh'</span>
+    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+    <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
+    <span class="n">activation</span><span class="o">=</span><span class="s1">'captured'</span><span class="p">,</span>  <span class="c1"># or 'dynamic'</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>How the script is composed:</strong></p>
+<p>The returned snippet is assembled in three steps:</p>
+<ol class="arabic">
+<li><p>Optionally activate the requested environment. By default this is a
+single line:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>&lt;spack_path&gt;/var/spack/environments/&lt;env_name&gt;/activate.sh
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">activate.sh</span></code> (and <code class="docutils literal notranslate"><span class="pre">activate.csh</span></code>) is captured when the environment is
+built: <code class="docutils literal notranslate"><span class="pre">mache</span></code> runs <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code> once in a clean shell and
+rewrites the result so that path-like variables are prepended to, rather
+than replaced. Sourcing it costs milliseconds and runs no Spack. It also
+sets <code class="docutils literal notranslate"><span class="pre">SPACK_ROOT</span></code> and <code class="docutils literal notranslate"><span class="pre">SPACK_ENV</span></code> and puts the plain <code class="docutils literal notranslate"><span class="pre">spack</span></code> executable on
+<code class="docutils literal notranslate"><span class="pre">PATH</span></code>, so <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">find</span></code> and <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">config</span> <span class="pre">get</span></code> work on the loaded
+environment; for <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">load</span></code> or <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code>, source
+<code class="docutils literal notranslate"><span class="pre">$SPACK_ROOT/share/spack/setup-env.sh</span></code> first. With <code class="docutils literal notranslate"><span class="pre">activation='dynamic'</span></code>
+the snippet sources <code class="docutils literal notranslate"><span class="pre">setup-env.sh</span></code> and runs <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">env</span> <span class="pre">activate</span></code> instead.</p>
+</li>
+<li><p>Auto-generate module loads and environment exports from the E3SM CIME
+machine configuration (<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>) for
+the given <code class="docutils literal notranslate"><span class="pre">(machine,</span> <span class="pre">compiler,</span> <span class="pre">mpi)</span></code> and target shell (<code class="docutils literal notranslate"><span class="pre">sh</span></code> or <code class="docutils literal notranslate"><span class="pre">csh</span></code>).</p></li>
+<li><p>Append any Mache template override present in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/</span></code> named
+<code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;.&lt;sh|csh&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.&lt;sh|csh&gt;</span></code>.</p></li>
+</ol>
+<p>This design keeps Mache aligned with E3SM’s authoritative machine
+configuration and minimizes maintenance.</p>
+<p><code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> applies here too, so <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code> removes matching
+machine-provided module loads and environment variables from both:</p>
+<ul class="simple">
+<li><p>shell snippets derived from <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, and</p></li>
+<li><p>any package-local shell overrides in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/*.sh</span></code> or
+<code class="docutils literal notranslate"><span class="pre">*.csh</span></code>.</p></li>
+</ul>
+<p><strong>Usage in activation scripts:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example in a load script</span>
+<span class="o">{{</span><span class="w"> </span>spack_script<span class="w"> </span><span class="o">}}</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="get-modules-env-vars-and-mpi-compilers">
+<h2><code class="docutils literal notranslate"><span class="pre">get_modules_env_vars_and_mpi_compilers</span></code><a class="headerlink" href="#get-modules-env-vars-and-mpi-compilers" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache.spack</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_modules_env_vars_and_mpi_compilers</span>
+</pre></div>
+</div>
+<p><strong>Purpose:</strong>
+Returns the MPI compiler wrappers and a shell snippet to load modules and set
+environment variables for a given machine, compiler, and MPI library.</p>
+<p><strong>Typical usage in downstream packages:</strong></p>
+<ul class="simple">
+<li><p>Used when building or installing packages that require knowledge of the correct MPI compiler wrappers (e.g., <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>, <code class="docutils literal notranslate"><span class="pre">mpifc</span></code>).</p></li>
+<li><p>Used to generate build scripts for additional software (e.g., building <code class="docutils literal notranslate"><span class="pre">mpi4py</span></code>, <code class="docutils literal notranslate"><span class="pre">ilamb</span></code>, or <code class="docutils literal notranslate"><span class="pre">esmpy</span></code> in <code class="docutils literal notranslate"><span class="pre">e3sm-unified</span></code>).</p></li>
+</ul>
+<p><strong>Example usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mpicc</span><span class="p">,</span> <span class="n">mpicxx</span><span class="p">,</span> <span class="n">mpifc</span><span class="p">,</span> <span class="n">mod_env_commands</span> <span class="o">=</span> <span class="n">get_modules_env_vars_and_mpi_compilers</span><span class="p">(</span>
+    <span class="n">machine</span><span class="o">=</span><span class="n">machine</span><span class="p">,</span>
+    <span class="n">compiler</span><span class="o">=</span><span class="n">compiler</span><span class="p">,</span>
+    <span class="n">mpi</span><span class="o">=</span><span class="n">mpi</span><span class="p">,</span>
+    <span class="n">shell</span><span class="o">=</span><span class="s1">'sh'</span><span class="p">,</span>  <span class="c1"># or 'csh'</span>
+    <span class="n">include_e3sm_lapack</span><span class="o">=</span><span class="n">include_e3sm_lapack</span><span class="p">,</span>
+    <span class="n">e3sm_hdf5_netcdf</span><span class="o">=</span><span class="n">e3sm_hdf5_netcdf</span><span class="p">,</span>
+    <span class="n">exclude_packages</span><span class="o">=</span><span class="n">exclude_packages</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Returns:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mpicc</span></code>: Name of the MPI C compiler wrapper (e.g., <code class="docutils literal notranslate"><span class="pre">mpicc</span></code> or <code class="docutils literal notranslate"><span class="pre">cc</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>: Name of the MPI C++ compiler wrapper (e.g., <code class="docutils literal notranslate"><span class="pre">mpicxx</span></code> or <code class="docutils literal notranslate"><span class="pre">CC</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mpifc</span></code>: Name of the MPI Fortran compiler wrapper (e.g., <code class="docutils literal notranslate"><span class="pre">mpif90</span></code> or <code class="docutils literal notranslate"><span class="pre">ftn</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mod_env_commands</span></code>: Shell commands to load modules and set environment variables.</p></li>
+</ul>
+<p>As with <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code>, <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> can be used to remove
+machine-provided package setup from the generated shell snippet.</p>
+<p><strong>Notes and usage in build scripts:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{{</span><span class="w"> </span>mod_env_commands<span class="w"> </span><span class="o">}}</span>
+<span class="c1"># Now safe to use $mpicc, $mpicxx, $mpifc for building MPI-dependent software</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>This helper uses the same shell-generation logic as <code class="docutils literal notranslate"><span class="pre">get_spack_script()</span></code>
+but does not activate a Spack environment. It therefore includes the
+machine-derived setup from <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> plus any matching Mache
+shell overrides.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="example-how-downstream-packages-use-these-functions">
+<h2>Example: How Downstream Packages Use These Functions<a class="headerlink" href="#example-how-downstream-packages-use-these-functions" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>compass</strong>:
+Uses <code class="docutils literal notranslate"><span class="pre">make_spack_env</span></code> to build the Spack environment, then calls <code class="docutils literal notranslate"><span class="pre">get_spack_script</span></code> to generate activation scripts for users.
+See: <a class="reference external" href="https://github.com/MPAS-Dev/compass/blob/main/conda/bootstrap.py"><code class="docutils literal notranslate"><span class="pre">compass'</span> <span class="pre">conda/bootstrap.py</span></code></a></p></li>
+<li><p><strong>polaris</strong>:
+Similar usage to <code class="docutils literal notranslate"><span class="pre">compass</span></code>, with additional logic for “soft” and “libs” Spack environments.
+See: <a class="reference external" href="https://github.com/E3SM-Project/polaris/blob/main/deploy/bootstrap.py"><code class="docutils literal notranslate"><span class="pre">polaris'</span> <span class="pre">deploy/bootstrap.py</span></code></a></p></li>
+<li><p><strong>e3sm-unified</strong>:
+Uses all three functions to build Spack environments, generate activation scripts, and build additional packages (e.g., <code class="docutils literal notranslate"><span class="pre">mpi4py</span></code>, <code class="docutils literal notranslate"><span class="pre">ilamb</span></code>, <code class="docutils literal notranslate"><span class="pre">esmpy</span></code>) using the correct compilers and environment.
+See: <a class="reference external" href="https://github.com/E3SM-Project/e3sm-unified/blob/main/e3sm_supported_machines/bootstrap.py"><code class="docutils literal notranslate"><span class="pre">e3sm-unified's</span> <span class="pre">e3sm_supported_machines/bootstrap.py</span></code></a></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>These functions are intended for use in deployment scripts, not for
+interactive use.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e3sm_hdf5_netcdf</span></code> and <code class="docutils literal notranslate"><span class="pre">include_e3sm_hdf5_netcdf</span></code> remain supported for
+backward compatibility, but new downstream code should use
+<code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code> instead.</p></li>
+<li><p>The downstream package is responsible for determining the correct arguments
+(machine, compiler, MPI, etc.) and for integrating the generated scripts
+into their activation workflow.</p></li>
+<li><p>For more details, see the source code and examples in the downstream
+packages listed above.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../parallel.html" class="btn btn-neutral float-left" title="Parallel execution with mache.parallel" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../sync/diags.html" class="btn btn-neutral float-right" title="Synchronize diagnostics between machines (mache sync diags)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="5.0.0">
+  <meta name="doc-site-root" content="../../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.placement\_support
+=======================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. autoproperty:: ParallelSystem.placement_support

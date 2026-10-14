@@ -1,0 +1,6 @@
+﻿mache.deploy.cli\_spec.filter\_args\_by\_route
+==============================================
+
+.. currentmodule:: mache.deploy.cli_spec
+
+.. autofunction:: filter_args_by_route

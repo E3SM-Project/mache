@@ -1,0 +1,6 @@
+﻿mache.spack.pins.merge\_pins
+============================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: merge_pins

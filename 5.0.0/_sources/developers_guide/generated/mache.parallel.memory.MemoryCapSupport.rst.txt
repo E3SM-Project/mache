@@ -1,0 +1,23 @@
+﻿mache.parallel.memory.MemoryCapSupport
+======================================
+
+.. currentmodule:: mache.parallel.memory
+
+.. autoclass:: MemoryCapSupport
+
+   
+   .. automethod:: __init__
+
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemoryCapSupport.ENFORCED
+      ~MemoryCapSupport.NONE
+   
+   
