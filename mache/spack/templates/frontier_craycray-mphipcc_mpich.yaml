@@ -184,6 +184,11 @@ spack:
             fortran: ftn
           environment:
             prepend_path:
-              # needed to prevent loading /opt/cray/pe/lib64/libmpi_gtl_hsa.so.0
-              LD_LIBRARY_PATH: "/opt/cray/pe/mpich/9.1.0/gtl/lib"
+              # Spack clears LD_LIBRARY_PATH for builds and the
+              # libfabric module is already loaded, so reloading it as
+              # an external module restores nothing.  The Cray wrappers
+              # link MPI into every executable, so the linker needs it.
+              # The mpich gtl directory is needed to prevent loading
+              # /opt/cray/pe/lib64/libmpi_gtl_hsa.so.0
+              LD_LIBRARY_PATH: "/opt/cray/libfabric/2.3.1/lib64:/opt/cray/pe/mpich/9.1.0/gtl/lib"
       buildable: false
