@@ -20,7 +20,7 @@ termcolor = "*"
 tqdm = "*"
 
 # Building
-setuptools = ">=60"
+setuptools = ">=77"
 wheel = "*"
 rattler-build = "*"
 

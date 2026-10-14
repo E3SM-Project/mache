@@ -1,6 +1,6 @@
 python >=3.11,<3.15
 importlib_resources
-jinja2
+jinja2 >=2.9
 lxml
 packaging
 pyyaml
@@ -10,7 +10,7 @@ termcolor
 tqdm
 
 # Building
-setuptools >=60
+setuptools >=77
 wheel
 
 # Linting and testing
