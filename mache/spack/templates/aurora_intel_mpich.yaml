@@ -1,4 +1,4 @@
-{%- set compiler = "intel-oneapi-compilers@2026.1.0" %}
+{%- set compiler = "intel-oneapi-compilers@2025.3.1" %}
 {%- set mpi = "mpich@5.0.0" %}
 
 spack:
@@ -100,9 +100,14 @@ spack:
     intel-oneapi-compilers:
       externals:
       - spec: {{ compiler }}
+        # TODO: confirm the oneapi prefix and the compiler paths below for
+        # the 2025.3.1 release. /opt/aurora/26.181.0 was confirmed for
+        # 2026.1.0; if 2025.3.1 lives under a different /opt/aurora/<release>
+        # SDK, the gcc, cmake, gmake, libxml2, python, hdf5, netcdf and
+        # pnetcdf externals move with it.
         prefix: /opt/aurora/26.181.0/oneapi
         modules:
-        - oneapi/release/2026.1.0
+        - oneapi/release/2025.3.1
         extra_attributes:
           compilers:
             c: /opt/aurora/26.181.0/oneapi/compiler/latest/bin/icx
@@ -124,7 +129,13 @@ spack:
     mpich:
       externals:
       - spec: {{ mpi }}
+        # TODO: E3SM now loads mpich/prd/5.0.0.aurora_test.51a9474, a
+        # different build from the 87e2045 one in the SDK that this prefix
+        # points at. Replace the prefix with the install path of the
+        # 51a9474 build.
         prefix: /opt/aurora/26.181.0/spack/unified/1.1.1/install/linux-x86_64/mpich-5.0.0.aurora_test.87e2045-frxgreu
+        modules:
+        - mpich/prd/5.0.0.aurora_test.51a9474
       buildable: false
     hdf5:
       externals:
