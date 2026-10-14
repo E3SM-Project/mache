@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   name: mache
-  version: "5.0.0rc2"
+  version: "5.0.0"
 
 package:
   name: ${{ name|lower }}
