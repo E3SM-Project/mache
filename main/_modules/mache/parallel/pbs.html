@@ -111,8 +111,10 @@
     <span class="n">PlacementSupport</span><span class="p">,</span>
     <span class="n">ResourcePlacement</span><span class="p">,</span>
     <span class="n">check_one_list_serves_every_node</span><span class="p">,</span>
+    <span class="n">gpu_ids_by_node</span><span class="p">,</span>
     <span class="n">names_resources</span><span class="p">,</span>
     <span class="n">split_cores_by_node</span><span class="p">,</span>
+    <span class="n">split_gpus_by_node</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mache.parallel.system</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ParallelSystem</span><span class="p">,</span>
@@ -576,8 +578,52 @@
         <span class="p">)</span>
         <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--cpu-bind'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'list:</span><span class="si">{</span><span class="n">core_list</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
 
-        <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_visible_devices_args</span><span class="p">(</span><span class="n">placement</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binds_gpus_by_list</span><span class="p">():</span>
+            <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_gpu_bind_args</span><span class="p">(</span><span class="n">ntasks</span><span class="p">,</span> <span class="n">placement</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">placement_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_visible_devices_args</span><span class="p">(</span><span class="n">placement</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">placement_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_binds_gpus_by_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether this machine names its GPUs in a ``gpu_bind`` list."""</span>
+        <span class="n">gpu_bind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpu_bind'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gpu_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gpu_bind</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_gpu_bind_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get the arguments that give each task of a launch its own GPUs.</span>
+
+<span class="sd">        A machine that binds GPUs with a ``gpu_bind = list:...`` gives each</span>
+<span class="sd">        task its own devices when nothing is placed, and a placed launch has</span>
+<span class="sd">        to do the same.  An earlier version set the vendor's visible-devices</span>
+<span class="sd">        variable for the whole launch instead, so every task saw every GPU</span>
+<span class="sd">        the placement gave and took the first: measured on Aurora, four</span>
+<span class="sd">        tasks of an Omega step given four tiles all ran on one and ran out</span>
+<span class="sd">        of device memory.</span>
+
+<span class="sd">        PALS hands a ``list:`` to each node's tasks by their index on that</span>
+<span class="sd">        node, as it does the CPU list, so one node's worth of entries is</span>
+<span class="sd">        rendered and a placement whose other nodes want different GPUs is</span>
+<span class="sd">        refused.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'The placement asks for </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">gpus</span><span class="si">}</span><span class="s1"> gpus but does '</span>
+                <span class="sa">f</span><span class="s1">'not say which. This machine has no scheduler to assign '</span>
+                <span class="sa">f</span><span class="s1">'them, so the caller -- which is the only thing that '</span>
+                <span class="sa">f</span><span class="s1">'knows about every concurrent launch -- must set '</span>
+                <span class="sa">f</span><span class="s1">'gpu_ids.'</span>
+            <span class="p">)</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_checked_devices</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+        <span class="n">by_node</span> <span class="o">=</span> <span class="n">split_gpus_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">)</span>
+        <span class="n">check_one_list_serves_every_node</span><span class="p">(</span><span class="n">by_node</span><span class="p">,</span> <span class="n">placement</span><span class="p">,</span> <span class="s1">'PALS'</span><span class="p">,</span> <span class="s1">'GPU'</span><span class="p">)</span>
+        <span class="n">gpu_list</span> <span class="o">=</span> <span class="s1">':'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">devices</span><span class="p">[</span><span class="n">gpu_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">by_node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">'--gpu-bind'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'list:</span><span class="si">{</span><span class="n">gpu_list</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_visible_devices_args</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span>
@@ -628,14 +674,20 @@
                     <span class="sa">f</span><span class="s1">'knows about every concurrent launch -- must set '</span>
                     <span class="sa">f</span><span class="s1">'gpu_ids.'</span>
                 <span class="p">)</span>
-            <span class="n">devices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_devices</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">gpu_id</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">):</span>
+            <span class="n">devices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_checked_devices</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+            <span class="c1"># one value serves every node, so every node has to want the</span>
+            <span class="c1"># same GPUs</span>
+            <span class="n">gpu_ids</span> <span class="o">=</span> <span class="n">gpu_ids_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((),)</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">gpu_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">node_gpu_ids</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gpu_ids</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">node_gpu_ids</span> <span class="o">!=</span> <span class="n">first</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">'The placement asks for GPU </span><span class="si">{</span><span class="n">gpu_id</span><span class="si">}</span><span class="s1"> but this '</span>
-                        <span class="sa">f</span><span class="s1">'machine has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span><span class="si">}</span><span class="s1"> per node.'</span>
+                        <span class="sa">f</span><span class="s1">'This placement gives </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="si">}</span><span class="s1"> GPUs '</span>
+                        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">node_gpu_ids</span><span class="p">)</span><span class="si">}</span><span class="s1"> and </span><span class="si">{</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> GPUs '</span>
+                        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s1">, but </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s1"> takes one value for '</span>
+                        <span class="sa">f</span><span class="s1">'the whole launch.'</span>
                     <span class="p">)</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">devices</span><span class="p">[</span><span class="n">gpu_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpu_ids</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">devices</span><span class="p">[</span><span class="n">gpu_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">first</span><span class="p">)</span>
 
         <span class="c1"># `--env VAR=VAL` as two arguments, which is the form PALS's usage</span>
         <span class="c1"># text describes.  The `--env=VAR=VAL` form has never got as far as</span>
@@ -646,25 +698,17 @@
         <span class="c1"># it.</span>
         <span class="k">return</span> <span class="p">[</span><span class="s1">'--env'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Get the node's GPUs, in order, as the vendor's variable names them.</span>
-
-<span class="sd">        A machine whose devices are not simply numbered from zero -- Aurora</span>
-<span class="sd">        addresses a tile as ``0.1`` -- already lists them in order in its</span>
-<span class="sd">        ``gpu_bind`` binding list, so that is used when it is present.</span>
-<span class="sd">        """</span>
-        <span class="n">gpu_bind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpu_bind'</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">gpu_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gpu_bind</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">gpu_bind</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)</span>
-
-        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span>
-        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s1">'gpus_per_node must be set in the config to place GPUs on '</span>
-                <span class="s1">'the pbs system.'</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">gpus_per_node</span><span class="p">)]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_checked_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the node's GPU names, checking the placement names real ones."""</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gpu_device_names</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node_gpu_ids</span> <span class="ow">in</span> <span class="n">gpu_ids_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span> <span class="ow">or</span> <span class="p">():</span>
+            <span class="k">for</span> <span class="n">gpu_id</span> <span class="ow">in</span> <span class="n">node_gpu_ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">gpu_id</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">'The placement asks for GPU </span><span class="si">{</span><span class="n">gpu_id</span><span class="si">}</span><span class="s1"> but this '</span>
+                        <span class="sa">f</span><span class="s1">'machine has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span><span class="si">}</span><span class="s1"> per node.'</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">devices</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_node_count_from_qstat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Try to determine node count from qstat output."""</span>

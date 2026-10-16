@@ -16,6 +16,7 @@
       ~PbsSystem.__init__
       ~PbsSystem.get_config
       ~PbsSystem.get_config_int
+      ~PbsSystem.get_gpu_device_names
       ~PbsSystem.get_parallel_command
       ~PbsSystem.get_pbs_options
       ~PbsSystem.get_scheduler_target

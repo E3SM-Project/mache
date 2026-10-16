@@ -16,6 +16,7 @@
       ~ParallelSystem.__init__
       ~ParallelSystem.get_config
       ~ParallelSystem.get_config_int
+      ~ParallelSystem.get_gpu_device_names
       ~ParallelSystem.get_parallel_command
       ~ParallelSystem.get_scheduler_target
       ~ParallelSystem.resolve_submission

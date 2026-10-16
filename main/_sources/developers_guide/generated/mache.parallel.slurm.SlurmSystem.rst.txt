@@ -16,6 +16,7 @@
       ~SlurmSystem.__init__
       ~SlurmSystem.get_config
       ~SlurmSystem.get_config_int
+      ~SlurmSystem.get_gpu_device_names
       ~SlurmSystem.get_parallel_command
       ~SlurmSystem.get_scheduler_target
       ~SlurmSystem.get_slurm_options

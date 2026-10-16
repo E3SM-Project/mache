@@ -75,6 +75,7 @@
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_parallel_command.html">mache.parallel.system.ParallelSystem.get_parallel_command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.node_names.html">mache.parallel.system.ParallelSystem.node_names</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.usable_core_ids.html">mache.parallel.system.ParallelSystem.usable_core_ids</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_gpu_device_names.html">mache.parallel.system.ParallelSystem.get_gpu_device_names</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.placement_support.html">mache.parallel.system.ParallelSystem.placement_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.memory_cap_support.html">mache.parallel.system.ParallelSystem.memory_cap_support</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mache.parallel.system.ParallelSystem.get_scheduler_target.html">mache.parallel.system.ParallelSystem.get_scheduler_target</a></li>
@@ -175,19 +176,22 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_int</span></code>(key[, default])</p></td>
 <td><p>Get an integer config value from the parallel configs.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_command</span></code>(args, ntasks[, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_gpu_device_names</span></code>()</p></td>
+<td><p>Name each of a node's GPUs, in index order, as the machine does.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parallel_command</span></code>(args, ntasks[, ...])</p></td>
 <td><p>Get the parallel execution command for the current system.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scheduler_target</span></code>(config, target_type, nodes)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scheduler_target</span></code>(config, target_type, nodes)</p></td>
 <td><p>Choose queue/partition/qos metadata target for a node count.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.get_slurm_options.html#mache.parallel.slurm.SlurmSystem.get_slurm_options" title="mache.parallel.slurm.SlurmSystem.get_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
 <td><p>Get Slurm submission options for a requested node count.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="mache.parallel.slurm.SlurmSystem.resolve_slurm_options.html#mache.parallel.slurm.SlurmSystem.resolve_slurm_options" title="mache.parallel.slurm.SlurmSystem.resolve_slurm_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_slurm_options</span></code></a>(config, nodes[, ...])</p></td>
 <td><p>Get Slurm submission options for a requested node count.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_submission</span></code>(config, nodes, target_type)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_submission</span></code>(config, nodes, target_type)</p></td>
 <td><p>Resolve a scheduler target and effective node count.</p></td>
 </tr>
 </tbody>

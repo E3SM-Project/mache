@@ -595,24 +595,32 @@ tasks that land on it, and says which node.</p>
 </section>
 <section id="assigning-gpus-on-pbs-with-pals">
 <span id="users-parallel-pals-gpus"></span><h3>Assigning GPUs on PBS with PALS<a class="headerlink" href="#assigning-gpus-on-pbs-with-pals" title="Link to this heading"></a></h3>
-<p>PALS has no scheduler to hand out GPUs, so isolation there is by the vendor’s
-visible-device variable – <code class="docutils literal notranslate"><span class="pre">ZE_AFFINITY_MASK</span></code> on Aurora,
-<code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> on Polaris. mache renders it into the <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> command
-and needs to be told <em>which</em> devices to name:</p>
+<p>PALS has no scheduler to hand out GPUs, so mache has to be told <em>which</em>
+devices a launch gets:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">placement</span> <span class="o">=</span> <span class="n">ResourcePlacement</span><span class="p">(</span>
     <span class="n">nodes</span><span class="o">=</span><span class="p">[</span><span class="s2">"x4401c1s0b0n0"</span><span class="p">],</span>
-    <span class="n">cores</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)),</span>
+    <span class="n">cores</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">))],</span>
     <span class="n">gpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">gpu_ids</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+    <span class="n">gpu_ids</span><span class="o">=</span><span class="p">[[</span><span class="mi">2</span><span class="p">]],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> are indices from 0 to <code class="docutils literal notranslate"><span class="pre">gpus_per_node</span> <span class="pre">-</span> <span class="pre">1</span></code>; mache maps them to
-whatever form the machine’s variable takes, including Aurora’s <code class="docutils literal notranslate"><span class="pre">device.tile</span></code>
-addressing. Only the caller knows about every launch running at that moment,
-so only the caller can assign disjoint GPUs – mache renders what it is given
-and never guesses. A placement with <code class="docutils literal notranslate"><span class="pre">gpus</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> and no <code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> raises on
-PALS, and <code class="docutils literal notranslate"><span class="pre">len(gpu_ids)</span></code> must equal <code class="docutils literal notranslate"><span class="pre">gpus</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> holds one set per node, like <code class="docutils literal notranslate"><span class="pre">cores</span></code>, of indices from 0 to
+<code class="docutils literal notranslate"><span class="pre">gpus_per_node</span> <span class="pre">-</span> <span class="pre">1</span></code>, and the sets add up to <code class="docutils literal notranslate"><span class="pre">gpus</span></code>. A flat list such as
+<code class="docutils literal notranslate"><span class="pre">[2]</span></code> is accepted for a placement on one node. mache maps the indices to
+whatever form the machine uses, including Aurora’s <code class="docutils literal notranslate"><span class="pre">device.tile</span></code> addressing;
+<code class="docutils literal notranslate"><span class="pre">get_gpu_device_names()</span></code> returns those names. Only the caller knows about
+every launch running at that moment, so only the caller can assign disjoint
+GPUs – mache renders what it is given and never guesses. A placement with
+<code class="docutils literal notranslate"><span class="pre">gpus</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> and no <code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> raises on PALS.</p>
+<p>Where the machine has an ordered <code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">list:...</span></code> binding list, as
+Aurora does, each task gets its own share of its node’s GPUs through
+<code class="docutils literal notranslate"><span class="pre">--gpu-bind</span> <span class="pre">list:</span></code>. As with the CPU list, PALS applies one node’s list to
+every node, so a launch spanning nodes must use the same indices on each of
+them; a node with fewer tasks may use the front of the first node’s set.
+Elsewhere – <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> on Polaris – the vendor’s visible-device
+variable, named by <code class="docutils literal notranslate"><span class="pre">gpu_visible_devices_var</span></code>, is set for the whole launch,
+and every node must be given the same set.</p>
 <p><code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> is ignored where the scheduler assigns GPUs itself, which is every
 Slurm machine.</p>
 <p>A placement with no GPUs sets the variable to an empty value. Note that this
@@ -623,10 +631,6 @@ empty value actually hides has not been measured. An empty
 may instead mean “no mask”, which is every tile. Do not rely on it to keep a
 GPU launch and a CPU launch off the same device – give the GPU launch
 explicit <code class="docutils literal notranslate"><span class="pre">gpu_ids</span></code> instead.</p>
-<p>Two config options support this, both already set on the machines that need
-them: <code class="docutils literal notranslate"><span class="pre">gpu_visible_devices_var</span></code> names the variable, and the ordered
-<code class="docutils literal notranslate"><span class="pre">gpu_bind</span> <span class="pre">=</span> <span class="pre">list:...</span></code> binding list, where a machine has one, says how its
-devices are named.</p>
 </section>
 <section id="what-a-placement-overrides">
 <h3>What a placement overrides<a class="headerlink" href="#what-a-placement-overrides" title="Link to this heading"></a></h3>
@@ -638,7 +642,8 @@ a whole node:</p>
 the placement has already said which nodes and how many cores the launch
 gets</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code>, <code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> and <code class="docutils literal notranslate"><span class="pre">mem_bind</span></code> are dropped when they name specific
-cores or devices, as Aurora’s do</p></li>
+cores or devices, as Aurora’s do; a placement with GPUs on PALS renders
+its own <code class="docutils literal notranslate"><span class="pre">--gpu-bind</span> <span class="pre">list:</span></code> instead</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cpu_bind</span></code> is also dropped wherever the placement renders its own binding</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gpu_bind</span></code> is dropped when the placement asks for no GPUs, and also when it
 is <code class="docutils literal notranslate"><span class="pre">none</span></code>, which asks for no binding at all</p></li>

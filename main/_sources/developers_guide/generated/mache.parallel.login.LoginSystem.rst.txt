@@ -16,6 +16,7 @@
       ~LoginSystem.__init__
       ~LoginSystem.get_config
       ~LoginSystem.get_config_int
+      ~LoginSystem.get_gpu_device_names
       ~LoginSystem.get_parallel_command
       ~LoginSystem.get_scheduler_target
       ~LoginSystem.resolve_submission

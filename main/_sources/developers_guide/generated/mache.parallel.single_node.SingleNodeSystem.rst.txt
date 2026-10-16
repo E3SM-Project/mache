@@ -16,6 +16,7 @@
       ~SingleNodeSystem.__init__
       ~SingleNodeSystem.get_config
       ~SingleNodeSystem.get_config_int
+      ~SingleNodeSystem.get_gpu_device_names
       ~SingleNodeSystem.get_parallel_command
       ~SingleNodeSystem.get_scheduler_target
       ~SingleNodeSystem.resolve_submission

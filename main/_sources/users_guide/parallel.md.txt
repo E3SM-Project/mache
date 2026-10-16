@@ -521,26 +521,35 @@ tasks that land on it, and says which node.
 
 ### Assigning GPUs on PBS with PALS
 
-PALS has no scheduler to hand out GPUs, so isolation there is by the vendor's
-visible-device variable -- `ZE_AFFINITY_MASK` on Aurora,
-`CUDA_VISIBLE_DEVICES` on Polaris. mache renders it into the `mpiexec` command
-and needs to be told *which* devices to name:
+PALS has no scheduler to hand out GPUs, so mache has to be told *which*
+devices a launch gets:
 
 ```python
 placement = ResourcePlacement(
     nodes=["x4401c1s0b0n0"],
-    cores=list(range(1, 9)),
+    cores=[list(range(1, 9))],
     gpus=1,
-    gpu_ids=[2],
+    gpu_ids=[[2]],
 )
 ```
 
-`gpu_ids` are indices from 0 to `gpus_per_node - 1`; mache maps them to
-whatever form the machine's variable takes, including Aurora's `device.tile`
-addressing. Only the caller knows about every launch running at that moment,
-so only the caller can assign disjoint GPUs -- mache renders what it is given
-and never guesses. A placement with `gpus > 0` and no `gpu_ids` raises on
-PALS, and `len(gpu_ids)` must equal `gpus`.
+`gpu_ids` holds one set per node, like `cores`, of indices from 0 to
+`gpus_per_node - 1`, and the sets add up to `gpus`. A flat list such as
+`[2]` is accepted for a placement on one node. mache maps the indices to
+whatever form the machine uses, including Aurora's `device.tile` addressing;
+`get_gpu_device_names()` returns those names. Only the caller knows about
+every launch running at that moment, so only the caller can assign disjoint
+GPUs -- mache renders what it is given and never guesses. A placement with
+`gpus > 0` and no `gpu_ids` raises on PALS.
+
+Where the machine has an ordered `gpu_bind = list:...` binding list, as
+Aurora does, each task gets its own share of its node's GPUs through
+`--gpu-bind list:`. As with the CPU list, PALS applies one node's list to
+every node, so a launch spanning nodes must use the same indices on each of
+them; a node with fewer tasks may use the front of the first node's set.
+Elsewhere -- `CUDA_VISIBLE_DEVICES` on Polaris -- the vendor's visible-device
+variable, named by `gpu_visible_devices_var`, is set for the whole launch,
+and every node must be given the same set.
 
 `gpu_ids` is ignored where the scheduler assigns GPUs itself, which is every
 Slurm machine.
@@ -554,10 +563,6 @@ may instead mean "no mask", which is every tile. Do not rely on it to keep a
 GPU launch and a CPU launch off the same device -- give the GPU launch
 explicit `gpu_ids` instead.
 
-Two config options support this, both already set on the machines that need
-them: `gpu_visible_devices_var` names the variable, and the ordered
-`gpu_bind = list:...` binding list, where a machine has one, says how its
-devices are named.
 
 ### What a placement overrides
 
@@ -569,7 +574,8 @@ a whole node:
     the placement has already said which nodes and how many cores the launch
     gets
 - `cpu_bind`, `gpu_bind` and `mem_bind` are dropped when they name specific
-    cores or devices, as Aurora's do
+    cores or devices, as Aurora's do; a placement with GPUs on PALS renders
+    its own `--gpu-bind list:` instead
 - `cpu_bind` is also dropped wherever the placement renders its own binding
 - `gpu_bind` is dropped when the placement asks for no GPUs, and also when it
     is `none`, which asks for no binding at all

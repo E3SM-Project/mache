@@ -263,6 +263,39 @@
 <span class="w">        </span><span class="sd">"""Read the hostnames this system holds, or ``None`` if unnamed."""</span>
         <span class="k">return</span> <span class="kc">None</span>
 
+<div class="viewcode-block" id="ParallelSystem.get_gpu_device_names">
+<a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.get_gpu_device_names.html#mache.parallel.system.ParallelSystem.get_gpu_device_names">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_gpu_device_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Name each of a node's GPUs, in index order, as the machine does.</span>
+
+<span class="sd">        A placement's ``gpu_ids`` are indices from 0 to</span>
+<span class="sd">        ``gpus_per_node - 1``, but a machine whose devices are not simply</span>
+<span class="sd">        numbered from zero names them otherwise -- Aurora addresses a tile as</span>
+<span class="sd">        ``0.1``. Such a machine lists its devices in order in its</span>
+<span class="sd">        ``gpu_bind = list:...`` binding list, so that is used where it is</span>
+<span class="sd">        present. This is also what a launch's ranks will see in the vendor's</span>
+<span class="sd">        visible-devices variable, so a caller checking what a launch got can</span>
+<span class="sd">        compare against these names.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        names : list of str</span>
+<span class="sd">            The name of each GPU on a node, indexed as ``gpu_ids`` are.</span>
+<span class="sd">        """</span>
+        <span class="n">gpu_bind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'gpu_bind'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gpu_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gpu_bind</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">gpu_bind</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'list:'</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)</span>
+
+        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpus_per_node</span>
+        <span class="k">if</span> <span class="n">gpus_per_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'gpus_per_node must be set in the config to name the GPUs '</span>
+                <span class="s1">'of a node.'</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">gpus_per_node</span><span class="p">)]</span></div>
+
+
 <div class="viewcode-block" id="ParallelSystem.usable_core_ids">
 <a class="viewcode-back" href="../../../developers_guide/generated/mache.parallel.system.ParallelSystem.usable_core_ids.html#mache.parallel.system.ParallelSystem.usable_core_ids">[docs]</a>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
