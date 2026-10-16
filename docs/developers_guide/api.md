@@ -50,6 +50,7 @@ documentation.
     ParallelSystem.get_parallel_command
     ParallelSystem.node_names
     ParallelSystem.usable_core_ids
+    ParallelSystem.get_gpu_device_names
     ParallelSystem.placement_support
     ParallelSystem.memory_cap_support
     ParallelSystem.get_scheduler_target
