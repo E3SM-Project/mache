@@ -153,6 +153,36 @@ class ParallelSystem:
         """Read the hostnames this system holds, or ``None`` if unnamed."""
         return None
 
+    def get_gpu_device_names(self) -> List[str]:
+        """
+        Name each of a node's GPUs, in index order, as the machine does.
+
+        A placement's ``gpu_ids`` are indices from 0 to
+        ``gpus_per_node - 1``, but a machine whose devices are not simply
+        numbered from zero names them otherwise -- Aurora addresses a tile as
+        ``0.1``. Such a machine lists its devices in order in its
+        ``gpu_bind = list:...`` binding list, so that is used where it is
+        present. This is also what a launch's ranks will see in the vendor's
+        visible-devices variable, so a caller checking what a launch got can
+        compare against these names.
+
+        Returns
+        -------
+        names : list of str
+            The name of each GPU on a node, indexed as ``gpu_ids`` are.
+        """
+        gpu_bind = self.get_config('gpu_bind')
+        if gpu_bind is not None and gpu_bind.startswith('list:'):
+            return gpu_bind[len('list:') :].split(':')
+
+        gpus_per_node = self.gpus_per_node
+        if gpus_per_node is None:
+            raise ValueError(
+                'gpus_per_node must be set in the config to name the GPUs '
+                'of a node.'
+            )
+        return [f'{index}' for index in range(gpus_per_node)]
+
     @functools.cached_property
     def usable_core_ids(self) -> Tuple[int, ...]:
         """

@@ -130,6 +130,31 @@ def test_placement_defaults_to_no_gpus():
     assert placement.gpu_ids is None
 
 
+def test_placement_gpu_ids_are_one_set_per_node():
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'],
+        cores=[[0, 1], [0, 1]],
+        gpus=3,
+        gpu_ids=[[0, 1], [0]],
+    )
+    assert placement.gpu_ids == ((0, 1), (0,))
+    with pytest.raises(ValueError, match='flat list'):
+        ResourcePlacement(
+            nodes=['x1', 'x2'], cores=[[0], [0]], gpus=2, gpu_ids=[0, 1]
+        )
+    with pytest.raises(ValueError, match='gives 1 gpu_ids sets'):
+        ResourcePlacement(
+            nodes=['x1', 'x2'], cores=[[0], [0]], gpus=1, gpu_ids=[[0]]
+        )
+    with pytest.raises(ValueError, match='lists 2 gpu_ids but asks for 4'):
+        ResourcePlacement(
+            nodes=['x1', 'x2'],
+            cores=[[0], [0]],
+            gpus=4,
+            gpu_ids=[[0], [0]],
+        )
+
+
 def test_placement_gpu_ids_must_match_the_total():
     """A mismatch is a scheduler bug, caught here rather than hours later."""
     with pytest.raises(ValueError, match='lists 1 gpu_ids but asks for 2'):
@@ -143,7 +168,7 @@ def test_placement_normalizes_sequences_to_tuples():
     assert placement.nodes == ('x1',)
     # core order is preserved, since it is the order tasks are given cores in
     assert placement.cores == ((5, 4),)
-    assert placement.gpu_ids == (3,)
+    assert placement.gpu_ids == ((3,),)
 
 
 # --- existing behavior is unchanged ----------------------------------------
@@ -575,23 +600,120 @@ def test_pals_packs_an_unplaced_launch_as_before(monkeypatch):
     assert _get_flag_value(args, '--ppn') == '4'
 
 
-def test_pals_renders_the_visible_devices_variable(monkeypatch):
-    system = _get_pbs_system(
+def _get_aurora_like_system(monkeypatch):
+    return _get_pbs_system(
         monkeypatch,
         gpus_per_node='12',
         gpu_bind='list:0.0:0.1:1.0:1.1:2.0:2.1',
         gpu_visible_devices_var='ZE_AFFINITY_MASK',
     )
+
+
+def test_pals_gives_each_task_its_own_gpus(monkeypatch):
+    """
+    One visible-devices value for the whole launch let every task see every
+    GPU, and on Aurora they all took the first.
+    """
+    system = _get_aurora_like_system(monkeypatch)
     placement = ResourcePlacement(
         nodes=['x1'], cores=[[1, 2]], gpus=2, gpu_ids=[2, 3]
     )
     args = system._get_parallel_args(
         cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
     )
-    # a value on the command line cannot leak from the parent
-    assert _get_flag_value(args, '--env') == 'ZE_AFFINITY_MASK=1.0,1.1'
+    assert _get_flag_value(args, '--gpu-bind') == 'list:1.0:1.1'
+    assert '--env' not in args
     # PALS has no --env-remove, and rejects the whole command if given one
     assert not any(arg.startswith('--env-remove') for arg in args)
+
+
+def test_pals_divides_gpus_between_a_nodes_tasks(monkeypatch):
+    system = _get_aurora_like_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1'], cores=[[1, 2]], gpus=4, gpu_ids=[0, 1, 2, 3]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=2, placement=placement
+    )
+    assert _get_flag_value(args, '--gpu-bind') == 'list:0.0,0.1:1.0,1.1'
+
+
+def test_pals_shares_gpus_between_more_tasks(monkeypatch):
+    system = _get_aurora_like_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1'], cores=[[1, 2, 3, 4]], gpus=2, gpu_ids=[4, 5]
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+    )
+    assert _get_flag_value(args, '--gpu-bind') == 'list:2.0:2.0:2.1:2.1'
+
+
+def test_pals_renders_one_nodes_gpus_for_a_launch_spanning_nodes(
+    monkeypatch,
+):
+    """PALS restarts a list on every node, as it does the CPU list."""
+    system = _get_aurora_like_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'],
+        cores=[[1, 2, 3], [1, 2]],
+        gpus=5,
+        gpu_ids=[[0, 1, 2], [0, 1]],
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=5, placement=placement
+    )
+    assert _get_flag_value(args, '--gpu-bind') == 'list:0.0:0.1:1.0'
+
+
+def test_pals_refuses_different_gpus_on_different_nodes(monkeypatch):
+    system = _get_aurora_like_system(monkeypatch)
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'],
+        cores=[[1, 2], [1, 2]],
+        gpus=4,
+        gpu_ids=[[0, 1], [2, 3]],
+    )
+    with pytest.raises(ValueError, match='different GPU numbers'):
+        system._get_parallel_args(
+            cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+        )
+
+
+def test_pals_names_gpus_as_the_machine_does(monkeypatch):
+    system = _get_aurora_like_system(monkeypatch)
+    assert system.get_gpu_device_names()[:3] == ['0.0', '0.1', '1.0']
+    numbered = _get_pbs_system(monkeypatch, gpus_per_node='4')
+    assert numbered.get_gpu_device_names() == ['0', '1', '2', '3']
+
+
+def test_pals_sets_the_visible_devices_variable_on_every_node(monkeypatch):
+    system = _get_pbs_system(
+        monkeypatch,
+        gpus_per_node='4',
+        gpu_visible_devices_var='CUDA_VISIBLE_DEVICES',
+    )
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'],
+        cores=[[1, 2], [1, 2]],
+        gpus=4,
+        gpu_ids=[[2, 3], [2, 3]],
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+    )
+    assert _get_flag_value(args, '--env') == 'CUDA_VISIBLE_DEVICES=2,3'
+
+    placement = ResourcePlacement(
+        nodes=['x1', 'x2'],
+        cores=[[1, 2], [1, 2]],
+        gpus=4,
+        gpu_ids=[[0, 1], [2, 3]],
+    )
+    with pytest.raises(ValueError, match='one value for the whole launch'):
+        system._get_parallel_args(
+            cpus_per_task=1, gpus_per_task=0, ntasks=4, placement=placement
+        )
 
 
 def test_pals_numbers_devices_from_zero_by_default(monkeypatch):

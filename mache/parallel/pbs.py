@@ -12,8 +12,10 @@ from mache.parallel.placement import (
     PlacementSupport,
     ResourcePlacement,
     check_one_list_serves_every_node,
+    gpu_ids_by_node,
     names_resources,
     split_cores_by_node,
+    split_gpus_by_node,
 )
 from mache.parallel.system import (
     ParallelSystem,
@@ -460,8 +462,52 @@ class PbsSystem(ParallelSystem):
         )
         placement_args.extend(['--cpu-bind', f'list:{core_list}'])
 
-        placement_args.extend(self._get_visible_devices_args(placement))
+        if placement.gpus > 0 and self._binds_gpus_by_list():
+            placement_args.extend(self._get_gpu_bind_args(ntasks, placement))
+        else:
+            placement_args.extend(self._get_visible_devices_args(placement))
         return placement_args
+
+    def _binds_gpus_by_list(self) -> bool:
+        """Whether this machine names its GPUs in a ``gpu_bind`` list."""
+        gpu_bind = self.get_config('gpu_bind')
+        return gpu_bind is not None and gpu_bind.startswith('list:')
+
+    def _get_gpu_bind_args(
+        self, ntasks: int, placement: ResourcePlacement
+    ) -> List[str]:
+        """
+        Get the arguments that give each task of a launch its own GPUs.
+
+        A machine that binds GPUs with a ``gpu_bind = list:...`` gives each
+        task its own devices when nothing is placed, and a placed launch has
+        to do the same.  An earlier version set the vendor's visible-devices
+        variable for the whole launch instead, so every task saw every GPU
+        the placement gave and took the first: measured on Aurora, four
+        tasks of an Omega step given four tiles all ran on one and ran out
+        of device memory.
+
+        PALS hands a ``list:`` to each node's tasks by their index on that
+        node, as it does the CPU list, so one node's worth of entries is
+        rendered and a placement whose other nodes want different GPUs is
+        refused.
+        """
+        if placement.gpu_ids is None:
+            raise ValueError(
+                f'The placement asks for {placement.gpus} gpus but does '
+                f'not say which. This machine has no scheduler to assign '
+                f'them, so the caller -- which is the only thing that '
+                f'knows about every concurrent launch -- must set '
+                f'gpu_ids.'
+            )
+        devices = self._get_checked_devices(placement)
+        by_node = split_gpus_by_node(placement, ntasks)
+        check_one_list_serves_every_node(by_node, placement, 'PALS', 'GPU')
+        gpu_list = ':'.join(
+            ','.join(devices[gpu_id] for gpu_id in chunk)
+            for chunk in by_node[0]
+        )
+        return ['--gpu-bind', f'list:{gpu_list}']
 
     def _get_visible_devices_args(
         self, placement: ResourcePlacement
@@ -512,14 +558,20 @@ class PbsSystem(ParallelSystem):
                     f'knows about every concurrent launch -- must set '
                     f'gpu_ids.'
                 )
-            devices = self._get_devices()
-            for gpu_id in placement.gpu_ids:
-                if gpu_id >= len(devices):
+            devices = self._get_checked_devices(placement)
+            # one value serves every node, so every node has to want the
+            # same GPUs
+            gpu_ids = gpu_ids_by_node(placement) or ((),)
+            first = gpu_ids[0]
+            for index, node_gpu_ids in enumerate(gpu_ids[1:], 1):
+                if node_gpu_ids != first:
                     raise ValueError(
-                        f'The placement asks for GPU {gpu_id} but this '
-                        f'machine has {len(devices)} per node.'
+                        f'This placement gives {placement.nodes[index]} GPUs '
+                        f'{list(node_gpu_ids)} and {placement.nodes[0]} GPUs '
+                        f'{list(first)}, but {variable} takes one value for '
+                        f'the whole launch.'
                     )
-            value = ','.join(devices[gpu_id] for gpu_id in placement.gpu_ids)
+            value = ','.join(devices[gpu_id] for gpu_id in first)
 
         # `--env VAR=VAL` as two arguments, which is the form PALS's usage
         # text describes.  The `--env=VAR=VAL` form has never got as far as
@@ -530,25 +582,17 @@ class PbsSystem(ParallelSystem):
         # it.
         return ['--env', f'{variable}={value}']
 
-    def _get_devices(self) -> List[str]:
-        """
-        Get the node's GPUs, in order, as the vendor's variable names them.
-
-        A machine whose devices are not simply numbered from zero -- Aurora
-        addresses a tile as ``0.1`` -- already lists them in order in its
-        ``gpu_bind`` binding list, so that is used when it is present.
-        """
-        gpu_bind = self.get_config('gpu_bind')
-        if gpu_bind is not None and gpu_bind.startswith('list:'):
-            return gpu_bind[len('list:') :].split(':')
-
-        gpus_per_node = self.gpus_per_node
-        if gpus_per_node is None:
-            raise ValueError(
-                'gpus_per_node must be set in the config to place GPUs on '
-                'the pbs system.'
-            )
-        return [f'{index}' for index in range(gpus_per_node)]
+    def _get_checked_devices(self, placement: ResourcePlacement) -> List[str]:
+        """Get the node's GPU names, checking the placement names real ones."""
+        devices = self.get_gpu_device_names()
+        for node_gpu_ids in gpu_ids_by_node(placement) or ():
+            for gpu_id in node_gpu_ids:
+                if gpu_id >= len(devices):
+                    raise ValueError(
+                        f'The placement asks for GPU {gpu_id} but this '
+                        f'machine has {len(devices)} per node.'
+                    )
+        return devices
 
     def _get_node_count_from_qstat(self):
         """Try to determine node count from qstat output."""

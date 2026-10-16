@@ -1,6 +1,7 @@
+import numbers
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Sequence, Tuple
+from typing import Any, List, Sequence, Tuple, cast
 
 # the machine's binding config options, in the order they are rendered
 BINDING_OPTIONS = ('cpu_bind', 'gpu_bind', 'mem_bind')
@@ -88,20 +89,24 @@ class ResourcePlacement:
         explicit request for no GPUs, since a launch that says nothing about
         GPUs is read as claiming every one on the node.
 
-    gpu_ids : tuple of int or None
-        Which of the node's GPUs to use, as indices from 0 to
-        ``gpus_per_node - 1``. This is needed only where the batch system
-        does not assign GPUs itself and mache has to name them, which is the
-        case on PBS with PALS. Only the caller knows about every concurrent
-        launch, so only the caller can assign disjoint GPUs; mache renders
-        what it is given and never guesses. ``None`` where the scheduler
-        assigns GPUs from ``gpus``.
+    gpu_ids : tuple of tuple of int or None
+        Which GPUs to use, one set per entry in ``nodes`` like ``cores``, as
+        node-local indices from 0 to ``gpus_per_node - 1``. The sets add up
+        to ``gpus``. This is needed only where the batch system does not
+        assign GPUs itself and mache has to name them, which is the case on
+        PBS with PALS. Only the caller knows about every concurrent launch,
+        so only the caller can assign disjoint GPUs; mache renders what it is
+        given and never guesses. ``None`` where the scheduler assigns GPUs
+        from ``gpus``.
+
+        A flat sequence of indices is accepted for a placement on at most one
+        node, and is read as that node's set.
     """
 
     nodes: Sequence[str]
     cores: Sequence[Sequence[int]]
     gpus: int = 0
-    gpu_ids: Sequence[int] | None = None
+    gpu_ids: Sequence[Sequence[int]] | Sequence[int] | None = None
 
     def __post_init__(self) -> None:
         nodes = tuple(str(node).strip() for node in self.nodes)
@@ -132,21 +137,31 @@ class ResourcePlacement:
         if self.gpu_ids is None:
             return
 
-        gpu_ids = tuple(int(gpu_id) for gpu_id in self.gpu_ids)
-        if any(gpu_id < 0 for gpu_id in gpu_ids):
+        gpu_ids = _per_node_gpu_ids(self.gpu_ids, nodes)
+        if len(gpu_ids) != expected:
             raise ValueError(
-                f'Placement gpu_ids must not be negative, got {gpu_ids}.'
+                f'A placement names {len(nodes)} nodes but gives '
+                f'{len(gpu_ids)} gpu_ids sets. It needs {expected}, one per '
+                f'node.'
             )
-        if len(set(gpu_ids)) != len(gpu_ids):
-            raise ValueError(
-                f'Placement gpu_ids must be unique, got {gpu_ids}.'
-            )
-        if len(gpu_ids) != self.gpus:
+        for node_gpu_ids in gpu_ids:
+            if any(gpu_id < 0 for gpu_id in node_gpu_ids):
+                raise ValueError(
+                    f'Placement gpu_ids must not be negative, got '
+                    f'{node_gpu_ids}.'
+                )
+            if len(set(node_gpu_ids)) != len(node_gpu_ids):
+                raise ValueError(
+                    f'Placement gpu_ids must be unique on each node, got '
+                    f'{node_gpu_ids}.'
+                )
+        listed = sum(len(node_gpu_ids) for node_gpu_ids in gpu_ids)
+        if listed != self.gpus:
             # a mismatch here is a bug in whatever assigned the GPUs, and it
             # is much cheaper to catch at the boundary than as silent
             # oversubscription once the work is running
             raise ValueError(
-                f'Placement lists {len(gpu_ids)} gpu_ids but asks for '
+                f'Placement lists {listed} gpu_ids but asks for '
                 f'{self.gpus} gpus. They must agree.'
             )
         object.__setattr__(self, 'gpu_ids', gpu_ids)
@@ -257,10 +272,82 @@ def split_cores_by_node(
     return by_node
 
 
+def split_gpus_by_node(
+    placement: ResourcePlacement, ntasks: int
+) -> List[List[List[int]]]:
+    """
+    Divide a placement's GPUs between the tasks on each node.
+
+    Tasks are spread over the nodes as :py:func:`split_cores_by_node` spreads
+    them. A node's GPUs are divided as evenly as they go between the tasks
+    that land on it, in order. Where a node has fewer GPUs than tasks, tasks
+    share them, each task taking the GPU its share of the list falls on.
+
+    Parameters
+    ----------
+    placement : ResourcePlacement
+        The placement whose GPUs should be divided. Its ``gpu_ids`` must be
+        set.
+
+    ntasks : int
+        The number of tasks to divide the GPUs between.
+
+    Returns
+    -------
+    by_node : list of list of list of int
+        One list of GPU indices per task, grouped by the node the task lands
+        on.
+    """
+    gpu_ids = gpu_ids_by_node(placement)
+    if gpu_ids is None:
+        raise ValueError('The placement does not name its GPUs.')
+    node_count = max(len(placement.nodes), 1)
+    base, extra = divmod(ntasks, node_count)
+
+    by_node: List[List[List[int]]] = []
+    for node_index in range(node_count):
+        tasks_here = base + (1 if node_index < extra else 0)
+        if tasks_here <= 0:
+            break
+        node_gpu_ids = list(gpu_ids[node_index])
+        if len(node_gpu_ids) == 0:
+            where = (
+                f'node {placement.nodes[node_index]}'
+                if placement.nodes
+                else 'the placement'
+            )
+            raise ValueError(
+                f'The placement gives {where} no GPUs but {tasks_here} tasks '
+                f'land there.'
+            )
+        count = len(node_gpu_ids)
+        chunks = []
+        for task in range(tasks_here):
+            start = task * count // tasks_here
+            end = max(start + 1, (task + 1) * count // tasks_here)
+            chunks.append(node_gpu_ids[start:end])
+        by_node.append(chunks)
+    return by_node
+
+
+def gpu_ids_by_node(
+    placement: ResourcePlacement,
+) -> Tuple[Tuple[int, ...], ...] | None:
+    """
+    A placement's ``gpu_ids``, as the one set per node it always holds.
+
+    The field accepts a flat list for a placement on one node and normalizes
+    it, so once constructed it is always one tuple per node; this says so to
+    a type checker.
+    """
+    return cast(Tuple[Tuple[int, ...], ...] | None, placement.gpu_ids)
+
+
 def check_one_list_serves_every_node(
     by_node: List[List[List[int]]],
     placement: ResourcePlacement,
     launcher: str,
+    resource: str = 'core',
 ) -> None:
     """
     Check that the first node's core list describes every node's tasks.
@@ -290,6 +377,9 @@ def check_one_list_serves_every_node(
     launcher : str
         The launcher's name, for the message
 
+    resource : str, optional
+        What the list holds, ``core`` or ``GPU``, for the message
+
     Raises
     ------
     ValueError
@@ -303,18 +393,18 @@ def check_one_list_serves_every_node(
         names = placement.nodes
         here = names[index] if index < len(names) else f'node {index}'
         there = names[0] if names else 'the first node'
-        wanted = [core for chunk in chunks for core in chunk]
-        given = [core for chunk in first for core in chunk]
+        wanted = [item for chunk in chunks for item in chunk]
+        given = [item for chunk in first for item in chunk]
         raise ValueError(
-            f'This placement gives {here} different core numbers from '
+            f'This placement gives {here} different {resource} numbers from '
             f'{there}, and {launcher} has no way to be told that: it applies '
             f'one binding list to every node, addressing each task by its '
             f'index on its own node. So {here} would silently run on the '
-            f'cores of {there}.\n'
+            f'{resource}s of {there}.\n'
             f'  {there}: {given}\n'
             f'  {here}: {wanted}\n'
-            f'A launch spanning nodes has to be given the same core numbers '
-            f'on each of them.'
+            f'A launch spanning nodes has to be given the same {resource} '
+            f'numbers on each of them.'
         )
 
 
@@ -363,3 +453,29 @@ def _check_node_cores(cores: Sequence[int]) -> Tuple[int, ...]:
             f'{node_cores}.'
         )
     return node_cores
+
+
+def _per_node_gpu_ids(
+    gpu_ids: Sequence[Sequence[int]] | Sequence[int],
+    nodes: Tuple[str, ...],
+) -> Tuple[Tuple[int, ...], ...]:
+    """Normalize a placement's GPU indices to one set per node."""
+    entries: List[Any] = list(gpu_ids)
+    if all(isinstance(entry, numbers.Integral) for entry in entries):
+        # a flat list was what a placement took before it spoke in terms of
+        # nodes, and it can still say what it said then: the GPUs of a
+        # launch on one node
+        if len(nodes) > 1:
+            raise ValueError(
+                f'Placement gpu_ids are one set per node for a placement on '
+                f'{len(nodes)} nodes, but got a flat list {tuple(entries)}.'
+            )
+        return (tuple(entries),)
+    if any(
+        isinstance(entry, (numbers.Integral, str, bytes)) for entry in entries
+    ):
+        raise ValueError(
+            f'Placement gpu_ids must be one set of indices per node, got '
+            f'{gpu_ids!r}.'
+        )
+    return tuple(tuple(int(gpu_id) for gpu_id in entry) for entry in entries)
