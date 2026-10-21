@@ -1,11 +1,15 @@
 ---
 name: testing-comments
-description: Write a Testing comment on a pull request, recording what was run and what the results were. Use after running suites, tests or linting for a PR.
+description: Write a Testing comment on a pull request, recording what was run and what the results were. Use after testing a PR beyond what CI reports.
 ---
 
 # Testing comments
 
 What you ran, where, and whether it passed.
+
+Only write one for testing beyond what CI already reports. Running
+the unit tests, pre-commit or the docs build locally repeats CI; skip
+the comment and leave its checklist line unticked.
 
 - Name the suite, the machine and the compiler. One sentence.
 - Give the work directory or the baseline you compared against.
