@@ -266,8 +266,38 @@ def test_modern_slurm_places_on_several_nodes(monkeypatch):
     args = system._get_parallel_args(
         cpus_per_task=2, gpus_per_task=0, ntasks=4, placement=placement
     )
-    assert _get_flag_value(args, '-w') == 'nid001,nid002'
-    assert _get_flag_value(args, '-N') == '2'
+    assert args == [
+        '-c',
+        '2',
+        '-n',
+        '4',
+        '-m',
+        'arbitrary',
+        '-w',
+        'nid001,nid001,nid002,nid002',
+        '--exact',
+        '--gres=none',
+    ]
+
+
+def test_modern_slurm_names_each_tasks_node(monkeypatch):
+    """Slurm fills nodes by what is free, so each task's node is named."""
+    system = _get_slurm_system(monkeypatch, MODERN_SLURM)
+    placement = ResourcePlacement(
+        nodes=['nid001', 'nid002', 'nid003'],
+        cores=[list(range(4)), list(range(4)), list(range(4))],
+        gpus=7,
+    )
+    args = system._get_parallel_args(
+        cpus_per_task=1, gpus_per_task=0, ntasks=7, placement=placement
+    )
+    # the same layout split_cores_by_node gives the cores: 3, 2 and 2
+    assert _get_flag_value(args, '-w') == (
+        'nid001,nid001,nid001,nid002,nid002,nid003,nid003'
+    )
+    assert _get_flag_value(args, '-m') == 'arbitrary'
+    assert '-N' not in args
+    assert '--gpus=7' in args
 
 
 def test_modern_slurm_asks_for_a_gpu_total(monkeypatch):
