@@ -510,7 +510,9 @@ How much of the sets is honored depends on the mechanism:
 
 - where the scheduler reserves resources, only the sizes are used; Slurm is
     asked for that many cores and picks which ones itself, and an explicit
-    core list is rejected outright alongside `-c`
+    core list is rejected outright alongside `-c`. A launch spanning nodes
+    names the node of every task (`-m arbitrary`), because Slurm otherwise
+    puts more tasks on whichever node has more cores free
 - where placement is by CPU binding, the sets are used exactly as given, in
     order, split into one contiguous chunk of `cpus_per_task` cores per task
 

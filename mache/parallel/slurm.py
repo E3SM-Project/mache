@@ -623,14 +623,12 @@ class SlurmSystem(ParallelSystem):
                 f'likely need to allocate more nodes.'
             )
 
-        parallel_args = [
-            '-c',
-            f'{cpus_per_task}',
-            '-N',
-            f'{launch_nodes}',
-            '-n',
-            f'{ntasks}',
-        ]
+        parallel_args = ['-c', f'{cpus_per_task}']
+        if not self._lays_out_tasks(placement):
+            # -N is an error alongside -m arbitrary, whose host list already
+            # says which nodes and how many
+            parallel_args.extend(['-N', f'{launch_nodes}'])
+        parallel_args.extend(['-n', f'{ntasks}'])
 
         if placement is not None:
             parallel_args = self._add_placement_args(
@@ -673,12 +671,29 @@ class SlurmSystem(ParallelSystem):
         placement: ResourcePlacement,
     ) -> List[str]:
         """Add the arguments that confine a launch to a placement."""
-        if len(placement.nodes) > 0:
-            parallel_args.extend(['-w', ','.join(placement.nodes)])
-
-        # divided here for both paths, because it is also what checks that
+        # divided here for every path, because it is also what checks that
         # the placement has the cores its tasks need
         by_node = split_cores_by_node(placement, ntasks, cpus_per_task)
+
+        if self._lays_out_tasks(placement):
+            # Slurm 20.11 and newer does not balance a launch's tasks over
+            # the nodes it names: it fills them by what is free on each, so
+            # a step spanning nodes runs on more of one node than it was
+            # placed on.  With 10 cores busy on one of two nodes, `-N 2 -n 80
+            # --exact` put 38 tasks there and 42 on the other, and neither
+            # --ntasks-per-node nor a block or cyclic -m changed that; with
+            # two GPUs busy on one of three, `-N 3 -n 20 --gpus=20` put 4, 7
+            # and 9 where 7, 7 and 6 were placed (Frontier, jobs 5723503 and
+            # 5723611).  Only an arbitrary layout held the counts: one host
+            # per task, in task order.
+            hosts = [
+                node
+                for node, chunks in zip(placement.nodes, by_node, strict=False)
+                for _ in chunks
+            ]
+            parallel_args.extend(['-m', 'arbitrary', '-w', ','.join(hosts)])
+        elif len(placement.nodes) > 0:
+            parallel_args.extend(['-w', ','.join(placement.nodes)])
 
         if self.placement_support is PlacementSupport.CPU_BINDING:
             if placement.gpus > 0:
@@ -723,6 +738,21 @@ class SlurmSystem(ParallelSystem):
             # node, which is what serializes concurrent launches there
             parallel_args.append('--gres=none')
         return parallel_args
+
+    def _lays_out_tasks(self, placement: ResourcePlacement | None) -> bool:
+        """
+        Check whether a placed launch names the node of every task.
+
+        Only a launch spanning nodes has a layout to get wrong, and only
+        where Slurm reserves cores: before 20.11 steps share a node's cores
+        rather than reserving them, so nothing busy pushes tasks elsewhere,
+        and the core masks rely on the balanced layout Slurm gives there.
+        """
+        return (
+            placement is not None
+            and len(placement.nodes) > 1
+            and self.placement_support is PlacementSupport.SCHEDULER
+        )
 
     def _get_binding_args(
         self, placement: ResourcePlacement | None
