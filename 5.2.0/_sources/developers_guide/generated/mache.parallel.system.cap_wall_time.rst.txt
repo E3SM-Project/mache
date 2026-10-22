@@ -1,0 +1,6 @@
+﻿mache.parallel.system.cap\_wall\_time
+=====================================
+
+.. currentmodule:: mache.parallel.system
+
+.. autofunction:: cap_wall_time

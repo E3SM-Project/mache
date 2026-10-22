@@ -1,0 +1,6 @@
+﻿mache.deploy.hooks.load\_hooks
+==============================
+
+.. currentmodule:: mache.deploy.hooks
+
+.. autofunction:: load_hooks

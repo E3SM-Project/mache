@@ -1,0 +1,6 @@
+﻿mache.jigsaw.deploy\_jigsawpy
+=============================
+
+.. currentmodule:: mache.jigsaw
+
+.. autofunction:: deploy_jigsawpy

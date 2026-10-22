@@ -1,0 +1,6 @@
+﻿mache.deploy.spack.capture\_spack\_activations
+==============================================
+
+.. currentmodule:: mache.deploy.spack
+
+.. autofunction:: capture_spack_activations
