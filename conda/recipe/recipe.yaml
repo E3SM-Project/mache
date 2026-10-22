@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   name: mache
-  version: "5.0.0"
+  version: "5.1.0"
 
 package:
   name: ${{ name|lower }}
@@ -23,7 +23,7 @@ requirements:
   run:
     - python >=${{ python_min }}
     - importlib_resources
-    - jinja2
+    - jinja2 >=2.9
     - lxml
     - packaging
     - pyyaml
