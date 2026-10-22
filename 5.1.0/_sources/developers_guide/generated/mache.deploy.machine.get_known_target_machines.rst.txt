@@ -1,0 +1,6 @@
+﻿mache.deploy.machine.get\_known\_target\_machines
+=================================================
+
+.. currentmodule:: mache.deploy.machine
+
+.. autofunction:: get_known_target_machines

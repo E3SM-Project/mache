@@ -1,0 +1,6 @@
+﻿mache.spack.activation.parse\_raw\_activation
+=============================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: parse_raw_activation

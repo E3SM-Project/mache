@@ -1,0 +1,6 @@
+﻿mache.spack.pins.release\_pins\_are\_valid
+==========================================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: release_pins_are_valid
