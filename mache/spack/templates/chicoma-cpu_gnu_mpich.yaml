@@ -31,6 +31,9 @@ spack:
       - spec: cmake@3.29.6
         prefix: /usr/projects/hpcsoft/tce/23-12/cos2-x86_64-cc80/packages/cmake/cmake-3.29.6/
       buildable: false
+    m4:
+      require:
+      - 'cflags="-std=gnu17"'
     curl:
       externals:
       - spec: curl@7.60.0
