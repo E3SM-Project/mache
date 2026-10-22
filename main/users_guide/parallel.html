@@ -586,7 +586,9 @@ cores the placement gives the launch in all.</p>
 <ul class="simple">
 <li><p>where the scheduler reserves resources, only the sizes are used; Slurm is
 asked for that many cores and picks which ones itself, and an explicit
-core list is rejected outright alongside <code class="docutils literal notranslate"><span class="pre">-c</span></code></p></li>
+core list is rejected outright alongside <code class="docutils literal notranslate"><span class="pre">-c</span></code>. A launch spanning nodes
+names the node of every task (<code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">arbitrary</span></code>), because Slurm otherwise
+puts more tasks on whichever node has more cores free</p></li>
 <li><p>where placement is by CPU binding, the sets are used exactly as given, in
 order, split into one contiguous chunk of <code class="docutils literal notranslate"><span class="pre">cpus_per_task</span></code> cores per task</p></li>
 </ul>

@@ -745,14 +745,12 @@
                 <span class="sa">f</span><span class="s1">'likely need to allocate more nodes.'</span>
             <span class="p">)</span>
 
-        <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s1">'-c'</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
-            <span class="s1">'-N'</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">launch_nodes</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
-            <span class="s1">'-n'</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
-        <span class="p">]</span>
+        <span class="n">parallel_args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-c'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cpus_per_task</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lays_out_tasks</span><span class="p">(</span><span class="n">placement</span><span class="p">):</span>
+            <span class="c1"># -N is an error alongside -m arbitrary, whose host list already</span>
+            <span class="c1"># says which nodes and how many</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-N'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">launch_nodes</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
+        <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-n'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ntasks</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parallel_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_placement_args</span><span class="p">(</span>
@@ -795,12 +793,29 @@
         <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Add the arguments that confine a launch to a placement."""</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-w'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
-
-        <span class="c1"># divided here for both paths, because it is also what checks that</span>
+        <span class="c1"># divided here for every path, because it is also what checks that</span>
         <span class="c1"># the placement has the cores its tasks need</span>
         <span class="n">by_node</span> <span class="o">=</span> <span class="n">split_cores_by_node</span><span class="p">(</span><span class="n">placement</span><span class="p">,</span> <span class="n">ntasks</span><span class="p">,</span> <span class="n">cpus_per_task</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lays_out_tasks</span><span class="p">(</span><span class="n">placement</span><span class="p">):</span>
+            <span class="c1"># Slurm 20.11 and newer does not balance a launch's tasks over</span>
+            <span class="c1"># the nodes it names: it fills them by what is free on each, so</span>
+            <span class="c1"># a step spanning nodes runs on more of one node than it was</span>
+            <span class="c1"># placed on.  With 10 cores busy on one of two nodes, `-N 2 -n 80</span>
+            <span class="c1"># --exact` put 38 tasks there and 42 on the other, and neither</span>
+            <span class="c1"># --ntasks-per-node nor a block or cyclic -m changed that; with</span>
+            <span class="c1"># two GPUs busy on one of three, `-N 3 -n 20 --gpus=20` put 4, 7</span>
+            <span class="c1"># and 9 where 7, 7 and 6 were placed (Frontier, jobs 5723503 and</span>
+            <span class="c1"># 5723611).  Only an arbitrary layout held the counts: one host</span>
+            <span class="c1"># per task, in task order.</span>
+            <span class="n">hosts</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">node</span>
+                <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">chunks</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span> <span class="n">by_node</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">chunks</span>
+            <span class="p">]</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-m'</span><span class="p">,</span> <span class="s1">'arbitrary'</span><span class="p">,</span> <span class="s1">'-w'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hosts</span><span class="p">)])</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">parallel_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'-w'</span><span class="p">,</span> <span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)])</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">CPU_BINDING</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -845,6 +860,21 @@
             <span class="c1"># node, which is what serializes concurrent launches there</span>
             <span class="n">parallel_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'--gres=none'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parallel_args</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lays_out_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Check whether a placed launch names the node of every task.</span>
+
+<span class="sd">        Only a launch spanning nodes has a layout to get wrong, and only</span>
+<span class="sd">        where Slurm reserves cores: before 20.11 steps share a node's cores</span>
+<span class="sd">        rather than reserving them, so nothing busy pushes tasks elsewhere,</span>
+<span class="sd">        and the core masks rely on the balanced layout Slurm gives there.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">placement_support</span> <span class="ow">is</span> <span class="n">PlacementSupport</span><span class="o">.</span><span class="n">SCHEDULER</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_binding_args</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">ResourcePlacement</span> <span class="o">|</span> <span class="kc">None</span>
