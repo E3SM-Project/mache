@@ -419,7 +419,7 @@ def _run_retry_hook(on_retry, log_filename, quiet):
         )
 
 
-def _clear_pixi_repodata_cache(*, pixi_exe, log_filename, quiet):
+def _clear_pixi_repodata_cache(*, pixi_exe, cwd, log_filename, quiet):
     """Drop cached repodata so the next solve refetches it.
 
     A stale repodata cache makes every retry of a failed ``pixi install``
@@ -427,6 +427,11 @@ def _clear_pixi_repodata_cache(*, pixi_exe, log_filename, quiet):
     any network traffic, so the retries cannot succeed.  Clearing the cache
     costs a few MB of downloads on the next attempt and only happens after
     a command has already failed.
+
+    ``cwd`` should be the bootstrap's pixi directory.  pixi looks for a
+    manifest even when cleaning the cache, and refuses to run from a
+    directory (such as the target repository's root) whose
+    ``pyproject.toml`` has no ``tool.pixi`` section.
     """
     _log_message(
         'Clearing the pixi repodata cache before retrying...\n',
@@ -438,6 +443,7 @@ def _clear_pixi_repodata_cache(*, pixi_exe, log_filename, quiet):
             [pixi_exe, 'clean', 'cache', '--repodata', '-y'],
             log_filename,
             quiet,
+            cwd=str(cwd),
             env=build_pixi_env(),
         )
     except Exception as exc:
@@ -761,6 +767,7 @@ def _run(log_filename):
             on_retry=partial(
                 _clear_pixi_repodata_cache,
                 pixi_exe=pixi_exe,
+                cwd=bootstrap_dir,
                 log_filename=log_filename,
                 quiet=quiet,
             ),
@@ -796,6 +803,7 @@ def _run(log_filename):
             on_retry=partial(
                 _clear_pixi_repodata_cache,
                 pixi_exe=pixi_exe,
+                cwd=bootstrap_dir,
                 log_filename=log_filename,
                 quiet=quiet,
             ),

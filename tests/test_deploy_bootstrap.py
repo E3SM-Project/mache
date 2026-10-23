@@ -724,8 +724,10 @@ def test_clear_pixi_repodata_cache_runs_pixi_clean_cache(
     monkeypatch.setattr(bootstrap, 'check_call', fake_check_call)
     monkeypatch.setenv('PIXI_CACHE_DIR', str(tmp_path / 'pixi-cache'))
 
+    bootstrap_dir = tmp_path / 'deploy_tmp' / 'bootstrap_pixi'
     bootstrap._clear_pixi_repodata_cache(
         pixi_exe='/path/to/pixi',
+        cwd=bootstrap_dir,
         log_filename=str(tmp_path / 'bootstrap.log'),
         quiet=True,
     )
@@ -737,6 +739,9 @@ def test_clear_pixi_repodata_cache_runs_pixi_clean_cache(
         '--repodata',
         '-y',
     ]
+    # pixi refuses to run from a target repo whose pyproject.toml has no
+    # tool.pixi section, so the cache must be cleared from the bootstrap dir
+    assert recorded['kwargs']['cwd'] == str(bootstrap_dir)
     env = recorded['kwargs']['env']
     assert env['PIXI_CACHE_DIR'] == str(tmp_path / 'pixi-cache')
     assert 'PIXI_IN_SHELL' not in env
@@ -753,6 +758,7 @@ def test_clear_pixi_repodata_cache_tolerates_failure(
     log_filename = tmp_path / 'bootstrap.log'
     bootstrap._clear_pixi_repodata_cache(
         pixi_exe='/path/to/pixi',
+        cwd=tmp_path,
         log_filename=str(log_filename),
         quiet=True,
     )
@@ -856,6 +862,7 @@ def test_run_clears_repodata_cache_between_install_attempts(
     assert cleared == [
         {
             'pixi_exe': '/path/to/pixi',
+            'cwd': (tmp_path / 'deploy_tmp' / 'bootstrap_pixi').resolve(),
             'log_filename': log_filename,
             'quiet': True,
         }
