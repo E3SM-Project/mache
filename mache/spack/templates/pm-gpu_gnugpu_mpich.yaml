@@ -140,7 +140,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: {{ mpi }}
+      - spec: {{ mpi }} %c={{ compiler }}
         prefix: /opt/cray/pe/mpich/9.0.1/ofi/gnu/12.3
       buildable: false
     cray-libsci:

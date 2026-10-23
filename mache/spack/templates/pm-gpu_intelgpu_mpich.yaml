@@ -155,7 +155,7 @@ spack:
       buildable: false
     cray-mpich:
       externals:
-      - spec: {{ mpi }}
+      - spec: {{ mpi }} %c={{ compiler }}
         modules:
         - libfabric/2.3.1
         - cray-mpich/9.0.1
