@@ -612,7 +612,10 @@ The changes, applied to every remaining template:
 3. `%{{ compiler }}` is removed from every spec: root specs, externals and
    providers ([Decisions](#decisions) 4). The compiler is no longer a root
    spec, so it no longer appears in the view; MPI stays a root so its
-   wrappers do.
+   wrappers do. Amended for `cray-mpich` externals, whose prefix depends on
+   the compiler: they carry `%c={{ compiler }}`, or every toolchain in a
+   Spack instance shares one `cray-mpich` and its first prefix
+   ([#526](https://github.com/E3SM-Project/mache/issues/526)).
 4. Compiler package names follow `spack-packages`: `gcc`, `nvhpc`, `cce`, and
    `intel-oneapi-compilers` for both today's `intel@2025.x` and `oneapi@x`.
 5. `extra_attributes.compilers` keeps the keys `c`, `cxx` and `fortran` that
@@ -935,7 +938,8 @@ Changed:
   `repos.yaml`, instead of `spack repo add` and `spack repo update --scope
   site` at build time.
 - Pins in YAML using Spack's `repos.yaml` keys, instead of `config.cfg`.
-- No `%{{ compiler }}` on externals; the toolchain selects compilers.
+- No `%{{ compiler }}` on externals; the toolchain selects compilers. The
+  exception is `cray-mpich`, which carries `%c={{ compiler }}`.
 - `extra_attributes.compilers` keys `c`/`cxx`/`fortran`, not `cc`/`f77`/`fc`.
 - `https://` clone URLs, not `git@github.com:`.
 

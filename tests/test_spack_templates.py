@@ -62,7 +62,13 @@ def test_template_uses_spack_1x_compiler_model(
 
     for name, package in data['packages'].items():
         for external in package.get('externals', []):
-            assert '%' not in external['spec'], (name, external['spec'])
+            spec = external['spec']
+            if name == 'cray-mpich' and '%' in spec:
+                # its prefix depends on the compiler, so it names the
+                # toolchain's compiler to get a hash of its own
+                assert spec.endswith(f' %c={compiler_spec}'), (name, spec)
+                spec = spec.rsplit(' %c=', 1)[0]
+            assert '%' not in spec, (name, spec)
 
     compiler_name = compiler_spec.split('@')[0]
     assert compiler_name in COMPILER_PACKAGES
@@ -74,6 +80,21 @@ def test_template_uses_spack_1x_compiler_model(
         'fortran',
     }
     assert 'prefix' in external or external.get('modules')
+
+
+@pytest.mark.parametrize(
+    'machine, compiler, mpi',
+    [
+        triple
+        for triple in list_machine_compiler_mpilib()
+        if triple[0] in ('pm-cpu', 'pm-gpu')
+    ],
+)
+def test_perlmutter_cray_mpich_names_compiler(machine, compiler, mpi):
+    data = safe_load(_render(machine, compiler, mpi))['spack']
+    compiler_spec = data['toolchains']['mache'][0]['spec'].split('=', 1)[1]
+    for external in data['packages']['cray-mpich']['externals']:
+        assert external['spec'].endswith(f' %c={compiler_spec}')
 
 
 @pytest.mark.parametrize(
