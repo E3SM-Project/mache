@@ -87,6 +87,8 @@ def pre_pixi(ctx: DeployContext) -> dict[str, Any] | None:
     # - runtime["permissions"]["group"]: overrides `permissions.group`
     # - runtime["permissions"]["world_readable"]:
     #     overrides `permissions.world_readable`
+    # - runtime["permissions"]["owner_writable"]:
+    #     overrides `permissions.owner_writable`
     # - runtime["shared"]["load_script_copies"]: additional managed copies of
     #     the generated load script in shared locations
     # - runtime["shared"]["load_script_symlinks"]: additional managed

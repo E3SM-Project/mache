@@ -871,8 +871,19 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
         '_resolve_pixi_omit_dependencies',
         lambda **_kwargs: [],
     )
+    restored_paths = []
+
+    def _fake_restore_owner_write(paths):
+        events.append('restore_owner_write')
+        restored_paths.extend(paths)
+
     monkeypatch.setattr(
-        deploy_run, '_deploy_target_pixi_env', lambda **_kwargs: None
+        deploy_run, 'restore_owner_write', _fake_restore_owner_write
+    )
+    monkeypatch.setattr(
+        deploy_run,
+        '_deploy_target_pixi_env',
+        lambda **_kwargs: events.append('deploy_pixi'),
     )
     monkeypatch.setattr(
         deploy_run, '_maybe_deploy_jigsaw', lambda **_kwargs: None
@@ -915,7 +926,7 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
     monkeypatch.setattr(
         deploy_run,
         '_resolve_deploy_permissions',
-        lambda **_kwargs: ('deployers', True),
+        lambda **_kwargs: ('deployers', True, False),
     )
     monkeypatch.setattr(
         deploy_run,
@@ -938,6 +949,8 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
 
     assert events == [
         'pre_pixi',
+        'restore_owner_write',
+        'deploy_pixi',
         'post_pixi',
         'pre_spack',
         'post_spack',
@@ -946,6 +959,7 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
         'apply_permissions',
         'post_publish',
     ]
+    assert restored_paths == ['/tmp/prefix']
 
 
 def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
@@ -953,27 +967,33 @@ def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
     machine_config.add_section('deploy')
     machine_config.set('deploy', 'group', 'deployers')
     machine_config.set('deploy', 'world_readable', 'false')
+    machine_config.set('deploy', 'owner_writable', 'false')
     machine_config.add_section('e3sm_unified')
     machine_config.set('e3sm_unified', 'group', 'legacy')
 
-    group, world_readable = deploy_run._resolve_deploy_permissions(
-        config={
-            'permissions': {
-                'group': 'from-config',
-                'world_readable': True,
-            }
-        },
-        runtime={
-            'permissions': {
-                'group': 'from-hook',
-                'world_readable': False,
-            }
-        },
-        machine_config=machine_config,
+    group, world_readable, owner_writable = (
+        deploy_run._resolve_deploy_permissions(
+            config={
+                'permissions': {
+                    'group': 'from-config',
+                    'world_readable': True,
+                    'owner_writable': False,
+                }
+            },
+            runtime={
+                'permissions': {
+                    'group': 'from-hook',
+                    'world_readable': False,
+                    'owner_writable': True,
+                }
+            },
+            machine_config=machine_config,
+        )
     )
 
     assert group == 'from-hook'
     assert world_readable is False
+    assert owner_writable is True
 
 
 def test_resolve_deploy_permissions_does_not_use_e3sm_unified_group():
@@ -981,14 +1001,17 @@ def test_resolve_deploy_permissions_does_not_use_e3sm_unified_group():
     machine_config.add_section('e3sm_unified')
     machine_config.set('e3sm_unified', 'group', 'legacy-group')
 
-    group, world_readable = deploy_run._resolve_deploy_permissions(
-        config={},
-        runtime={},
-        machine_config=machine_config,
+    group, world_readable, owner_writable = (
+        deploy_run._resolve_deploy_permissions(
+            config={},
+            runtime={},
+            machine_config=machine_config,
+        )
     )
 
     assert group is None
     assert world_readable is True
+    assert owner_writable is False
 
 
 def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
@@ -1026,6 +1049,8 @@ def test_apply_deploy_permissions_updates_prefix_and_managed_paths(
         ),
         group='e3sm',
         world_readable=False,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1078,6 +1103,8 @@ def test_apply_deploy_permissions_is_noop_without_group(
         ),
         group=None,
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1121,6 +1148,8 @@ def test_apply_deploy_permissions_includes_deployed_spack_paths(
         ),
         group='e3sm',
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1175,6 +1204,8 @@ def test_apply_deploy_permissions_includes_shared_managed_paths(
         ),
         group='e3sm',
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1232,6 +1263,8 @@ def test_apply_deploy_permissions_applies_recursive_dir_and_writable_root(
         ),
         group='e3sm',
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1293,6 +1326,8 @@ def test_apply_deploy_permissions_applies_writable_root_under_shared_base(
         ),
         group='e3sm',
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1382,6 +1417,8 @@ def test_apply_deploy_permissions_updates_shared_base_first(
         ),
         group='e3sm',
         world_readable=True,
+        repo_root=str(tmp_path / 'repo'),
+        owner_writable=True,
         logger=logger,
     )
 
@@ -1409,6 +1446,105 @@ def test_apply_deploy_permissions_updates_shared_base_first(
     )
     assert third_kwargs['group_writable'] is False
     assert third_kwargs['recursive'] is True
+
+
+def test_apply_deploy_permissions_makes_deployed_envs_read_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    repo_root = tmp_path / 'repo'
+    repo_root.mkdir()
+    load_script = repo_root / 'load_demo.sh'
+    load_script.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    shared_base = tmp_path / 'shared'
+    shared_base.mkdir()
+    prefix = tmp_path / 'prefix'
+    (prefix / 'bin').mkdir(parents=True)
+    spack = tmp_path / 'spack'
+    spack.mkdir()
+    managed_dir = tmp_path / 'aliases'
+    managed_dir.mkdir()
+    managed_file = managed_dir / 'load_latest.sh'
+    managed_file.write_text('#!/bin/sh\n', encoding='utf-8')
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-read-only'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        repo_root=str(repo_root),
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[str(load_script)],
+        spack_paths=[str(spack)],
+        shared_artifacts=SharedDeployArtifacts(
+            base_path=str(shared_base),
+            managed_dirs=[str(managed_dir)],
+            managed_files=[str(managed_file)],
+        ),
+        group='e3sm',
+        world_readable=True,
+        owner_writable=False,
+        logger=logger,
+    )
+
+    assert [(args, kwargs['owner_writable']) for args, kwargs in calls] == [
+        ((str(shared_base), 'e3sm'), False),
+        ((str(prefix), 'e3sm'), False),
+        ((str(managed_dir), 'e3sm'), True),
+        (([str(load_script), str(managed_file)], 'e3sm'), True),
+        (([str(prefix / 'bin'), str(spack)], 'e3sm'), False),
+    ]
+
+
+def test_apply_deploy_permissions_keeps_repo_deployments_writable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    repo_root = tmp_path / 'repo'
+    prefix = repo_root / 'pixi-env'
+    (prefix / 'bin').mkdir(parents=True)
+
+    calls = []
+
+    def _fake_update_permissions(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        deploy_run, 'update_permissions', _fake_update_permissions
+    )
+
+    logger = deploy_run.logging.getLogger(
+        'test-apply-deploy-permissions-repo-writable'
+    )
+    logger.handlers = [deploy_run.logging.NullHandler()]
+    logger.propagate = False
+
+    deploy_run._apply_deploy_permissions(
+        repo_root=str(repo_root),
+        prefix=str(prefix),
+        extra_prefixes=None,
+        load_script_paths=[],
+        spack_paths=[],
+        shared_artifacts=SharedDeployArtifacts(),
+        group='e3sm',
+        world_readable=True,
+        owner_writable=False,
+        logger=logger,
+    )
+
+    assert len(calls) == 2
+    assert all(kwargs['owner_writable'] for _args, kwargs in calls)
 
 
 def test_pixi_install_writes_project_local_pixi_config(

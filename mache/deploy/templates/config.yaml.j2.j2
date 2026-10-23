@@ -149,10 +149,12 @@ permissions:
   #   1. Hook/runtime overrides:
   #        ctx.runtime["permissions"]["group"]
   #        ctx.runtime["permissions"]["world_readable"]
+  #        ctx.runtime["permissions"]["owner_writable"]
   #   2. Values here
   #   3. Machine config defaults from [deploy]:
   #        group = <unix-group>
   #        world_readable = true|false
+  #        owner_writable = true|false
   #
   # If no group is resolved, mache skips the permission update step.
   group: null
@@ -160,6 +162,13 @@ permissions:
   # Whether deployed files should be readable by users outside the shared
   # group. Directories keep execute permission when needed for traversal.
   world_readable: true
+
+  # Whether the deploying user keeps write permission on the deployed pixi
+  # prefixes, Spack checkouts and shared.base_path.  If false (the default),
+  # they become read-only for the deployer too, except inside the repo
+  # checkout, and the next deployment restores write permission before
+  # changing them.  Load scripts and other shared artifacts stay writable.
+  owner_writable: false
 
 shared:
   # Optional extra shared-deployment artifacts managed by `mache deploy run`.

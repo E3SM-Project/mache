@@ -15,6 +15,7 @@ def update_permissions(  # noqa: C901
     other_readable=True,
     workers=4,
     recursive=True,
+    owner_writable=True,
 ):
     """
     Update the group that a directory belongs to along with the "group" and
@@ -43,6 +44,11 @@ def update_permissions(  # noqa: C901
 
     recursive : bool, optional
         Whether to traverse the path(s) provided recursively
+
+    owner_writable : bool, optional
+        Whether the owner keeps write permission.  Use
+        :py:func:`restore_owner_write` to give it back before modifying
+        paths updated with ``owner_writable=False``.
     """
 
     if isinstance(base_paths, str):
@@ -53,15 +59,12 @@ def update_permissions(  # noqa: C901
     new_uid = os.getuid()
     new_gid = grp.getgrnam(group).gr_gid
 
-    read_write_perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP
-    exec_perm = (
-        stat.S_IRUSR
-        | stat.S_IWUSR
-        | stat.S_IXUSR
-        | stat.S_IRGRP
-        | stat.S_IXGRP
-    )
+    read_write_perm = stat.S_IRUSR | stat.S_IRGRP
+    exec_perm = stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP
 
+    if owner_writable:
+        read_write_perm = read_write_perm | stat.S_IWUSR
+        exec_perm = exec_perm | stat.S_IWUSR
     if group_writable:
         read_write_perm = read_write_perm | stat.S_IWGRP
         exec_perm = exec_perm | stat.S_IWGRP
@@ -124,6 +127,61 @@ def update_permissions(  # noqa: C901
                 fut.result()
 
 
+def restore_owner_write(base_paths, show_progress=True):
+    """
+    Give the owner back write permission on path(s), recursively, so that a
+    deployment made read-only with
+    ``update_permissions(..., owner_writable=False)`` can be modified
+
+    Only paths owned by the current user are changed, and symlinks are
+    skipped.  A directory that is already owner-writable is assumed not to
+    have been made read-only and is skipped without traversing it, which
+    keeps this cheap for deployments that were never made read-only.
+
+    Parameters
+    ----------
+    base_paths : str or list
+        The base path(s) to restore owner write permission on.  Paths that
+        do not exist are ignored.
+
+    show_progress : bool, optional
+        Whether to show a progress bar
+    """
+
+    if isinstance(base_paths, str):
+        paths = [Path(base_paths)]
+    else:
+        paths = [Path(path) for path in base_paths]
+
+    uid = os.getuid()
+
+    for path in paths:
+        try:
+            path_stat = os.lstat(path)
+        except OSError:
+            continue
+        if stat.S_ISLNK(path_stat.st_mode):
+            continue
+        if stat.S_ISDIR(path_stat.st_mode):
+            if path_stat.st_mode & stat.S_IWUSR:
+                continue
+            print(
+                f'Restoring owner write permission (recursively) for: {path}'
+            )
+            with tqdm(
+                unit='item',
+                dynamic_ncols=True,
+                disable=(not show_progress),
+            ) as bar:
+                # children before their directory, so an interrupted run
+                # leaves the top directory read-only and is redone next time
+                for root, dirs, files in os.walk(path, topdown=False):
+                    for name in files + dirs:
+                        _add_owner_write(Path(root) / name, uid)
+                        bar.update(1)
+        _add_owner_write(path, uid)
+
+
 def _update(
     path: Path,
     uid: int,
@@ -152,5 +210,19 @@ def _update(
 
         os.chown(path, uid, gid)
         os.chmod(path, new_perm)
+    except OSError:
+        pass
+
+
+def _add_owner_write(path: Path, uid: int) -> None:
+    """
+    Add owner write permission to a single path the current user owns
+    """
+    try:
+        path_stat = os.lstat(path)
+        if stat.S_ISLNK(path_stat.st_mode) or path_stat.st_uid != uid:
+            return
+        if not path_stat.st_mode & stat.S_IWUSR:
+            os.chmod(path, stat.S_IMODE(path_stat.st_mode) | stat.S_IWUSR)
     except OSError:
         pass
