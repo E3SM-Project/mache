@@ -211,8 +211,18 @@ Important settings:
   successful deploy. If unset, `mache deploy run` falls back to merged machine
   config `[deploy] group`.
 - `permissions.world_readable`: optional boolean controlling whether deployed
-  files are readable outside the shared group. Hooks may override both values
-  through `ctx.runtime["permissions"]`.
+  files are readable outside the shared group.
+- `permissions.owner_writable`: optional boolean, default `false`, controlling
+  whether the deployer keeps write access to the deployed environments: the
+  pixi prefixes, deployed Spack checkouts and `shared.base_path`. By default
+  they become read-only for the deployer too, to prevent accidental changes,
+  except where they lie inside the repository checkout. The next
+  `mache deploy run` restores write access before changing them; to edit or
+  remove one by hand, run `chmod -R u+w` on it first. Load scripts and the
+  other `shared` artifacts below stay writable. If unset, `mache deploy run`
+  falls back to merged machine config `[deploy] owner_writable`. Hooks may
+  override all three `permissions` values through
+  `ctx.runtime["permissions"]`.
 - `shared.base_path`: optional shared base directory whose permissions mache
   updates recursively before any path-specific permission updates. Hooks may
   override this through `ctx.runtime["shared"]["base_path"]`, and `"dynamic"`
@@ -939,6 +949,13 @@ Fix:
 
 - Either set a fixed `project.version` or return
   `{"project": {"version": ...}}` from `pre_pixi`.
+
+### Editing or removing a shared deployment fails with `Permission denied`
+
+By default, a deployment with a `permissions.group` is read-only even for the
+user who deployed it (see `permissions.owner_writable` above). Restore write
+access first, for example `chmod -R u+w /path/to/pixi-env`. Rerunning
+`./deploy.py` does this for you.
 
 ### The generated load script fails when executed
 

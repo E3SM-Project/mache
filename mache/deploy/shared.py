@@ -26,10 +26,10 @@ def create_shared_deploy_artifacts(
 ) -> SharedDeployArtifacts:
     shared_cfg = _merge_shared_config(config=config, runtime=runtime)
 
-    base_path = _resolve_optional_path(
-        value=shared_cfg.get('base_path'),
+    base_path = resolve_shared_base_path(
+        config=config,
+        runtime=runtime,
         repo_root=repo_root,
-        field_name='shared.base_path',
     )
     (
         managed_recursive_dirs,
@@ -97,6 +97,22 @@ def create_shared_deploy_artifacts(
         root_group_writable_dirs=_dedupe_existing_paths(
             root_group_writable_dirs
         ),
+    )
+
+
+def resolve_shared_base_path(
+    *,
+    config: dict[str, Any],
+    runtime: dict[str, Any],
+    repo_root: str,
+) -> str | None:
+    """Return the absolute ``shared.base_path``, or ``None`` if unset."""
+
+    shared_cfg = _merge_shared_config(config=config, runtime=runtime)
+    return _resolve_optional_path(
+        value=shared_cfg.get('base_path'),
+        repo_root=repo_root,
+        field_name='shared.base_path',
     )
 
 

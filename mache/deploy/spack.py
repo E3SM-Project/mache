@@ -103,6 +103,37 @@ def get_effective_spack_config(*, ctx: DeployContext) -> dict:
     return merged
 
 
+def find_spack_path(*, ctx: DeployContext, spack_cfg: dict) -> str | None:
+    """Return the absolute spack checkout path, or ``None`` if it is not set.
+
+    Priority order:
+      1. CLI ``--spack-path``
+      2. Hook/runtime override ``ctx.runtime['spack']['spack_path']``
+      3. Config ``spack.spack_path``
+    """
+
+    spack_path = _normalize_optional_token(
+        getattr(ctx.args, 'spack_path', None)
+    )
+
+    rt_spack_cfg = ctx.runtime.get('spack', {})
+    if rt_spack_cfg is None:
+        rt_spack_cfg = {}
+    if not isinstance(rt_spack_cfg, dict):
+        raise ValueError('runtime.spack must be a mapping if provided')
+
+    if spack_path is None:
+        spack_path = _normalize_optional_token(rt_spack_cfg.get('spack_path'))
+
+    if spack_path is None:
+        spack_path = _normalize_optional_token(spack_cfg.get('spack_path'))
+
+    spack_path = str(spack_path or '').strip()
+    if not spack_path:
+        return None
+    return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
+
+
 def spack_disabled_for_run(*, ctx: DeployContext) -> bool:
     """Return True when the CLI explicitly disables all Spack use."""
 
@@ -750,32 +781,10 @@ def _resolve_spack_path(
     spack_cfg: dict,
     reason: str,
 ) -> str:
-    """Resolve spack checkout path.
+    """Resolve spack checkout path, raising if it is not set."""
 
-    Priority order:
-      1. CLI ``--spack-path``
-      2. Hook/runtime override ``ctx.runtime['spack']['spack_path']``
-      3. Config ``spack.spack_path``
-    """
-
-    spack_path = _normalize_optional_token(
-        getattr(ctx.args, 'spack_path', None)
-    )
-
-    rt_spack_cfg = ctx.runtime.get('spack', {})
-    if rt_spack_cfg is None:
-        rt_spack_cfg = {}
-    if not isinstance(rt_spack_cfg, dict):
-        raise ValueError('runtime.spack must be a mapping if provided')
-
+    spack_path = find_spack_path(ctx=ctx, spack_cfg=spack_cfg)
     if spack_path is None:
-        spack_path = _normalize_optional_token(rt_spack_cfg.get('spack_path'))
-
-    if spack_path is None:
-        spack_path = _normalize_optional_token(spack_cfg.get('spack_path'))
-
-    spack_path = str(spack_path or '').strip()
-    if not spack_path:
         raise ValueError(
             f'Spack {reason} but spack_path is not set. Set '
             '--spack-path, '
@@ -784,7 +793,7 @@ def _resolve_spack_path(
             'deploy/config.yaml.j2. To bypass Spack entirely for this run, '
             'pass --no-spack.'
         )
-    return os.path.abspath(os.path.expanduser(os.path.expandvars(spack_path)))
+    return spack_path
 
 
 def _ensure_spack_activation_exists(*, spack_path: str, env_name: str) -> str:

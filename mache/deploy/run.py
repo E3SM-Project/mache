@@ -14,7 +14,7 @@ from jinja2 import Template
 from yaml import safe_load
 
 from mache.jigsaw import deploy_jigsawpy
-from mache.permissions import update_permissions
+from mache.permissions import restore_owner_write, update_permissions
 
 from .bootstrap import (
     _format_pixi_version_specifier,
@@ -30,13 +30,18 @@ from .bootstrap import (
 from .conda import get_conda_platform_and_system
 from .hooks import DeployContext, configparser_to_nested_dict, load_hooks
 from .machine import get_machine, get_machine_config
-from .shared import SharedDeployArtifacts, create_shared_deploy_artifacts
+from .shared import (
+    SharedDeployArtifacts,
+    create_shared_deploy_artifacts,
+    resolve_shared_base_path,
+)
 from .spack import (
     SpackDeployResult,
     SpackSoftwareEnvResult,
     capture_spack_activations,
     deploy_spack_envs,
     deploy_spack_software_env,
+    find_spack_path,
     get_effective_spack_config,
     load_existing_spack_envs,
     load_existing_spack_software_env,
@@ -246,6 +251,21 @@ def run_deploy(args: argparse.Namespace) -> None:
         }
     )
 
+    # A previous deployment may have left these read-only for the owner.
+    # The shared base goes first, since it may contain the prefixes.
+    owner_write_paths = []
+    shared_base_path = resolve_shared_base_path(
+        config=config,
+        runtime=ctx.runtime,
+        repo_root=repo_root,
+    )
+    if shared_base_path is not None:
+        owner_write_paths.append(shared_base_path)
+    owner_write_paths.append(prefix)
+    if login_env is not None:
+        owner_write_paths.append(login_env['prefix'])
+    restore_owner_write(owner_write_paths)
+
     _deploy_target_pixi_env(
         prefix=prefix,
         replacements=replacements,
@@ -308,6 +328,10 @@ def run_deploy(args: argparse.Namespace) -> None:
         spack_results = []
         spack_software_env = None
     elif deploy_spack:
+        spack_path = find_spack_path(ctx=ctx, spack_cfg=spack_cfg)
+        if spack_path is not None:
+            restore_owner_write(spack_path)
+
         spack_results = deploy_spack_envs(
             ctx=ctx,
             toolchain_pairs=toolchain_pairs,
@@ -399,12 +423,15 @@ def run_deploy(args: argparse.Namespace) -> None:
         logger=logger,
     )
 
-    permissions_group, world_readable = _resolve_deploy_permissions(
-        config=config,
-        runtime=ctx.runtime,
-        machine_config=machine_config,
+    permissions_group, world_readable, owner_writable = (
+        _resolve_deploy_permissions(
+            config=config,
+            runtime=ctx.runtime,
+            machine_config=machine_config,
+        )
     )
     _apply_deploy_permissions(
+        repo_root=repo_root,
         prefix=prefix,
         extra_prefixes=(
             [login_env['prefix']]
@@ -423,6 +450,7 @@ def run_deploy(args: argparse.Namespace) -> None:
         shared_artifacts=shared_artifacts,
         group=permissions_group,
         world_readable=world_readable,
+        owner_writable=owner_writable,
         logger=logger,
     )
 
@@ -943,7 +971,7 @@ def _resolve_deploy_permissions(
     config: dict[str, Any],
     runtime: dict[str, Any],
     machine_config: ConfigParser,
-) -> tuple[str | None, bool]:
+) -> tuple[str | None, bool, bool]:
     """Resolve shared-deployment permission settings.
 
     Priority:
@@ -951,7 +979,9 @@ def _resolve_deploy_permissions(
       2. config['permissions']
       3. merged machine config [deploy]
 
-    If no group is resolved, permission updates are skipped.
+    If no group is resolved, permission updates are skipped.  Returns the
+    group and whether deployed files are world-readable and stay writable
+    by their owner.
     """
 
     runtime_permissions = runtime.get('permissions')
@@ -988,11 +1018,30 @@ def _resolve_deploy_permissions(
     ):
         world_readable = machine_config.getboolean('deploy', 'world_readable')
 
-    return group, True if world_readable is None else world_readable
+    owner_writable = _coerce_optional_bool(
+        runtime_permissions.get('owner_writable'),
+        field_name='runtime.permissions.owner_writable',
+    )
+    if owner_writable is None:
+        owner_writable = _coerce_optional_bool(
+            config_permissions.get('owner_writable'),
+            field_name='permissions.owner_writable',
+        )
+    if owner_writable is None and machine_config.has_option(
+        'deploy', 'owner_writable'
+    ):
+        owner_writable = machine_config.getboolean('deploy', 'owner_writable')
+
+    return (
+        group,
+        True if world_readable is None else world_readable,
+        False if owner_writable is None else owner_writable,
+    )
 
 
 def _apply_deploy_permissions(
     *,
+    repo_root: str,
     prefix: str,
     extra_prefixes: list[str] | None,
     load_script_paths: list[str],
@@ -1000,9 +1049,17 @@ def _apply_deploy_permissions(
     shared_artifacts: SharedDeployArtifacts,
     group: str | None,
     world_readable: bool,
+    owner_writable: bool,
     logger: logging.Logger,
 ) -> None:
-    """Apply post-deploy file permissions when configured."""
+    """Apply post-deploy file permissions when configured.
+
+    Unless ``owner_writable``, the deployed environments (the shared base,
+    pixi prefixes and Spack checkouts) are made read-only for their owner as
+    well, except where they lie inside the repo checkout.  Load scripts and
+    other shared artifacts stay owner-writable, since later deployments and
+    hooks update them in place.
+    """
 
     if group is None:
         logger.info('Skipping deploy permission update: no group configured.')
@@ -1012,9 +1069,11 @@ def _apply_deploy_permissions(
         os.path.expanduser(os.path.expandvars(str(prefix)))
     )
     logger.info(
-        'Updating deployment permissions: group=%s world_readable=%s',
+        'Updating deployment permissions: group=%s world_readable=%s '
+        'owner_writable=%s',
         group,
         world_readable,
+        owner_writable,
     )
 
     # A declared shared base absorbs permission management for any descendant
@@ -1028,6 +1087,9 @@ def _apply_deploy_permissions(
             group_writable=False,
             other_readable=world_readable,
             recursive=True,
+            owner_writable=_keeps_owner_write(
+                shared_base_path, owner_writable, repo_root
+            ),
         )
 
     prefixes = [prefix_abs]
@@ -1041,60 +1103,77 @@ def _apply_deploy_permissions(
                 prefixes.append(extra_prefix_abs)
 
     permission_roots = [
-        path
-        for path in prefixes + shared_artifacts.managed_dirs
+        (path, _keeps_owner_write(path, owner_writable, repo_root))
+        for path in prefixes
+    ]
+    permission_roots.extend(
+        (path, True) for path in shared_artifacts.managed_dirs
+    )
+    permission_roots = [
+        (path, root_owner_writable)
+        for path, root_owner_writable in dict(permission_roots).items()
         if not _permission_path_is_within(path, shared_base_path)
     ]
-    permission_roots = list(dict.fromkeys(permission_roots))
 
-    for managed_prefix in permission_roots:
+    for managed_prefix, root_owner_writable in permission_roots:
         update_permissions(
             managed_prefix,
             group,
             group_writable=False,
             other_readable=world_readable,
             recursive=False,
+            owner_writable=root_owner_writable,
         )
 
-    managed_paths = [
-        _normalize_permission_path(path) for path in load_script_paths
+    # (path, whether it is part of a deployed environment), in the order
+    # they are updated
+    candidates: list[tuple[str | None, bool]] = [
+        (_normalize_permission_path(path), False) for path in load_script_paths
     ]
     for managed_prefix in prefixes:
         prefix_path = Path(managed_prefix)
         if prefix_path.is_dir():
-            managed_paths.extend(str(path) for path in prefix_path.iterdir())
+            candidates.extend(
+                (str(path), True) for path in prefix_path.iterdir()
+            )
         elif prefix_path.exists():
-            managed_paths.append(managed_prefix)
-    managed_paths.extend(
-        _normalize_permission_path(path) for path in spack_paths
+            candidates.append((managed_prefix, True))
+    candidates.extend(
+        (_normalize_permission_path(path), True) for path in spack_paths
     )
-    managed_paths.extend(
-        _normalize_permission_path(path)
+    candidates.extend(
+        (_normalize_permission_path(path), False)
         for path in shared_artifacts.managed_recursive_dirs
-    )
-    managed_paths.extend(
-        _normalize_permission_path(path)
-        for path in shared_artifacts.managed_files
+        + shared_artifacts.managed_files
     )
 
-    managed_paths = [
-        path
-        for path in managed_paths
-        if path is not None
-        and not _permission_path_is_within(path, shared_base_path)
-    ]
+    writable_paths: list[str] = []
+    read_only_paths: list[str] = []
+    for path, deployed in candidates:
+        if path is None or _permission_path_is_within(path, shared_base_path):
+            continue
+        if deployed and not _keeps_owner_write(
+            path, owner_writable, repo_root
+        ):
+            read_only_paths.append(path)
+        else:
+            writable_paths.append(path)
 
-    managed_paths = list(dict.fromkeys(managed_paths))
-
-    if managed_paths:
-        update_permissions(
-            managed_paths,
-            group,
-            show_progress=True,
-            group_writable=False,
-            other_readable=world_readable,
-            recursive=True,
-        )
+    for managed_paths, paths_owner_writable in (
+        (writable_paths, True),
+        (read_only_paths, False),
+    ):
+        managed_paths = list(dict.fromkeys(managed_paths))
+        if managed_paths:
+            update_permissions(
+                managed_paths,
+                group,
+                show_progress=True,
+                group_writable=False,
+                other_readable=world_readable,
+                recursive=True,
+                owner_writable=paths_owner_writable,
+            )
 
     root_group_writable_dirs = [
         path
@@ -1115,6 +1194,16 @@ def _apply_deploy_permissions(
             other_readable=world_readable,
             recursive=False,
         )
+
+
+def _keeps_owner_write(
+    path: str, owner_writable: bool, repo_root: str
+) -> bool:
+    """Whether a deployed path keeps owner write: a deployment inside the
+    repo checkout is the developer's own, so it always does."""
+    return owner_writable or _permission_path_is_within(
+        path, _normalize_permission_path(repo_root)
+    )
 
 
 def _normalize_permission_path(path: str | None) -> str | None:
