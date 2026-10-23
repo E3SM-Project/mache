@@ -88,8 +88,15 @@ spack mirror add spack_mirror file://{{ mirror }}
 
 env_dir="$spack_path/var/spack/environments/$env_name"
 if [ -e "$env_dir" ]; then
-  spack env remove -y "$env_name" >& /dev/null
   echo "recreating environment: $env_name"
+  # `spack env remove` can fail partway on NFS, where a lock file it holds
+  # open survives as .nfsXXXX, and fails outright on an environment a
+  # previous attempt left without spack.yaml.  Remove what is left directly.
+  spack env remove -y "$env_name" || true
+  if [ -e "$env_dir" ]; then
+    echo "spack env remove left $env_dir behind; deleting it"
+    rm -rf "$env_dir"
+  fi
 else
   echo "creating new environment: $env_name"
 fi
