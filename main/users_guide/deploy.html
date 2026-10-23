@@ -91,6 +91,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#the-machine-is-unknown">The machine is unknown</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#spack-is-enabled-but-deployment-fails-because-spack-path-is-missing">Spack is enabled but deployment fails because <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> is missing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#project-version-is-still-dynamic"><code class="docutils literal notranslate"><span class="pre">project.version</span></code> is still <code class="docutils literal notranslate"><span class="pre">dynamic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#editing-or-removing-a-shared-deployment-fails-with-permission-denied">Editing or removing a shared deployment fails with <code class="docutils literal notranslate"><span class="pre">Permission</span> <span class="pre">denied</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-generated-load-script-fails-when-executed">The generated load script fails when executed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-load-script-cannot-be-found-when-sourced-from-bin-sh">The load script cannot be found when sourced from <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code></a></li>
 </ul>
@@ -342,8 +343,18 @@ differ.</p></li>
 successful deploy. If unset, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> falls back to merged machine
 config <code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">group</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">permissions.world_readable</span></code>: optional boolean controlling whether deployed
-files are readable outside the shared group. Hooks may override both values
-through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;permissions&quot;]</span></code>.</p></li>
+files are readable outside the shared group.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permissions.owner_writable</span></code>: optional boolean, default <code class="docutils literal notranslate"><span class="pre">false</span></code>, controlling
+whether the deployer keeps write access to the deployed environments: the
+pixi prefixes, deployed Spack checkouts and <code class="docutils literal notranslate"><span class="pre">shared.base_path</span></code>. By default
+they become read-only for the deployer too, to prevent accidental changes,
+except where they lie inside the repository checkout. The next
+<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> restores write access before changing them; to edit or
+remove one by hand, run <code class="docutils literal notranslate"><span class="pre">chmod</span> <span class="pre">-R</span> <span class="pre">u+w</span></code> on it first. Load scripts and the
+other <code class="docutils literal notranslate"><span class="pre">shared</span></code> artifacts below stay writable. If unset, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code>
+falls back to merged machine config <code class="docutils literal notranslate"><span class="pre">[deploy]</span> <span class="pre">owner_writable</span></code>. Hooks may
+override all three <code class="docutils literal notranslate"><span class="pre">permissions</span></code> values through
+<code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;permissions&quot;]</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">shared.base_path</span></code>: optional shared base directory whose permissions mache
 updates recursively before any path-specific permission updates. Hooks may
 override this through <code class="docutils literal notranslate"><span class="pre">ctx.runtime[&quot;shared&quot;][&quot;base_path&quot;]</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;dynamic&quot;</span></code>
@@ -1019,6 +1030,13 @@ hook provided the runtime value.</p></li>
 <li><p>Either set a fixed <code class="docutils literal notranslate"><span class="pre">project.version</span></code> or return
 <code class="docutils literal notranslate"><span class="pre">{&quot;project&quot;:</span> <span class="pre">{&quot;version&quot;:</span> <span class="pre">...}}</span></code> from <code class="docutils literal notranslate"><span class="pre">pre_pixi</span></code>.</p></li>
 </ul>
+</section>
+<section id="editing-or-removing-a-shared-deployment-fails-with-permission-denied">
+<h3>Editing or removing a shared deployment fails with <code class="docutils literal notranslate"><span class="pre">Permission</span> <span class="pre">denied</span></code><a class="headerlink" href="#editing-or-removing-a-shared-deployment-fails-with-permission-denied" title="Link to this heading"></a></h3>
+<p>By default, a deployment with a <code class="docutils literal notranslate"><span class="pre">permissions.group</span></code> is read-only even for the
+user who deployed it (see <code class="docutils literal notranslate"><span class="pre">permissions.owner_writable</span></code> above). Restore write
+access first, for example <code class="docutils literal notranslate"><span class="pre">chmod</span> <span class="pre">-R</span> <span class="pre">u+w</span> <span class="pre">/path/to/pixi-env</span></code>. Rerunning
+<code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> does this for you.</p>
 </section>
 <section id="the-generated-load-script-fails-when-executed">
 <h3>The generated load script fails when executed<a class="headerlink" href="#the-generated-load-script-fails-when-executed" title="Link to this heading"></a></h3>

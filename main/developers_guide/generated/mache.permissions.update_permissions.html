@@ -19,7 +19,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mache.parallel.get_parallel_system" href="mache.parallel.get_parallel_system.html" />
+    <link rel="next" title="mache.permissions.restore_owner_write" href="mache.permissions.restore_owner_write.html" />
     <link rel="prev" title="mache.discover.discover_machine" href="mache.discover.discover_machine.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -72,6 +72,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#mache.permissions.update_permissions"><code class="docutils literal notranslate"><span class="pre">update_permissions()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="mache.permissions.restore_owner_write.html">mache.permissions.restore_owner_write</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#parallel">parallel</a></li>
@@ -119,7 +120,7 @@
 <h1>mache.permissions.update_permissions<a class="headerlink" href="#mache-permissions-update-permissions" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="mache.permissions.update_permissions">
-<span class="sig-prename descclassname"><span class="pre">mache.permissions.</span></span><span class="sig-name descname"><span class="pre">update_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_writable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_readable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recursive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/permissions.html#update_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.permissions.update_permissions" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">mache.permissions.</span></span><span class="sig-name descname"><span class="pre">update_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_writable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_readable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recursive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_writable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mache/permissions.html#update_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mache.permissions.update_permissions" title="Link to this definition"></a></dt>
 <dd><p>Update the group that a directory belongs to along with the “group” and
 “other” permissions for the directory</p>
 <dl class="field-list simple">
@@ -133,6 +134,9 @@
 permissions</p></li>
 <li><p><strong>workers</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em>, </em><em>optional</em>) – Number of threads to parallelize across</p></li>
 <li><p><strong>recursive</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to traverse the path(s) provided recursively</p></li>
+<li><p><strong>owner_writable</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether the owner keeps write permission.  Use
+<a class="reference internal" href="mache.permissions.restore_owner_write.html#mache.permissions.restore_owner_write" title="mache.permissions.restore_owner_write"><code class="xref py py-func docutils literal notranslate"><span class="pre">restore_owner_write()</span></code></a> to give it back before modifying
+paths updated with <code class="docutils literal notranslate"><span class="pre">owner_writable=False</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -145,7 +149,7 @@ permissions</p></li>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="mache.discover.discover_machine.html" class="btn btn-neutral float-left" title="mache.discover.discover_machine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mache.parallel.get_parallel_system.html" class="btn btn-neutral float-right" title="mache.parallel.get_parallel_system" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mache.permissions.restore_owner_write.html" class="btn btn-neutral float-right" title="mache.permissions.restore_owner_write" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

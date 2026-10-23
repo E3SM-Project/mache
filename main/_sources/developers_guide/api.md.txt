@@ -26,6 +26,7 @@ documentation.
     :toctree: generated/
 
     update_permissions
+    restore_owner_write
 ```
 
 ## parallel

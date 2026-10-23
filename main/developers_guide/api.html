@@ -72,6 +72,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#permissions">permissions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.update_permissions.html">mache.permissions.update_permissions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mache.permissions.restore_owner_write.html">mache.permissions.restore_owner_write</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#parallel">parallel</a><ul>
@@ -251,6 +252,9 @@ documentation.</p>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mache.permissions.update_permissions.html#mache.permissions.update_permissions" title="mache.permissions.update_permissions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_permissions</span></code></a>(base_paths, group[, ...])</p></td>
 <td><p>Update the group that a directory belongs to along with the &quot;group&quot; and &quot;other&quot; permissions for the directory</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mache.permissions.restore_owner_write.html#mache.permissions.restore_owner_write" title="mache.permissions.restore_owner_write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_owner_write</span></code></a>(base_paths[, show_progress])</p></td>
+<td><p>Give the owner back write permission on path(s), recursively, so that a deployment made read-only with <code class="docutils literal notranslate"><span class="pre">update_permissions(...,</span> <span class="pre">owner_writable=False)</span></code> can be modified</p></td>
 </tr>
 </tbody>
 </table>
