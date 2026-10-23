@@ -154,8 +154,10 @@ template override when strictly necessary (see below).</p></li>
 <p>Templates use the Spack 1.x compiler model: the compiler is an external
 package with <code class="docutils literal notranslate"><span class="pre">extra_attributes.compilers</span></code>, and a toolchain named <code class="docutils literal notranslate"><span class="pre">mache</span></code>,
 required for every package, selects it for <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">cxx</span></code> and <code class="docutils literal notranslate"><span class="pre">fortran</span></code>. The
-compiler is not a root spec, and no spec carries <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code>. A minimal
-template:</p>
+compiler is not a root spec, and no spec carries <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code>. The
+exception is a <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code> external defined by module, whose prefix depends
+on the compiler: it carries <code class="docutils literal notranslate"><span class="pre">%c={{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> so that toolchains sharing a
+Spack instance each get their own <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code>. A minimal template:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- set compiler = "gcc@11.2.0" %</span><span class="p p-Indicator">}</span>
 <span class="p p-Indicator">{</span><span class="err">%</span><span class="nv">- set mpi = "openmpi@4.1.6" %</span><span class="p p-Indicator">}</span>
 <span class="nt">spack</span><span class="p">:</span>

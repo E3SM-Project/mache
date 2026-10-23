@@ -612,7 +612,15 @@ The changes, applied to every remaining template:
 3. `%{{ compiler }}` is removed from every spec: root specs, externals and
    providers ([Decisions](#decisions) 4). The compiler is no longer a root
    spec, so it no longer appears in the view; MPI stays a root so its
-   wrappers do.
+   wrappers do. Amended for `cray-mpich` externals, whose prefix depends on
+   the compiler: they carry `%c={{ compiler }}`, or every toolchain in a
+   Spack instance shares one `cray-mpich` and its first prefix
+   ([#526](https://github.com/E3SM-Project/mache/issues/526)). Spack 1.0.0
+   mishandled a compiler on an external (fixed in 1.0.1,
+   [spack#51064](https://github.com/spack/spack/pull/51064)). Since 1.1
+   ([spack#51118](https://github.com/spack/spack/pull/51118)), Spack matches
+   it to an existing compiler external and fails if that is ambiguous or
+   missing, so `{{ compiler }}` must name exactly one external.
 4. Compiler package names follow `spack-packages`: `gcc`, `nvhpc`, `cce`, and
    `intel-oneapi-compilers` for both today's `intel@2025.x` and `oneapi@x`.
 5. `extra_attributes.compilers` keeps the keys `c`, `cxx` and `fortran` that
@@ -935,7 +943,8 @@ Changed:
   `repos.yaml`, instead of `spack repo add` and `spack repo update --scope
   site` at build time.
 - Pins in YAML using Spack's `repos.yaml` keys, instead of `config.cfg`.
-- No `%{{ compiler }}` on externals; the toolchain selects compilers.
+- No `%{{ compiler }}` on externals; the toolchain selects compilers. The
+  exception is `cray-mpich`, which carries `%c={{ compiler }}`.
 - `extra_attributes.compilers` keys `c`/`cxx`/`fortran`, not `cc`/`f77`/`fc`.
 - `https://` clone URLs, not `git@github.com:`.
 
@@ -968,7 +977,9 @@ affect.
 4. **Appending `%{{ compiler }}` to every spec**, as today. Rejected: in 1.x
    variants after `%` bind to the compiler, externals do not take a compiler,
    and downstream specs would break silently. See
-   [Environment templates](#environment-templates-for-spack-1x).
+   [Environment templates](#environment-templates-for-spack-1x). Spack 1.1
+   and later do accept a compiler on an external, matched to a compiler
+   external; `cray-mpich` relies on that (item 3 there).
 5. **One Spack instance per toolchain** (Andrew's branch). Rejected: disk and
    bootstrap cost per toolchain; Spack supports many environments per
    instance and reuses common builds across them. See [Prior work](#prior-work).

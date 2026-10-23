@@ -791,7 +791,15 @@ or <code class="docutils literal notranslate"><span class="pre">gnu</span></code
 <li><p><code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> is removed from every spec: root specs, externals and
 providers (<a class="reference internal" href="#decisions">Decisions</a> 4). The compiler is no longer a root
 spec, so it no longer appears in the view; MPI stays a root so its
-wrappers do.</p></li>
+wrappers do. Amended for <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code> externals, whose prefix depends on
+the compiler: they carry <code class="docutils literal notranslate"><span class="pre">%c={{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code>, or every toolchain in a
+Spack instance shares one <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code> and its first prefix
+(<a class="reference external" href="https://github.com/E3SM-Project/mache/issues/526">#526</a>). Spack 1.0.0
+mishandled a compiler on an external (fixed in 1.0.1,
+<a class="reference external" href="https://github.com/spack/spack/pull/51064">spack#51064</a>). Since 1.1
+(<a class="reference external" href="https://github.com/spack/spack/pull/51118">spack#51118</a>), Spack matches
+it to an existing compiler external and fails if that is ambiguous or
+missing, so <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> must name exactly one external.</p></li>
 <li><p>Compiler package names follow <code class="docutils literal notranslate"><span class="pre">spack-packages</span></code>: <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, <code class="docutils literal notranslate"><span class="pre">nvhpc</span></code>, <code class="docutils literal notranslate"><span class="pre">cce</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">intel-oneapi-compilers</span></code> for both today’s <code class="docutils literal notranslate"><span class="pre">intel&#64;2025.x</span></code> and <code class="docutils literal notranslate"><span class="pre">oneapi&#64;x</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">extra_attributes.compilers</span></code> keeps the keys <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">cxx</span></code> and <code class="docutils literal notranslate"><span class="pre">fortran</span></code> that
@@ -1089,7 +1097,8 @@ compiler <code class="docutils literal notranslate"><span class="pre">environmen
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span></code> clones the package repositories itself and writes a path-based
 <code class="docutils literal notranslate"><span class="pre">repos.yaml</span></code>, instead of <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">repo</span> <span class="pre">add</span></code> and <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">repo</span> <span class="pre">update</span> <span class="pre">--scope</span> <span class="pre">site</span></code> at build time.</p></li>
 <li><p>Pins in YAML using Spack’s <code class="docutils literal notranslate"><span class="pre">repos.yaml</span></code> keys, instead of <code class="docutils literal notranslate"><span class="pre">config.cfg</span></code>.</p></li>
-<li><p>No <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> on externals; the toolchain selects compilers.</p></li>
+<li><p>No <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> on externals; the toolchain selects compilers. The
+exception is <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code>, which carries <code class="docutils literal notranslate"><span class="pre">%c={{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">extra_attributes.compilers</span></code> keys <code class="docutils literal notranslate"><span class="pre">c</span></code>/<code class="docutils literal notranslate"><span class="pre">cxx</span></code>/<code class="docutils literal notranslate"><span class="pre">fortran</span></code>, not <code class="docutils literal notranslate"><span class="pre">cc</span></code>/<code class="docutils literal notranslate"><span class="pre">f77</span></code>/<code class="docutils literal notranslate"><span class="pre">fc</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">https://</span></code> clone URLs, not <code class="docutils literal notranslate"><span class="pre">git&#64;github.com:</span></code>.</p></li>
 </ul>
@@ -1121,7 +1130,9 @@ See <a class="reference internal" href="#spack-instance-layout">Spack instance l
 <li><p><strong>Appending <code class="docutils literal notranslate"><span class="pre">%{{</span> <span class="pre">compiler</span> <span class="pre">}}</span></code> to every spec</strong>, as today. Rejected: in 1.x
 variants after <code class="docutils literal notranslate"><span class="pre">%</span></code> bind to the compiler, externals do not take a compiler,
 and downstream specs would break silently. See
-<a class="reference internal" href="#environment-templates-for-spack-1-x">Environment templates</a>.</p></li>
+<a class="reference internal" href="#environment-templates-for-spack-1-x">Environment templates</a>. Spack 1.1
+and later do accept a compiler on an external, matched to a compiler
+external; <code class="docutils literal notranslate"><span class="pre">cray-mpich</span></code> relies on that (item 3 there).</p></li>
 <li><p><strong>One Spack instance per toolchain</strong> (Andrew’s branch). Rejected: disk and
 bootstrap cost per toolchain; Spack supports many environments per
 instance and reuses common builds across them. See <a class="reference internal" href="#prior-work">Prior work</a>.</p></li>
