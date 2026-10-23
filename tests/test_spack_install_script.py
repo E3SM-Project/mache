@@ -202,6 +202,42 @@ def test_legacy_check_runs(tmp_path: Path, version, refused):
         assert 'PASSED_CHECK' in result.stdout
 
 
+@pytest.mark.parametrize(
+    'spack_body, leftover',
+    [
+        # a clean removal
+        ('rm -rf "$env_dir"', False),
+        # the NFS failure: spack.yaml goes, .spack-env stays, spack fails
+        ('rm -f "$env_dir/spack.yaml"; return 1', True),
+        # an environment a previous attempt left without spack.yaml
+        ('echo "Environment does not exist" >&2; return 1', True),
+    ],
+)
+def test_recreate_removes_env_dir(tmp_path: Path, spack_body, leftover):
+    """Run the environment-removal step against a fake ``spack`` and check
+    that the environment directory is gone whatever ``spack env remove``
+    does."""
+    env_dir = tmp_path / 'var' / 'spack' / 'environments' / 'dev'
+    (env_dir / '.spack-env' / 'view').mkdir(parents=True)
+    (env_dir / 'spack.yaml').write_text('spack: {}\n')
+    (env_dir / 'spack.lock').write_text('{}\n')
+
+    script = _render(load_pins(), spack_path=str(tmp_path), env_name='dev')
+    start = script.index('env_dir=')
+    end = script.index('spack env create')
+    step = (
+        f'set -e\nspack_path={tmp_path}\nenv_name=dev\n'
+        f'spack() {{ {spack_body}; }}\n{script[start:end]}'
+    )
+    result = subprocess.run(
+        ['bash', '-c', step], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    assert 'recreating environment: dev' in result.stdout
+    assert ('left' in result.stdout) == leftover
+    assert not env_dir.exists()
+
+
 def test_write_prologue(tmp_path: Path):
     path = write_prologue(str(tmp_path), 'env', '\nmodule load x\n')
     assert path == prologue_path(str(tmp_path), 'env')
