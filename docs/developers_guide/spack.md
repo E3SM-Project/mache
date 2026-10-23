@@ -38,8 +38,10 @@ These files are Jinja2 templates, allowing conditional inclusion of packages
 Templates use the Spack 1.x compiler model: the compiler is an external
 package with `extra_attributes.compilers`, and a toolchain named `mache`,
 required for every package, selects it for `c`, `cxx` and `fortran`. The
-compiler is not a root spec, and no spec carries `%{{ compiler }}`. A minimal
-template:
+compiler is not a root spec, and no spec carries `%{{ compiler }}`. The
+exception is a `cray-mpich` external defined by module, whose prefix depends
+on the compiler: it carries `%c={{ compiler }}` so that toolchains sharing a
+Spack instance each get their own `cray-mpich`. A minimal template:
 
 ```yaml
 {%- set compiler = "gcc@11.2.0" %}
