@@ -1,0 +1,6 @@
+﻿mache.spack.install.write\_prologue
+===================================
+
+.. currentmodule:: mache.spack.install
+
+.. autofunction:: write_prologue

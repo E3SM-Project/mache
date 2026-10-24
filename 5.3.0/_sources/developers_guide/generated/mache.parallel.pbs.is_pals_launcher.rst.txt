@@ -1,0 +1,6 @@
+﻿mache.parallel.pbs.is\_pals\_launcher
+=====================================
+
+.. currentmodule:: mache.parallel.pbs
+
+.. autofunction:: is_pals_launcher

@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.get\_gpu\_device\_names
+============================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. automethod:: ParallelSystem.get_gpu_device_names
