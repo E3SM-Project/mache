@@ -173,12 +173,12 @@ spack:
     hdf5:
       externals:
       - spec: hdf5@1.14.3.7~cxx+fortran+hl~java+mpi+shared
-        prefix: /opt/cray/pe/hdf5-parallel/1.14.3.7/intel/2023.2
+        prefix: /opt/cray/pe/hdf5-parallel/1.14.3.7/intel/2025.0
       buildable: false
     parallel-netcdf:
       externals:
       - spec: parallel-netcdf@1.12.3.19+cxx+fortran+pic+shared
-        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.19/intel/2023.2
+        prefix: /opt/cray/pe/parallel-netcdf/1.12.3.19/intel/2025.0
       buildable: false
     netcdf-c:
       externals:
