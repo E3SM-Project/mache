@@ -1,0 +1,6 @@
+﻿mache.spack.config\_to\_shell\_script
+=====================================
+
+.. currentmodule:: mache.spack
+
+.. autofunction:: config_to_shell_script

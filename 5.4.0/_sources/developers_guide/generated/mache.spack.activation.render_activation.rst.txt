@@ -1,0 +1,6 @@
+﻿mache.spack.activation.render\_activation
+=========================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: render_activation

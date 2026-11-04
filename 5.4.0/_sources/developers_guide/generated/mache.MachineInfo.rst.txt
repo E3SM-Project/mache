@@ -1,0 +1,27 @@
+﻿mache.MachineInfo
+=================
+
+.. currentmodule:: mache
+
+.. autoclass:: MachineInfo
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MachineInfo.__init__
+      ~MachineInfo.get_account_defaults
+      ~MachineInfo.get_partition_specs
+      ~MachineInfo.get_qos_specs
+      ~MachineInfo.get_queue_specs
+      ~MachineInfo.get_scheduler_specs
+   
+   
+
+   
+   
+   

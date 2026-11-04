@@ -1,0 +1,6 @@
+﻿mache.spack.activation.capture\_activation
+==========================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: capture_activation

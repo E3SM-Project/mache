@@ -1,0 +1,6 @@
+﻿mache.deploy.conda.get\_conda\_platform\_and\_system
+====================================================
+
+.. currentmodule:: mache.deploy.conda
+
+.. autofunction:: get_conda_platform_and_system

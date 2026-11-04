@@ -1,0 +1,6 @@
+﻿mache.parallel.topology.with\_siblings
+======================================
+
+.. currentmodule:: mache.parallel.topology
+
+.. autofunction:: with_siblings

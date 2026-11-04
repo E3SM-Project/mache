@@ -1,0 +1,6 @@
+﻿mache.spack.get\_modules\_env\_vars\_and\_mpi\_compilers
+========================================================
+
+.. currentmodule:: mache.spack
+
+.. autofunction:: get_modules_env_vars_and_mpi_compilers

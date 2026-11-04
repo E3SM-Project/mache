@@ -1,0 +1,6 @@
+﻿mache.spack.activation.parse\_env\_before
+=========================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: parse_env_before

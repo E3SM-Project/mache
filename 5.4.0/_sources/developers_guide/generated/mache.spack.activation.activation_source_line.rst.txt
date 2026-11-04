@@ -1,0 +1,6 @@
+﻿mache.spack.activation.activation\_source\_line
+===============================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: activation_source_line

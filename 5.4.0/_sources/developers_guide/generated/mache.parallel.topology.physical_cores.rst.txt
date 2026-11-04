@@ -1,0 +1,6 @@
+﻿mache.parallel.topology.physical\_cores
+=======================================
+
+.. currentmodule:: mache.parallel.topology
+
+.. autofunction:: physical_cores
