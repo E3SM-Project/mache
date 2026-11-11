@@ -48,11 +48,16 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.30.5
+      - spec: cmake@3.31.11
         # prefix is needed -- module does not seem to be sufficient
+        # TODO(reviewer): the prefix below is still the core-25.03
+        # cmake 3.30.5 install.  The core-26.05 cmake 3.31.11 prefix
+        # contains a Spack hash that cannot be derived off-machine, so
+        # it has to be filled in from frontier, e.g. with
+        # `ls -d /sw/frontier/spack-envs/core-26.05/opt/*/cmake-3.31.11-*`
         prefix: /sw/frontier/spack-envs/core-25.03/opt/gcc-13.2/cmake-3.30.5-3megaha56irdlal5or2bjkasn2zj5fvp
         modules:
-        - cmake/3.30.5
+        - cmake/3.31.11
       buildable: false
     curl:
       externals:
@@ -166,7 +171,7 @@ spack:
       externals:
       - spec: {{ compiler }}
         modules:
-        - Core/25.03
+        - Core/26.05
         - PrgEnv-cray/8.7.0
         - cpe/26.03
         - libunwind/1.8.3
