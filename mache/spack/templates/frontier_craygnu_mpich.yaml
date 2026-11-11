@@ -1,5 +1,5 @@
 {%- set compiler = "gcc@14.2" %}
-{%- set mpi = "cray-mpich@9.0.1" %}
+{%- set mpi = "cray-mpich@9.1.0" %}
 spack:
   specs:
   - {{ mpi }}
@@ -29,7 +29,7 @@ spack:
       providers:
         mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
-        lapack: [cray-libsci@25.09.0]
+        lapack: [cray-libsci@26.03.0]
 {%- endif %}
     autoconf:
       externals:
@@ -48,11 +48,11 @@ spack:
       buildable: false
     cmake:
       externals:
-      - spec: cmake@3.30.5
+      - spec: cmake@3.31.11
         # prefix is needed -- module does not seem to be sufficient
-        prefix: /sw/frontier/spack-envs/core-25.03/opt/gcc-13.2/cmake-3.30.5-3megaha56irdlal5or2bjkasn2zj5fvp
+        prefix: /sw/frontier/spack-envs/core-26.05/opt/gcc-14.2/cmake-3.31.11-hfpkffpvqw3z5ohyxcoem6n22l6m7fit
         modules:
-        - cmake/3.30.5
+        - cmake/3.31.11
       buildable: false
     curl:
       externals:
@@ -126,12 +126,12 @@ spack:
       externals:
       - spec: {{ compiler }}
         modules:
-        - Core/25.03
-        - PrgEnv-gnu/8.6.0
-        - cpe/25.09
+        - Core/26.05
+        - PrgEnv-gnu/8.7.0
+        - cpe/26.03
         - libunwind/1.8.3
         - gcc-native/14.2
-        - craype/2.7.35
+        - craype/2.7.36
         - libfabric/2.3.1
         extra_attributes:
           # this needs to be here for gcc because the gcc pacakge looks here
@@ -154,7 +154,7 @@ spack:
         modules:
         - libfabric/2.3.1
         - libunwind/1.8.3
-        - cray-mpich/9.0.1
+        - cray-mpich/9.1.0
       buildable: false
     libfabric:
       externals:
@@ -165,9 +165,9 @@ spack:
 {%- if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@25.09.0
+      - spec: cray-libsci@26.03.0
         modules:
-        - cray-libsci/25.09.0
+        - cray-libsci/26.03.0
       buildable: false
 {%- endif %}
     hdf5:
@@ -187,6 +187,6 @@ spack:
       buildable: false
     netcdf-fortran:
       externals:
-      - spec: netcdf-fortran@4.5.3
+      - spec: netcdf-fortran@4.6.1
         prefix: /opt/cray/pe/netcdf-hdf5parallel/4.9.2.1/gnu/12.3
       buildable: false
