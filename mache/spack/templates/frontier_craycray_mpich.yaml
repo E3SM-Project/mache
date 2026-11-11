@@ -1,4 +1,4 @@
-{%- set compiler = "cce@21.0.0" %}
+{%- set compiler = "cce@21.0.4" %}
 {%- set mpi = "cray-mpich@9.1.0" %}
 spack:
   specs:
@@ -29,7 +29,7 @@ spack:
       providers:
         mpi: [{{ mpi }}]
 {%- if e3sm_lapack %}
-        lapack: [cray-libsci@22.12.1.1]
+        lapack: [cray-libsci@26.03.0]
 {%- endif %}
     autoconf:
       externals:
@@ -50,12 +50,7 @@ spack:
       externals:
       - spec: cmake@3.31.11
         # prefix is needed -- module does not seem to be sufficient
-        # TODO(reviewer): the prefix below is still the core-25.03
-        # cmake 3.30.5 install.  The core-26.05 cmake 3.31.11 prefix
-        # contains a Spack hash that cannot be derived off-machine, so
-        # it has to be filled in from frontier, e.g. with
-        # `ls -d /sw/frontier/spack-envs/core-26.05/opt/*/cmake-3.31.11-*`
-        prefix: /sw/frontier/spack-envs/core-25.03/opt/gcc-13.2/cmake-3.30.5-3megaha56irdlal5or2bjkasn2zj5fvp
+        prefix: /sw/frontier/spack-envs/core-26.05/opt/gcc-14.2/cmake-3.31.11-hfpkffpvqw3z5ohyxcoem6n22l6m7fit
         modules:
         - cmake/3.31.11
       buildable: false
@@ -142,9 +137,9 @@ spack:
 {%- if e3sm_lapack %}
     cray-libsci:
       externals:
-      - spec: cray-libsci@22.12.1.1
+      - spec: cray-libsci@26.03.0
         modules:
-        - cray-libsci/22.12.1.1
+        - cray-libsci/26.03.0
       buildable: false
 {%- endif %}
     hdf5:
