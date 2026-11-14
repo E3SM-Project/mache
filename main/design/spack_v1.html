@@ -150,7 +150,7 @@
            <div itemprop="articleBody">
              
   <section class="tex2jax_ignore mathjax_ignore" id="design-document-spack-1-x-in-mache">
-<h1>Design Document: Spack 1.x in mache<a class="headerlink" href="#design-document-spack-1-x-in-mache" title="Link to this heading"></a></h1>
+<span id="design-document-spack-1x-in-mache"></span><h1>Design Document: Spack 1.x in mache<a class="headerlink" href="#design-document-spack-1-x-in-mache" title="Link to this heading"></a></h1>
 <section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">mache</span></code> builds Spack environments from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/spack</span></code>, a fork of Spack
@@ -260,7 +260,7 @@ version in <code class="docutils literal notranslate"><span class="pre">spack_pa
 </section>
 <hr class="docutils" />
 <section id="requirement-machine-templates-valid-for-spack-1-x">
-<h3>Requirement: Machine templates valid for Spack 1.x<a class="headerlink" href="#requirement-machine-templates-valid-for-spack-1-x" title="Link to this heading"></a></h3>
+<span id="requirement-machine-templates-valid-for-spack-1x"></span><h3>Requirement: Machine templates valid for Spack 1.x<a class="headerlink" href="#requirement-machine-templates-valid-for-spack-1-x" title="Link to this heading"></a></h3>
 <p>Every <code class="docutils literal notranslate"><span class="pre">&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.yaml</span></code> template must render to a <code class="docutils literal notranslate"><span class="pre">spack.yaml</span></code>
 that Spack 1.x accepts with no deprecated sections, and must select the E3SM
 compiler and MPI for every package that needs one.</p>
@@ -712,7 +712,7 @@ on 1.2.2), and <code class="docutils literal notranslate"><span class="pre">spac
 </section>
 <hr class="docutils" />
 <section id="environment-templates-for-spack-1-x">
-<h2>Environment templates for Spack 1.x<a class="headerlink" href="#environment-templates-for-spack-1-x" title="Link to this heading"></a></h2>
+<span id="environment-templates-for-spack-1x"></span><h2>Environment templates for Spack 1.x<a class="headerlink" href="#environment-templates-for-spack-1-x" title="Link to this heading"></a></h2>
 <p><em>Date last modified: Sep 19, 2026</em></p>
 <p>All 25 packaged templates carry a <code class="docutils literal notranslate"><span class="pre">compilers:</span></code> section and
 <code class="docutils literal notranslate"><span class="pre">packages:all:compiler</span></code>, both of which Spack 1.x deprecates or ignores. Three
@@ -934,7 +934,7 @@ the captured <code class="docutils literal notranslate"><span class="pre">source
 </section>
 <hr class="docutils" />
 <section id="integration-with-mache-spack-and-mache-deploy">
-<h2>Integration with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> and <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code><a class="headerlink" href="#integration-with-mache-spack-and-mache-deploy" title="Link to this heading"></a></h2>
+<span id="integration-with-machespack-and-machedeploy"></span><h2>Integration with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code> and <code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code><a class="headerlink" href="#integration-with-mache-spack-and-mache-deploy" title="Link to this heading"></a></h2>
 <p><em>Date last modified: Sep 19, 2026</em></p>
 <p>New module <code class="docutils literal notranslate"><span class="pre">mache/spack/pins.py</span></code>:</p>
 <ul class="simple">

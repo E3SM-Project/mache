@@ -60,11 +60,11 @@
 <li class="toctree-l1"><a class="reference internal" href="deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine to Mache</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#adding-a-new-config-file">Adding a new config file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dev-new-config-file">Adding a new config file</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#parallel-execution-settings">Parallel execution settings</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#adding-the-new-machine-to-discover-py">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dev-discover-new-machine">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
@@ -105,8 +105,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="adding-a-new-machine-to-mache">
-<span id="dev-adding-new-machine"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#adding-a-new-machine-to-mache" title="Link to this heading"></a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="dev-adding-new-machine">
+<span id="adding-a-new-machine-to-mache"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#dev-adding-new-machine" title="Link to this heading"></a></h1>
 <p>Adding an E3SM-known machine to mache requires adding a new config file, as
 well as updating the list of machines in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code>.</p>
 <div class="admonition note">
@@ -122,8 +122,8 @@ machine.</p>
 and hands the follow-up work to Claude Code, see
 <a class="reference internal" href="config_machines_updates.html"><span class="doc">Automated config_machines.xml updates</span></a>.</p>
 </div>
-<section id="adding-a-new-config-file">
-<span id="dev-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#adding-a-new-config-file" title="Link to this heading"></a></h2>
+<section id="dev-new-config-file">
+<span id="adding-a-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#dev-new-config-file" title="Link to this heading"></a></h2>
 <p>Adding a new config file is usually straightforward if you follow the format of
 an existing config file.</p>
 <p>For machines with a known E3SM inputdata location, also add an <code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code>
@@ -262,8 +262,8 @@ no node-count or wall-clock limits to record.</p>
 </ul>
 </section>
 </section>
-<section id="adding-the-new-machine-to-discover-py">
-<span id="dev-discover-new-machine"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#adding-the-new-machine-to-discover-py" title="Link to this heading"></a></h2>
+<section id="dev-discover-new-machine">
+<span id="adding-the-new-machine-to-discover-py"></span><span id="adding-the-new-machine-to-discoverpy"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#dev-discover-new-machine" title="Link to this heading"></a></h2>
 <p>You will need to amend the list of machine names in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code> so that mache
 can identify the new machine via its hostname. This process is typically done
 using a regular expression, which is often possible whenever the machine’s

@@ -126,7 +126,7 @@
            <div itemprop="articleBody">
              
   <section class="tex2jax_ignore mathjax_ignore" id="automated-config-machines-xml-updates">
-<h1>Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates<a class="headerlink" href="#automated-config-machines-xml-updates" title="Link to this heading"></a></h1>
+<span id="automated-config_machinesxml-updates"></span><h1>Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates<a class="headerlink" href="#automated-config-machines-xml-updates" title="Link to this heading"></a></h1>
 <p>This page describes the automation that watches for upstream changes to
 E3SM’s <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>, hands the work to Claude Code when drift is
 detected, and explains how maintainers are expected to review the resulting
@@ -219,7 +219,7 @@ issue body contains the required maintainer instructions.</p>
 </section>
 </section>
 <section id="how-config-machines-xml-gets-updated">
-<h2>How <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> gets updated<a class="headerlink" href="#how-config-machines-xml-gets-updated" title="Link to this heading"></a></h2>
+<span id="how-config_machinesxml-gets-updated"></span><h2>How <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> gets updated<a class="headerlink" href="#how-config-machines-xml-gets-updated" title="Link to this heading"></a></h2>
 <p>The important point is that the scheduled workflow never edits
 <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> itself.</p>
 <p>The update path is:</p>
@@ -320,7 +320,7 @@ issue in the repository.</p></li>
 <p>When Claude opens a PR from this issue, the reviewer should check the changes
 in this order.</p>
 <section id="config-machines-xml-changes">
-<h3>1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes<a class="headerlink" href="#config-machines-xml-changes" title="Link to this heading"></a></h3>
+<span id="1-config_machinesxml-changes"></span><h3>1. <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> changes<a class="headerlink" href="#config-machines-xml-changes" title="Link to this heading"></a></h3>
 <p>Verify that the PR replaces
 <code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code> with the current upstream file
 from <code class="docutils literal notranslate"><span class="pre">E3SM-Project/E3SM</span></code>, rather than hand-editing only selected machine
@@ -332,7 +332,7 @@ artifact and the upstream XML source from the workflow run that opened or
 refreshed the issue.</p>
 </section>
 <section id="related-spack-updates">
-<h3>2. Related Spack updates<a class="headerlink" href="#related-spack-updates" title="Link to this heading"></a></h3>
+<span id="2-related-spack-updates"></span><h3>2. Related Spack updates<a class="headerlink" href="#related-spack-updates" title="Link to this heading"></a></h3>
 <p>If the report lists package groups or candidate Spack templates, check that the
 PR updated the relevant <code class="docutils literal notranslate"><span class="pre">mache/spack/*.yaml</span></code> inputs and any version strings
 that should track the new module or environment values.</p>
@@ -340,14 +340,14 @@ that should track the new module or environment values.</p>
 limited to <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>.</p>
 </section>
 <section id="ambiguous-path-or-prefix-changes">
-<h3>3. Ambiguous path or prefix changes<a class="headerlink" href="#ambiguous-path-or-prefix-changes" title="Link to this heading"></a></h3>
+<span id="3-ambiguous-path-or-prefix-changes"></span><h3>3. Ambiguous path or prefix changes<a class="headerlink" href="#ambiguous-path-or-prefix-changes" title="Link to this heading"></a></h3>
 <p>When upstream changes a path-like variable such as <code class="docutils literal notranslate"><span class="pre">NETCDF_PATH</span></code>, the correct
 replacement in <code class="docutils literal notranslate"><span class="pre">mache</span></code> may not be obvious from the XML alone.</p>
 <p>In that case, the expected behavior is <strong>not</strong> to guess. The PR should leave a
 TODO note for the reviewer and explain what needs confirmation.</p>
 </section>
 <section id="validation">
-<h3>4. Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h3>
+<span id="4-validation"></span><h3>4. Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h3>
 <p>At minimum, reviewers or PR authors should run the same local checks used by
 development in this repository.</p>
 <p>Generate the current report locally:</p>

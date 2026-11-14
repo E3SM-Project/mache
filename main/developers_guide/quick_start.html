@@ -56,8 +56,8 @@
 <p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start for Developers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#setting-up-for-development">Setting up for Development</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#code-styling-and-linting">Code Styling and Linting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dev-installing-mache">Setting up for Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dev-code-styling">Code Styling and Linting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-tests">Running Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
 </ul>
@@ -108,8 +108,8 @@
 <h1>Quick Start for Developers<a class="headerlink" href="#quick-start-for-developers" title="Link to this heading"></a></h1>
 <p>This guide is for contributors to <code class="docutils literal notranslate"><span class="pre">mache</span></code>. For general installation and usage,
 see the <a class="reference internal" href="../users_guide/quick_start.html"><span class="std std-doc">User’s Guide</span></a>.</p>
-<section id="setting-up-for-development">
-<span id="dev-installing-mache"></span><h2>Setting up for Development<a class="headerlink" href="#setting-up-for-development" title="Link to this heading"></a></h2>
+<section id="dev-installing-mache">
+<span id="setting-up-for-development"></span><h2>Setting up for Development<a class="headerlink" href="#dev-installing-mache" title="Link to this heading"></a></h2>
 <p>Install <code class="docutils literal notranslate"><span class="pre">pixi</span></code>, a faster package manager similar to <code class="docutils literal notranslate"><span class="pre">conda</span></code>, if you don’t
 already have it:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://pixi.sh/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
@@ -132,8 +132,8 @@ includes <code class="docutils literal notranslate"><span class="pre">mache</spa
 environments (<code class="docutils literal notranslate"><span class="pre">py311</span></code>-<code class="docutils literal notranslate"><span class="pre">py314</span></code>) intentionally skip this editable install and add
 it explicitly with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code> in CI after <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">install</span></code>.</p>
 </section>
-<section id="code-styling-and-linting">
-<span id="dev-code-styling"></span><h2>Code Styling and Linting<a class="headerlink" href="#code-styling-and-linting" title="Link to this heading"></a></h2>
+<section id="dev-code-styling">
+<span id="code-styling-and-linting"></span><h2>Code Styling and Linting<a class="headerlink" href="#dev-code-styling" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">mache</span></code> uses <a class="reference external" href="https://pre-commit.com/"><code class="docutils literal notranslate"><span class="pre">pre-commit</span></code></a> to enforce code style and
 quality. After setting up your environment, run:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install

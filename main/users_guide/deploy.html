@@ -220,7 +220,7 @@ logic without importing the target package before the environment exists.</p>
 <p>This section describes which files are required, which are optional, and which
 ones are usually safe to edit.</p>
 <section id="deploy-py">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code><a class="headerlink" href="#deploy-py" title="Link to this heading"></a></h3>
+<span id="deploypy"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code><a class="headerlink" href="#deploy-py" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: yes</p>
@@ -240,7 +240,7 @@ requested fork/branch.</p></li>
 </ul>
 </section>
 <section id="deploy-cli-spec-json">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code><a class="headerlink" href="#deploy-cli-spec-json" title="Link to this heading"></a></h3>
+<span id="deploycli_specjson"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code><a class="headerlink" href="#deploy-cli-spec-json" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: yes</p>
@@ -260,7 +260,7 @@ routed to <code class="docutils literal notranslate"><span class="pre">mache</sp
 </ul>
 </section>
 <section id="deploy-custom-cli-spec-json">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code><a class="headerlink" href="#deploy-custom-cli-spec-json" title="Link to this heading"></a></h3>
+<span id="deploycustom_cli_specjson"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code><a class="headerlink" href="#deploy-custom-cli-spec-json" title="Link to this heading"></a></h3>
 <p>Required: no</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -283,7 +283,7 @@ feature toggles.</p></li>
 </ul>
 </section>
 <section id="deploy-pins-cfg">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code><a class="headerlink" href="#deploy-pins-cfg" title="Link to this heading"></a></h3>
+<span id="deploypinscfg"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code><a class="headerlink" href="#deploy-pins-cfg" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -302,7 +302,7 @@ feature toggles.</p></li>
 </ul>
 </section>
 <section id="deploy-config-yaml-j2">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code><a class="headerlink" href="#deploy-config-yaml-j2" title="Link to this heading"></a></h3>
+<span id="deployconfigyamlj2"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code><a class="headerlink" href="#deploy-config-yaml-j2" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -462,7 +462,7 @@ translate that into <code class="docutils literal notranslate"><span class="pre"
 moving the actual Spack selection onto <code class="docutils literal notranslate"><span class="pre">exclude_packages</span></code>.</p>
 </section>
 <section id="deploy-pixi-toml-j2">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code><a class="headerlink" href="#deploy-pixi-toml-j2" title="Link to this heading"></a></h3>
+<span id="deploypixitomlj2"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/pixi.toml.j2</span></code><a class="headerlink" href="#deploy-pixi-toml-j2" title="Link to this heading"></a></h3>
 <p>Required: yes</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -502,7 +502,7 @@ machine while still installing conda <code class="docutils literal notranslate">
 <code class="docutils literal notranslate"><span class="pre">mache</span></code> about a new package-specific toggle.</p>
 </section>
 <section id="deploy-spack-yaml-j2">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code><a class="headerlink" href="#deploy-spack-yaml-j2" title="Link to this heading"></a></h3>
+<span id="deployspackyamlj2"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/spack.yaml.j2</span></code><a class="headerlink" href="#deploy-spack-yaml-j2" title="Link to this heading"></a></h3>
 <p>Required: only when you support Spack</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -527,7 +527,7 @@ build; <code class="docutils literal notranslate"><span class="pre">exclude_pack
 suppressed before concretization.</p>
 </section>
 <section id="deploy-hooks-py">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code><a class="headerlink" href="#deploy-hooks-py" title="Link to this heading"></a></h3>
+<span id="deployhookspy"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/hooks.py</span></code><a class="headerlink" href="#deploy-hooks-py" title="Link to this heading"></a></h3>
 <p>Required: no</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes, as an example module</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -600,7 +600,7 @@ group while leaving its contents non-group-writable:</p>
 </div>
 </section>
 <section id="deploy-load-sh">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code><a class="headerlink" href="#deploy-load-sh" title="Link to this heading"></a></h3>
+<span id="deployloadsh"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/load.sh</span></code><a class="headerlink" href="#deploy-load-sh" title="Link to this heading"></a></h3>
 <p>Required: no</p>
 <p>Created by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">init</span></code>: yes</p>
 <p>Overwritten by <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code>: no</p>
@@ -708,7 +708,7 @@ flag that should survive <code class="docutils literal notranslate"><span class=
 <p>From a user’s point of view, deployment starts with <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code>. Internally,
 that process has three phases.</p>
 <section id="phase-1-deploy-py">
-<h3>Phase 1: <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code><a class="headerlink" href="#phase-1-deploy-py" title="Link to this heading"></a></h3>
+<span id="phase-1-deploypy"></span><h3>Phase 1: <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code><a class="headerlink" href="#phase-1-deploy-py" title="Link to this heading"></a></h3>
 <p>The generated <code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> file:</p>
 <ol class="arabic simple">
 <li><p>Verifies it is being run from the target repository root.</p></li>
@@ -851,7 +851,7 @@ currently <code class="docutils literal notranslate"><span class="pre">deploy.py
 </dl>
 </section>
 <section id="how-deploy-cli-spec-json-works">
-<h3>How <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> works<a class="headerlink" href="#how-deploy-cli-spec-json-works" title="Link to this heading"></a></h3>
+<span id="how-deploycli_specjson-works"></span><h3>How <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> works<a class="headerlink" href="#how-deploy-cli-spec-json-works" title="Link to this heading"></a></h3>
 <p>Each argument entry contains:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">flags</span></code></p></li>
@@ -882,7 +882,7 @@ currently <code class="docutils literal notranslate"><span class="pre">deploy.py
 </ul>
 </section>
 <section id="how-deploy-custom-cli-spec-json-works">
-<h3>How <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> works<a class="headerlink" href="#how-deploy-custom-cli-spec-json-works" title="Link to this heading"></a></h3>
+<span id="how-deploycustom_cli_specjson-works"></span><h3>How <code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> works<a class="headerlink" href="#how-deploy-custom-cli-spec-json-works" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">deploy/custom_cli_spec.json</span></code> uses the same argument-entry format as
 <code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code>, but it is downstream-owned and optional.</p>
 <p>At runtime:</p>
@@ -956,7 +956,7 @@ should not be replaced automatically.</p>
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <p>This section is intentionally short for now and will grow over time.</p>
 <section id="deploy-py-says-it-must-be-run-from-the-repository-root">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> says it must be run from the repository root<a class="headerlink" href="#deploy-py-says-it-must-be-run-from-the-repository-root" title="Link to this heading"></a></h3>
+<span id="deploypy-says-it-must-be-run-from-the-repository-root"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy.py</span></code> says it must be run from the repository root<a class="headerlink" href="#deploy-py-says-it-must-be-run-from-the-repository-root" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
 <li><p>You ran <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> from the wrong directory.</p></li>
@@ -967,7 +967,7 @@ should not be replaced automatically.</p>
 </ul>
 </section>
 <section id="deploy-cli-spec-json-and-deploy-pins-cfg-disagree-on-the-mache-version">
-<h3><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> disagree on the <code class="docutils literal notranslate"><span class="pre">mache</span></code> version<a class="headerlink" href="#deploy-cli-spec-json-and-deploy-pins-cfg-disagree-on-the-mache-version" title="Link to this heading"></a></h3>
+<span id="deploycli_specjson-and-deploypinscfg-disagree-on-the-mache-version"></span><h3><code class="docutils literal notranslate"><span class="pre">deploy/cli_spec.json</span></code> and <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code> disagree on the <code class="docutils literal notranslate"><span class="pre">mache</span></code> version<a class="headerlink" href="#deploy-cli-spec-json-and-deploy-pins-cfg-disagree-on-the-mache-version" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">update</span></code> was run without also updating <code class="docutils literal notranslate"><span class="pre">deploy/pins.cfg</span></code>, or a
@@ -1003,7 +1003,7 @@ the target repository’s <code class="docutils literal notranslate"><span class
 </ul>
 </section>
 <section id="spack-is-enabled-but-deployment-fails-because-spack-path-is-missing">
-<h3>Spack is enabled but deployment fails because <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> is missing<a class="headerlink" href="#spack-is-enabled-but-deployment-fails-because-spack-path-is-missing" title="Link to this heading"></a></h3>
+<span id="spack-is-enabled-but-deployment-fails-because-spack_path-is-missing"></span><h3>Spack is enabled but deployment fails because <code class="docutils literal notranslate"><span class="pre">spack_path</span></code> is missing<a class="headerlink" href="#spack-is-enabled-but-deployment-fails-because-spack-path-is-missing" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
 <li><p>Spack support was enabled for this run, but no path was provided in config,
@@ -1019,7 +1019,7 @@ hooks, or the CLI.</p></li>
 </ul>
 </section>
 <section id="project-version-is-still-dynamic">
-<h3><code class="docutils literal notranslate"><span class="pre">project.version</span></code> is still <code class="docutils literal notranslate"><span class="pre">dynamic</span></code><a class="headerlink" href="#project-version-is-still-dynamic" title="Link to this heading"></a></h3>
+<span id="projectversion-is-still-dynamic"></span><h3><code class="docutils literal notranslate"><span class="pre">project.version</span></code> is still <code class="docutils literal notranslate"><span class="pre">dynamic</span></code><a class="headerlink" href="#project-version-is-still-dynamic" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">deploy/config.yaml.j2</span></code> left <code class="docutils literal notranslate"><span class="pre">project.version:</span> <span class="pre">dynamic</span></code>, but no <code class="docutils literal notranslate"><span class="pre">pre_pixi</span></code>
@@ -1051,7 +1051,7 @@ a standalone executable.</p></li>
 </ul>
 </section>
 <section id="the-load-script-cannot-be-found-when-sourced-from-bin-sh">
-<h3>The load script cannot be found when sourced from <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code><a class="headerlink" href="#the-load-script-cannot-be-found-when-sourced-from-bin-sh" title="Link to this heading"></a></h3>
+<span id="the-load-script-cannot-be-found-when-sourced-from-binsh"></span><h3>The load script cannot be found when sourced from <code class="docutils literal notranslate"><span class="pre">/bin/sh</span></code><a class="headerlink" href="#the-load-script-cannot-be-found-when-sourced-from-bin-sh" title="Link to this heading"></a></h3>
 <p>Cause:</p>
 <ul class="simple">
 <li><p>Bash started as <code class="docutils literal notranslate"><span class="pre">sh</span></code> runs in POSIX mode, where <code class="docutils literal notranslate"><span class="pre">source</span></code> no longer searches
