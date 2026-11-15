@@ -13,4 +13,12 @@ cmake ${CMAKE_ARGS} \
 cmake --build . --config Release --target install
 cd ..
 
+# Since 1.1.1, jigsaw-python refuses to build a wheel unless the back end
+# is bundled in the package, so copy it there too.  The copies on PATH stay
+# for callers that run `jigsaw` directly.
+mkdir -p jigsawpy/_bin jigsawpy/_lib
+cp ${PREFIX}/bin/jigsaw ${PREFIX}/bin/tripod ${PREFIX}/bin/marche \
+  jigsawpy/_bin/
+cp ${PREFIX}/lib/libjigsaw${SHLIB_EXT} jigsawpy/_lib/
+
 ${PYTHON} -m pip install . -vv --no-deps --no-build-isolation
