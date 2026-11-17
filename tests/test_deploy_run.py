@@ -3,6 +3,7 @@ import configparser
 import shlex
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -770,8 +771,15 @@ def test_resolve_toolchain_pairs_error_names_missing_compiler():
     assert "Machine: 'anvil'." in message
 
 
+@pytest.mark.parametrize(
+    ('shared_base_path', 'attach_environments'),
+    [(None, False), ('/tmp', True)],
+)
 def test_run_deploy_runs_post_publish_after_publish_steps(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    shared_base_path: str | None,
+    attach_environments: bool,
 ):
     monkeypatch.chdir(tmp_path)
 
@@ -806,6 +814,7 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
             },
             'spack': {'deploy': False, 'supported': False},
             'jigsaw': {'enabled': False},
+            'shared': {'base_path': shared_base_path},
         },
     )
     monkeypatch.setattr(
@@ -880,10 +889,14 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
     monkeypatch.setattr(
         deploy_run, 'restore_owner_write', _fake_restore_owner_write
     )
+    deploy_pixi_kwargs = []
+
+    def _fake_deploy_target_pixi_env(**kwargs):
+        events.append('deploy_pixi')
+        deploy_pixi_kwargs.append(kwargs)
+
     monkeypatch.setattr(
-        deploy_run,
-        '_deploy_target_pixi_env',
-        lambda **_kwargs: events.append('deploy_pixi'),
+        deploy_run, '_deploy_target_pixi_env', _fake_deploy_target_pixi_env
     )
     monkeypatch.setattr(
         deploy_run, '_maybe_deploy_jigsaw', lambda **_kwargs: None
@@ -959,7 +972,13 @@ def test_run_deploy_runs_post_publish_after_publish_steps(
         'apply_permissions',
         'post_publish',
     ]
-    assert restored_paths == ['/tmp/prefix']
+    if shared_base_path is None:
+        assert restored_paths == ['/tmp/prefix']
+    else:
+        assert restored_paths == [shared_base_path, '/tmp/prefix']
+    # Only an env in the shared base path ignores detached-environments
+    attached = [kwargs['attach_environments'] for kwargs in deploy_pixi_kwargs]
+    assert attached == [attach_environments]
 
 
 def test_resolve_deploy_permissions_prefers_runtime_then_config_then_machine():
@@ -1547,8 +1566,11 @@ def test_apply_deploy_permissions_keeps_repo_deployments_writable(
     assert all(kwargs['owner_writable'] for _args, kwargs in calls)
 
 
+@pytest.mark.parametrize('attach_environments', [False, True])
 def test_pixi_install_writes_project_local_pixi_config(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    attach_environments: bool,
 ):
     calls = []
 
@@ -1566,13 +1588,21 @@ def test_pixi_install_writes_project_local_pixi_config(
         recreate=False,
         log_filename=str(tmp_path / 'deploy.log'),
         quiet=True,
+        attach_environments=attach_environments,
     )
 
     config_toml = project_dir / '.pixi' / 'config.toml'
     assert config_toml.is_file()
-    assert '"https://conda.anaconda.org/conda-forge/label" = [' in (
-        config_toml.read_text(encoding='utf-8')
-    )
+    text = config_toml.read_text(encoding='utf-8')
+    assert '"https://conda.anaconda.org/conda-forge/label" = [' in text
+    config = tomllib.loads(text)
+    assert 'detached-environments' not in config['mirrors']
+    if attach_environments:
+        # Shared envs stay in the prefix whatever the deployer's config says
+        assert config['detached-environments'] is False
+    else:
+        # Other envs follow the deployer's own pixi config
+        assert 'detached-environments' not in config
     assert len(calls) == 1
 
 

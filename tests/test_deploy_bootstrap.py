@@ -421,6 +421,8 @@ def test_write_bootstrap_pixi_config_adds_label_mirror(tmp_path: Path):
     assert config_toml.is_file()
     assert '[mirrors]' in text
     assert '"https://conda.anaconda.org/conda-forge/label" = [' in text
+    # The bootstrap env is the deployer's own, so their pixi config applies.
+    assert 'detached-environments' not in text
 
 
 def test_clone_mache_repo_uses_local_source_override(

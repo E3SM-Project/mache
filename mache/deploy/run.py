@@ -274,6 +274,9 @@ def run_deploy(args: argparse.Namespace) -> None:
         recreate=args.recreate,
         log_filename=log_filename,
         quiet=quiet,
+        attach_environments=_permission_path_is_within(
+            prefix, shared_base_path
+        ),
     )
 
     if login_env is not None:
@@ -297,6 +300,9 @@ def run_deploy(args: argparse.Namespace) -> None:
                 recreate=args.recreate,
                 log_filename=log_filename,
                 quiet=quiet,
+                attach_environments=_permission_path_is_within(
+                    login_env['prefix'], shared_base_path
+                ),
             )
 
     _maybe_deploy_jigsaw(
@@ -646,6 +652,7 @@ def _deploy_target_pixi_env(
     recreate: bool,
     log_filename: str,
     quiet: bool,
+    attach_environments: bool = False,
 ) -> None:
     _write_pixi_toml(
         template_path='deploy/pixi.toml.j2',
@@ -671,6 +678,7 @@ def _deploy_target_pixi_env(
         pixi_exe=pixi_exe,
         project_dir=prefix,
         recreate=recreate,
+        attach_environments=attach_environments,
         log_filename=log_filename,
         quiet=quiet,
     )
@@ -1862,6 +1870,7 @@ def _pixi_install(
     recreate: bool,
     log_filename: str,
     quiet: bool,
+    attach_environments: bool = False,
 ) -> None:
     project_dir = os.path.abspath(project_dir)
 
@@ -1869,7 +1878,13 @@ def _pixi_install(
     if recreate and os.path.exists(pixi_dir):
         shutil.rmtree(pixi_dir)
 
-    _write_bootstrap_pixi_config(bootstrap_dir=Path(project_dir))
+    # A shared environment must live in its prefix, where other users load
+    # it and permissions are set, even if the deployer's own pixi config
+    # detaches environments.  Other environments follow that config.
+    _write_bootstrap_pixi_config(
+        bootstrap_dir=Path(project_dir),
+        attach_environments=attach_environments,
+    )
 
     # build_pixi_env() pins PIXI_CACHE_DIR to a local disk by default (see
     # default_pixi_cache_dir()) to suppress parallel-filesystem warnings on

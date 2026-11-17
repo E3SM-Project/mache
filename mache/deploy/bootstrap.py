@@ -1128,11 +1128,34 @@ def _write_bootstrap_pixi_toml_with_mache(
     pixi_toml_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
-def _write_bootstrap_pixi_config(*, bootstrap_dir: Path) -> None:
+def _write_bootstrap_pixi_config(
+    *, bootstrap_dir: Path, attach_environments: bool = False
+) -> None:
+    """Write the project-local pixi config for ``bootstrap_dir``.
+
+    With ``attach_environments``, the config also sets
+    ``detached-environments = false``, so the environment stays in
+    ``bootstrap_dir/.pixi/envs`` even if the deployer's own pixi config
+    asks for detached environments.  Project-local config takes precedence
+    over user config, and pixi reads it whenever anyone uses the project,
+    including ``pixi shell-hook`` in load scripts.
+    """
     config_dir = bootstrap_dir / '.pixi'
     config_dir.mkdir(parents=True, exist_ok=True)
     config_toml = config_dir / 'config.toml'
-    lines = [
+    lines = []
+    if attach_environments:
+        # Top-level keys must come before any table in TOML.
+        lines.extend(
+            [
+                '# Keep the environment in this prefix, not in a location',
+                "# set by the deployer's own pixi config.  Load scripts,",
+                '# permission updates and other users rely on it being here.',
+                'detached-environments = false',
+                '',
+            ]
+        )
+    lines += [
         '# Keep conda-forge label channels on Anaconda because prefix.dev',
         '# does not currently mirror public conda-forge labels such as ',
         '# mache_dev.',
