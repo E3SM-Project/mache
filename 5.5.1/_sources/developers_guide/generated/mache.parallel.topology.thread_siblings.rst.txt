@@ -1,0 +1,6 @@
+﻿mache.parallel.topology.thread\_siblings
+========================================
+
+.. currentmodule:: mache.parallel.topology
+
+.. autofunction:: thread_siblings

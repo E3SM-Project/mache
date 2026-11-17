@@ -1,0 +1,6 @@
+﻿mache.spack.pins.checkout\_command
+==================================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: checkout_command

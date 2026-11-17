@@ -1,0 +1,36 @@
+﻿mache.parallel.pbs.PbsOptions
+=============================
+
+.. currentmodule:: mache.parallel.pbs
+
+.. autoclass:: PbsOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PbsOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PbsOptions.honored
+      ~PbsOptions.reason
+      ~PbsOptions.wall_time
+      ~PbsOptions.queue
+      ~PbsOptions.constraint
+      ~PbsOptions.gpus_per_node
+      ~PbsOptions.max_wallclock
+      ~PbsOptions.filesystems
+      ~PbsOptions.effective_nodes
+   
+   

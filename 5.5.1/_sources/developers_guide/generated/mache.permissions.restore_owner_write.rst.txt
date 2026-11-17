@@ -1,0 +1,6 @@
+﻿mache.permissions.restore\_owner\_write
+=======================================
+
+.. currentmodule:: mache.permissions
+
+.. autofunction:: restore_owner_write
