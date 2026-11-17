@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.memory\_cap\_support
+=========================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. autoproperty:: ParallelSystem.memory_cap_support

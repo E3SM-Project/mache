@@ -1,0 +1,6 @@
+﻿mache.parallel.slurm.SlurmSystem.resolve\_slurm\_options
+========================================================
+
+.. currentmodule:: mache.parallel.slurm
+
+.. automethod:: SlurmSystem.resolve_slurm_options

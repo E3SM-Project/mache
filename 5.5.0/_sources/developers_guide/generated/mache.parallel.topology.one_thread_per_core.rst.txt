@@ -1,0 +1,6 @@
+﻿mache.parallel.topology.one\_thread\_per\_core
+==============================================
+
+.. currentmodule:: mache.parallel.topology
+
+.. autofunction:: one_thread_per_core

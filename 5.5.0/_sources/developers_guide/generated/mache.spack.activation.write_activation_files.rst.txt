@@ -1,0 +1,6 @@
+﻿mache.spack.activation.write\_activation\_files
+===============================================
+
+.. currentmodule:: mache.spack.activation
+
+.. autofunction:: write_activation_files

@@ -1,0 +1,6 @@
+﻿mache.jigsaw.build\_jigsawpy\_package
+=====================================
+
+.. currentmodule:: mache.jigsaw
+
+.. autofunction:: build_jigsawpy_package

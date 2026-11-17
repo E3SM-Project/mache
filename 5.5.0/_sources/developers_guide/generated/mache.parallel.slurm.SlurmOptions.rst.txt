@@ -1,0 +1,36 @@
+﻿mache.parallel.slurm.SlurmOptions
+=================================
+
+.. currentmodule:: mache.parallel.slurm
+
+.. autoclass:: SlurmOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SlurmOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SlurmOptions.honored
+      ~SlurmOptions.reason
+      ~SlurmOptions.wall_time
+      ~SlurmOptions.partition
+      ~SlurmOptions.qos
+      ~SlurmOptions.constraint
+      ~SlurmOptions.gpus_per_node
+      ~SlurmOptions.max_wallclock
+      ~SlurmOptions.effective_nodes
+   
+   

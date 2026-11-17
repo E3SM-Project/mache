@@ -1,0 +1,6 @@
+﻿mache.spack.list\_machine\_compiler\_mpilib
+===========================================
+
+.. currentmodule:: mache.spack
+
+.. autofunction:: list_machine_compiler_mpilib

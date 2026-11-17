@@ -1,0 +1,6 @@
+﻿mache.parallel.system.ParallelSystem.node\_names
+================================================
+
+.. currentmodule:: mache.parallel.system
+
+.. autoproperty:: ParallelSystem.node_names
