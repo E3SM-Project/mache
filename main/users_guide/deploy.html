@@ -73,6 +73,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#phase-2-bootstrap">Phase 2: bootstrap</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phase-3-mache-deploy-run">Phase 3: <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#where-the-pixi-package-cache-goes">Where the pixi package cache goes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pkg-config-and-system-libraries">pkg-config and system libraries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploying-on-a-compute-node">Deploying on a compute node</a></li>
 </ul>
 </li>
@@ -808,6 +809,17 @@ goes to <code class="docutils literal notranslate"><span class="pre">$SCRATCH/pi
 left to pixi.</p>
 <p>Set <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> before running <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> or sourcing a load script
 to use a different location.</p>
+</section>
+<section id="pkg-config-and-system-libraries">
+<h3>pkg-config and system libraries<a class="headerlink" href="#pkg-config-and-system-libraries" title="Link to this heading"></a></h3>
+<p>The pixi environment can put conda-forge’s <code class="docutils literal notranslate"><span class="pre">pkgconf</span></code> on <code class="docutils literal notranslate"><span class="pre">PATH</span></code> ahead of the
+system <code class="docutils literal notranslate"><span class="pre">pkg-config</span></code> (<code class="docutils literal notranslate"><span class="pre">scipy</span></code> depends on it, for example). By default
+<code class="docutils literal notranslate"><span class="pre">pkgconf</span></code> rewrites a <code class="docutils literal notranslate"><span class="pre">.pc</span></code> file’s prefix based on where the file sits, which
+gives wrong library paths for system and module <code class="docutils literal notranslate"><span class="pre">.pc</span></code> files installed away
+from their prefix. On HPE Cray machines, this makes the <code class="docutils literal notranslate"><span class="pre">cc</span></code> wrapper link
+with <code class="docutils literal notranslate"><span class="pre">-L/usr/lib64</span> <span class="pre">-lxpmem</span></code> instead of <code class="docutils literal notranslate"><span class="pre">-L/opt/xpmem/lib64</span></code> and fail. The
+load scripts export <code class="docutils literal notranslate"><span class="pre">PKG_CONFIG_DONT_DEFINE_PREFIX=1</span></code> to turn that rewriting
+off.</p>
 </section>
 <section id="deploying-on-a-compute-node">
 <h3>Deploying on a compute node<a class="headerlink" href="#deploying-on-a-compute-node" title="Link to this heading"></a></h3>

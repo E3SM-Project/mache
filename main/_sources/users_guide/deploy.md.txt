@@ -730,6 +730,17 @@ left to pixi.
 Set `PIXI_CACHE_DIR` before running `./deploy.py` or sourcing a load script
 to use a different location.
 
+### pkg-config and system libraries
+
+The pixi environment can put conda-forge's `pkgconf` on `PATH` ahead of the
+system `pkg-config` (`scipy` depends on it, for example). By default
+`pkgconf` rewrites a `.pc` file's prefix based on where the file sits, which
+gives wrong library paths for system and module `.pc` files installed away
+from their prefix. On HPE Cray machines, this makes the `cc` wrapper link
+with `-L/usr/lib64 -lxpmem` instead of `-L/opt/xpmem/lib64` and fail. The
+load scripts export `PKG_CONFIG_DONT_DEFINE_PREFIX=1` to turn that rewriting
+off.
+
 ### Deploying on a compute node
 
 A deploy can run inside a batch job, which is how nightly regression
