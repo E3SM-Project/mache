@@ -1732,3 +1732,27 @@ def test_load_script_leaves_posix_mode_off_when_caller_had_it_off(
     assert result.returncode == 0, result.stderr
     assert 'SOURCE-OK' in result.stdout
     assert 'POSIX-OFF' in result.stdout
+
+
+@_requires_bash
+def test_load_script_disables_pkgconf_define_prefix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv('PKG_CONFIG_DONT_DEFINE_PREFIX', raising=False)
+    script_path = _write_posix_probe_load_script(tmp_path)
+
+    result = subprocess.run(
+        [
+            str(_BASH),
+            '-c',
+            f'source {shlex.quote(str(script_path))} && '
+            'echo "PKGCONF=${PKG_CONFIG_DONT_DEFINE_PREFIX:-unset}"',
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert 'PKGCONF=1' in result.stdout

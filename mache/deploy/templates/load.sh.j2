@@ -254,6 +254,16 @@ eval "$(env -u PIXI_PROJECT_MANIFEST -u PIXI_PROJECT_ROOT \
   "${MACHE_DEPLOY_ACTIVE_PIXI_TOML}")"
 echo "   pixi env loaded."
 
+# The pixi env may put conda-forge's pkgconf ahead of the system pkg-config
+# (scipy depends on it, for example).  pkgconf defaults to "define-prefix",
+# which replaces a .pc file's prefix with one guessed from where the file
+# sits.  System and module .pc files are often installed away from their
+# prefix (e.g. /usr/lib64/pkgconfig/xpmem.pc with prefix=/opt/xpmem), so
+# compiler wrappers that query pkg-config, such as Cray's cc, get wrong -L
+# paths and fail to link.  Conda packages have absolute prefixes written in
+# at install time, so they do not need define-prefix either.
+export PKG_CONFIG_DONT_DEFINE_PREFIX=1
+
 # Unload python/conda modules so that compiler module switches in the
 # spack or target load snippet cannot prepend a system python ahead of pixi.
 if command -v module >/dev/null 2>&1; then
