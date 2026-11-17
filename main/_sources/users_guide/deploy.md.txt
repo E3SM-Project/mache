@@ -227,7 +227,11 @@ Important settings:
   updates recursively before any path-specific permission updates. Hooks may
   override this through `ctx.runtime["shared"]["base_path"]`, and `"dynamic"`
   is useful when the path depends on machine-specific logic in
-  `deploy/hooks.py`.
+  `deploy/hooks.py`. Pixi environments whose prefix lies inside it are
+  shared, so mache sets `detached-environments = false` in each prefix's
+  `.pixi/config.toml`. That keeps them in the prefix, readable by other
+  users, even if the deployer's own pixi config detaches environments.
+  Other pixi environments follow the deployer's pixi config.
 - `shared.managed_directories`: optional extra directories to include in
   permission management. Entries may be strings, or mappings with `path` and
   `root_group_writable`. Mache updates each managed directory recursively

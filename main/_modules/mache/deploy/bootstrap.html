@@ -1241,11 +1241,34 @@
     <span class="n">pixi_toml_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_write_bootstrap_pixi_config</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">bootstrap_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_bootstrap_pixi_config</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">bootstrap_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">attach_environments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the project-local pixi config for ``bootstrap_dir``.</span>
+
+<span class="sd">    With ``attach_environments``, the config also sets</span>
+<span class="sd">    ``detached-environments = false``, so the environment stays in</span>
+<span class="sd">    ``bootstrap_dir/.pixi/envs`` even if the deployer's own pixi config</span>
+<span class="sd">    asks for detached environments.  Project-local config takes precedence</span>
+<span class="sd">    over user config, and pixi reads it whenever anyone uses the project,</span>
+<span class="sd">    including ``pixi shell-hook`` in load scripts.</span>
+<span class="sd">    """</span>
     <span class="n">config_dir</span> <span class="o">=</span> <span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">'.pixi'</span>
     <span class="n">config_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">config_toml</span> <span class="o">=</span> <span class="n">config_dir</span> <span class="o">/</span> <span class="s1">'config.toml'</span>
-    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">attach_environments</span><span class="p">:</span>
+        <span class="c1"># Top-level keys must come before any table in TOML.</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s1">'# Keep the environment in this prefix, not in a location'</span><span class="p">,</span>
+                <span class="s2">"# set by the deployer's own pixi config.  Load scripts,"</span><span class="p">,</span>
+                <span class="s1">'# permission updates and other users rely on it being here.'</span><span class="p">,</span>
+                <span class="s1">'detached-environments = false'</span><span class="p">,</span>
+                <span class="s1">''</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span>
         <span class="s1">'# Keep conda-forge label channels on Anaconda because prefix.dev'</span><span class="p">,</span>
         <span class="s1">'# does not currently mirror public conda-forge labels such as '</span><span class="p">,</span>
         <span class="s1">'# mache_dev.'</span><span class="p">,</span>
