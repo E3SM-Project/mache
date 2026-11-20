@@ -57,6 +57,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#hyperthreading">Hyperthreading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-this-in-generated-job-scripts">Using this in generated job scripts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#slurm-distribution-options">Slurm distribution options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ending-a-step-when-a-task-crashes">Ending a step when a task crashes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#selecting-scheduler-options-by-node-count">Selecting scheduler options by node count</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requesting-a-specific-queue-partition-or-qos">Requesting a specific queue, partition or QOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requesting-a-target-without-naming-its-axis">Requesting a target without naming its axis</a></li>
@@ -265,6 +266,18 @@ unrelated to the <code class="docutils literal notranslate"><span class="pre">pl
 <a class="reference internal" href="#users-parallel-placement"><span class="std std-ref">Placing concurrent launches within one allocation</span></a>. Passing that argument drops this config
 option from the command.</p>
 </div>
+</section>
+<section id="ending-a-step-when-a-task-crashes">
+<h2>Ending a step when a task crashes<a class="headerlink" href="#ending-a-step-when-a-task-crashes" title="Link to this heading"></a></h2>
+<p>On <code class="docutils literal notranslate"><span class="pre">slurm</span></code> systems whose launcher is <code class="docutils literal notranslate"><span class="pre">srun</span></code>, mache adds <code class="docutils literal notranslate"><span class="pre">--kill-on-bad-exit</span></code>
+to every command, so a task that dies abnormally ends the whole job step. A
+task killed by a signal (a segfault, or glibc aborting on heap corruption)
+never reaches <code class="docutils literal notranslate"><span class="pre">MPI_Abort</span></code>, and without the flag the other tasks can wait for
+it until the job’s wall-clock limit on sites that set <code class="docutils literal notranslate"><span class="pre">KillOnBadExit=0</span></code>, such
+as Chrysalis.</p>
+<p>The flag is not repeated if <code class="docutils literal notranslate"><span class="pre">parallel_executable</span></code> already has <code class="docutils literal notranslate"><span class="pre">-K</span></code> or
+<code class="docutils literal notranslate"><span class="pre">--kill-on-bad-exit</span></code>. A machine can turn it off with
+<code class="docutils literal notranslate"><span class="pre">kill_on_bad_exit</span> <span class="pre">=</span> <span class="pre">False</span></code> in its <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> section.</p>
 </section>
 <section id="selecting-scheduler-options-by-node-count">
 <h2>Selecting scheduler options by node count<a class="headerlink" href="#selecting-scheduler-options-by-node-count" title="Link to this heading"></a></h2>

@@ -1253,6 +1253,12 @@
 <span class="sd">    asks for detached environments.  Project-local config takes precedence</span>
 <span class="sd">    over user config, and pixi reads it whenever anyone uses the project,</span>
 <span class="sd">    including ``pixi shell-hook`` in load scripts.</span>
+
+<span class="sd">    The config always sets ``[shell] source-completion-scripts = false``.</span>
+<span class="sd">    Otherwise, ``pixi shell-hook`` sources every bash completion script in</span>
+<span class="sd">    the environment.  GDAL installs dozens of these, and each runs ``ps``</span>
+<span class="sd">    when sourced, which made sourcing a load script take a minute on busy</span>
+<span class="sd">    HPC login nodes.</span>
 <span class="sd">    """</span>
     <span class="n">config_dir</span> <span class="o">=</span> <span class="n">bootstrap_dir</span> <span class="o">/</span> <span class="s1">'.pixi'</span>
     <span class="n">config_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1270,6 +1276,11 @@
             <span class="p">]</span>
         <span class="p">)</span>
     <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="s1">'# Do not source bash completion scripts on activation.  Some'</span><span class="p">,</span>
+        <span class="s1">'# (e.g. GDAL) are slow, and load scripts do not need them.'</span><span class="p">,</span>
+        <span class="s1">'[shell]'</span><span class="p">,</span>
+        <span class="s1">'source-completion-scripts = false'</span><span class="p">,</span>
+        <span class="s1">''</span><span class="p">,</span>
         <span class="s1">'# Keep conda-forge label channels on Anaconda because prefix.dev'</span><span class="p">,</span>
         <span class="s1">'# does not currently mirror public conda-forge labels such as '</span><span class="p">,</span>
         <span class="s1">'# mache_dev.'</span><span class="p">,</span>

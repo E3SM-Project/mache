@@ -75,6 +75,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#phase-3-mache-deploy-run">Phase 3: <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#where-the-pixi-package-cache-goes">Where the pixi package cache goes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pkg-config-and-system-libraries">pkg-config and system libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bash-completion-scripts">Bash completion scripts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deploying-on-a-compute-node">Deploying on a compute node</a></li>
 </ul>
 </li>
@@ -821,6 +822,15 @@ from their prefix. On HPE Cray machines, this makes the <code class="docutils li
 with <code class="docutils literal notranslate"><span class="pre">-L/usr/lib64</span> <span class="pre">-lxpmem</span></code> instead of <code class="docutils literal notranslate"><span class="pre">-L/opt/xpmem/lib64</span></code> and fail. The
 load scripts export <code class="docutils literal notranslate"><span class="pre">PKG_CONFIG_DONT_DEFINE_PREFIX=1</span></code> to turn that rewriting
 off.</p>
+</section>
+<section id="bash-completion-scripts">
+<h3>Bash completion scripts<a class="headerlink" href="#bash-completion-scripts" title="Link to this heading"></a></h3>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">shell-hook</span></code> sources every bash completion script in the
+environment. GDAL installs dozens of these, and each one runs <code class="docutils literal notranslate"><span class="pre">ps</span></code> when
+sourced, which made sourcing a load script take a minute on busy HPC login
+nodes. Mache sets <code class="docutils literal notranslate"><span class="pre">source-completion-scripts</span> <span class="pre">=</span> <span class="pre">false</span></code> under <code class="docutils literal notranslate"><span class="pre">[shell]</span></code> in each
+deployed prefix’s <code class="docutils literal notranslate"><span class="pre">.pixi/config.toml</span></code>, so load scripts skip them for every
+user.</p>
 </section>
 <section id="deploying-on-a-compute-node">
 <h3>Deploying on a compute node<a class="headerlink" href="#deploying-on-a-compute-node" title="Link to this heading"></a></h3>
