@@ -1139,6 +1139,12 @@ def _write_bootstrap_pixi_config(
     asks for detached environments.  Project-local config takes precedence
     over user config, and pixi reads it whenever anyone uses the project,
     including ``pixi shell-hook`` in load scripts.
+
+    The config always sets ``[shell] source-completion-scripts = false``.
+    Otherwise, ``pixi shell-hook`` sources every bash completion script in
+    the environment.  GDAL installs dozens of these, and each runs ``ps``
+    when sourced, which made sourcing a load script take a minute on busy
+    HPC login nodes.
     """
     config_dir = bootstrap_dir / '.pixi'
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -1156,6 +1162,11 @@ def _write_bootstrap_pixi_config(
             ]
         )
     lines += [
+        '# Do not source bash completion scripts on activation.  Some',
+        '# (e.g. GDAL) are slow, and load scripts do not need them.',
+        '[shell]',
+        'source-completion-scripts = false',
+        '',
         '# Keep conda-forge label channels on Anaconda because prefix.dev',
         '# does not currently mirror public conda-forge labels such as ',
         '# mache_dev.',
