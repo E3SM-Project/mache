@@ -281,6 +281,18 @@ def test_inputdata_base_missing_for_chicoma_cpu():
     assert machinfo.inputdata_base is None
 
 
+def test_web_portal_info():
+    machinfo = MachineInfo(machine='pm-cpu')
+    assert machinfo.web_portal_base == '/global/cfs/cdirs/e3sm/www'
+    assert machinfo.web_portal_url == 'https://portal.nersc.gov/cfs/e3sm'
+
+
+def test_web_portal_info_missing_for_frontier():
+    machinfo = MachineInfo(machine='frontier')
+    assert machinfo.web_portal_base is None
+    assert machinfo.web_portal_url is None
+
+
 def test_inputdata_base_matches_config_machines_xml():
     din_loc_root_by_machine = _get_xml_din_loc_root_by_machine()
 

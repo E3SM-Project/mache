@@ -112,6 +112,7 @@ class MachineInfo:
 
         self.web_portal_base = None
         self.web_portal_url = None
+        self._get_web_portal_info()
 
         self.username = pwd.getpwuid(os.getuid()).pw_name
         if not self.config.has_section('web_portal'):
@@ -479,6 +480,17 @@ class MachineInfo:
 
         if config is not None and config.has_option('inputdata', 'base_path'):
             self.inputdata_base = config.get('inputdata', 'base_path')
+
+    def _get_web_portal_info(self):
+        """Get config options related to the web portal"""
+
+        config = self.config
+
+        if config.has_option('web_portal', 'base_path'):
+            self.web_portal_base = config.get('web_portal', 'base_path')
+
+        if config.has_option('web_portal', 'base_url'):
+            self.web_portal_url = config.get('web_portal', 'base_url')
 
     def _get_scheduler_value(self, section: str, option: str) -> str | None:
         """Get a scheduler-target config value, treating empty as unset."""
