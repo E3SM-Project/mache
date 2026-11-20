@@ -2,8 +2,9 @@
 
 # Adding a New Machine to Mache
 
-Adding an E3SM-known machine to mache requires adding a new config file, as
-well as updating the list of machines in `discover.py`.
+Adding an E3SM-known machine to mache requires adding a new config file,
+`mache/machines/<machine>.cfg`, that includes the regular expressions mache
+uses to recognize the machine from its hostname.
 
 :::{note}
 Only machines that are included in mache's
@@ -24,16 +25,31 @@ and hands the follow-up work to Claude Code, see
 ## Adding a new config file
 
 Adding a new config file is usually straightforward if you follow the format of
-an existing config file.
+an existing config file. {ref}`users-machine-config` describes every section
+and option; the rest of this page covers where to find the values.
 
-For machines with a known E3SM inputdata location, also add an `[inputdata]`
-section with:
+(dev-config-sources)=
 
-- `base_path`: base directory for the shared E3SM inputdata tree
+### Where the paths and other values come from
 
-When the machine also appears in
-`mache/cime_machine_config/config_machines.xml`, this value should match that
-machine's `DIN_LOC_ROOT` entry.
+Most values are not mache's to choose. Each one comes from E3SM's CIME
+machine config, the site, or the team that maintains the resource:
+
+| Option | Where to find it |
+| --- | --- |
+| `[inputdata] base_path` | The machine's `DIN_LOC_ROOT` in `config_machines.xml`. A test fails if they differ. Leave it out if `DIN_LOC_ROOT` is per-user. |
+| `[diagnostics] base_path` | The E3SM project's shared diagnostics directory, usually in the same project space as inputdata. If none exists yet, create one and populate it with `mache sync diags from chrysalis` (see {doc}`../users_guide/sync/diags`). |
+| `[e3sm_unified] base_path` | Wherever the E3SM-Unified maintainers deploy it, normally the project's shared software space. |
+| `[e3sm_unified] compiler`, `mpi` | A pair with a Spack template in `mache/spack/templates/<machine>_<compiler>_<mpi>.yaml`. |
+| `[e3sm_unified] group`, `[diagnostics] group` | The Unix group that owns the E3SM project space. `stat -c %G <base_path>` on an existing shared directory shows it. |
+| `[web_portal] base_path`, `base_url` | The site's documentation for project web space. At NERSC, `/global/cfs/cdirs/<project>/www` is served at `https://portal.nersc.gov/cfs/<project>`. Leave the section out if the site has none. |
+| `[sync] hostname` | The login hostname users `ssh` to, as given in the site's documentation. |
+| `[parallel] memory_per_node` and other node resources | The machine itself; see {ref}`dev-parallel-settings` below. |
+
+Paths that aren't in `config_machines.xml` should be checked on the machine
+before they are committed, since no test can catch a path that doesn't exist.
+
+(dev-parallel-settings)=
 
 ### Parallel execution settings
 
@@ -181,36 +197,27 @@ These options are used to:
 
 (dev-discover-new-machine)=
 
-## Adding the new machine to `discover.py`
+## Letting mache discover the machine
 
-You will need to amend the list of machine names in `discover.py` so that mache
-can identify the new machine via its hostname. This process is typically done
-using a regular expression, which is often possible whenever the machine's
-hostname follows a standardized format. For example, we can identify known
-machines from hostnames with the following regular expressions:
+{py:func}`mache.discover_machine()` matches the hostname against the
+`hostname_re` patterns in each config's `[discovery]` section, so a new
+machine needs one:
 
-```python
-'^chr-\d{4}'  # Chrysalis compute nodes with hostnames chr-0000 to chr-9999
-'^compy'      # Compy nodes with hostname compy
-'^dane\d{1,4}' # Dane nodes with hostnames dane0 to dane9999
+```ini
+# Options related to machine discovery
+[discovery]
+
+# regular expression(s) used to identify this machine from its hostname
+hostname_re = ^chrlogin, ^chr-\d{4}
 ```
 
-In some cases, the hostname assigned to a machine is too generic to
-differentiate it from other machines. In these cases, we must identify the
-machine by its environment variables. However, this is *not* the recommended
-procedure and should only be done as a last resort. For example, we identify
-`frontier` by its `LMOD_SYSTEM_NAME` environment variable:
+Include patterns for both login and compute nodes. Each pattern is matched
+against the start of the hostname, and patterns are separated by a comma and a
+space so that ones like `\d{1,4}` are safe. Check that the new patterns don't
+also match another machine's hostnames; mache warns and picks the first match
+if they do.
 
-```python
-if machine is None and 'LMOD_SYSTEM_NAME' in os.environ:
-    hostname = os.environ['LMOD_SYSTEM_NAME']
-    if hostname == 'frontier':
-        # frontier's hostname is too generic to detect, so relying on
-        # LMOD_SYSTEM_NAME
-        machine = 'frontier'
-```
-
-:::{note}
-Identifying the machine by environment variables is **not recommended** unless
-absolutely necessary.
-:::
+In some cases, the hostname is too generic to tell the machine apart from
+others. Only then, add a check of an environment variable to `discover.py`, as
+is done for Frontier (`$LMOD_SYSTEM_NAME`) and Perlmutter (`$NERSC_HOST`), and
+leave `[discovery]` out of the config.

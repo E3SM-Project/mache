@@ -47,6 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../users_guide/machine_config.html">Machine Config Options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/deploy.html">Deploying target software</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/jigsaw.html">JIGSAW</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../users_guide/parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
@@ -61,10 +62,11 @@
 <li class="toctree-l1"><a class="reference internal" href="config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Machine to Mache</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#dev-new-config-file">Adding a new config file</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#parallel-execution-settings">Parallel execution settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dev-config-sources">Where the paths and other values come from</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dev-parallel-settings">Parallel execution settings</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#dev-discover-new-machine">Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dev-discover-new-machine">Letting mache discover the machine</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="spack.html">Adding Spack Support for a New Machine</a></li>
@@ -107,8 +109,9 @@
              
   <section class="tex2jax_ignore mathjax_ignore" id="dev-adding-new-machine">
 <span id="adding-a-new-machine-to-mache"></span><h1>Adding a New Machine to Mache<a class="headerlink" href="#dev-adding-new-machine" title="Link to this heading"></a></h1>
-<p>Adding an E3SM-known machine to mache requires adding a new config file, as
-well as updating the list of machines in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code>.</p>
+<p>Adding an E3SM-known machine to mache requires adding a new config file,
+<code class="docutils literal notranslate"><span class="pre">mache/machines/&lt;machine&gt;.cfg</span></code>, that includes the regular expressions mache
+uses to recognize the machine from its hostname.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Only machines that are included in mache’s
@@ -125,17 +128,50 @@ and hands the follow-up work to Claude Code, see
 <section id="dev-new-config-file">
 <span id="adding-a-new-config-file"></span><h2>Adding a new config file<a class="headerlink" href="#dev-new-config-file" title="Link to this heading"></a></h2>
 <p>Adding a new config file is usually straightforward if you follow the format of
-an existing config file.</p>
-<p>For machines with a known E3SM inputdata location, also add an <code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code>
-section with:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code>: base directory for the shared E3SM inputdata tree</p></li>
-</ul>
-<p>When the machine also appears in
-<code class="docutils literal notranslate"><span class="pre">mache/cime_machine_config/config_machines.xml</span></code>, this value should match that
-machine’s <code class="docutils literal notranslate"><span class="pre">DIN_LOC_ROOT</span></code> entry.</p>
-<section id="parallel-execution-settings">
-<h3>Parallel execution settings<a class="headerlink" href="#parallel-execution-settings" title="Link to this heading"></a></h3>
+an existing config file. <a class="reference internal" href="../users_guide/machine_config.html#users-machine-config"><span class="std std-ref">Machine Config Options</span></a> describes every section
+and option; the rest of this page covers where to find the values.</p>
+<section id="dev-config-sources">
+<span id="where-the-paths-and-other-values-come-from"></span><h3>Where the paths and other values come from<a class="headerlink" href="#dev-config-sources" title="Link to this heading"></a></h3>
+<p>Most values are not mache’s to choose. Each one comes from E3SM’s CIME
+machine config, the site, or the team that maintains the resource:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Where to find it</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">[inputdata]</span> <span class="pre">base_path</span></code></p></td>
+<td><p>The machine’s <code class="docutils literal notranslate"><span class="pre">DIN_LOC_ROOT</span></code> in <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code>. A test fails if they differ. Leave it out if <code class="docutils literal notranslate"><span class="pre">DIN_LOC_ROOT</span></code> is per-user.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">[diagnostics]</span> <span class="pre">base_path</span></code></p></td>
+<td><p>The E3SM project’s shared diagnostics directory, usually in the same project space as inputdata. If none exists yet, create one and populate it with <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span> <span class="pre">from</span> <span class="pre">chrysalis</span></code> (see <a class="reference internal" href="../users_guide/sync/diags.html"><span class="doc">Synchronize diagnostics between machines (mache sync diags)</span></a>).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span> <span class="pre">base_path</span></code></p></td>
+<td><p>Wherever the E3SM-Unified maintainers deploy it, normally the project’s shared software space.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span> <span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code></p></td>
+<td><p>A pair with a Spack template in <code class="docutils literal notranslate"><span class="pre">mache/spack/templates/&lt;machine&gt;_&lt;compiler&gt;_&lt;mpi&gt;.yaml</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span> <span class="pre">group</span></code>, <code class="docutils literal notranslate"><span class="pre">[diagnostics]</span> <span class="pre">group</span></code></p></td>
+<td><p>The Unix group that owns the E3SM project space. <code class="docutils literal notranslate"><span class="pre">stat</span> <span class="pre">-c</span> <span class="pre">%G</span> <span class="pre">&lt;base_path&gt;</span></code> on an existing shared directory shows it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">[web_portal]</span> <span class="pre">base_path</span></code>, <code class="docutils literal notranslate"><span class="pre">base_url</span></code></p></td>
+<td><p>The site’s documentation for project web space. At NERSC, <code class="docutils literal notranslate"><span class="pre">/global/cfs/cdirs/&lt;project&gt;/www</span></code> is served at <code class="docutils literal notranslate"><span class="pre">https://portal.nersc.gov/cfs/&lt;project&gt;</span></code>. Leave the section out if the site has none.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">[sync]</span> <span class="pre">hostname</span></code></p></td>
+<td><p>The login hostname users <code class="docutils literal notranslate"><span class="pre">ssh</span></code> to, as given in the site’s documentation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">[parallel]</span> <span class="pre">memory_per_node</span></code> and other node resources</p></td>
+<td><p>The machine itself; see <a class="reference internal" href="#dev-parallel-settings"><span class="std std-ref">Parallel execution settings</span></a> below.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Paths that aren’t in <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> should be checked on the machine
+before they are committed, since no test can catch a path that doesn’t exist.</p>
+</section>
+<section id="dev-parallel-settings">
+<span id="parallel-execution-settings"></span><h3>Parallel execution settings<a class="headerlink" href="#dev-parallel-settings" title="Link to this heading"></a></h3>
 <p>Machine config files now include parallel-resource settings that are consumed
 by <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code>. At minimum, each machine should define a <code class="docutils literal notranslate"><span class="pre">[parallel]</span></code>
 section with:</p>
@@ -263,35 +299,26 @@ no node-count or wall-clock limits to record.</p>
 </section>
 </section>
 <section id="dev-discover-new-machine">
-<span id="adding-the-new-machine-to-discover-py"></span><span id="adding-the-new-machine-to-discoverpy"></span><h2>Adding the new machine to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code><a class="headerlink" href="#dev-discover-new-machine" title="Link to this heading"></a></h2>
-<p>You will need to amend the list of machine names in <code class="docutils literal notranslate"><span class="pre">discover.py</span></code> so that mache
-can identify the new machine via its hostname. This process is typically done
-using a regular expression, which is often possible whenever the machine’s
-hostname follows a standardized format. For example, we can identify known
-machines from hostnames with the following regular expressions:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">'^chr-\d</span><span class="si">{4}</span><span class="s1">'</span>  <span class="c1"># Chrysalis compute nodes with hostnames chr-0000 to chr-9999</span>
-<span class="s1">'^compy'</span>      <span class="c1"># Compy nodes with hostname compy</span>
-<span class="s1">'^dane\d{1,4}'</span> <span class="c1"># Dane nodes with hostnames dane0 to dane9999</span>
+<span id="letting-mache-discover-the-machine"></span><h2>Letting mache discover the machine<a class="headerlink" href="#dev-discover-new-machine" title="Link to this heading"></a></h2>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">mache.discover_machine()</span></code> matches the hostname against the
+<code class="docutils literal notranslate"><span class="pre">hostname_re</span></code> patterns in each config’s <code class="docutils literal notranslate"><span class="pre">[discovery]</span></code> section, so a new
+machine needs one:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="c1"># Options related to machine discovery</span>
+<span class="k">[discovery]</span>
+
+<span class="c1"># regular expression(s) used to identify this machine from its hostname</span>
+<span class="na">hostname_re</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">^chrlogin, ^chr-\d{4}</span>
 </pre></div>
 </div>
-<p>In some cases, the hostname assigned to a machine is too generic to
-differentiate it from other machines. In these cases, we must identify the
-machine by its environment variables. However, this is <em>not</em> the recommended
-procedure and should only be done as a last resort. For example, we identify
-<code class="docutils literal notranslate"><span class="pre">frontier</span></code> by its <code class="docutils literal notranslate"><span class="pre">LMOD_SYSTEM_NAME</span></code> environment variable:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">'LMOD_SYSTEM_NAME'</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-    <span class="n">hostname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'LMOD_SYSTEM_NAME'</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">hostname</span> <span class="o">==</span> <span class="s1">'frontier'</span><span class="p">:</span>
-        <span class="c1"># frontier's hostname is too generic to detect, so relying on</span>
-        <span class="c1"># LMOD_SYSTEM_NAME</span>
-        <span class="n">machine</span> <span class="o">=</span> <span class="s1">'frontier'</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Identifying the machine by environment variables is <strong>not recommended</strong> unless
-absolutely necessary.</p>
-</div>
+<p>Include patterns for both login and compute nodes. Each pattern is matched
+against the start of the hostname, and patterns are separated by a comma and a
+space so that ones like <code class="docutils literal notranslate"><span class="pre">\d{1,4}</span></code> are safe. Check that the new patterns don’t
+also match another machine’s hostnames; mache warns and picks the first match
+if they do.</p>
+<p>In some cases, the hostname is too generic to tell the machine apart from
+others. Only then, add a check of an environment variable to <code class="docutils literal notranslate"><span class="pre">discover.py</span></code>, as
+is done for Frontier (<code class="docutils literal notranslate"><span class="pre">$LMOD_SYSTEM_NAME</span></code>) and Perlmutter (<code class="docutils literal notranslate"><span class="pre">$NERSC_HOST</span></code>), and
+leave <code class="docutils literal notranslate"><span class="pre">[discovery]</span></code> out of the config.</p>
 </section>
 </section>
 

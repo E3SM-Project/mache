@@ -10,6 +10,7 @@
 :maxdepth: 2
 
 users_guide/quick_start
+users_guide/machine_config
 users_guide/deploy
 users_guide/jigsaw
 users_guide/parallel

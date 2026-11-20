@@ -40,7 +40,8 @@ machine = discover_machine()
 ```
 
 This loads machine info for the current machine, prints it, and retrieves a
-config option specific to that machine. The {py:func}`mache.discover_machine()`
+config option specific to that machine. {doc}`machine_config` lists the
+options available and which machines define them. The {py:func}`mache.discover_machine()`
 function can also be used to detect which machine you are on.
 
 As an example, the result of `print(machine_info)` is:

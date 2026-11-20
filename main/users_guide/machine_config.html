@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Machine Config Options</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=a8da1a53"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Deploying target software" href="deploy.html" />
+    <link rel="prev" title="Quick Start" href="quick_start.html" />
+    <link href="../_static/style.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Mache
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Machine Config Options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#reading-the-options">Reading the options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#paths-and-shared-resources">Paths and shared resources</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#e3sm-unified"><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#diagnostics"><code class="docutils literal notranslate"><span class="pre">[diagnostics]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inputdata"><code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#web-portal"><code class="docutils literal notranslate"><span class="pre">[web_portal]</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-jobs">Running jobs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-and-scheduler-sections"><code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> and scheduler sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spack"><code class="docutils literal notranslate"><span class="pre">[spack]</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-identity">Machine identity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sync"><code class="docutils literal notranslate"><span class="pre">[sync]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#discovery"><code class="docutils literal notranslate"><span class="pre">[discovery]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploy"><code class="docutils literal notranslate"><span class="pre">[deploy]</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploying target software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jigsaw.html">JIGSAW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel execution with <code class="docutils literal notranslate"><span class="pre">mache.parallel</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack/build.html">Building and Using Spack Environments with <code class="docutils literal notranslate"><span class="pre">mache.spack</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="sync/diags.html">Synchronize diagnostics between machines (<code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code>)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/quick_start.html">Quick Start for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/contributing.html">Contributing to mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/deploy.html"><code class="docutils literal notranslate"><span class="pre">mache.deploy</span></code> developer guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/config_machines_updates.html">Automated <code class="docutils literal notranslate"><span class="pre">config_machines.xml</span></code> updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/adding_new_machine.html">Adding a New Machine to Mache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/spack.html">Adding Spack Support for a New Machine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/jigsaw.html">JIGSAW integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html">Building the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/building_docs.html#previewing-the-documentation">Previewing the Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/releasing.html">Releasing a New Version</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers_guide/api.html">API reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Design documents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../design/mache_deploy.html">Design Document: mache.deploy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/parallel_placement.html">Design Document: parallel placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/spack_v1.html">Design Document: Spack 1.x in mache</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Mache</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Machine Config Options</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/users_guide/machine_config.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="users-machine-config">
+<span id="machine-config-options"></span><h1>Machine Config Options<a class="headerlink" href="#users-machine-config" title="Link to this heading"></a></h1>
+<p>Each supported machine has a config file,
+<a class="reference external" href="https://github.com/E3SM-Project/mache/tree/main/mache/machines"><code class="docutils literal notranslate"><span class="pre">mache/machines/&lt;machine&gt;.cfg</span></code></a>,
+that records where shared E3SM resources live on that machine and how to run
+jobs there. This page lists the sections and options those files contain, what
+each one means, and which machines define it. To add a machine or fill in a
+missing option, see <a class="reference internal" href="../developers_guide/adding_new_machine.html#dev-config-sources"><span class="std std-ref">Where the paths and other values come from</span></a>.</p>
+<section id="reading-the-options">
+<h2>Reading the options<a class="headerlink" href="#reading-the-options" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="../developers_guide/generated/mache.MachineInfo.html#mache.MachineInfo" title="mache.MachineInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">mache.MachineInfo</span></code></a> reads <code class="docutils literal notranslate"><span class="pre">default.cfg</span></code> and then the machine’s own
+file into a <code class="docutils literal notranslate"><span class="pre">configparser.ConfigParser</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mache</span><span class="w"> </span><span class="kn">import</span> <span class="n">MachineInfo</span>
+
+<span class="n">machine_info</span> <span class="o">=</span> <span class="n">MachineInfo</span><span class="p">(</span><span class="n">machine</span><span class="o">=</span><span class="s1">'chrysalis'</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">machine_info</span><span class="o">.</span><span class="n">config</span>
+
+<span class="n">inputdata</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'inputdata'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">)</span>
+<span class="n">www</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'web_portal'</span><span class="p">,</span> <span class="s1">'base_path'</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Not every machine defines every section, so use <code class="docutils literal notranslate"><span class="pre">fallback=</span></code> or
+<code class="docutils literal notranslate"><span class="pre">config.has_option()</span></code> for anything not marked “all machines” below. The parser
+uses <code class="docutils literal notranslate"><span class="pre">configparser.ExtendedInterpolation</span></code>, so <code class="docutils literal notranslate"><span class="pre">${section:option}</span></code> references
+work if you add your own options on top of these.</p>
+<p>Software that deploys with <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span></code> can layer its own machine configs
+over these ones; see <code class="docutils literal notranslate"><span class="pre">machines.path</span></code> in <a class="reference internal" href="deploy.html"><span class="doc">Deploying target software</span></a>.</p>
+</section>
+<section id="paths-and-shared-resources">
+<h2>Paths and shared resources<a class="headerlink" href="#paths-and-shared-resources" title="Link to this heading"></a></h2>
+<section id="e3sm-unified">
+<span id="e3sm_unified"></span><h3><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span></code><a class="headerlink" href="#e3sm-unified" title="Link to this heading"></a></h3>
+<p>Options for deploying and locating
+<a class="reference external" href="https://github.com/E3SM-Project/e3sm-unified">E3SM-Unified</a>. Defined on all
+machines; <code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code> and <code class="docutils literal notranslate"><span class="pre">use_e3sm_hdf5_netcdf</span></code> only on aurora,
+chrysalis, compy, dane, frontier, pm-cpu and pm-gpu.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code></p></td>
+<td><p>Directory holding E3SM-Unified’s activation scripts and environments. Also available as <code class="docutils literal notranslate"><span class="pre">MachineInfo.e3sm_unified_base</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">group</span></code></p></td>
+<td><p>Unix group that owns the E3SM-Unified deployment. Downstream tools also use it as the shared group for files they write.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code></p></td>
+<td><p>Toolchain for the Spack-built system libraries in E3SM-Unified.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">use_e3sm_hdf5_netcdf</span></code></p></td>
+<td><p>Whether to use the machine’s E3SM modules for HDF5, NetCDF and PnetCDF instead of building them with Spack.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">use_system_git</span></code>, <code class="docutils literal notranslate"><span class="pre">use_legacy_glibc_pins</span></code></p></td>
+<td><p>Compy-only workarounds read by E3SM-Unified’s deploy hooks.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="diagnostics">
+<h3><code class="docutils literal notranslate"><span class="pre">[diagnostics]</span></code><a class="headerlink" href="#diagnostics" title="Link to this heading"></a></h3>
+<p>The shared directory of observations, mapping files and other reference data
+used by e3sm_diags, MPAS-Analysis, zppy and related tools. Defined on all
+machines.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code></p></td>
+<td><p>Root of the diagnostics data. Also available as <code class="docutils literal notranslate"><span class="pre">MachineInfo.diagnostics_base</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">group</span></code></p></td>
+<td><p>Unix group given to files synced into <code class="docutils literal notranslate"><span class="pre">base_path</span></code> by <a class="reference internal" href="sync/diags.html"><span class="doc">Synchronize diagnostics between machines (mache sync diags)</span></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="inputdata">
+<h3><code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code><a class="headerlink" href="#inputdata" title="Link to this heading"></a></h3>
+<p>Defined on all machines except chicoma-cpu, where E3SM’s inputdata is
+per-user.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code></p></td>
+<td><p>Root of the shared E3SM inputdata tree (CIME’s <code class="docutils literal notranslate"><span class="pre">DIN_LOC_ROOT</span></code>). Also available as <code class="docutils literal notranslate"><span class="pre">MachineInfo.inputdata_base</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="web-portal">
+<span id="web_portal"></span><h3><code class="docutils literal notranslate"><span class="pre">[web_portal]</span></code><a class="headerlink" href="#web-portal" title="Link to this heading"></a></h3>
+<p>The project’s public web space, where tools like zppy and e3sm_diags publish
+output. Defined on bebop, chrysalis, compy, dane, improv, pm-cpu and pm-gpu.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code></p></td>
+<td><p>Directory served by the web portal. Also available as <code class="docutils literal notranslate"><span class="pre">MachineInfo.web_portal_base</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">base_url</span></code></p></td>
+<td><p>URL that corresponds to <code class="docutils literal notranslate"><span class="pre">base_path</span></code>. Also available as <code class="docutils literal notranslate"><span class="pre">MachineInfo.web_portal_url</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">username</span></code></p></td>
+<td><p>Not in the files. <code class="docutils literal notranslate"><span class="pre">MachineInfo</span></code> adds the current user’s name here on every machine, for building per-user portal paths.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="running-jobs">
+<h2>Running jobs<a class="headerlink" href="#running-jobs" title="Link to this heading"></a></h2>
+<section id="parallel-and-scheduler-sections">
+<h3><code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> and scheduler sections<a class="headerlink" href="#parallel-and-scheduler-sections" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">[parallel]</span></code> describes the scheduler, launcher and node resources, with
+optional per-compiler overrides in <code class="docutils literal notranslate"><span class="pre">[parallel.&lt;compiler&gt;]</span></code> and policy limits in
+<code class="docutils literal notranslate"><span class="pre">[queue.&lt;name&gt;]</span></code>, <code class="docutils literal notranslate"><span class="pre">[partition.&lt;name&gt;]</span></code> and <code class="docutils literal notranslate"><span class="pre">[qos.&lt;name&gt;]</span></code>. It is defined on
+every machine except andes and bebop; <code class="docutils literal notranslate"><span class="pre">default.cfg</span></code> supplies <code class="docutils literal notranslate"><span class="pre">login_cores</span></code> and
+<code class="docutils literal notranslate"><span class="pre">login_gpus</span></code> everywhere. <a class="reference internal" href="parallel.html"><span class="doc">Parallel execution with mache.parallel</span></a> explains how these options are used
+and <a class="reference internal" href="../developers_guide/adding_new_machine.html#dev-new-config-file"><span class="std std-ref">Adding a new config file</span></a> lists each one.</p>
+</section>
+<section id="spack">
+<h3><code class="docutils literal notranslate"><span class="pre">[spack]</span></code><a class="headerlink" href="#spack" title="Link to this heading"></a></h3>
+<p>Defined on frontier, pm-cpu and pm-gpu.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cray_compilers</span></code></p></td>
+<td><p>Whether Spack builds use the Cray <code class="docutils literal notranslate"><span class="pre">cc</span></code>, <code class="docutils literal notranslate"><span class="pre">CC</span></code> and <code class="docutils literal notranslate"><span class="pre">ftn</span></code> wrappers instead of the MPI library’s own wrappers. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="machine-identity">
+<h2>Machine identity<a class="headerlink" href="#machine-identity" title="Link to this heading"></a></h2>
+<section id="sync">
+<h3><code class="docutils literal notranslate"><span class="pre">[sync]</span></code><a class="headerlink" href="#sync" title="Link to this heading"></a></h3>
+<p>Used by <a class="reference internal" href="sync/diags.html"><span class="doc">Synchronize diagnostics between machines (mache sync diags)</span></a>. Defined on all machines.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hostname</span></code></p></td>
+<td><p>Fully qualified login hostname that rsync connects to.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tunnel_hostname</span></code></p></td>
+<td><p>Optional front-end host to tunnel through when <code class="docutils literal notranslate"><span class="pre">hostname</span></code> can’t be reached directly (chicoma-cpu only).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">public_diags</span></code>, <code class="docutils literal notranslate"><span class="pre">private_diags</span></code></p></td>
+<td><p>Source directories that <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">sync</span> <span class="pre">diags</span></code> copies from. LCRC machines (bebop, chrysalis, improv) only.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="discovery">
+<h3><code class="docutils literal notranslate"><span class="pre">[discovery]</span></code><a class="headerlink" href="#discovery" title="Link to this heading"></a></h3>
+<p>Used by <code class="xref py py-func docutils literal notranslate"><span class="pre">mache.discover_machine()</span></code>. Defined on every machine except
+pm-cpu and pm-gpu, which are recognized from <code class="docutils literal notranslate"><span class="pre">$NERSC_HOST</span></code> instead.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hostname_re</span></code></p></td>
+<td><p>One or more regular expressions, separated by commas, matched against the start of the hostname.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="deploy">
+<h3><code class="docutils literal notranslate"><span class="pre">[deploy]</span></code><a class="headerlink" href="#deploy" title="Link to this heading"></a></h3>
+<p>No shipped config defines <code class="docutils literal notranslate"><span class="pre">[deploy]</span></code>. Downstream software sets it in its own
+machine configs to give <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> defaults such as <code class="docutils literal notranslate"><span class="pre">compiler</span></code>, <code class="docutils literal notranslate"><span class="pre">mpi</span></code>
+and <code class="docutils literal notranslate"><span class="pre">group</span></code>; see <a class="reference internal" href="deploy.html"><span class="doc">Deploying target software</span></a>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quick_start.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="deploy.html" class="btn btn-neutral float-right" title="Deploying target software" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Energy Exascale Earth System Model Project.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+   
+
+  <!-- Meta tags for JS to use -->
+  <meta name="doc-version" content="main">
+  <meta name="doc-site-root" content="../">
+
+  <!-- Create version switcher container -->
+  <script>
+    const sidebar = document.querySelector('.wy-side-nav-search');
+    if (sidebar) {
+      const versionDiv = document.createElement('div');
+      versionDiv.id = 'version-switcher';
+      versionDiv.style.marginTop = '1em';
+      sidebar.appendChild(versionDiv);
+    }
+  </script>
+
+  <!-- Load version-switcher.js using the correct relative path -->
+  <script src="../../shared/version-switcher.js"></script>
+
+
+</body>
+</html>
