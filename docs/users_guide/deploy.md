@@ -741,6 +741,15 @@ with `-L/usr/lib64 -lxpmem` instead of `-L/opt/xpmem/lib64` and fail. The
 load scripts export `PKG_CONFIG_DONT_DEFINE_PREFIX=1` to turn that rewriting
 off.
 
+### Bash completion scripts
+
+By default, `pixi shell-hook` sources every bash completion script in the
+environment. GDAL installs dozens of these, and each one runs `ps` when
+sourced, which made sourcing a load script take a minute on busy HPC login
+nodes. Mache sets `source-completion-scripts = false` under `[shell]` in each
+deployed prefix's `.pixi/config.toml`, so load scripts skip them for every
+user.
+
 ### Deploying on a compute node
 
 A deploy can run inside a batch job, which is how nightly regression
