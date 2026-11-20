@@ -187,6 +187,7 @@ def test_slurm_without_placement_is_unchanged(monkeypatch):
     assert command == [
         'srun',
         '--label',
+        '--kill-on-bad-exit',
         '-c',
         '2',
         '-N',

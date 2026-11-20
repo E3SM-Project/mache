@@ -354,6 +354,7 @@ class ParallelSystem:
         parallel_executable = self.get_config('parallel_executable')
         command = self._get_command_prefix(placement)
         command.extend(parallel_executable.split(' '))
+        command.extend(self._get_launcher_args())
         parallel_args = self._get_parallel_args(
             cpus_per_task, gpus_per_task, ntasks, placement
         )
@@ -371,6 +372,10 @@ class ParallelSystem:
     ) -> List[str]:
         """Get the parallel command-line arguments related to resources."""
         raise NotImplementedError
+
+    def _get_launcher_args(self) -> List[str]:
+        """Get arguments every launch passes, whatever its resources."""
+        return []
 
     def _get_memory_args(self, memory_cap: int | None) -> List[str]:
         """Get the arguments that hold a launch to a memory cap."""
