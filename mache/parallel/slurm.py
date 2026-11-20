@@ -7,7 +7,7 @@ import subprocess
 import warnings
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import List
+from typing import Any, List
 
 from mache.parallel.memory import MemoryCapSupport
 from mache.parallel.placement import (
@@ -663,6 +663,30 @@ class SlurmSystem(ParallelSystem):
             )
         return parallel_args
 
+    def _get_launcher_args(self) -> List[str]:
+        """
+        Ask srun to end the whole step as soon as any task dies abnormally.
+
+        A task killed by a signal (a segfault, or glibc aborting on heap
+        corruption) never reaches ``MPI_Abort``, so the other tasks wait for
+        it in MPI communication. Unless the site sets ``KillOnBadExit=1``
+        (Chrysalis sets 0), srun leaves them there and the step hangs until
+        the job's wall-clock limit. E3SM's own machine configs pass this flag
+        for the same reason.
+
+        Nothing is added if the launcher is not srun, if
+        ``parallel_executable`` already has the flag, or if the machine sets
+        ``kill_on_bad_exit = False``.
+        """
+        if not _config_bool(self.get_config('kill_on_bad_exit'), True):
+            return []
+        executable = str(self.get_config('parallel_executable', '')).split()
+        if len(executable) == 0 or os.path.basename(executable[0]) != 'srun':
+            return []
+        if any(_is_kill_on_bad_exit_flag(arg) for arg in executable[1:]):
+            return []
+        return ['--kill-on-bad-exit']
+
     def _add_placement_args(
         self,
         parallel_args: List[str],
@@ -805,3 +829,22 @@ class SlurmSystem(ParallelSystem):
             # on Perlmutter GPU with the option gone.
             return value.strip() != 'none'
         return True
+
+
+def _is_kill_on_bad_exit_flag(arg: str) -> bool:
+    """Whether an srun argument already sets --kill-on-bad-exit (-K)."""
+    return arg.startswith('--kill-on-bad-exit') or (
+        arg.startswith('-K') and not arg.startswith('--')
+    )
+
+
+def _config_bool(value: Any, default: bool) -> bool:
+    """Read a boolean config option, with a default when it is absent."""
+    if value is None or str(value).strip() == '':
+        return default
+    text = str(value).strip().lower()
+    if text in ('true', 'yes', 'on', '1'):
+        return True
+    if text in ('false', 'no', 'off', '0'):
+        return False
+    raise ValueError(f'Expected a boolean config value, got {value!r}')

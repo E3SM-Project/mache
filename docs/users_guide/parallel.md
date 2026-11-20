@@ -146,6 +146,19 @@ unrelated to the `placement` argument to `get_parallel_command()` described in
 option from the command.
 ```
 
+## Ending a step when a task crashes
+
+On `slurm` systems whose launcher is `srun`, mache adds `--kill-on-bad-exit`
+to every command, so a task that dies abnormally ends the whole job step. A
+task killed by a signal (a segfault, or glibc aborting on heap corruption)
+never reaches `MPI_Abort`, and without the flag the other tasks can wait for
+it until the job's wall-clock limit on sites that set `KillOnBadExit=0`, such
+as Chrysalis.
+
+The flag is not repeated if `parallel_executable` already has `-K` or
+`--kill-on-bad-exit`. A machine can turn it off with
+`kill_on_bad_exit = False` in its `[parallel]` section.
+
 ## Selecting scheduler options by node count
 
 `mache.parallel` also provides helpers for selecting queue/partition/QOS from
