@@ -1597,6 +1597,8 @@ def test_pixi_install_writes_project_local_pixi_config(
     assert '"https://conda.anaconda.org/conda-forge/label" = [' in text
     config = tomllib.loads(text)
     assert 'detached-environments' not in config['mirrors']
+    # Load scripts must not source the env's bash completion scripts
+    assert config['shell']['source-completion-scripts'] is False
     if attach_environments:
         # Shared envs stay in the prefix whatever the deployer's config says
         assert config['detached-environments'] is False
