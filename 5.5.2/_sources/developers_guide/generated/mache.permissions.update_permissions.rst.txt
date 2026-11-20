@@ -1,0 +1,6 @@
+﻿mache.permissions.update\_permissions
+=====================================
+
+.. currentmodule:: mache.permissions
+
+.. autofunction:: update_permissions

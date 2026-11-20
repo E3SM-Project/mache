@@ -1,0 +1,6 @@
+﻿mache.deploy.cli\_spec.routes\_include
+======================================
+
+.. currentmodule:: mache.deploy.cli_spec
+
+.. autofunction:: routes_include

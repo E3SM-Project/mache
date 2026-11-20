@@ -1,0 +1,6 @@
+﻿mache.spack.pins.load\_pins
+===========================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: load_pins

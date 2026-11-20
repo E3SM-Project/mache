@@ -1,0 +1,6 @@
+﻿mache.spack.pins.validate\_pins
+===============================
+
+.. currentmodule:: mache.spack.pins
+
+.. autofunction:: validate_pins
