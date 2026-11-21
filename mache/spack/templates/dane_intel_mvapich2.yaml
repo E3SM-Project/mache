@@ -1,4 +1,4 @@
-{%- set compiler = "intel-oneapi-compilers@2023.2.1" %}
+{%- set compiler = "intel-oneapi-compilers@2025.2.0" %}
 {%- set mpi = "mvapich2@2.3.7" %}
 
 spack:
@@ -91,23 +91,30 @@ spack:
       externals:
       - spec: {{ mpi }}~cuda~debug+regcache+wrapperrpath ch3_rank_bits=32 file_systems=lustre,nfs,ufs
           process_managers=hydra threads=multiple
-        prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.7-intel-2023.2.1-magic
+        # TODO: reviewer, confirm this prefix on dane.  The directory name
+        # tracks the compiler, and E3SM's new dane paths spell the 2025
+        # compiler as "intel-2025.2.0" without the "-magic" suffix, so the
+        # build may instead be mvapich2-2.3.7-intel-2025.2.0.
+        prefix: /usr/tce/packages/mvapich2/mvapich2-2.3.7-intel-2025.2.0-magic
         modules:
         - mvapich2/2.3.7
         - mvapich2-tce/2.3.7
       buildable: false
     intel-oneapi-compilers:
       externals:
+      # TODO: reviewer, confirm these paths on dane.  They follow the
+      # "-magic" layout the 2023.2.1 entry used, with the version taken
+      # from E3SM's new intel/2025.2.0-magic module.
       - spec: {{ compiler }}
-        prefix: /usr/tce/packages/intel/intel-2023.2.1-magic
+        prefix: /usr/tce/packages/intel/intel-2025.2.0-magic
         extra_attributes:
           compilers:
-            c: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/icx
-            cxx: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/icpx
-            fortran: /usr/tce/packages/intel/intel-2023.2.1-magic/bin/ifx
+            c: /usr/tce/packages/intel/intel-2025.2.0-magic/bin/icx
+            cxx: /usr/tce/packages/intel/intel-2025.2.0-magic/bin/icpx
+            fortran: /usr/tce/packages/intel/intel-2025.2.0-magic/bin/ifx
         modules:
         - StdEnv
-        - intel/2023.2.1-magic
+        - intel/2025.2.0-magic
       buildable: false
     gcc:
       externals:
