@@ -75,10 +75,10 @@ mkdir -p ~/.ssh/connections
 chmod 700 ~/.ssh ~/.ssh/connections
 ```
 
-#### OLCF (Frontier) extra settings
+#### OLCF (Frontier, Riker) extra settings
 
 Some OLCF systems require explicit auth options. Add these lines to the
-`chrys` host in your SSH config if you’re on Frontier:
+`chrys` host in your SSH config if you’re on Frontier or Riker:
 
 ```ini
 Host chrys

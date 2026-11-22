@@ -8,6 +8,11 @@ def test_discover_machine_builtin_rules(monkeypatch):
     assert discover_machine(quiet=True) == 'frontier'
 
 
+def test_discover_machine_riker(monkeypatch):
+    monkeypatch.setattr('socket.gethostname', lambda: 'riker-login1')
+    assert discover_machine(quiet=True) == 'riker'
+
+
 def test_discover_machine_path_overrides_package(monkeypatch, tmp_path):
     # Both package and path match, path wins.
     pkg_dir = tmp_path / 'extmachines'
