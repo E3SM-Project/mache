@@ -260,7 +260,11 @@ if [[ -n "${MACHE_DEPLOY_RUNTIME_VERSION_CMD:-}" ]]; then
   echo "  Verified version ${runtime_version}."
 fi
 
+{% if login_pixi_toml -%}
 echo "loading ${MACHE_DEPLOY_ACTIVE_ENV_KIND} pixi env..."
+{% else -%}
+echo "loading pixi env..."
+{% endif -%}
 # Use `shell-hook` (not `pixi run`) so activation applies to this shell.
 # Shared deployments can be read-only for downstream users, so avoid any
 # lockfile or environment writes during activation.
