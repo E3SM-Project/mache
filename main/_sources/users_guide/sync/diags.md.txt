@@ -48,7 +48,7 @@ different one. Don’t share your private key.
 - Copy the content of your public key (typically `~/.ssh/id_ed25519.pub`).
 - Visit https://accounts.cels.anl.gov/ and add it under your account’s SSH
   keys.
-- Give it a descriptive name (e.g., `andes`, `frontier`, `compy`).
+- Give it a descriptive name (e.g., `frontier`, `compy`).
 - Allow a few minutes for the new key to propagate.
 
 ### 3) Configure your `~/.ssh/config`
@@ -75,10 +75,10 @@ mkdir -p ~/.ssh/connections
 chmod 700 ~/.ssh ~/.ssh/connections
 ```
 
-#### OLCF (Andes, Frontier) extra settings
+#### OLCF (Frontier) extra settings
 
 Some OLCF systems require explicit auth options. Add these lines to the
-`chrys` host in your SSH config if you’re on Andes/Frontier:
+`chrys` host in your SSH config if you’re on Frontier:
 
 ```ini
 Host chrys

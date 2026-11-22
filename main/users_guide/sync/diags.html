@@ -57,7 +57,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#generate-an-ssh-key-if-you-dont-already-have-one">1) Generate an SSH key (if you don’t already have one)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#add-your-public-key-to-your-cels-account">2) Add your public key to your CELS account</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#configure-your-ssh-config">3) Configure your <code class="docutils literal notranslate"><span class="pre">~/.ssh/config</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#olcf-andes-frontier-extra-settings">OLCF (Andes, Frontier) extra settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#olcf-frontier-extra-settings">OLCF (Frontier) extra settings</a></li>
 </ul>
 </li>
 </ul>
@@ -164,7 +164,7 @@ different one. Don’t share your private key.</p>
 <li><p>Copy the content of your public key (typically <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_ed25519.pub</span></code>).</p></li>
 <li><p>Visit https://accounts.cels.anl.gov/ and add it under your account’s SSH
 keys.</p></li>
-<li><p>Give it a descriptive name (e.g., <code class="docutils literal notranslate"><span class="pre">andes</span></code>, <code class="docutils literal notranslate"><span class="pre">frontier</span></code>, <code class="docutils literal notranslate"><span class="pre">compy</span></code>).</p></li>
+<li><p>Give it a descriptive name (e.g., <code class="docutils literal notranslate"><span class="pre">frontier</span></code>, <code class="docutils literal notranslate"><span class="pre">compy</span></code>).</p></li>
 <li><p>Allow a few minutes for the new key to propagate.</p></li>
 </ul>
 </section>
@@ -188,10 +188,10 @@ keys.</p></li>
 chmod<span class="w"> </span><span class="m">700</span><span class="w"> </span>~/.ssh<span class="w"> </span>~/.ssh/connections
 </pre></div>
 </div>
-<section id="olcf-andes-frontier-extra-settings">
-<h4>OLCF (Andes, Frontier) extra settings<a class="headerlink" href="#olcf-andes-frontier-extra-settings" title="Link to this heading"></a></h4>
+<section id="olcf-frontier-extra-settings">
+<h4>OLCF (Frontier) extra settings<a class="headerlink" href="#olcf-frontier-extra-settings" title="Link to this heading"></a></h4>
 <p>Some OLCF systems require explicit auth options. Add these lines to the
-<code class="docutils literal notranslate"><span class="pre">chrys</span></code> host in your SSH config if you’re on Andes/Frontier:</p>
+<code class="docutils literal notranslate"><span class="pre">chrys</span></code> host in your SSH config if you’re on Frontier:</p>
 <div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">Host chrys</span>
 <span class="w">    </span><span class="na">Hostname chrysalis.lcrc.anl.gov</span>
 <span class="w">    </span><span class="na">User &lt;cels_username&gt;</span>
