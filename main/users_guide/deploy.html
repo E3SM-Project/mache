@@ -805,8 +805,11 @@ explicit path avoids that and keeps the multi-GB package cache off the home
 quota.</p>
 <p>The default is <code class="docutils literal notranslate"><span class="pre">pixi-cache-$USER</span></code> under the first of <code class="docutils literal notranslate"><span class="pre">$SLURM_TMPDIR</span></code>,
 <code class="docutils literal notranslate"><span class="pre">$PBS_JOBFS</span></code>, <code class="docutils literal notranslate"><span class="pre">$TMPDIR</span></code>, <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> and <code class="docutils literal notranslate"><span class="pre">/var/tmp</span></code> that exists, is writable and
-is not memory-backed (<code class="docutils literal notranslate"><span class="pre">tmpfs</span></code>), since on some login nodes <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> lives in
-RAM and counts against a per-user memory limit. If none qualifies, the cache
+is not memory-backed, since on some login nodes <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> lives in RAM and
+counts against a per-user memory limit. Memory-backed means <code class="docutils literal notranslate"><span class="pre">tmpfs</span></code>, or an
+overlay whose upper directory is <code class="docutils literal notranslate"><span class="pre">tmpfs</span></code>: on diskless login nodes such as
+Polaris’s, the root filesystem is such an overlay, so <code class="docutils literal notranslate"><span class="pre">/var/tmp</span></code> is in RAM
+too. If none qualifies, the cache
 goes to <code class="docutils literal notranslate"><span class="pre">$SCRATCH/pixi-cache</span></code> when <code class="docutils literal notranslate"><span class="pre">$SCRATCH</span></code> is set; otherwise the choice is
 left to pixi.</p>
 <p>Set <code class="docutils literal notranslate"><span class="pre">PIXI_CACHE_DIR</span></code> before running <code class="docutils literal notranslate"><span class="pre">./deploy.py</span></code> or sourcing a load script

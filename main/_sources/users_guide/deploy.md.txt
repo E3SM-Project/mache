@@ -722,8 +722,11 @@ quota.
 
 The default is `pixi-cache-$USER` under the first of `$SLURM_TMPDIR`,
 `$PBS_JOBFS`, `$TMPDIR`, `/tmp` and `/var/tmp` that exists, is writable and
-is not memory-backed (`tmpfs`), since on some login nodes `/tmp` lives in
-RAM and counts against a per-user memory limit. If none qualifies, the cache
+is not memory-backed, since on some login nodes `/tmp` lives in RAM and
+counts against a per-user memory limit. Memory-backed means `tmpfs`, or an
+overlay whose upper directory is `tmpfs`: on diskless login nodes such as
+Polaris's, the root filesystem is such an overlay, so `/var/tmp` is in RAM
+too. If none qualifies, the cache
 goes to `$SCRATCH/pixi-cache` when `$SCRATCH` is set; otherwise the choice is
 left to pixi.
 

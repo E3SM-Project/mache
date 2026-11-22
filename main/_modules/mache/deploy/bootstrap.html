@@ -135,6 +135,9 @@
 <span class="n">PIXI_CACHE_DIR_ENV_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'SLURM_TMPDIR'</span><span class="p">,</span> <span class="s1">'PBS_JOBFS'</span><span class="p">,</span> <span class="s1">'TMPDIR'</span><span class="p">)</span>
 <span class="n">PIXI_CACHE_DIR_PATH_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'/tmp'</span><span class="p">,</span> <span class="s1">'/var/tmp'</span><span class="p">)</span>
 <span class="n">MEMORY_BACKED_FILESYSTEMS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'tmpfs'</span><span class="p">,</span> <span class="s1">'ramfs'</span><span class="p">)</span>
+<span class="c1"># An overlay is only as memory-backed as its upper directory, where writes go</span>
+<span class="c1"># (e.g. the root filesystem of diskless login nodes, as on Polaris).</span>
+<span class="n">OVERLAY_FILESYSTEMS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'overlay'</span><span class="p">,)</span>
 <span class="n">MOUNT_POINT_ESCAPES</span> <span class="o">=</span> <span class="p">(</span>
     <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">040'</span><span class="p">,</span> <span class="s1">' '</span><span class="p">),</span>
     <span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">011'</span><span class="p">,</span> <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">),</span>
@@ -638,17 +641,19 @@
 
 <span class="sd">    The candidates are the scheduler's per-job scratch directory, ``TMPDIR``,</span>
 <span class="sd">    ``/tmp`` and ``/var/tmp``, in that order. A candidate is skipped if it</span>
-<span class="sd">    is missing, not writable, or memory-backed (tmpfs), as ``/tmp`` is on</span>
-<span class="sd">    some login nodes. If none qualifies, ``$SCRATCH`` is used when it is</span>
-<span class="sd">    set, since an explicit path is fine on a parallel filesystem.</span>
+<span class="sd">    is missing, not writable, or memory-backed: tmpfs, as ``/tmp`` is on</span>
+<span class="sd">    some login nodes, or an overlay whose upper directory is tmpfs, as the</span>
+<span class="sd">    root filesystem of diskless login nodes is. If none qualifies,</span>
+<span class="sd">    ``$SCRATCH`` is used when it is set, since an explicit path is fine on a</span>
+<span class="sd">    parallel filesystem.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    env : dict</span>
 <span class="sd">        The environment variables to consult.</span>
-<span class="sd">    mounts : list of (str, str), optional</span>
-<span class="sd">        ``(mount_point, filesystem_type)`` pairs to use instead of reading</span>
-<span class="sd">        ``/proc/self/mounts`` (for tests).</span>
+<span class="sd">    mounts : list of tuple, optional</span>
+<span class="sd">        ``(mount_point, filesystem_type[, options])`` tuples to use instead</span>
+<span class="sd">        of reading ``/proc/self/mounts`` (for tests).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -673,8 +678,13 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_memory_backed</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Whether ``path`` lives on a memory-backed filesystem (tmpfs)."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_memory_backed</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Whether ``path`` lives on a memory-backed filesystem (tmpfs).</span>
+
+<span class="sd">    An overlay counts as memory-backed when its upper directory is, since</span>
+<span class="sd">    that is where anything written to the overlay ends up.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">mounts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mounts</span> <span class="o">=</span> <span class="n">_read_mounts</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">mounts</span><span class="p">:</span>
@@ -683,18 +693,37 @@
     <span class="n">real_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">best_point</span> <span class="o">=</span> <span class="s1">''</span>
     <span class="n">best_type</span> <span class="o">=</span> <span class="s1">''</span>
-    <span class="k">for</span> <span class="n">mount_point</span><span class="p">,</span> <span class="n">fs_type</span> <span class="ow">in</span> <span class="n">mounts</span><span class="p">:</span>
+    <span class="n">best_options</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">for</span> <span class="n">mount</span> <span class="ow">in</span> <span class="n">mounts</span><span class="p">:</span>
+        <span class="n">mount_point</span><span class="p">,</span> <span class="n">fs_type</span> <span class="o">=</span> <span class="n">mount</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mount</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">mount_point</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'/'</span>
         <span class="k">if</span> <span class="n">real_path</span> <span class="o">!=</span> <span class="n">mount_point</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">real_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mount_point</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_point</span><span class="p">):</span>
             <span class="n">best_point</span> <span class="o">=</span> <span class="n">mount_point</span>
             <span class="n">best_type</span> <span class="o">=</span> <span class="n">fs_type</span>
-    <span class="k">return</span> <span class="n">best_type</span> <span class="ow">in</span> <span class="n">MEMORY_BACKED_FILESYSTEMS</span>
+            <span class="n">best_options</span> <span class="o">=</span> <span class="n">mount</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mount</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="s1">''</span>
+    <span class="k">if</span> <span class="n">best_type</span> <span class="ow">in</span> <span class="n">MEMORY_BACKED_FILESYSTEMS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">best_type</span> <span class="ow">in</span> <span class="n">OVERLAY_FILESYSTEMS</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">upper_dir</span> <span class="o">=</span> <span class="n">_overlay_upper_dir</span><span class="p">(</span><span class="n">best_options</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">upper_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_is_memory_backed</span><span class="p">(</span><span class="n">upper_dir</span><span class="p">,</span> <span class="n">mounts</span><span class="o">=</span><span class="n">mounts</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_overlay_upper_dir</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The ``upperdir`` in an overlay's mount options, if it has one."""</span>
+    <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">option</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'upperdir='</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_unescape_mount_field</span><span class="p">(</span><span class="n">option</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'upperdir='</span><span class="p">)</span> <span class="p">:])</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_mounts</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Read ``(mount_point, filesystem_type)`` pairs from ``/proc``."""</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Read ``(mount_point, filesystem_type, options)`` tuples from ``/proc``.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'/proc/self/mounts'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
@@ -705,12 +734,17 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">mount_point</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="c1"># The kernel writes these characters in mount points as octal.</span>
-        <span class="k">for</span> <span class="n">escaped</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">MOUNT_POINT_ESCAPES</span><span class="p">:</span>
-            <span class="n">mount_point</span> <span class="o">=</span> <span class="n">mount_point</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">escaped</span><span class="p">,</span> <span class="n">char</span><span class="p">)</span>
-        <span class="n">mounts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mount_point</span><span class="p">,</span> <span class="n">fields</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+        <span class="n">mount_point</span> <span class="o">=</span> <span class="n">_unescape_mount_field</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="s1">''</span>
+        <span class="n">mounts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mount_point</span><span class="p">,</span> <span class="n">fields</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">options</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">mounts</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unescape_mount_field</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Decode the characters the kernel writes as octal in mount fields."""</span>
+    <span class="k">for</span> <span class="n">escaped</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">MOUNT_POINT_ESCAPES</span><span class="p">:</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">escaped</span><span class="p">,</span> <span class="n">char</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">field</span>
 
 
 <div class="viewcode-block" id="check_location">
