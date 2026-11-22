@@ -66,8 +66,8 @@ def _get_system(
     Build the parallel system a machine's config asks for.
 
     Returns ``None`` for a machine that defines no parallel system at all --
-    Andes and Bebop ship no ``[parallel]`` section, so mache only ever treats
-    them as login nodes.
+    Bebop ships no ``[parallel]`` section, so mache only ever treats it as a
+    login node.
     """
     system_name = config.get('parallel', 'system', fallback=None)
     if system_name is None:
