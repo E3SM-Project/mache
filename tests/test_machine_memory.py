@@ -38,8 +38,8 @@ def _describes_a_parallel_system(config: ConfigParser) -> bool:
     """
     Whether a machine describes a system that runs work in parallel.
 
-    Bebop ships no ``[parallel]`` section at all, so mache only ever treats
-    it as a login node and there is no compute node to describe.
+    Bebop and Riker ship no ``[parallel]`` section at all, so mache only ever
+    treats them as login nodes and there is no compute node to describe.
     """
     return config.get('parallel', 'system', fallback=None) is not None
 

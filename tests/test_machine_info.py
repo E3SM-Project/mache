@@ -269,6 +269,7 @@ def test_get_scheduler_specs_invalid_target_type():
         ('pm-cpu', '/global/cfs/cdirs/e3sm/inputdata'),
         ('aurora', '/lus/flare/projects/E3SMinput/data'),
         ('frontier', '/lustre/orion/cli115/world-shared/e3sm/inputdata'),
+        ('riker', '/lustre/orion/cli115/world-shared/e3sm/inputdata'),
     ],
 )
 def test_inputdata_base(machine, expected_inputdata_base):

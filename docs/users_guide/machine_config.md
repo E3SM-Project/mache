@@ -87,7 +87,7 @@ output. Defined on bebop, chrysalis, compy, dane, improv, pm-cpu and pm-gpu.
 `[parallel]` describes the scheduler, launcher and node resources, with
 optional per-compiler overrides in `[parallel.<compiler>]` and policy limits in
 `[queue.<name>]`, `[partition.<name>]` and `[qos.<name>]`. It is defined on
-every machine except bebop; `default.cfg` supplies `login_cores` and
+every machine except bebop and riker; `default.cfg` supplies `login_cores` and
 `login_gpus` everywhere. {doc}`parallel` explains how these options are used
 and {ref}`dev-new-config-file` lists each one.
 
