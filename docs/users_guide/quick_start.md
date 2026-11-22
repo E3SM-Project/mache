@@ -86,7 +86,6 @@ Config options:
 If you are on the login node of one of the following E3SM supported machines,
 you don't need to provide the machine name. It can be discovered automatically:
 
-- andes
 - aurora
 - bebop
 - chrysalis

@@ -4,8 +4,8 @@ from mache.discover import discover_machine
 
 
 def test_discover_machine_builtin_rules(monkeypatch):
-    monkeypatch.setattr('socket.gethostname', lambda: 'andes001')
-    assert discover_machine(quiet=True) == 'andes'
+    monkeypatch.setattr('socket.gethostname', lambda: 'frontier05')
+    assert discover_machine(quiet=True) == 'frontier'
 
 
 def test_discover_machine_path_overrides_package(monkeypatch, tmp_path):

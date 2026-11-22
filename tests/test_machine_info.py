@@ -268,7 +268,7 @@ def test_get_scheduler_specs_invalid_target_type():
         ('chrysalis', '/lcrc/group/e3sm/data/inputdata'),
         ('pm-cpu', '/global/cfs/cdirs/e3sm/inputdata'),
         ('aurora', '/lus/flare/projects/E3SMinput/data'),
-        ('andes', '/lustre/orion/cli115/world-shared/e3sm/inputdata'),
+        ('frontier', '/lustre/orion/cli115/world-shared/e3sm/inputdata'),
     ],
 )
 def test_inputdata_base(machine, expected_inputdata_base):

@@ -104,7 +104,7 @@ def test_machine_config_without_machine_has_no_deploy_defaults():
 
 def test_machine_config_leaves_pixi_only_machines_without_toolchain_defaults():
     platform, _ = get_conda_platform_and_system()
-    for machine in ('andes', 'chicoma-cpu', 'polaris'):
+    for machine in ('chicoma-cpu', 'polaris'):
         cfg = get_machine_config(
             machine=machine,
             machines_path=None,
