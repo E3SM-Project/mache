@@ -36,6 +36,9 @@ PIXI_ENV_VARS_TO_UNSET = (
 PIXI_CACHE_DIR_ENV_CANDIDATES = ('SLURM_TMPDIR', 'PBS_JOBFS', 'TMPDIR')
 PIXI_CACHE_DIR_PATH_CANDIDATES = ('/tmp', '/var/tmp')
 MEMORY_BACKED_FILESYSTEMS = ('tmpfs', 'ramfs')
+# An overlay is only as memory-backed as its upper directory, where writes go
+# (e.g. the root filesystem of diskless login nodes, as on Polaris).
+OVERLAY_FILESYSTEMS = ('overlay',)
 MOUNT_POINT_ESCAPES = (
     ('\\040', ' '),
     ('\\011', '\t'),
@@ -533,17 +536,19 @@ def default_pixi_cache_dir(env, mounts=None):
 
     The candidates are the scheduler's per-job scratch directory, ``TMPDIR``,
     ``/tmp`` and ``/var/tmp``, in that order. A candidate is skipped if it
-    is missing, not writable, or memory-backed (tmpfs), as ``/tmp`` is on
-    some login nodes. If none qualifies, ``$SCRATCH`` is used when it is
-    set, since an explicit path is fine on a parallel filesystem.
+    is missing, not writable, or memory-backed: tmpfs, as ``/tmp`` is on
+    some login nodes, or an overlay whose upper directory is tmpfs, as the
+    root filesystem of diskless login nodes is. If none qualifies,
+    ``$SCRATCH`` is used when it is set, since an explicit path is fine on a
+    parallel filesystem.
 
     Parameters
     ----------
     env : dict
         The environment variables to consult.
-    mounts : list of (str, str), optional
-        ``(mount_point, filesystem_type)`` pairs to use instead of reading
-        ``/proc/self/mounts`` (for tests).
+    mounts : list of tuple, optional
+        ``(mount_point, filesystem_type[, options])`` tuples to use instead
+        of reading ``/proc/self/mounts`` (for tests).
 
     Returns
     -------
@@ -568,8 +573,13 @@ def default_pixi_cache_dir(env, mounts=None):
     return None
 
 
-def _is_memory_backed(path, mounts=None):
-    """Whether ``path`` lives on a memory-backed filesystem (tmpfs)."""
+def _is_memory_backed(path, mounts=None, depth=0):
+    """
+    Whether ``path`` lives on a memory-backed filesystem (tmpfs).
+
+    An overlay counts as memory-backed when its upper directory is, since
+    that is where anything written to the overlay ends up.
+    """
     if mounts is None:
         mounts = _read_mounts()
     if not mounts:
@@ -578,18 +588,37 @@ def _is_memory_backed(path, mounts=None):
     real_path = os.path.realpath(path)
     best_point = ''
     best_type = ''
-    for mount_point, fs_type in mounts:
+    best_options = ''
+    for mount in mounts:
+        mount_point, fs_type = mount[0], mount[1]
         root = mount_point.rstrip('/') + '/'
         if real_path != mount_point and not real_path.startswith(root):
             continue
         if len(mount_point) >= len(best_point):
             best_point = mount_point
             best_type = fs_type
-    return best_type in MEMORY_BACKED_FILESYSTEMS
+            best_options = mount[2] if len(mount) > 2 else ''
+    if best_type in MEMORY_BACKED_FILESYSTEMS:
+        return True
+    if best_type in OVERLAY_FILESYSTEMS and depth < 4:
+        upper_dir = _overlay_upper_dir(best_options)
+        if upper_dir is not None:
+            return _is_memory_backed(upper_dir, mounts=mounts, depth=depth + 1)
+    return False
+
+
+def _overlay_upper_dir(options):
+    """The ``upperdir`` in an overlay's mount options, if it has one."""
+    for option in options.split(','):
+        if option.startswith('upperdir='):
+            return _unescape_mount_field(option[len('upperdir=') :])
+    return None
 
 
 def _read_mounts():
-    """Read ``(mount_point, filesystem_type)`` pairs from ``/proc``."""
+    """
+    Read ``(mount_point, filesystem_type, options)`` tuples from ``/proc``.
+    """
     try:
         with open('/proc/self/mounts', encoding='utf-8') as handle:
             lines = handle.read().splitlines()
@@ -600,12 +629,17 @@ def _read_mounts():
         fields = line.split()
         if len(fields) < 3:
             continue
-        mount_point = fields[1]
-        # The kernel writes these characters in mount points as octal.
-        for escaped, char in MOUNT_POINT_ESCAPES:
-            mount_point = mount_point.replace(escaped, char)
-        mounts.append((mount_point, fields[2]))
+        mount_point = _unescape_mount_field(fields[1])
+        options = fields[3] if len(fields) > 3 else ''
+        mounts.append((mount_point, fields[2], options))
     return mounts
+
+
+def _unescape_mount_field(field):
+    """Decode the characters the kernel writes as octal in mount fields."""
+    for escaped, char in MOUNT_POINT_ESCAPES:
+        field = field.replace(escaped, char)
+    return field
 
 
 def check_location(software=None):

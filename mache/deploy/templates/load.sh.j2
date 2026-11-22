@@ -132,13 +132,29 @@ export {{ software_upper }}_PIXI_MPI="${MACHE_DEPLOY_ACTIVE_PIXI_MPI}"
 # the home directory, which on HPC machines is usually a network/parallel
 # filesystem that pixi redirects away from with a warning on every run. An
 # explicit path avoids that, but /tmp is memory-backed (tmpfs) on some login
-# nodes, so skip any memory-backed candidate and fall back to $SCRATCH, then
-# to pixi's own defaults. This mirrors default_pixi_cache_dir() in mache.
+# nodes, and /var/tmp is too where the root filesystem is an overlay held in
+# RAM (diskless login nodes), so skip any memory-backed candidate and fall
+# back to $SCRATCH, then to pixi's own defaults. This mirrors
+# default_pixi_cache_dir() in mache.
 _mache_deploy_is_memory_backed() {
+  local path="$1"
   local fs_type
-  # GNU stat only; other platforms do not put /tmp in RAM.
-  fs_type="$(stat -f -c %T "$1" 2>/dev/null)" || return 1
-  [[ "${fs_type}" == "tmpfs" || "${fs_type}" == "ramfs" ]]
+  local depth
+  for depth in 1 2 3 4; do
+    # GNU stat only; other platforms do not put /tmp in RAM.
+    fs_type="$(stat -f -c %T "${path}" 2>/dev/null)" || return 1
+    case "${fs_type}" in
+      tmpfs|ramfs) return 0 ;;
+      overlayfs) ;;
+      *) return 1 ;;
+    esac
+    # An overlay is only as memory-backed as its upper directory, where
+    # anything written to it ends up.
+    path="$(findmnt -n -o OPTIONS --target "${path}" 2>/dev/null \
+      | tr ',' '\n' | sed -n 's/^upperdir=//p')"
+    [[ -n "${path}" ]] || return 1
+  done
+  return 1
 }
 
 _mache_deploy_default_pixi_cache_dir() {

@@ -249,6 +249,40 @@ def test_is_memory_backed_without_mount_table():
     assert not bootstrap._is_memory_backed('/tmp', mounts=[])
 
 
+def test_is_memory_backed_follows_overlay_upper_dir():
+    # The root filesystem of a diskless login node: an overlay whose writes
+    # land in tmpfs
+    ram_overlay = [
+        ('/', 'overlay', 'rw,lowerdir=/root_ro,upperdir=/rootfs.rw/upper'),
+        ('/rootfs.rw', 'tmpfs', 'rw'),
+    ]
+    disk_overlay = [
+        ('/', 'overlay', 'rw,lowerdir=/root_ro,upperdir=/disk/upper'),
+        ('/disk', 'xfs', 'rw'),
+    ]
+    no_upper = [('/', 'overlay', 'ro,lowerdir=/a:/b')]
+
+    assert bootstrap._is_memory_backed('/var/tmp', mounts=ram_overlay)
+    assert not bootstrap._is_memory_backed('/var/tmp', mounts=disk_overlay)
+    assert not bootstrap._is_memory_backed('/var/tmp', mounts=no_upper)
+
+
+def test_default_pixi_cache_dir_skips_overlay_in_ram(tmp_path: Path):
+    scratch = tmp_path / 'scratch'
+    scratch.mkdir()
+    env = {'USER': 'someone', 'SCRATCH': str(scratch)}
+    mounts = [
+        ('/', 'overlay', 'rw,lowerdir=/root_ro,upperdir=/rootfs.rw/upper'),
+        ('/rootfs.rw', 'tmpfs', 'rw'),
+        ('/tmp', 'tmpfs', 'rw'),
+        (str(scratch), 'lustre', 'rw'),
+    ]
+
+    cache_dir = bootstrap.default_pixi_cache_dir(env, mounts=mounts)
+
+    assert cache_dir == str(scratch / 'pixi-cache')
+
+
 def test_read_mounts_decodes_escaped_mount_points(monkeypatch, tmp_path: Path):
     mounts_file = tmp_path / 'mounts'
     mounts_file.write_text(
@@ -267,8 +301,8 @@ def test_read_mounts_decodes_escaped_mount_points(monkeypatch, tmp_path: Path):
     monkeypatch.setattr('builtins.open', fake_open)
 
     assert bootstrap._read_mounts() == [
-        ('/tmp', 'tmpfs'),
-        ('/mnt/with space', 'ext4'),
+        ('/tmp', 'tmpfs', 'rw,nosuid'),
+        ('/mnt/with space', 'ext4', 'rw'),
     ]
 
 
