@@ -323,6 +323,10 @@ def test_write_load_script_includes_login_env_metadata(tmp_path, monkeypatch):
     assert '_mache_deploy_is_compute_node' in script_text
     assert 'MACHE_DEPLOY_ACTIVE_ENV_KIND' in script_text
     assert (
+        'echo "loading ${MACHE_DEPLOY_ACTIVE_ENV_KIND} pixi env..."'
+        in script_text
+    )
+    assert (
         'if [[ "${MACHE_DEPLOY_ACTIVE_ENV_KIND}" == "compute" ]]; then'
         in script_text
     )
@@ -543,6 +547,9 @@ def test_write_load_script_without_login_env_skips_compute_detection(
     script_text = Path(script_path).read_text(encoding='utf-8')
     assert '_mache_deploy_is_compute_node' not in script_text
     assert 'MACHE_DEPLOY_ACTIVE_ENV_KIND="compute"' in script_text
+    # With only one environment, the message should not call it "compute"
+    assert 'echo "loading pixi env..."' in script_text
+    assert 'loading ${MACHE_DEPLOY_ACTIVE_ENV_KIND}' not in script_text
 
 
 def test_write_load_script_omits_optional_exports_when_values_are_empty(
