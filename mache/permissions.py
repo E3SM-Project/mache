@@ -49,6 +49,12 @@ def update_permissions(  # noqa: C901
         Whether the owner keeps write permission.  Use
         :py:func:`restore_owner_write` to give it back before modifying
         paths updated with ``owner_writable=False``.
+
+    Notes
+    -----
+    Symlinks found while traversing a directory are skipped, so the paths
+    they point to, which may be outside ``base_paths``, keep their
+    permissions.  A symlink given in ``base_paths`` itself is followed.
     """
 
     if isinstance(base_paths, str):
@@ -118,6 +124,7 @@ def update_permissions(  # noqa: C901
                     read_write_perm=read_write_perm,
                     exec_perm=exec_perm,
                     mask=mask,
+                    follow_symlinks=False,
                 )
                 for p in paths_iter
             ]
@@ -189,11 +196,17 @@ def _update(
     read_write_perm: int,
     exec_perm: int,
     mask: int,
+    follow_symlinks: bool = True,
 ) -> None:
     """
     Update file permissions for a single path
+
+    Unless ``follow_symlinks``, a symlink is skipped rather than having the
+    path it points to updated.
     """
     try:
+        if not follow_symlinks and path.is_symlink():
+            return
         _stat = os.stat(path)
         _perm = _stat.st_mode & mask
 

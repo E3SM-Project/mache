@@ -98,3 +98,43 @@ def test_restore_owner_write_skips_writable_directory(tmp_path):
     permissions.restore_owner_write(str(shared_dir), show_progress=False)
 
     assert stat.S_IMODE(data_file.stat().st_mode) == 0o444
+
+
+def test_update_permissions_skips_symlinks_while_traversing(
+    tmp_path, monkeypatch
+):
+    # like e3smu_latest_for_nco, a directory of links to read-only
+    # environments elsewhere: updating it must leave the targets alone
+    env_dir = tmp_path / 'env'
+    env_dir.mkdir()
+    env_file = tmp_path / 'private.txt'
+    env_file.write_text('demo\n', encoding='utf-8')
+    env_file.chmod(0o600)
+    links_dir = tmp_path / 'links'
+    links_dir.mkdir()
+    (links_dir / 'env').symlink_to(env_dir)
+    (links_dir / 'file').symlink_to(env_file)
+    env_dir.chmod(0o555)
+
+    monkeypatch.setattr(
+        permissions.grp,
+        'getgrnam',
+        lambda _group: SimpleNamespace(gr_gid=os.getgid()),
+    )
+    monkeypatch.setattr(permissions.os, 'chown', lambda *_args: None)
+
+    try:
+        permissions.update_permissions(
+            str(links_dir),
+            'e3sm',
+            show_progress=False,
+            group_writable=True,
+            owner_writable=True,
+            recursive=True,
+        )
+
+        assert stat.S_IMODE(links_dir.stat().st_mode) == 0o775
+        assert stat.S_IMODE(env_dir.stat().st_mode) == 0o555
+        assert stat.S_IMODE(env_file.stat().st_mode) == 0o600
+    finally:
+        env_dir.chmod(0o755)
