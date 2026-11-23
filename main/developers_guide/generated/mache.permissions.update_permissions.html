@@ -141,6 +141,10 @@ paths updated with <code class="docutils literal notranslate"><span class="pre">
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Symlinks found while traversing a directory are skipped, so the paths
+they point to, which may be outside <code class="docutils literal notranslate"><span class="pre">base_paths</span></code>, keep their
+permissions.  A symlink given in <code class="docutils literal notranslate"><span class="pre">base_paths</span></code> itself is followed.</p>
 </dd></dl>
 
 </section>
