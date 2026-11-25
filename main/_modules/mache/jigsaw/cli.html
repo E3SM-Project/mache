@@ -126,6 +126,16 @@
         <span class="n">help</span><span class="o">=</span><span class="s1">'Path to jigsaw-python source relative to --repo-root.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">'--jigsaw-python-ref'</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s1">'REF'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'The commit, tag or branch of jigsaw-python to build. If the '</span>
+            <span class="s1">'source has to be cloned, it is cloned at REF; an existing '</span>
+            <span class="s1">'checkout must already be at REF.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">p_install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s1">'--repo-root'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s1">'.'</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s1">'Repository root containing jigsaw-python.'</span><span class="p">,</span>
@@ -171,6 +181,7 @@
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jigsaw_cmd</span> <span class="o">==</span> <span class="s1">'install'</span><span class="p">:</span>
         <span class="n">deploy_jigsawpy</span><span class="p">(</span>
             <span class="n">jigsaw_python_path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">jigsaw_python_path</span><span class="p">,</span>
+            <span class="n">jigsaw_python_ref</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">jigsaw_python_ref</span><span class="p">,</span>
             <span class="n">repo_root</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">,</span>
             <span class="n">log_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">quiet</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">quiet</span><span class="p">,</span>

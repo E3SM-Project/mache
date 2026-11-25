@@ -176,7 +176,9 @@ logic.</p>
 </ol>
 <p>The build step:</p>
 <ul class="simple">
-<li><p>Ensures <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> source is available, cloning it when necessary.</p></li>
+<li><p>Ensures <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> source is available, cloning it over HTTPS when
+necessary (at <code class="docutils literal notranslate"><span class="pre">jigsaw_python_ref</span></code> if one is given), and checks that the
+source is at that ref.</p></li>
 <li><p>Computes a cache key from the source tree and selected Python/platform.</p></li>
 <li><p>Reuses cached output under the shared cache when valid.</p></li>
 <li><p>Runs <code class="docutils literal notranslate"><span class="pre">rattler-build</span></code> through pixi or conda, depending on the selected

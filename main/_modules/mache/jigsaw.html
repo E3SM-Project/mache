@@ -125,7 +125,7 @@
     <span class="n">check_call_with_retries</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">JIGSAW_PYTHON_URL</span> <span class="o">=</span> <span class="s1">'git@github.com:dengwirda/jigsaw-python.git'</span>
+<span class="n">JIGSAW_PYTHON_URL</span> <span class="o">=</span> <span class="s1">'https://github.com/dengwirda/jigsaw-python.git'</span>
 
 <span class="n">CONDA_PLATFORM_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="p">(</span><span class="s1">'linux'</span><span class="p">,</span> <span class="s1">'x86_64'</span><span class="p">):</span> <span class="s1">'linux-64'</span><span class="p">,</span>
@@ -171,6 +171,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">deploy_jigsawpy</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">jigsaw_python_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'jigsaw-python'</span><span class="p">,</span>
+    <span class="n">jigsaw_python_ref</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">repo_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span>
     <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -196,6 +197,11 @@
 <span class="sd">    jigsaw_python_path : str</span>
 <span class="sd">        Path to the ``jigsaw-python`` source relative to ``repo_root``.</span>
 <span class="sd">        Defaults to ``"jigsaw-python"``.</span>
+<span class="sd">    jigsaw_python_ref : str, optional</span>
+<span class="sd">        The commit, tag or branch of ``jigsaw-python`` to build.  If the</span>
+<span class="sd">        source has to be cloned, it is cloned at this ref; an existing</span>
+<span class="sd">        checkout must already be at it.  If omitted, an existing checkout</span>
+<span class="sd">        is used as it is and a clone is of the default branch.</span>
 <span class="sd">    repo_root : str</span>
 <span class="sd">        Root directory containing the target source tree. Defaults to</span>
 <span class="sd">        ``"."``.</span>
@@ -259,6 +265,7 @@
         <span class="n">pixi_exe</span><span class="o">=</span><span class="n">resolved_pixi_exe</span><span class="p">,</span>
         <span class="n">python_version</span><span class="o">=</span><span class="n">resolved_python_version</span><span class="p">,</span>
         <span class="n">jigsaw_python_path</span><span class="o">=</span><span class="n">jigsaw_python_path</span><span class="p">,</span>
+        <span class="n">jigsaw_python_ref</span><span class="o">=</span><span class="n">jigsaw_python_ref</span><span class="p">,</span>
         <span class="n">repo_root</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
         <span class="n">log_filename</span><span class="o">=</span><span class="n">resolved_log_filename</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
@@ -461,6 +468,7 @@
     <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'auto'</span><span class="p">,</span>
     <span class="n">pixi_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">conda_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">jigsaw_python_ref</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JigsawBuildResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Build a local conda package for ``jigsawpy``.</span>
@@ -491,6 +499,9 @@
 <span class="sd">        Path to the ``pixi`` executable when backend resolves to ``"pixi"``.</span>
 <span class="sd">    conda_exe : str, optional</span>
 <span class="sd">        Conda executable used when backend resolves to ``"conda"``.</span>
+<span class="sd">    jigsaw_python_ref : str, optional</span>
+<span class="sd">        The commit, tag or branch of ``jigsaw-python`` to build.  See</span>
+<span class="sd">        ``deploy_jigsawpy()``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -516,6 +527,7 @@
         <span class="n">rel_path</span><span class="o">=</span><span class="n">jigsaw_python_path</span><span class="p">,</span>
         <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span>
         <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span>
+        <span class="n">ref</span><span class="o">=</span><span class="n">jigsaw_python_ref</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">cache_key</span> <span class="o">=</span> <span class="n">_compute_jigsaw_cache_key</span><span class="p">(</span>
@@ -920,6 +932,7 @@
     <span class="n">rel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">log_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">has_submodule</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">gitmodules_path</span> <span class="o">=</span> <span class="n">repo_root</span> <span class="o">/</span> <span class="s1">'.gitmodules'</span>
@@ -942,16 +955,58 @@
             <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">jigsaw_python_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s1">'cd "</span><span class="si">{</span><span class="n">repo_root</span><span class="si">}</span><span class="s1">" &amp;&amp; '</span>
-            <span class="sa">f</span><span class="s1">'git clone --depth 1 "</span><span class="si">{</span><span class="n">JIGSAW_PYTHON_URL</span><span class="si">}</span><span class="s1">" "</span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s1">"'</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'cd "</span><span class="si">{</span><span class="n">repo_root</span><span class="si">}</span><span class="s1">" &amp;&amp; '</span>
+                <span class="sa">f</span><span class="s1">'git clone --depth 1 "</span><span class="si">{</span><span class="n">JIGSAW_PYTHON_URL</span><span class="si">}</span><span class="s1">" "</span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s1">"'</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># a blobless clone has every commit, so any ref -- including an</span>
+            <span class="c1"># abbreviated commit -- can be checked out, but downloads only</span>
+            <span class="c1"># the files of the commit that is</span>
+            <span class="n">commands</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'cd "</span><span class="si">{</span><span class="n">repo_root</span><span class="si">}</span><span class="s1">" &amp;&amp; '</span>
+                <span class="sa">f</span><span class="s1">'git clone --filter=blob:none --no-checkout '</span>
+                <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">JIGSAW_PYTHON_URL</span><span class="si">}</span><span class="s1">" "</span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s1">" &amp;&amp; '</span>
+                <span class="sa">f</span><span class="s1">'git -C "</span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s1">" checkout --detach "</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s1">"'</span>
+            <span class="p">)</span>
         <span class="n">check_call</span><span class="p">(</span><span class="n">commands</span><span class="p">,</span> <span class="n">log_filename</span><span class="o">=</span><span class="n">log_filename</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="n">quiet</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">jigsaw_python_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">'Failed to acquire JIGSAW-Python at </span><span class="si">{</span><span class="n">jigsaw_python_dir</span><span class="si">}</span><span class="s1"> '</span>
             <span class="sa">f</span><span class="s1">'(clone_url=</span><span class="si">{</span><span class="n">JIGSAW_PYTHON_URL</span><span class="si">}</span><span class="s1">).'</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_check_jigsaw_python_ref</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="o">=</span><span class="n">jigsaw_python_dir</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_jigsaw_python_ref</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">jigsaw_python_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Check that the ``jigsaw-python`` checkout is at the requested ref</span>
+
+<span class="sd">    A checkout that was already there is not moved: it may be a submodule</span>
+<span class="sd">    whose commit the enclosing repository records, or a developer's clone</span>
+<span class="sd">    with work in it.</span>
+<span class="sd">    """</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">_get_git_head</span><span class="p">(</span><span class="n">jigsaw_python_dir</span><span class="p">)</span>
+    <span class="n">wanted</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">'rev-parse'</span><span class="p">,</span> <span class="s1">'--verify'</span><span class="p">,</span> <span class="s1">'--quiet'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s1">^</span><span class="se">{{</span><span class="s1">commit</span><span class="se">}}</span><span class="s1">'</span><span class="p">],</span>
+        <span class="n">cwd</span><span class="o">=</span><span class="n">jigsaw_python_dir</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">wanted</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'JIGSAW-Python at </span><span class="si">{</span><span class="n">jigsaw_python_dir</span><span class="si">}</span><span class="s1"> does not have the '</span>
+            <span class="sa">f</span><span class="s1">'requested ref </span><span class="si">{</span><span class="n">ref</span><span class="si">!r}</span><span class="s1">.  Fetch it there, or remove the '</span>
+            <span class="sa">f</span><span class="s1">'directory so that mache clones JIGSAW-Python at </span><span class="si">{</span><span class="n">ref</span><span class="si">!r}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">head</span> <span class="o">!=</span> <span class="n">wanted</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'JIGSAW-Python at </span><span class="si">{</span><span class="n">jigsaw_python_dir</span><span class="si">}</span><span class="s1"> is at commit </span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="s1">, not '</span>
+            <span class="sa">f</span><span class="s1">'at the requested ref </span><span class="si">{</span><span class="n">ref</span><span class="si">!r}</span><span class="s1"> (</span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s1">).  Check out </span><span class="si">{</span><span class="n">ref</span><span class="si">!r}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'there, or remove the directory so that mache clones '</span>
+            <span class="sa">f</span><span class="s1">'JIGSAW-Python at </span><span class="si">{</span><span class="n">ref</span><span class="si">!r}</span><span class="s1">.'</span>
         <span class="p">)</span>
 
 

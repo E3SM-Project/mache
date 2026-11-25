@@ -169,6 +169,7 @@ solver conflicts.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">--pixi-manifest</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--pixi-feature</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-path</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-ref</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--repo-root</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--quiet</span></code></p></li>
 </ul>
@@ -183,8 +184,14 @@ target a specific existing manifest instead of the auto-managed local copy.</p>
 </div>
 <p>The conda backend installs <code class="docutils literal notranslate"><span class="pre">jigsawpy</span></code> into <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> unless you provide a
 different prefix programmatically.</p>
+<p>If the software you are installing JIGSAW for was tested with a particular
+<code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> commit, as Polaris is, ask for that commit:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mache<span class="w"> </span>jigsaw<span class="w"> </span>install<span class="w"> </span>--jigsaw-python-ref<span class="w"> </span>46a26d38b27fcdd28be723c923ce677159d2b766
+</pre></div>
+</div>
 <p>For most users, no additional options are required beyond:</p>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-ref</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-path</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--repo-root</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--quiet</span></code></p></li>
@@ -236,18 +243,26 @@ worktree after that reuses it.</p>
 to <code class="docutils literal notranslate"><span class="pre">--repo-root</span></code>.</p>
 <p>If the source tree is missing:</p>
 <ul class="simple">
-<li><p>In downstream deploy workflows, <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">deploy</span> <span class="pre">run</span></code> can clone or initialize
-the source automatically when JIGSAW is enabled.</p></li>
-<li><p>In direct <code class="docutils literal notranslate"><span class="pre">mache</span> <span class="pre">jigsaw</span> <span class="pre">install</span></code> workflows, <code class="docutils literal notranslate"><span class="pre">mache</span></code> will also try to make
-the source available before building.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> is a submodule of the repository at <code class="docutils literal notranslate"><span class="pre">--repo-root</span></code>, as in
+downstream deploy workflows, <code class="docutils literal notranslate"><span class="pre">mache</span></code> initializes the submodule.</p></li>
+<li><p>Otherwise, <code class="docutils literal notranslate"><span class="pre">mache</span></code> clones
+<a class="reference external" href="https://github.com/dengwirda/jigsaw-python">jigsaw-python</a> over HTTPS, so
+no GitHub SSH key is needed.  With <code class="docutils literal notranslate"><span class="pre">--jigsaw-python-ref</span></code>, it clones that
+commit, tag or branch; without it, the latest commit of the default branch.</p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">--jigsaw-python-ref</span></code> also guards a checkout that is already there: if it is
+not at the requested ref, <code class="docutils literal notranslate"><span class="pre">mache</span></code> stops without building, rather than building
+a different JIGSAW than the one asked for.  It never moves an existing
+checkout, which may be a submodule or hold your own work.  Check out the ref
+there yourself, or remove the directory so that <code class="docutils literal notranslate"><span class="pre">mache</span></code> clones it.</p>
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <p>If installation fails:</p>
 <ol class="arabic simple">
 <li><p>Confirm you are in an active pixi or conda environment.</p></li>
-<li><p>Check that <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> is present at the expected path.</p></li>
+<li><p>Check that <code class="docutils literal notranslate"><span class="pre">jigsaw-python</span></code> is present at the expected path, and at the
+ref you asked for with <code class="docutils literal notranslate"><span class="pre">--jigsaw-python-ref</span></code>.</p></li>
 <li><p>Re-run with terminal output enabled and inspect the build logs under
 <code class="docutils literal notranslate"><span class="pre">&lt;clone&gt;/.mache_cache/jigsaw/&lt;cache_key&gt;</span></code> or the deploy logs under
 <code class="docutils literal notranslate"><span class="pre">deploy_tmp/logs</span></code>.</p></li>
