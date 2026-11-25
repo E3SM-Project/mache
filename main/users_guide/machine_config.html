@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#paths-and-shared-resources">Paths and shared resources</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#e3sm-unified"><code class="docutils literal notranslate"><span class="pre">[e3sm_unified]</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diagnostics"><code class="docutils literal notranslate"><span class="pre">[diagnostics]</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance"><code class="docutils literal notranslate"><span class="pre">[performance]</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#inputdata"><code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#web-portal"><code class="docutils literal notranslate"><span class="pre">[web_portal]</span></code></a></li>
 </ul>
@@ -199,8 +200,22 @@ machines.</p>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">group</span></code></p></td>
 <td><p>Unix group given to files synced into <code class="docutils literal notranslate"><span class="pre">base_path</span></code> by <a class="reference internal" href="sync/diags.html"><span class="doc">Synchronize diagnostics between machines (mache sync diags)</span></a>.</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">archive_path</span></code></p></td>
+<td><p>The path to the diagnostics output archive used by Zppy to publish to SimBoard.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">archive_url</span></code></p></td>
+<td><p>The web URL corresponding to the diagnostics output archive.</p></td>
+</tr>
 </tbody>
 </table>
+</section>
+<section id="performance">
+<h3><code class="docutils literal notranslate"><span class="pre">[performance]</span></code><a class="headerlink" href="#performance" title="Link to this heading"></a></h3>
+<p>The shared directories of simulation performance data, deposited by simulation
+run scripts, and processed by PACE and/or Simboard thereafter.</p>
+<p>| — | — |
+| <code class="docutils literal notranslate"><span class="pre">staging_path</span></code> | Where performance data is staged, performed by simulation run scripts.
+| <code class="docutils literal notranslate"><span class="pre">archive_path</span></code> | Where older performance data is archived.</p>
 </section>
 <section id="inputdata">
 <h3><code class="docutils literal notranslate"><span class="pre">[inputdata]</span></code><a class="headerlink" href="#inputdata" title="Link to this heading"></a></h3>
