@@ -59,6 +59,17 @@ machines.
 | --- | --- |
 | `base_path` | Root of the diagnostics data. Also available as `MachineInfo.diagnostics_base`. |
 | `group` | Unix group given to files synced into `base_path` by {doc}`sync/diags`. |
+| `archive_path` | The path to the diagnostics output archive used by Zppy to publish to SimBoard. |
+| `archive_url` | The web URL corresponding to the diagnostics output archive. |
+
+### `[performance]`
+
+The shared directories of simulation performance data, deposited by simulation
+run scripts, and processed by PACE and/or Simboard thereafter.
+
+| --- | --- |
+| `staging_path` | Where performance data is staged, performed by simulation run scripts.
+| `archive_path` | Where older performance data is archived.
 
 ### `[inputdata]`
 
