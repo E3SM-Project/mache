@@ -24,6 +24,16 @@ def add_jigsaw_subparser(subparsers: argparse._SubParsersAction) -> None:
         help='Path to jigsaw-python source relative to --repo-root.',
     )
     p_install.add_argument(
+        '--jigsaw-python-ref',
+        default=None,
+        metavar='REF',
+        help=(
+            'The commit, tag or branch of jigsaw-python to build. If the '
+            'source has to be cloned, it is cloned at REF; an existing '
+            'checkout must already be at REF.'
+        ),
+    )
+    p_install.add_argument(
         '--repo-root',
         default='.',
         help='Repository root containing jigsaw-python.',
@@ -68,6 +78,7 @@ def _dispatch_jigsaw(args: argparse.Namespace) -> None:
     if args.jigsaw_cmd == 'install':
         deploy_jigsawpy(
             jigsaw_python_path=args.jigsaw_python_path,
+            jigsaw_python_ref=args.jigsaw_python_ref,
             repo_root=args.repo_root,
             log_filename=None,
             quiet=args.quiet,

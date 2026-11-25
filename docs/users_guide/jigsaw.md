@@ -65,6 +65,7 @@ Useful pixi options are:
 - `--pixi-manifest`
 - `--pixi-feature`
 - `--jigsaw-python-path`
+- `--jigsaw-python-ref`
 - `--repo-root`
 - `--quiet`
 
@@ -82,8 +83,16 @@ mache jigsaw install
 The conda backend installs `jigsawpy` into `CONDA_PREFIX` unless you provide a
 different prefix programmatically.
 
+If the software you are installing JIGSAW for was tested with a particular
+`jigsaw-python` commit, as Polaris is, ask for that commit:
+
+```bash
+mache jigsaw install --jigsaw-python-ref 46a26d38b27fcdd28be723c923ce677159d2b766
+```
+
 For most users, no additional options are required beyond:
 
+- `--jigsaw-python-ref`
 - `--jigsaw-python-path`
 - `--repo-root`
 - `--quiet`
@@ -143,17 +152,26 @@ to `--repo-root`.
 
 If the source tree is missing:
 
-- In downstream deploy workflows, `mache deploy run` can clone or initialize
-  the source automatically when JIGSAW is enabled.
-- In direct `mache jigsaw install` workflows, `mache` will also try to make
-  the source available before building.
+- If `jigsaw-python` is a submodule of the repository at `--repo-root`, as in
+  downstream deploy workflows, `mache` initializes the submodule.
+- Otherwise, `mache` clones
+  [jigsaw-python](https://github.com/dengwirda/jigsaw-python) over HTTPS, so
+  no GitHub SSH key is needed.  With `--jigsaw-python-ref`, it clones that
+  commit, tag or branch; without it, the latest commit of the default branch.
+
+`--jigsaw-python-ref` also guards a checkout that is already there: if it is
+not at the requested ref, `mache` stops without building, rather than building
+a different JIGSAW than the one asked for.  It never moves an existing
+checkout, which may be a submodule or hold your own work.  Check out the ref
+there yourself, or remove the directory so that `mache` clones it.
 
 ## Troubleshooting
 
 If installation fails:
 
 1. Confirm you are in an active pixi or conda environment.
-2. Check that `jigsaw-python` is present at the expected path.
+2. Check that `jigsaw-python` is present at the expected path, and at the
+   ref you asked for with `--jigsaw-python-ref`.
 3. Re-run with terminal output enabled and inspect the build logs under
    `<clone>/.mache_cache/jigsaw/<cache_key>` or the deploy logs under
    `deploy_tmp/logs`.

@@ -67,6 +67,7 @@ class JigsawBuildResult:
 def deploy_jigsawpy(
     *,
     jigsaw_python_path: str = 'jigsaw-python',
+    jigsaw_python_ref: str | None = None,
     repo_root: str = '.',
     log_filename: str | None = None,
     quiet: bool = False,
@@ -92,6 +93,11 @@ def deploy_jigsawpy(
     jigsaw_python_path : str
         Path to the ``jigsaw-python`` source relative to ``repo_root``.
         Defaults to ``"jigsaw-python"``.
+    jigsaw_python_ref : str, optional
+        The commit, tag or branch of ``jigsaw-python`` to build.  If the
+        source has to be cloned, it is cloned at this ref; an existing
+        checkout must already be at it.  If omitted, an existing checkout
+        is used as it is and a clone is of the default branch.
     repo_root : str
         Root directory containing the target source tree. Defaults to
         ``"."``.
@@ -155,6 +161,7 @@ def deploy_jigsawpy(
         pixi_exe=resolved_pixi_exe,
         python_version=resolved_python_version,
         jigsaw_python_path=jigsaw_python_path,
+        jigsaw_python_ref=jigsaw_python_ref,
         repo_root=repo_root,
         log_filename=resolved_log_filename,
         quiet=quiet,
@@ -348,6 +355,7 @@ def build_jigsawpy_package(
     backend: str = 'auto',
     pixi_exe: str | None = None,
     conda_exe: str | None = None,
+    jigsaw_python_ref: str | None = None,
 ) -> JigsawBuildResult:
     """
     Build a local conda package for ``jigsawpy``.
@@ -378,6 +386,9 @@ def build_jigsawpy_package(
         Path to the ``pixi`` executable when backend resolves to ``"pixi"``.
     conda_exe : str, optional
         Conda executable used when backend resolves to ``"conda"``.
+    jigsaw_python_ref : str, optional
+        The commit, tag or branch of ``jigsaw-python`` to build.  See
+        ``deploy_jigsawpy()``.
 
     Returns
     -------
@@ -403,6 +414,7 @@ def build_jigsawpy_package(
         rel_path=jigsaw_python_path,
         log_filename=log_filename,
         quiet=quiet,
+        ref=jigsaw_python_ref,
     )
 
     cache_key = _compute_jigsaw_cache_key(
@@ -806,6 +818,7 @@ def _ensure_jigsaw_python_source(
     rel_path: str,
     log_filename: str,
     quiet: bool,
+    ref: str | None = None,
 ) -> None:
     has_submodule = False
     gitmodules_path = repo_root / '.gitmodules'
@@ -828,16 +841,58 @@ def _ensure_jigsaw_python_source(
             check_call(commands, log_filename=log_filename, quiet=quiet)
 
     elif not jigsaw_python_dir.is_dir():
-        commands = (
-            f'cd "{repo_root}" && '
-            f'git clone --depth 1 "{JIGSAW_PYTHON_URL}" "{rel_path}"'
-        )
+        if ref is None:
+            commands = (
+                f'cd "{repo_root}" && '
+                f'git clone --depth 1 "{JIGSAW_PYTHON_URL}" "{rel_path}"'
+            )
+        else:
+            # a blobless clone has every commit, so any ref -- including an
+            # abbreviated commit -- can be checked out, but downloads only
+            # the files of the commit that is
+            commands = (
+                f'cd "{repo_root}" && '
+                f'git clone --filter=blob:none --no-checkout '
+                f'"{JIGSAW_PYTHON_URL}" "{rel_path}" && '
+                f'git -C "{rel_path}" checkout --detach "{ref}"'
+            )
         check_call(commands, log_filename=log_filename, quiet=quiet)
 
     if not jigsaw_python_dir.is_dir():
         raise RuntimeError(
             f'Failed to acquire JIGSAW-Python at {jigsaw_python_dir} '
             f'(clone_url={JIGSAW_PYTHON_URL}).'
+        )
+
+    if ref is not None:
+        _check_jigsaw_python_ref(jigsaw_python_dir=jigsaw_python_dir, ref=ref)
+
+
+def _check_jigsaw_python_ref(*, jigsaw_python_dir: Path, ref: str) -> None:
+    """
+    Check that the ``jigsaw-python`` checkout is at the requested ref
+
+    A checkout that was already there is not moved: it may be a submodule
+    whose commit the enclosing repository records, or a developer's clone
+    with work in it.
+    """
+    head = _get_git_head(jigsaw_python_dir)
+    wanted = _run_git(
+        ['rev-parse', '--verify', '--quiet', f'{ref}^{{commit}}'],
+        cwd=jigsaw_python_dir,
+    )
+    if wanted is None:
+        raise RuntimeError(
+            f'JIGSAW-Python at {jigsaw_python_dir} does not have the '
+            f'requested ref {ref!r}.  Fetch it there, or remove the '
+            f'directory so that mache clones JIGSAW-Python at {ref!r}.'
+        )
+    if head != wanted:
+        raise RuntimeError(
+            f'JIGSAW-Python at {jigsaw_python_dir} is at commit {head}, not '
+            f'at the requested ref {ref!r} ({wanted}).  Check out {ref!r} '
+            f'there, or remove the directory so that mache clones '
+            f'JIGSAW-Python at {ref!r}.'
         )
 
 
