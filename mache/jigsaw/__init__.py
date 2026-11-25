@@ -26,7 +26,7 @@ from mache.deploy.bootstrap import (
     check_call_with_retries,
 )
 
-JIGSAW_PYTHON_URL = 'git@github.com:dengwirda/jigsaw-python.git'
+JIGSAW_PYTHON_URL = 'https://github.com/dengwirda/jigsaw-python.git'
 
 CONDA_PLATFORM_MAP = {
     ('linux', 'x86_64'): 'linux-64',
