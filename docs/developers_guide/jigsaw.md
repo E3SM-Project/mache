@@ -63,7 +63,9 @@ The normal call graph is:
 
 The build step:
 
-- Ensures `jigsaw-python` source is available, cloning it when necessary.
+- Ensures `jigsaw-python` source is available, cloning it over HTTPS when
+  necessary (at `jigsaw_python_ref` if one is given), and checks that the
+  source is at that ref.
 - Computes a cache key from the source tree and selected Python/platform.
 - Reuses cached output under the shared cache when valid.
 - Runs `rattler-build` through pixi or conda, depending on the selected
